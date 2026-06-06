@@ -1,0 +1,716 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JA Tours & Experiences | Coming Soon</title>
+
+<style>
+:root{
+  --ink:#102a2c;
+  --cream:#fbf8f1;
+  --paper:#fff;
+  --mist:#edf5f2;
+  --coral:#f2644b;
+  --aqua:#89d5c7;
+  --line:#dfe8e4;
+  --muted:#637473;
+  --shadow:0 18px 50px rgba(16,42,44,.14);
+}
+
+*{
+  box-sizing:border-box;
+}
+
+html{
+  scroll-behavior:smooth;
+}
+
+body{
+  margin:0;
+  color:var(--ink);
+  background:var(--cream);
+  font:15px/1.5 Inter,Aptos,"Segoe UI",Arial,sans-serif;
+}
+
+button,input{
+  font:inherit;
+}
+
+img{
+  display:block;
+  width:100%;
+}
+
+a{
+  color:inherit;
+}
+
+.wrap{
+  width:min(1180px,calc(100% - 40px));
+  margin:auto;
+}
+
+.concept{
+  padding:9px 20px;
+  color:#fff;
+  background:var(--ink);
+  text-align:center;
+  font-size:13px;
+  font-weight:700;
+}
+
+.header{
+  position:sticky;
+  top:0;
+  z-index:20;
+  background:rgba(251,248,241,.94);
+  border-bottom:1px solid var(--line);
+  backdrop-filter:blur(16px);
+}
+
+.nav{
+  min-height:76px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:24px;
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:11px;
+  text-decoration:none;
+  font-weight:900;
+}
+
+.mark{
+  width:44px;
+  height:44px;
+  display:grid;
+  place-items:center;
+  border-radius:14px;
+  color:#fff;
+  background:var(--coral);
+  font-size:20px;
+  box-shadow:0 8px 20px rgba(242,100,75,.28);
+}
+
+.brand small{
+  display:block;
+  color:var(--muted);
+  font-size:10px;
+  letter-spacing:.09em;
+  text-transform:uppercase;
+}
+
+.links{
+  display:flex;
+  gap:25px;
+  align-items:center;
+}
+
+.links a{
+  text-decoration:none;
+  font-weight:750;
+}
+
+.links .cta{
+  padding:10px 15px;
+  border-radius:999px;
+  color:#fff;
+  background:var(--ink);
+}
+
+.menu{
+  display:none;
+  border:0;
+  background:transparent;
+  font-size:25px;
+  cursor:pointer;
+}
+
+.hero{
+  min-height:650px;
+  display:grid;
+  align-items:end;
+  color:#fff;
+  background:
+    linear-gradient(90deg,rgba(8,35,37,.94),rgba(8,35,37,.63) 52%,rgba(8,35,37,.12)),
+    url("https://images.unsplash.com/photo-1527631746610-bca00a040d60?auto=format&fit=crop&w=2000&q=85") center/cover;
+}
+
+.hero-content{
+  padding:90px 0 72px;
+}
+
+.eyebrow{
+  display:inline-block;
+  padding:8px 13px;
+  border:1px solid #ffffff55;
+  border-radius:999px;
+  background:#ffffff1c;
+  font-size:13px;
+  font-weight:800;
+}
+
+.hero h1{
+  max-width:850px;
+  margin:18px 0;
+  font:700 clamp(48px,7vw,86px)/.98 Georgia,serif;
+  letter-spacing:-.05em;
+}
+
+.hero p{
+  max-width:660px;
+  color:#ffffffdb;
+  font-size:18px;
+}
+
+.coming-soon-box{
+  width:min(760px,100%);
+  margin-top:28px;
+  padding:22px;
+  border-radius:18px;
+  background:#fff;
+  color:var(--ink);
+  box-shadow:var(--shadow);
+}
+
+.coming-soon-box strong{
+  display:block;
+  margin-bottom:6px;
+  font-size:20px;
+}
+
+.coming-soon-box p{
+  margin:0;
+  color:var(--muted);
+  font-size:15px;
+}
+
+.status-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:18px;
+}
+
+.status-pill{
+  padding:8px 12px;
+  border-radius:999px;
+  color:#fff;
+  background:#102a2c66;
+  border:1px solid #ffffff55;
+  font-weight:750;
+  font-size:13px;
+}
+
+.partners{
+  color:#fff;
+  background:var(--ink);
+}
+
+.partner-inner{
+  min-height:78px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
+}
+
+.partner-inner p{
+  color:#ffffffb5;
+}
+
+.pills{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.pill{
+  padding:9px 12px;
+  border:1px solid #ffffff2e;
+  border-radius:10px;
+  background:#ffffff12;
+  font-weight:800;
+}
+
+.pill.primary{
+  color:var(--ink);
+  background:var(--aqua);
+}
+
+section.content{
+  padding:82px 0;
+}
+
+.white{
+  background:#fff;
+}
+
+.head{
+  display:flex;
+  align-items:end;
+  justify-content:space-between;
+  gap:25px;
+  margin-bottom:30px;
+}
+
+.kicker{
+  margin:0 0 8px;
+  color:#d94b35;
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.13em;
+  text-transform:uppercase;
+}
+
+h2{
+  margin:0;
+  font:700 clamp(36px,5vw,56px)/1 Georgia,serif;
+  letter-spacing:-.04em;
+}
+
+.intro{
+  max-width:520px;
+  color:var(--muted);
+}
+
+.categories{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:14px;
+}
+
+.category{
+  padding:22px;
+  border:1px solid var(--line);
+  border-radius:18px;
+  background:#fff;
+  transition:.2s;
+}
+
+.category:hover{
+  transform:translateY(-4px);
+  box-shadow:var(--shadow);
+}
+
+.icon{
+  width:46px;
+  height:46px;
+  display:grid;
+  place-items:center;
+  margin-bottom:22px;
+  border-radius:14px;
+  background:var(--mist);
+  font-size:21px;
+}
+
+.category strong,
+.category span{
+  display:block;
+}
+
+.category span{
+  color:var(--muted);
+  font-size:13px;
+}
+
+.feature{
+  display:grid;
+  grid-template-columns:.9fr 1.1fr;
+  overflow:hidden;
+  border-radius:28px;
+  color:#fff;
+  background:var(--ink);
+}
+
+.feature-copy{
+  padding:58px;
+}
+
+.feature-copy p{
+  color:#ffffffb8;
+}
+
+.benefit{
+  display:flex;
+  gap:11px;
+  margin-top:17px;
+}
+
+.benefit b{
+  width:27px;
+  height:27px;
+  display:grid;
+  place-items:center;
+  flex:0 0 auto;
+  border-radius:50%;
+  color:var(--ink);
+  background:var(--aqua);
+}
+
+.feature-image{
+  min-height:470px;
+  background:url("https://images.unsplash.com/photo-1533104816931-20fa691ff6ca?auto=format&fit=crop&w=1300&q=85") center/cover;
+}
+
+.notice{
+  padding:21px;
+  border:1px solid #eedfbe;
+  border-left:5px solid #f3c96b;
+  border-radius:14px;
+  background:#fffaf0;
+  color:#5c574b;
+  font-size:13px;
+}
+
+footer{
+  padding:56px 0 28px;
+  color:#ffffffb0;
+  background:#092426;
+}
+
+.footer{
+  display:grid;
+  grid-template-columns:1.5fr repeat(3,1fr);
+  gap:40px;
+}
+
+.footer .brand{
+  color:#fff;
+}
+
+.col strong{
+  display:block;
+  margin-bottom:12px;
+  color:#fff;
+}
+
+.col a{
+  display:block;
+  margin:8px 0;
+  text-decoration:none;
+  font-size:13px;
+}
+
+.bottom{
+  margin-top:42px;
+  padding-top:20px;
+  border-top:1px solid #ffffff1f;
+  font-size:12px;
+}
+
+@media(max-width:900px){
+  .links{
+    display:none;
+    position:absolute;
+    top:76px;
+    left:20px;
+    right:20px;
+    padding:18px;
+    border-radius:15px;
+    background:#fff;
+    box-shadow:var(--shadow);
+  }
+
+  .links.open{
+    display:grid;
+  }
+
+  .menu{
+    display:block;
+  }
+
+  .categories{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  .feature{
+    grid-template-columns:1fr;
+  }
+
+  .feature-image{
+    order:-1;
+    min-height:340px;
+  }
+
+  .footer{
+    grid-template-columns:repeat(2,1fr);
+  }
+}
+
+@media(max-width:620px){
+  .wrap{
+    width:calc(100% - 24px);
+  }
+
+  .hero{
+    min-height:620px;
+    background-position:60% center;
+  }
+
+  .hero-content{
+    padding:65px 0 50px;
+  }
+
+  .hero p{
+    font-size:16px;
+  }
+
+  .partner-inner{
+    padding:18px 0;
+    align-items:flex-start;
+    flex-direction:column;
+  }
+
+  .head{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+
+  .categories{
+    grid-template-columns:1fr;
+  }
+
+  .feature-copy{
+    padding:32px 23px;
+  }
+
+  .footer{
+    grid-template-columns:1fr;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="concept">
+  JA Tours & Experiences is currently being prepared for launch.
+</div>
+
+<header class="header">
+  <div class="wrap nav">
+    <a class="brand" href="#top">
+      <span class="mark">JA</span>
+      <span>
+        JA Tours & Experiences
+        <small>Discover more of the world</small>
+      </span>
+    </a>
+
+    <button class="menu" id="menu" aria-label="Open menu">☰</button>
+
+    <nav class="links" id="links">
+      <a href="#coming-soon">Coming Soon</a>
+      <a href="#what-to-expect">What to Expect</a>
+      <a href="#about">About</a>
+      <a class="cta" href="#contact">Launch Updates</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+  <section class="hero" id="coming-soon">
+    <div class="wrap hero-content">
+      <span class="eyebrow">New travel experience website launching soon</span>
+
+      <h1>Website coming soon.</h1>
+
+      <p>
+        JA Tours & Experiences is being prepared as a new destination for discovering
+        attraction tickets, guided tours, day trips and memorable experiences from
+        trusted third-party booking partners.
+      </p>
+
+      <div class="coming-soon-box">
+        <strong>We are getting everything ready.</strong>
+        <p>
+          Our team is currently finalising the website, supplier links, affiliate notices,
+          booking information and customer-facing pages before launch.
+        </p>
+      </div>
+
+      <div class="status-row">
+        <span class="status-pill">Tours</span>
+        <span class="status-pill">Attraction tickets</span>
+        <span class="status-pill">Experiences</span>
+        <span class="status-pill">Worldwide destinations</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="partners">
+    <div class="wrap partner-inner">
+      <p>
+        This website will help customers discover experiences supplied by established
+        third-party booking platforms.
+      </p>
+
+      <div class="pills">
+        <span class="pill primary">Launching Soon</span>
+        <span class="pill">JA Group Services</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="content white" id="what-to-expect">
+    <div class="wrap">
+      <div class="head">
+        <div>
+          <p class="kicker">What to expect</p>
+          <h2>A simpler way to discover things to do.</h2>
+        </div>
+
+        <p class="intro">
+          Once launched, customers will be able to browse travel experiences by destination,
+          activity type and provider.
+        </p>
+      </div>
+
+      <div class="categories">
+        <article class="category">
+          <span class="icon">🎟</span>
+          <strong>Attraction tickets</strong>
+          <span>Landmarks, museums and must-see sights.</span>
+        </article>
+
+        <article class="category">
+          <span class="icon">🧭</span>
+          <strong>Guided tours</strong>
+          <span>Explore destinations with local experts.</span>
+        </article>
+
+        <article class="category">
+          <span class="icon">☀</span>
+          <strong>Day trips</strong>
+          <span>Discover memorable days beyond the city.</span>
+        </article>
+
+        <article class="category">
+          <span class="icon">🎭</span>
+          <strong>Shows and events</strong>
+          <span>Theatre, entertainment and cultural experiences.</span>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="content" id="about">
+    <div class="wrap feature">
+      <div class="feature-copy">
+        <p class="kicker" style="color:var(--aqua)">Coming soon</p>
+
+        <h2>Built for clear, trusted travel discovery.</h2>
+
+        <p>
+          JA Tours & Experiences will provide an online discovery and referral service.
+          Customers will be able to explore activities and then complete bookings securely
+          with the selected third-party provider.
+        </p>
+
+        <div class="benefit">
+          <b>✓</b>
+          <span>
+            <strong>Clear provider information</strong><br>
+            Booking providers will be labelled clearly before customers leave the website.
+          </span>
+        </div>
+
+        <div class="benefit">
+          <b>✓</b>
+          <span>
+            <strong>Simple customer journey</strong><br>
+            The website will help customers find experiences quickly and confidently.
+          </span>
+        </div>
+
+        <div class="benefit">
+          <b>✓</b>
+          <span>
+            <strong>Worldwide inspiration</strong><br>
+            Popular destinations and activity categories will be available from launch.
+          </span>
+        </div>
+      </div>
+
+      <div class="feature-image" role="img" aria-label="Travel destination image"></div>
+    </div>
+  </section>
+
+  <section class="content" id="contact">
+    <div class="wrap">
+      <div class="notice">
+        <strong>Launch notice:</strong>
+        JA Tours & Experiences is not yet live for bookings. Tours, tickets, availability,
+        prices, terms, cancellations and customer support will be supplied by the relevant
+        third-party provider once the website launches.
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="footer">
+      <div>
+        <a class="brand" href="#top">
+          <span class="mark">JA</span>
+          <span>
+            JA Tours & Experiences
+            <small style="color:#ffffff88">A JA Group Services website</small>
+          </span>
+        </a>
+
+        <p>
+          Helping travellers discover memorable activities from trusted booking partners.
+        </p>
+      </div>
+
+      <div class="col">
+        <strong>Website</strong>
+        <a href="#coming-soon">Coming Soon</a>
+        <a href="#what-to-expect">What to Expect</a>
+        <a href="#about">About</a>
+      </div>
+
+      <div class="col">
+        <strong>Information</strong>
+        <a href="#contact">Launch Notice</a>
+        <a href="#">Affiliate Disclosure</a>
+        <a href="#">Contact Us</a>
+      </div>
+
+      <div class="col">
+        <strong>Legal</strong>
+        <a href="#">Privacy Notice</a>
+        <a href="#">Cookie Policy</a>
+        <a href="#">Terms of Use</a>
+      </div>
+    </div>
+
+    <div class="bottom">
+      © 2026 JA Group Services Ltd. JA Tours & Experiences is currently being prepared for launch.
+    </div>
+  </div>
+</footer>
+
+<script>
+(() => {
+  const menu = document.querySelector("#menu");
+  const links = document.querySelector("#links");
+
+  menu.onclick = () => {
+    links.classList.toggle("open");
+  };
+})();
+</script>
+
+</body>
+</html>
