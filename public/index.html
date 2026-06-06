@@ -1,716 +1,890 @@
+
 <!doctype html>
 <html lang="en-GB">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>JA Tours & Experiences | Coming Soon</title>
-
-<style>
-:root{
-  --ink:#102a2c;
-  --cream:#fbf8f1;
-  --paper:#fff;
-  --mist:#edf5f2;
-  --coral:#f2644b;
-  --aqua:#89d5c7;
-  --line:#dfe8e4;
-  --muted:#637473;
-  --shadow:0 18px 50px rgba(16,42,44,.14);
-}
-
-*{
-  box-sizing:border-box;
-}
-
-html{
-  scroll-behavior:smooth;
-}
-
-body{
-  margin:0;
-  color:var(--ink);
-  background:var(--cream);
-  font:15px/1.5 Inter,Aptos,"Segoe UI",Arial,sans-serif;
-}
-
-button,input{
-  font:inherit;
-}
-
-img{
-  display:block;
-  width:100%;
-}
-
-a{
-  color:inherit;
-}
-
-.wrap{
-  width:min(1180px,calc(100% - 40px));
-  margin:auto;
-}
-
-.concept{
-  padding:9px 20px;
-  color:#fff;
-  background:var(--ink);
-  text-align:center;
-  font-size:13px;
-  font-weight:700;
-}
-
-.header{
-  position:sticky;
-  top:0;
-  z-index:20;
-  background:rgba(251,248,241,.94);
-  border-bottom:1px solid var(--line);
-  backdrop-filter:blur(16px);
-}
-
-.nav{
-  min-height:76px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:24px;
-}
-
-.brand{
-  display:flex;
-  align-items:center;
-  gap:11px;
-  text-decoration:none;
-  font-weight:900;
-}
-
-.mark{
-  width:44px;
-  height:44px;
-  display:grid;
-  place-items:center;
-  border-radius:14px;
-  color:#fff;
-  background:var(--coral);
-  font-size:20px;
-  box-shadow:0 8px 20px rgba(242,100,75,.28);
-}
-
-.brand small{
-  display:block;
-  color:var(--muted);
-  font-size:10px;
-  letter-spacing:.09em;
-  text-transform:uppercase;
-}
-
-.links{
-  display:flex;
-  gap:25px;
-  align-items:center;
-}
-
-.links a{
-  text-decoration:none;
-  font-weight:750;
-}
-
-.links .cta{
-  padding:10px 15px;
-  border-radius:999px;
-  color:#fff;
-  background:var(--ink);
-}
-
-.menu{
-  display:none;
-  border:0;
-  background:transparent;
-  font-size:25px;
-  cursor:pointer;
-}
-
-.hero{
-  min-height:650px;
-  display:grid;
-  align-items:end;
-  color:#fff;
-  background:
-    linear-gradient(90deg,rgba(8,35,37,.94),rgba(8,35,37,.63) 52%,rgba(8,35,37,.12)),
-    url("https://images.unsplash.com/photo-1527631746610-bca00a040d60?auto=format&fit=crop&w=2000&q=85") center/cover;
-}
-
-.hero-content{
-  padding:90px 0 72px;
-}
-
-.eyebrow{
-  display:inline-block;
-  padding:8px 13px;
-  border:1px solid #ffffff55;
-  border-radius:999px;
-  background:#ffffff1c;
-  font-size:13px;
-  font-weight:800;
-}
-
-.hero h1{
-  max-width:850px;
-  margin:18px 0;
-  font:700 clamp(48px,7vw,86px)/.98 Georgia,serif;
-  letter-spacing:-.05em;
-}
-
-.hero p{
-  max-width:660px;
-  color:#ffffffdb;
-  font-size:18px;
-}
-
-.coming-soon-box{
-  width:min(760px,100%);
-  margin-top:28px;
-  padding:22px;
-  border-radius:18px;
-  background:#fff;
-  color:var(--ink);
-  box-shadow:var(--shadow);
-}
-
-.coming-soon-box strong{
-  display:block;
-  margin-bottom:6px;
-  font-size:20px;
-}
-
-.coming-soon-box p{
-  margin:0;
-  color:var(--muted);
-  font-size:15px;
-}
-
-.status-row{
-  display:flex;
-  flex-wrap:wrap;
-  gap:10px;
-  margin-top:18px;
-}
-
-.status-pill{
-  padding:8px 12px;
-  border-radius:999px;
-  color:#fff;
-  background:#102a2c66;
-  border:1px solid #ffffff55;
-  font-weight:750;
-  font-size:13px;
-}
-
-.partners{
-  color:#fff;
-  background:var(--ink);
-}
-
-.partner-inner{
-  min-height:78px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:20px;
-}
-
-.partner-inner p{
-  color:#ffffffb5;
-}
-
-.pills{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-}
-
-.pill{
-  padding:9px 12px;
-  border:1px solid #ffffff2e;
-  border-radius:10px;
-  background:#ffffff12;
-  font-weight:800;
-}
-
-.pill.primary{
-  color:var(--ink);
-  background:var(--aqua);
-}
-
-section.content{
-  padding:82px 0;
-}
-
-.white{
-  background:#fff;
-}
-
-.head{
-  display:flex;
-  align-items:end;
-  justify-content:space-between;
-  gap:25px;
-  margin-bottom:30px;
-}
-
-.kicker{
-  margin:0 0 8px;
-  color:#d94b35;
-  font-size:12px;
-  font-weight:900;
-  letter-spacing:.13em;
-  text-transform:uppercase;
-}
-
-h2{
-  margin:0;
-  font:700 clamp(36px,5vw,56px)/1 Georgia,serif;
-  letter-spacing:-.04em;
-}
-
-.intro{
-  max-width:520px;
-  color:var(--muted);
-}
-
-.categories{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:14px;
-}
-
-.category{
-  padding:22px;
-  border:1px solid var(--line);
-  border-radius:18px;
-  background:#fff;
-  transition:.2s;
-}
-
-.category:hover{
-  transform:translateY(-4px);
-  box-shadow:var(--shadow);
-}
-
-.icon{
-  width:46px;
-  height:46px;
-  display:grid;
-  place-items:center;
-  margin-bottom:22px;
-  border-radius:14px;
-  background:var(--mist);
-  font-size:21px;
-}
-
-.category strong,
-.category span{
-  display:block;
-}
-
-.category span{
-  color:var(--muted);
-  font-size:13px;
-}
-
-.feature{
-  display:grid;
-  grid-template-columns:.9fr 1.1fr;
-  overflow:hidden;
-  border-radius:28px;
-  color:#fff;
-  background:var(--ink);
-}
-
-.feature-copy{
-  padding:58px;
-}
-
-.feature-copy p{
-  color:#ffffffb8;
-}
-
-.benefit{
-  display:flex;
-  gap:11px;
-  margin-top:17px;
-}
-
-.benefit b{
-  width:27px;
-  height:27px;
-  display:grid;
-  place-items:center;
-  flex:0 0 auto;
-  border-radius:50%;
-  color:var(--ink);
-  background:var(--aqua);
-}
-
-.feature-image{
-  min-height:470px;
-  background:url("https://images.unsplash.com/photo-1533104816931-20fa691ff6ca?auto=format&fit=crop&w=1300&q=85") center/cover;
-}
-
-.notice{
-  padding:21px;
-  border:1px solid #eedfbe;
-  border-left:5px solid #f3c96b;
-  border-radius:14px;
-  background:#fffaf0;
-  color:#5c574b;
-  font-size:13px;
-}
-
-footer{
-  padding:56px 0 28px;
-  color:#ffffffb0;
-  background:#092426;
-}
-
-.footer{
-  display:grid;
-  grid-template-columns:1.5fr repeat(3,1fr);
-  gap:40px;
-}
-
-.footer .brand{
-  color:#fff;
-}
-
-.col strong{
-  display:block;
-  margin-bottom:12px;
-  color:#fff;
-}
-
-.col a{
-  display:block;
-  margin:8px 0;
-  text-decoration:none;
-  font-size:13px;
-}
-
-.bottom{
-  margin-top:42px;
-  padding-top:20px;
-  border-top:1px solid #ffffff1f;
-  font-size:12px;
-}
-
-@media(max-width:900px){
-  .links{
-    display:none;
-    position:absolute;
-    top:76px;
-    left:20px;
-    right:20px;
-    padding:18px;
-    border-radius:15px;
-    background:#fff;
-    box-shadow:var(--shadow);
-  }
-
-  .links.open{
-    display:grid;
-  }
-
-  .menu{
-    display:block;
-  }
-
-  .categories{
-    grid-template-columns:repeat(2,1fr);
-  }
-
-  .feature{
-    grid-template-columns:1fr;
-  }
-
-  .feature-image{
-    order:-1;
-    min-height:340px;
-  }
-
-  .footer{
-    grid-template-columns:repeat(2,1fr);
-  }
-}
-
-@media(max-width:620px){
-  .wrap{
-    width:calc(100% - 24px);
-  }
-
-  .hero{
-    min-height:620px;
-    background-position:60% center;
-  }
-
-  .hero-content{
-    padding:65px 0 50px;
-  }
-
-  .hero p{
-    font-size:16px;
-  }
-
-  .partner-inner{
-    padding:18px 0;
-    align-items:flex-start;
-    flex-direction:column;
-  }
-
-  .head{
-    align-items:flex-start;
-    flex-direction:column;
-  }
-
-  .categories{
-    grid-template-columns:1fr;
-  }
-
-  .feature-copy{
-    padding:32px 23px;
-  }
-
-  .footer{
-    grid-template-columns:1fr;
-  }
-}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>JA Travel & Experiences | Travel Planning, Activities & Support</title>
+  <meta name="description" content="JA Travel & Experiences helps travellers plan trips, discover activities, understand transport options, explore accommodation ideas and access travel support from JA Group Services Ltd.">
+
+  <style>
+    :root {
+      --navy: #102a4c;
+      --deep: #071f3a;
+      --blue: #2457c5;
+      --soft-blue: #eef4ff;
+      --paper: #ffffff;
+      --cream: #f7f4ed;
+      --text: #102a4c;
+      --muted: #62728a;
+      --border: #dbe4f0;
+      --green: #00b67a;
+      --shadow: 0 24px 70px rgba(16, 42, 76, 0.14);
+      --radius: 24px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      color: var(--text);
+      background: var(--cream);
+      line-height: 1.6;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .wrap {
+      width: min(1180px, calc(100% - 40px));
+      margin: 0 auto;
+    }
+
+    .topbar {
+      background: var(--deep);
+      color: #ffffff;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 10px 16px;
+    }
+
+    .header {
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(16, 42, 76, 0.08);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .nav {
+      min-height: 96px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      color: var(--navy);
+    }
+
+    .brand-mark {
+      width: 52px;
+      height: 52px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #1877ff, #003c92);
+      color: #ffffff;
+      display: grid;
+      place-items: center;
+      font-size: 25px;
+      font-weight: 950;
+      box-shadow: 0 14px 35px rgba(36, 87, 197, 0.28);
+    }
+
+    .brand span small {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-top: 2px;
+    }
+
+    .links {
+      display: flex;
+      align-items: center;
+      gap: 26px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--navy);
+    }
+
+    .links a {
+      opacity: 0.9;
+    }
+
+    .links a:hover {
+      opacity: 1;
+      color: var(--blue);
+    }
+
+    .cta {
+      background: var(--navy);
+      color: #ffffff !important;
+      padding: 13px 22px;
+      border-radius: 999px;
+      box-shadow: 0 14px 30px rgba(16, 42, 76, 0.18);
+    }
+
+    .menu {
+      display: none;
+      border: 0;
+      background: var(--navy);
+      color: #ffffff;
+      padding: 12px 15px;
+      border-radius: 12px;
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      background:
+        linear-gradient(90deg, rgba(7, 31, 58, 0.94), rgba(7, 31, 58, 0.66), rgba(7, 31, 58, 0.25)),
+        radial-gradient(circle at 80% 20%, rgba(36, 87, 197, 0.45), transparent 34%),
+        linear-gradient(135deg, #102a4c, #1e4d91);
+      color: #ffffff;
+      padding: 92px 0 84px;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 44px;
+      align-items: center;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      color: #ffffff;
+      padding: 10px 16px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(46px, 7vw, 86px);
+      line-height: 0.98;
+      margin: 0 0 24px;
+      letter-spacing: -0.06em;
+    }
+
+    .hero p {
+      font-size: 20px;
+      max-width: 760px;
+      color: rgba(255, 255, 255, 0.88);
+      margin: 0 0 30px;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-top: 30px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 15px 22px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    .btn.primary {
+      background: #ffffff;
+      color: var(--navy);
+    }
+
+    .btn.secondary {
+      border-color: rgba(255, 255, 255, 0.35);
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .hero-card {
+      background: rgba(255, 255, 255, 0.96);
+      color: var(--navy);
+      border-radius: var(--radius);
+      padding: 28px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero-card h2 {
+      margin: 0 0 12px;
+      font-size: 26px;
+    }
+
+    .service-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .service-list div {
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      background: #ffffff;
+      border-radius: 16px;
+      font-weight: 750;
+    }
+
+    section {
+      padding: 82px 0;
+    }
+
+    .section-title {
+      max-width: 760px;
+      margin-bottom: 34px;
+    }
+
+    .section-title span {
+      color: var(--blue);
+      font-weight: 900;
+      text-transform: uppercase;
+      font-size: 13px;
+      letter-spacing: 0.14em;
+    }
+
+    .section-title h2 {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(34px, 5vw, 56px);
+      line-height: 1.03;
+      margin: 12px 0 16px;
+      letter-spacing: -0.04em;
+    }
+
+    .section-title p {
+      color: var(--muted);
+      font-size: 18px;
+      margin: 0;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 22px;
+    }
+
+    .card {
+      background: #ffffff;
+      border: 1px solid rgba(16, 42, 76, 0.08);
+      border-radius: var(--radius);
+      padding: 28px;
+      box-shadow: 0 18px 50px rgba(16, 42, 76, 0.08);
+    }
+
+    .card .icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: var(--soft-blue);
+      color: var(--blue);
+      font-size: 23px;
+      margin-bottom: 20px;
+    }
+
+    .card h3 {
+      margin: 0 0 10px;
+      font-size: 22px;
+      letter-spacing: -0.02em;
+    }
+
+    .card p {
+      color: var(--muted);
+      margin: 0;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: 0.9fr 1.1fr;
+      gap: 36px;
+      align-items: start;
+    }
+
+    .panel {
+      background: #ffffff;
+      border-radius: var(--radius);
+      border: 1px solid rgba(16, 42, 76, 0.08);
+      padding: 34px;
+      box-shadow: var(--shadow);
+    }
+
+    .steps {
+      display: grid;
+      gap: 16px;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 48px 1fr;
+      gap: 16px;
+      align-items: start;
+      padding: 18px;
+      border-radius: 18px;
+      background: #ffffff;
+      border: 1px solid var(--border);
+    }
+
+    .step strong:first-child {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: var(--navy);
+      color: #ffffff;
+    }
+
+    .notice {
+      background: var(--soft-blue);
+      border: 1px solid #cfe0ff;
+      color: var(--navy);
+      border-radius: var(--radius);
+      padding: 26px;
+      margin-top: 26px;
+    }
+
+    .notice strong {
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .footer-main {
+      background: #ffffff;
+      padding: 86px 0 80px;
+      border-top: 1px solid rgba(16, 42, 76, 0.08);
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.8fr 0.8fr 0.8fr;
+      gap: 54px;
+      align-items: start;
+    }
+
+    .footer-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 950;
+      color: var(--navy);
+      margin-bottom: 34px;
+    }
+
+    .footer-logo .brand-mark {
+      width: 56px;
+      height: 56px;
+      border-radius: 8px;
+      font-size: 25px;
+    }
+
+    .footer-main p {
+      color: var(--muted);
+      max-width: 360px;
+      margin: 0;
+      font-size: 16px;
+    }
+
+    .footer-col h4 {
+      font-family: Georgia, "Times New Roman", serif;
+      margin: 0 0 22px;
+      color: var(--navy);
+      font-size: 18px;
+    }
+
+    .footer-col a,
+    .footer-col span {
+      display: block;
+      color: #536681;
+      margin: 0 0 13px;
+      font-size: 16px;
+    }
+
+    .footer-col small {
+      display: block;
+      color: #9aa8ba;
+      margin-top: -10px;
+      margin-bottom: 13px;
+    }
+
+    .trustpilot {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--green);
+      color: var(--navy);
+      padding: 15px 18px;
+      margin-bottom: 30px;
+      font-size: 16px;
+      background: #ffffff;
+    }
+
+    .trustpilot strong {
+      color: var(--green);
+      font-size: 20px;
+    }
+
+    .footer-bottom {
+      background: var(--deep);
+      color: #ffffff;
+      padding: 18px 0;
+      font-size: 14px;
+    }
+
+    .footer-bottom .wrap {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .footer-bottom a {
+      color: #ffffff;
+      text-decoration: underline;
+    }
+
+    .cookie-bar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 80;
+      background: #132e55;
+      color: #ffffff;
+      padding: 16px 0;
+      box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.18);
+    }
+
+    .cookie-inner {
+      width: min(1180px, calc(100% - 40px));
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 18px;
+      align-items: center;
+    }
+
+    .cookie-inner p {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.45;
+    }
+
+    .cookie-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .cookie-actions button {
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      background: transparent;
+      color: #ffffff;
+      font-weight: 800;
+      border-radius: 8px;
+      padding: 12px 18px;
+      cursor: pointer;
+    }
+
+    .cookie-actions .accept {
+      background: #2f6df6;
+      border-color: #7aa0ff;
+      box-shadow: 0 0 0 3px rgba(47, 109, 246, 0.25);
+    }
+
+    @media (max-width: 980px) {
+      .hero-grid,
+      .split,
+      .footer-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .cards {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .links {
+        display: none;
+        position: absolute;
+        left: 20px;
+        right: 20px;
+        top: 86px;
+        background: #ffffff;
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 18px;
+        box-shadow: var(--shadow);
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .links.open {
+        display: flex;
+      }
+
+      .links .cta {
+        text-align: center;
+      }
+
+      .menu {
+        display: inline-flex;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .wrap {
+        width: min(100% - 28px, 1180px);
+      }
+
+      .hero {
+        padding: 64px 0;
+      }
+
+      .cards {
+        grid-template-columns: 1fr;
+      }
+
+      .nav {
+        min-height: 82px;
+      }
+
+      .brand span {
+        font-size: 14px;
+      }
+
+      .brand span small {
+        font-size: 9px;
+      }
+
+      .cookie-inner {
+        grid-template-columns: 1fr;
+      }
+
+      .cookie-actions {
+        flex-wrap: wrap;
+      }
+
+      .cookie-actions button {
+        flex: 1;
+      }
+    }
+  </style>
 </head>
 
 <body>
-
-<div class="concept">
-  JA Tours & Experiences is currently being prepared for launch.
-</div>
-
-<header class="header">
-  <div class="wrap nav">
-    <a class="brand" href="#top">
-      <span class="mark">JA</span>
-      <span>
-        JA Tours & Experiences
-        <small>Discover more of the world</small>
-      </span>
-    </a>
-
-    <button class="menu" id="menu" aria-label="Open menu">☰</button>
-
-    <nav class="links" id="links">
-      <a href="#coming-soon">Coming Soon</a>
-      <a href="#what-to-expect">What to Expect</a>
-      <a href="#about">About</a>
-      <a class="cta" href="#contact">Launch Updates</a>
-    </nav>
+  <div class="topbar">
+    JA Travel & Experiences is currently being developed as part of JA Group Services Ltd.
   </div>
-</header>
 
-<main id="top">
+  <header class="header">
+    <div class="wrap nav">
+      <a class="brand" href="/">
+        <span class="brand-mark">JA</span>
+        <span>
+          JA Travel & Experiences
+          <small>Plan more of the journey</small>
+        </span>
+      </a>
 
-  <section class="hero" id="coming-soon">
-    <div class="wrap hero-content">
-      <span class="eyebrow">New travel experience website launching soon</span>
+      <button class="menu" id="menu" aria-label="Open menu">☰</button>
 
-      <h1>Website coming soon.</h1>
-
-      <p>
-        JA Tours & Experiences is being prepared as a new destination for discovering
-        attraction tickets, guided tours, day trips and memorable experiences from
-        trusted third-party booking partners.
-      </p>
-
-      <div class="coming-soon-box">
-        <strong>We are getting everything ready.</strong>
-        <p>
-          Our team is currently finalising the website, supplier links, affiliate notices,
-          booking information and customer-facing pages before launch.
-        </p>
-      </div>
-
-      <div class="status-row">
-        <span class="status-pill">Tours</span>
-        <span class="status-pill">Attraction tickets</span>
-        <span class="status-pill">Experiences</span>
-        <span class="status-pill">Worldwide destinations</span>
-      </div>
+      <nav class="links" id="links">
+        <a href="/">Home</a>
+        <a href="/destinations/">Destinations</a>
+        <a href="/activities/">Activities</a>
+        <a href="/how-it-works/">How It Works</a>
+        <a href="/booking-partners/">Booking Partners</a>
+        <a class="cta" href="/contact/">Contact Us</a>
+      </nav>
     </div>
-  </section>
+  </header>
 
-  <section class="partners">
-    <div class="wrap partner-inner">
-      <p>
-        This website will help customers discover experiences supplied by established
-        third-party booking platforms.
-      </p>
-
-      <div class="pills">
-        <span class="pill primary">Launching Soon</span>
-        <span class="pill">JA Group Services</span>
-      </div>
-    </div>
-  </section>
-
-  <section class="content white" id="what-to-expect">
-    <div class="wrap">
-      <div class="head">
+  <main>
+    <section class="hero">
+      <div class="wrap hero-grid">
         <div>
-          <p class="kicker">What to expect</p>
-          <h2>A simpler way to discover things to do.</h2>
+          <div class="eyebrow">Travel planning, activities, transfers and local advice</div>
+          <h1>Plan better trips with JA.</h1>
+          <p>
+            JA Travel & Experiences is being developed as a practical travel discovery and planning platform,
+            helping customers explore things to do, understand transport options, find accommodation ideas,
+            and access direct travel support from JA Group Services Ltd.
+          </p>
+
+          <div class="hero-actions">
+            <a class="btn primary" href="/how-it-works/">How It Works</a>
+            <a class="btn secondary" href="/contact/">Register Interest</a>
+          </div>
         </div>
 
-        <p class="intro">
-          Once launched, customers will be able to browse travel experiences by destination,
-          activity type and provider.
-        </p>
+        <aside class="hero-card">
+          <h2>More than booking links.</h2>
+          <p>
+            The platform will combine JA direct support services with trusted third-party booking options.
+          </p>
+
+          <div class="service-list">
+            <div>✓ Trip planning and itinerary support</div>
+            <div>✓ Activities, tours and attractions</div>
+            <div>✓ Transfers and local transport guidance</div>
+            <div>✓ Accommodation and destination research</div>
+          </div>
+        </aside>
       </div>
+    </section>
 
-      <div class="categories">
-        <article class="category">
-          <span class="icon">🎟</span>
-          <strong>Attraction tickets</strong>
-          <span>Landmarks, museums and must-see sights.</span>
-        </article>
+    <section>
+      <div class="wrap">
+        <div class="section-title">
+          <span>What we are building</span>
+          <h2>A wider travel support platform.</h2>
+          <p>
+            The website is being developed to help travellers plan more of the journey, not just find a single activity.
+          </p>
+        </div>
 
-        <article class="category">
-          <span class="icon">🧭</span>
-          <strong>Guided tours</strong>
-          <span>Explore destinations with local experts.</span>
-        </article>
+        <div class="cards">
+          <article class="card">
+            <div class="icon">🧭</div>
+            <h3>Plan Your Trip</h3>
+            <p>
+              Practical support for organising trip ideas, destinations, timings, travel needs and pre-travel planning.
+            </p>
+          </article>
 
-        <article class="category">
-          <span class="icon">☀</span>
-          <strong>Day trips</strong>
-          <span>Discover memorable days beyond the city.</span>
-        </article>
+          <article class="card">
+            <div class="icon">🎟️</div>
+            <h3>Activities & Tours</h3>
+            <p>
+              Discover attraction tickets, guided tours, day trips, shows, excursions and memorable experiences.
+            </p>
+          </article>
 
-        <article class="category">
-          <span class="icon">🎭</span>
-          <strong>Shows and events</strong>
-          <span>Theatre, entertainment and cultural experiences.</span>
-        </article>
+          <article class="card">
+            <div class="icon">🚕</div>
+            <h3>Transfers & Transport</h3>
+            <p>
+              Explore airport transfers, local trains, buses, metro systems, route ideas and practical travel guidance.
+            </p>
+          </article>
+
+          <article class="card">
+            <div class="icon">🏨</div>
+            <h3>Accommodation Ideas</h3>
+            <p>
+              Research areas to stay, compare travel styles and explore accommodation options through trusted partners.
+            </p>
+          </article>
+
+          <article class="card">
+            <div class="icon">📍</div>
+            <h3>Destination Advice</h3>
+            <p>
+              Useful destination notes covering local tips, safety considerations, accessibility and travel reminders.
+            </p>
+          </article>
+
+          <article class="card">
+            <div class="icon">🤝</div>
+            <h3>JA Direct Support</h3>
+            <p>
+              Direct travel planning, research and support services may be provided by JA Group Services Ltd.
+            </p>
+          </article>
+        </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <section class="content" id="about">
-    <div class="wrap feature">
-      <div class="feature-copy">
-        <p class="kicker" style="color:var(--aqua)">Coming soon</p>
+    <section style="background:#ffffff;">
+      <div class="wrap split">
+        <div class="section-title">
+          <span>Service model</span>
+          <h2>JA support plus trusted partners.</h2>
+          <p>
+            The platform will clearly separate direct JA services from third-party booking services, giving customers
+            transparency before they make decisions.
+          </p>
 
-        <h2>Built for clear, trusted travel discovery.</h2>
+          <div class="notice">
+            <strong>Important customer distinction</strong>
+            JA Group Services Ltd may provide travel planning, research and information services directly. Where tours,
+            accommodation, transport or other products are booked through third-party providers, those services are
+            supplied under the relevant provider’s own terms.
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="steps">
+            <div class="step">
+              <strong>1</strong>
+              <div>
+                <strong>Choose where you are going</strong>
+                <p>Browse destinations, travel styles and practical information.</p>
+              </div>
+            </div>
+
+            <div class="step">
+              <strong>2</strong>
+              <div>
+                <strong>Build your trip plan</strong>
+                <p>Explore activities, local transport, transfers, accommodation areas and planning needs.</p>
+              </div>
+            </div>
+
+            <div class="step">
+              <strong>3</strong>
+              <div>
+                <strong>Use JA support or partner bookings</strong>
+                <p>Request direct JA planning support or continue to trusted third-party booking partners.</p>
+              </div>
+            </div>
+
+            <div class="step">
+              <strong>4</strong>
+              <div>
+                <strong>Travel with clearer information</strong>
+                <p>Keep key travel notes, provider details, checklists and booking reminders in one place.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer-main">
+    <div class="wrap footer-grid">
+      <div>
+        <div class="footer-logo">
+          <span class="brand-mark">JA</span>
+          <span>
+            JA Group Services
+            <small style="display:block;color:#62728a;font-size:11px;text-transform:uppercase;letter-spacing:.12em;">
+              Travel & Experiences
+            </small>
+          </span>
+        </div>
 
         <p>
-          JA Tours & Experiences will provide an online discovery and referral service.
-          Customers will be able to explore activities and then complete bookings securely
-          with the selected third-party provider.
+          Providing structured, accountable and professionally governed travel discovery, planning support,
+          partner recommendations and customer-facing resources.
         </p>
-
-        <div class="benefit">
-          <b>✓</b>
-          <span>
-            <strong>Clear provider information</strong><br>
-            Booking providers will be labelled clearly before customers leave the website.
-          </span>
-        </div>
-
-        <div class="benefit">
-          <b>✓</b>
-          <span>
-            <strong>Simple customer journey</strong><br>
-            The website will help customers find experiences quickly and confidently.
-          </span>
-        </div>
-
-        <div class="benefit">
-          <b>✓</b>
-          <span>
-            <strong>Worldwide inspiration</strong><br>
-            Popular destinations and activity categories will be available from launch.
-          </span>
-        </div>
       </div>
 
-      <div class="feature-image" role="img" aria-label="Travel destination image"></div>
-    </div>
-  </section>
+      <div class="footer-col">
+        <h4>Our Divisions</h4>
+        <a href="/">JA Travel & Experiences</a>
+        <small>Travel Planning & Experiences Division</small>
 
-  <section class="content" id="contact">
-    <div class="wrap">
-      <div class="notice">
-        <strong>Launch notice:</strong>
-        JA Tours & Experiences is not yet live for bookings. Tours, tickets, availability,
-        prices, terms, cancellations and customer support will be supplied by the relevant
-        third-party provider once the website launches.
+        <a href="https://jagroupservices.co.uk" target="_blank" rel="noopener">JA Group Services</a>
+        <small>Group Website</small>
       </div>
-    </div>
-  </section>
 
-</main>
+      <div class="footer-col">
+        <h4>Website</h4>
+        <a href="/destinations/">Destinations</a>
+        <a href="/activities/">Activities & Tours</a>
+        <a href="/how-it-works/">How It Works</a>
+        <a href="/booking-partners/">Booking Partners</a>
+        <a href="/affiliate-disclosure/">Affiliate Disclosure</a>
+        <a href="/contact/">Contact Us</a>
+      </div>
 
-<footer>
-  <div class="wrap">
-    <div class="footer">
-      <div>
-        <a class="brand" href="#top">
-          <span class="mark">JA</span>
-          <span>
-            JA Tours & Experiences
-            <small style="color:#ffffff88">A JA Group Services website</small>
-          </span>
+      <div class="footer-col">
+        <a class="trustpilot" href="#" aria-label="Review us on Trustpilot">
+          Review us on <strong>★</strong> Trustpilot
         </a>
 
-        <p>
-          Helping travellers discover memorable activities from trusted booking partners.
-        </p>
-      </div>
-
-      <div class="col">
-        <strong>Website</strong>
-        <a href="#coming-soon">Coming Soon</a>
-        <a href="#what-to-expect">What to Expect</a>
-        <a href="#about">About</a>
-      </div>
-
-      <div class="col">
-        <strong>Information</strong>
-        <a href="#contact">Launch Notice</a>
-        <a href="#">Affiliate Disclosure</a>
-        <a href="#">Contact Us</a>
-      </div>
-
-      <div class="col">
-        <strong>Legal</strong>
-        <a href="#">Privacy Notice</a>
-        <a href="#">Cookie Policy</a>
-        <a href="#">Terms of Use</a>
+        <h4>Legal & Resources</h4>
+        <a href="/legal/terms/">Terms of Use</a>
+        <a href="/legal/privacy/">Privacy Notice</a>
+        <a href="/legal/cookies/">Cookie Policy</a>
+        <a href="/affiliate-disclosure/">Affiliate Disclosure</a>
+        <a href="/contact/">Customer Support</a>
+        <a href="#">Cookie Settings</a>
       </div>
     </div>
+  </footer>
 
-    <div class="bottom">
-      © 2026 JA Group Services Ltd. JA Tours & Experiences is currently being prepared for launch.
+  <div class="footer-bottom">
+    <div class="wrap">
+      <span>© 2026 JA Group Services Ltd. All rights reserved.</span>
+      <span>JA Travel & Experiences is currently being prepared for launch.</span>
     </div>
   </div>
-</footer>
 
-<script>
-(() => {
-  const menu = document.querySelector("#menu");
-  const links = document.querySelector("#links");
+  <div class="cookie-bar" id="cookieBar">
+    <div class="cookie-inner">
+      <p>
+        We use cookies to improve your experience. We use essential cookies to make this website work and optional
+        cookies to help us understand how the site is used, improve performance, and support our services.
+        <a href="/legal/cookies/">Cookie Policy</a>.
+      </p>
 
-  menu.onclick = () => {
-    links.classList.toggle("open");
-  };
-})();
-</script>
+      <div class="cookie-actions">
+        <button type="button" id="declineCookies">Decline</button>
+        <button type="button" id="settingsCookies">Settings</button>
+        <button type="button" class="accept" id="acceptCookies">Accept</button>
+      </div>
+    </div>
+  </div>
 
+  <script>
+    (() => {
+      const menu = document.querySelector("#menu");
+      const links = document.querySelector("#links");
+
+      if (menu && links) {
+        menu.addEventListener("click", () => {
+          links.classList.toggle("open");
+        });
+      }
+
+      const cookieBar = document.querySelector("#cookieBar");
+      const acceptCookies = document.querySelector("#acceptCookies");
+      const declineCookies = document.querySelector("#declineCookies");
+
+      const savedCookieChoice = localStorage.getItem("jaTravelCookieChoice");
+
+      if (savedCookieChoice && cookieBar) {
+        cookieBar.style.display = "none";
+      }
+
+      if (acceptCookies) {
+        acceptCookies.addEventListener("click", () => {
+          localStorage.setItem("jaTravelCookieChoice", "accepted");
+          cookieBar.style.display = "none";
+        });
+      }
+
+      if (declineCookies) {
+        declineCookies.addEventListener("click", () => {
+          localStorage.setItem("jaTravelCookieChoice", "declined");
+          cookieBar.style.display = "none";
+        });
+      }
+    })();
+  </script>
 </body>
 </html>
