@@ -94,7 +94,8 @@
     return true;
   }
 
-  if (renderFeatured() || renderCities()) {
+  const renderedDynamicWidgets = renderFeatured() || renderCities();
+  if (renderedDynamicWidgets || document.querySelector("[data-gyg-widget]")) {
     const script = document.createElement("script");
     script.async = true;
     script.defer = true;
