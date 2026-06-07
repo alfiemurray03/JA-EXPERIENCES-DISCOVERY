@@ -3,12 +3,84 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Coming Soon | JA Travel & Experiences</title>
-  <meta name="robots" content="noindex">
-  <meta http-equiv="refresh" content="0;url=/">
+  <title>Destinations | JA Travel & Experiences</title>
+  <meta name="description" content="Explore London, Lisbon, Madeira and New York activities through selected third-party experience providers.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/destination-experiences.css">
+  <style>
+    .destination-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 22px;
+    }
+    .destination-card {
+      min-height: 250px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 28px;
+      overflow: hidden;
+      border-radius: 12px;
+      color: #fff;
+      background: linear-gradient(145deg, #164578, #2865a7);
+      box-shadow: 0 12px 32px rgba(15,57,99,.13);
+    }
+    .destination-card span {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .destination-card h2 {
+      margin: 8px 0;
+      font-size: 34px;
+    }
+    .destination-card p {
+      margin: 0 0 20px;
+      color: rgba(255,255,255,.82);
+    }
+    .destination-card strong {
+      align-self: flex-start;
+      padding: 10px 16px;
+      border-radius: 6px;
+      color: var(--navy);
+      background: #fff;
+      font-size: 13px;
+    }
+    @media (max-width: 700px) {
+      .destination-grid { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body>
-  <p>JA Travel & Experiences is currently being prepared for launch. Redirecting to the coming soon page...</p>
-  <p><a href="/">Return to the coming soon page</a></p>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/"><span class="brand-mark">JA</span><span>JA Travel &amp; Experiences<small>by JA Group Services Ltd</small></span></a>
+      <nav class="nav"><a href="/">Home</a><a href="/destinations/" aria-current="page">Destinations</a><a href="/pricing/">Pricing</a><a href="mailto:hello@jagroupservices.co.uk">Contact</a></nav>
+    </div>
+  </header>
+  <main>
+    <section class="hero">
+      <div class="container">
+        <span class="eyebrow">Experience discovery</span>
+        <h1>Explore things to do in selected destinations</h1>
+        <p>Browse activities and attractions from third-party providers while our wider destination planning service is prepared for launch.</p>
+      </div>
+    </section>
+    <section class="section white">
+      <div class="container">
+        <div class="affiliate-notice"><strong>Advertisement – affiliate content.</strong> Some destination pages contain Headout affiliate galleries. JA Group Services Ltd may receive commission from qualifying purchases. Bookings are made directly with Headout under its own terms.</div>
+        <div class="destination-grid">
+          <a class="destination-card" href="/destinations/london/"><span>United Kingdom</span><h2>London</h2><p>Attractions, tours and city experiences displayed in GBP.</p><strong>Explore London</strong></a>
+          <a class="destination-card" href="/destinations/lisbon/"><span>Portugal</span><h2>Lisbon</h2><p>Activities, attractions and experiences displayed in EUR.</p><strong>Explore Lisbon</strong></a>
+          <a class="destination-card" href="/destinations/madeira/"><span>Portugal</span><h2>Madeira</h2><p>Island activities, attractions and experiences displayed in EUR.</p><strong>Explore Madeira</strong></a>
+          <a class="destination-card" href="/destinations/new-york/"><span>United States</span><h2>New York</h2><p>Attractions, tours and city experiences displayed in USD.</p><strong>Explore New York</strong></a>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer class="site-footer"><div class="container"><strong>JA Travel &amp; Experiences</strong><p>Operated by JA Group Services Ltd. Third-party bookings are made directly with the relevant provider.</p></div></footer>
 </body>
 </html>
