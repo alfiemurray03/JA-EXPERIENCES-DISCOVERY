@@ -135,6 +135,37 @@ h1 {
 
 .affiliate-notice strong { color: var(--ink); }
 
+.coming-soon-panel {
+  max-width: 820px;
+  padding: 34px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 12px 32px rgba(15,57,99,.07);
+}
+
+.coming-soon-panel h2 {
+  margin: 0 0 12px;
+  font-size: 32px;
+}
+
+.coming-soon-panel p {
+  margin: 0 0 18px;
+  color: var(--muted);
+}
+
+.status-pill {
+  display: inline-flex;
+  padding: 6px 10px;
+  border-radius: 999px;
+  color: #8a5a00;
+  background: #fff4d8;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
 .headout-gallery {
   width: 100%;
   min-height: 320px;
@@ -169,6 +200,11 @@ h1 {
   color: var(--navy);
   background: #fff;
   font-weight: 700;
+}
+
+.button.blue {
+  color: #fff;
+  background: var(--navy);
 }
 
 .site-footer {
