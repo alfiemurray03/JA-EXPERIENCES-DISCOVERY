@@ -1,6 +1,6 @@
 {
   "name": "ja-tours-activities",
-  "main": "src/worker.js",
+  "main": "worker.js",
   "compatibility_date": "2026-06-06",
 
   "assets": {
