@@ -1,2 +1,2 @@
 # ja-tours-activities
-Private repository for the JA Group Services Tours &amp; Activities website hosted at tours.jagroupservices.co.uk.
+Private repository for the JA Group Services Travel &amp; Experiences website hosted at experiences.jagroupservices.co.uk.

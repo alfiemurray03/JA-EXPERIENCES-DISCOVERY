@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Activities & Experiences | JA Experiences & Discovery</title>
+  <meta name="description" content="Browse selected GetYourGuide activities, tours, tickets and popular city experiences.">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/ja-travel-rebuild.css">
+</head>
+<body data-page="experiences"><div id="siteShellHeader"></div><main id="main">
+  <section class="page-hero experiences-hero"><div class="container"><span class="eyebrow">Activities &amp; experiences</span><h1>Find memorable things to do in destinations around the world.</h1><p>Browse selected tours, tickets and attractions using live GetYourGuide widgets, then review the provider's current details before booking.</p></div></section>
+  <nav class="experience-tabs" aria-label="Activities page sections"><div class="container"><a href="#search">Search a destination</a><a href="#featured">Featured activities</a><a href="#cities">Popular cities</a><a href="/destinations/">All destinations</a></div></nav>
+  <section class="section alt" id="search"><div class="container">
+    <div class="destination-widget-search">
+      <div><span class="kicker">Destination activity search</span><h2>Where would you like to explore?</h2><p>Enter a country, city, island or region to load GetYourGuide activities for that destination.</p></div>
+      <form id="gygDestinationForm"><label for="gygDestination">Destination</label><div class="search-action"><input id="gygDestination" name="destination" type="search" placeholder="Try London, Madeira or New York" required><button class="button accent" type="submit">Find activities</button></div></form>
+    </div>
+    <div id="gygDestinationResult" class="destination-widget-result" hidden aria-live="polite"></div>
+  </div></section>
+  <section class="section" id="featured"><div class="container">
+    <div class="section-heading left"><span class="kicker">Featured ideas</span><h2>Selected activities with live availability</h2><p>These are the supplied GetYourGuide availability widgets, presented inside the new JA website design.</p></div>
+    <div id="jaFeaturedGrid" class="partner-widget-grid"></div>
+  </div></section>
+  <section class="section alt" id="cities"><div class="container">
+    <div class="section-heading left"><span class="kicker">Popular cities</span><h2>Explore activities by city</h2><p>Start with twelve popular city widgets from the original approved asset package.</p></div>
+    <div id="jaCityGrid" class="partner-widget-grid city-widget-grid"></div>
+  </div></section>
+  <section class="section"><div class="container split"><div><div class="section-heading left"><span class="kicker">Need a more personal shortlist?</span><h2>We can help shape the options around your trip.</h2><p>The Itinerary and Experience Planning Plan can bring activity ideas, local notes, practical pacing and flexible time into one written plan.</p></div><a class="button" href="/planning-services/">Explore guidance plans</a></div><div class="panel"><h3>Before booking</h3><p>GetYourGuide and the relevant supplier provide the activity, price, availability, booking terms, cancellation rules and customer support. JA Group Services Ltd may receive commission from qualifying bookings.</p><a href="/affiliate-disclosure/">Read the affiliate disclosure</a></div></div></section>
+</main><div id="siteShellFooter"></div><script src="/assets/js/site-shell.js"></script><script src="/assets/js/getyourguide-widgets.js"></script></body></html>

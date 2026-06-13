@@ -3,148 +3,36 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Destinations | JA Travel & Experiences</title>
-  <meta name="description" content="Explore all JA Travel & Experiences destinations, including available activity galleries and coming-soon destination pages.">
+  <title>Travel Destination Guides | JA Experiences & Discovery</title>
+  <meta name="description" content="Explore practical travel planning guides for countries, cities, islands and regions, with personalised research support available.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/assets/css/destination-experiences.css">
-  <style>
-    .featured-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 22px;
-    }
-    .featured-card {
-      min-height: 240px;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      padding: 28px;
-      border-radius: 12px;
-      color: #fff;
-      background: linear-gradient(145deg, #164578, #2865a7);
-      box-shadow: 0 12px 32px rgba(15,57,99,.13);
-    }
-    .featured-card span {
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: .06em;
-      text-transform: uppercase;
-    }
-    .featured-card h2 { margin: 8px 0; font-size: 34px; }
-    .featured-card p { margin: 0 0 20px; color: rgba(255,255,255,.82); }
-    .featured-card strong {
-      align-self: flex-start;
-      padding: 10px 16px;
-      border-radius: 6px;
-      color: var(--navy);
-      background: #fff;
-      font-size: 13px;
-    }
-    .directory-heading { margin-top: 58px; }
-    .directory-tools {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) 220px;
-      gap: 14px;
-      margin: 24px 0 16px;
-    }
-    .directory-tools input,
-    .directory-tools select {
-      width: 100%;
-      min-height: 48px;
-      padding: 0 14px;
-      border: 1px solid var(--line);
-      border-radius: 7px;
-      color: var(--ink);
-      background: #fff;
-      font: inherit;
-    }
-    .directory-summary { margin: 0 0 18px; color: var(--muted); font-size: 14px; }
-    .all-destinations {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-    }
-    .directory-card {
-      min-height: 138px;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      padding: 18px;
-      border: 1px solid var(--line);
-      border-radius: 9px;
-      background: #fff;
-      box-shadow: 0 7px 20px rgba(15,57,99,.05);
-    }
-    .directory-card strong {
-      margin-top: 15px;
-      font-family: "DM Sans", Inter, sans-serif;
-      font-size: 18px;
-    }
-    .directory-card small { color: var(--muted); }
-    .directory-status {
-      align-self: flex-start;
-      padding: 4px 8px;
-      border-radius: 999px;
-      color: #8a5a00;
-      background: #fff4d8;
-      font-size: 9px;
-      font-weight: 800;
-      letter-spacing: .05em;
-      text-transform: uppercase;
-    }
-    .directory-status.live { color: #157347; background: #eaf7ee; }
-    @media (max-width: 960px) {
-      .all-destinations { grid-template-columns: repeat(3, 1fr); }
-    }
-    @media (max-width: 700px) {
-      .featured-grid, .directory-tools, .all-destinations { grid-template-columns: 1fr; }
-    }
-  </style>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/ja-travel-rebuild.css">
 </head>
-<body>
-  <header class="site-header">
-    <div class="container header-inner">
-      <a class="brand" href="/"><span class="brand-mark">JA</span><span>JA Travel &amp; Experiences<small>by JA Group Services Ltd</small></span></a>
-      <nav class="nav"><a href="/">Home</a><a href="/destinations/" aria-current="page">Destinations</a><a href="/pricing/">Pricing</a><a href="mailto:hello@jagroupservices.co.uk">Contact</a></nav>
-    </div>
-  </header>
+<body data-page="destinations">
+  <div id="siteShellHeader"></div>
   <main>
-    <section class="hero">
-      <div class="container">
-        <span class="eyebrow">Destination directory</span>
-        <h1>Explore all destinations</h1>
-        <p>Open every destination page, browse available activity galleries and preview destinations currently being prepared for launch.</p>
+    <section class="page-hero"><div class="container"><span class="eyebrow">252 country, city and region guides</span><h1>Start with the destination. Build a plan that fits the person travelling.</h1><p>Explore practical planning overviews, suggested trip structures and important checks. These guides are general information; personalised research is available when you need a plan shaped around your circumstances.</p></div></section>
+    <section class="section"><div class="container">
+      <div class="section-heading"><span class="kicker">Featured planning guides</span><h2>Popular places to begin</h2><p>Each guide explains the destination, useful trip length, planning priorities and how JA can help.</p></div>
+      <div class="destination-directory-grid">
+        <a class="destination-card" style="--card-image:url('/assets/images/destinations/europe.jpg')" href="/destinations/united-kingdom/"><span>Country guide</span><h2>United Kingdom</h2><p>City breaks, coast, heritage, countryside and family travel.</p></a>
+        <a class="destination-card" style="--card-image:url('/assets/images/destinations/europe.jpg')" href="/destinations/spain/"><span>Country guide</span><h2>Spain</h2><p>Cultural cities, coasts, islands and regional routes.</p></a>
+        <a class="destination-card" style="--card-image:url('/assets/images/destinations/travel.jpg')" href="/destinations/portugal/"><span>Country guide</span><h2>Portugal</h2><p>Historic cities, Atlantic coast and island landscapes.</p></a>
+        <a class="destination-card" style="--card-image:url('/assets/images/destinations/asia.jpg')" href="/destinations/japan/"><span>Country guide</span><h2>Japan</h2><p>Efficient routes through major cities, culture and landscapes.</p></a>
+        <a class="destination-card" style="--card-image:url('/assets/images/destinations/europe.jpg')" href="/destinations/france/"><span>Country guide</span><h2>France</h2><p>Paris, coast, food, countryside and intercity rail travel.</p></a>
+        <a class="destination-card" style="--card-image:url('/assets/images/destinations/travel.jpg')" href="/destinations/italy/"><span>Country guide</span><h2>Italy</h2><p>Historic cities and carefully paced regional itineraries.</p></a>
       </div>
-    </section>
-    <section class="section white">
-      <div class="container">
-        <div class="affiliate-notice"><strong>Advertisement – affiliate content.</strong> Available-now destination pages contain Headout affiliate galleries. JA Group Services Ltd may receive commission from qualifying purchases. Bookings are made directly with Headout under its own terms.</div>
-        <div class="featured-grid">
-          <a class="featured-card" href="/destinations/london/"><span>Available now · United Kingdom</span><h2>London</h2><p>Attractions, tours and city experiences displayed in GBP.</p><strong>Explore London</strong></a>
-          <a class="featured-card" href="/destinations/lisbon/"><span>Available now · Portugal</span><h2>Lisbon</h2><p>Activities, attractions and experiences displayed in EUR.</p><strong>Explore Lisbon</strong></a>
-          <a class="featured-card" href="/destinations/madeira/"><span>Available now · Portugal</span><h2>Madeira</h2><p>Island activities, attractions and experiences displayed in EUR.</p><strong>Explore Madeira</strong></a>
-          <a class="featured-card" href="/destinations/new-york/"><span>Available now · United States</span><h2>New York</h2><p>Attractions, tours and city experiences displayed in USD.</p><strong>Explore New York</strong></a>
-        </div>
-        <div class="section-heading directory-heading">
-          <h2>All destinations</h2>
-          <p>Every destination below opens its own page. Destinations still being developed are clearly marked “Coming soon”.</p>
-        </div>
-        <div class="directory-tools">
-          <input id="destinationSearch" type="search" placeholder="Search all destinations" aria-label="Search destinations">
-          <select id="destinationStatus" aria-label="Filter destination status">
-            <option value="all">All destinations</option>
-            <option value="live">Available now</option>
-            <option value="coming">Coming soon</option>
-          </select>
-        </div>
-        <p class="directory-summary" id="destinationCount">Loading destinations…</p>
-        <div class="all-destinations" id="allDestinations"></div>
-      </div>
-    </section>
+      <div class="directory-tools"><input id="destinationSearch" type="search" placeholder="Search countries, cities and regions" aria-label="Search destinations"><select id="destinationStatus" aria-label="Filter destination type"><option value="all">All guides</option><option value="country">Country guides</option><option value="city">City and region guides</option></select></div>
+      <p class="subtle" id="destinationCount">Loading destination guides...</p>
+      <div class="directory-list" id="allDestinations"></div>
+    </div></section>
+    <section class="section mist"><div class="container"><div class="notice"><strong>Information notice:</strong> Destination pages are planning resources, not live travel advice or a recommendation to travel. Entry rules, safety, health requirements, transport and provider information can change. Always check current official sources and provider terms before making a booking.</div></div></section>
+    <section class="cta-band"><div class="container"><div><h2>Need more than a general guide?</h2><p>We can research a destination around your dates, pace, interests, family or accessibility requirements.</p></div><a class="button light" href="/contact/">Request personalised support</a></div></section>
   </main>
-  <footer class="site-footer"><div class="container"><strong>JA Travel &amp; Experiences</strong><p>Operated by JA Group Services Ltd. Third-party bookings are made directly with the relevant provider.</p></div></footer>
+  <div id="siteShellFooter"></div>
+  <script src="/assets/js/site-shell.js"></script>
   <script src="/assets/js/destinations-data.js"></script>
   <script src="/assets/js/destination-directory.js"></script>
 </body>

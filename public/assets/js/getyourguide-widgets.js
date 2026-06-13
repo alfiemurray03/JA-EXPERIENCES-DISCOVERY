@@ -94,13 +94,54 @@
     return true;
   }
 
-  const renderedDynamicWidgets = renderFeatured() || renderCities();
-  if (renderedDynamicWidgets || document.querySelector("[data-gyg-widget]")) {
+  function renderDestinationSearch() {
+    const form = document.getElementById("gygDestinationForm");
+    const input = document.getElementById("gygDestination");
+    const result = document.getElementById("gygDestinationResult");
+    if (!form || !input || !result) return false;
+
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+      const query = input.value.trim();
+      if (!query) return;
+      result.hidden = false;
+      result.innerHTML = `
+        <div class="destination-widget-heading"><span class="kicker">Activities for</span><h3>${escapeHtml(query)}</h3></div>
+        <div class="provider-widget destination-provider-widget">
+          <div
+            data-gyg-href="https://widget.getyourguide.com/default/activities.frame"
+            data-gyg-widget="activities"
+            data-gyg-partner-id="${PARTNER_ID}"
+            data-gyg-q="${escapeHtml(query)}"
+            data-gyg-locale-code="en-GB"
+            data-gyg-currency="GBP"
+            data-gyg-number-of-items="5"
+            data-gyg-cmp="jags-find-activities-tours">
+          </div>
+        </div>`;
+      loadPartnerScript();
+      result.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    return true;
+  }
+
+  let partnerScriptLoaded = false;
+  function loadPartnerScript() {
+    if (partnerScriptLoaded || document.querySelector('script[src*="widget.getyourguide.com/dist/pa.umd.production.min.js"]')) return;
+    partnerScriptLoaded = true;
     const script = document.createElement("script");
     script.async = true;
     script.defer = true;
     script.src = "https://widget.getyourguide.com/dist/pa.umd.production.min.js";
     script.setAttribute("data-gyg-partner-id", PARTNER_ID);
     document.body.appendChild(script);
+  }
+
+  const featuredRendered = renderFeatured();
+  const citiesRendered = renderCities();
+  renderDestinationSearch();
+  const renderedDynamicWidgets = featuredRendered || citiesRendered;
+  if (renderedDynamicWidgets || document.querySelector("[data-gyg-widget]")) {
+    loadPartnerScript();
   }
 })();

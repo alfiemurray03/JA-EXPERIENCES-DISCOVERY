@@ -1,40 +1,34 @@
-const liveDestinations = new Set(["london", "lisbon", "madeira", "new-york"]);
+const countrySlugs = new Set([
+  "albania","australia","austria","bahamas","barbados","belgium","bosnia-and-herzegovina","bulgaria","canada","croatia","cyprus","czech-republic","denmark","dominican-republic","egypt","estonia","finland","france","germany","greece","hungary","iceland","india","indonesia","ireland","italy","jamaica","japan","jordan","kenya","latvia","lithuania","luxembourg","malaysia","malta","mexico","montenegro","morocco","netherlands","new-zealand","norway","poland","portugal","qatar","romania","serbia","singapore","slovakia","slovenia","south-africa","south-korea","spain","sweden","switzerland","thailand","turkiye","united-arab-emirates","united-kingdom","united-states","vietnam"
+]);
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, character => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    "\"": "&quot;",
-    "'": "&#039;"
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#039;"
   })[character]);
 }
 
 function renderDestinations() {
   const grid = document.querySelector("#allDestinations");
   const search = document.querySelector("#destinationSearch");
-  const status = document.querySelector("#destinationStatus");
-  if (!grid || !search || !status || !Array.isArray(window.JA_DESTINATIONS)) return;
+  const filter = document.querySelector("#destinationStatus");
+  const count = document.querySelector("#destinationCount");
+  if (!grid || !search || !filter || !Array.isArray(window.JA_DESTINATIONS)) return;
 
   const query = search.value.trim().toLocaleLowerCase("en-GB");
-  const selectedStatus = status.value;
+  const type = filter.value;
   const matches = window.JA_DESTINATIONS.filter(destination => {
-    const isLive = liveDestinations.has(destination.slug);
+    const isCountry = countrySlugs.has(destination.slug);
     return (!query || destination.name.toLocaleLowerCase("en-GB").includes(query))
-      && (selectedStatus === "all" || (selectedStatus === "live" ? isLive : !isLive));
+      && (type === "all" || (type === "country" ? isCountry : !isCountry));
   });
 
-  grid.innerHTML = matches.map(destination => {
-    const isLive = liveDestinations.has(destination.slug);
-    return `
-      <a class="directory-card" href="/destinations/${escapeHtml(destination.slug)}/">
-        <span class="directory-status ${isLive ? "live" : ""}">${isLive ? "Available now" : "Coming soon"}</span>
-        <strong>${escapeHtml(destination.name)}</strong>
-        <small>${isLive ? "Browse activities and experiences" : "Open destination preview"}</small>
-      </a>`;
-  }).join("");
-
-  document.querySelector("#destinationCount").textContent = `${matches.length} destination${matches.length === 1 ? "" : "s"}`;
+  grid.innerHTML = matches.map(destination => `
+    <a class="directory-link" href="/destinations/${escapeHtml(destination.slug)}/">
+      <strong>${escapeHtml(destination.name)}</strong>
+      <small>${countrySlugs.has(destination.slug) ? "Country planning guide" : "City or region planning guide"}</small>
+    </a>`).join("");
+  count.textContent = `${matches.length} guide${matches.length === 1 ? "" : "s"} shown`;
 }
 
 document.querySelector("#destinationSearch")?.addEventListener("input", renderDestinations);

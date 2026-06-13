@@ -1,0 +1,26 @@
+{
+  "pages/home/hero": {
+    "mediaType": "image",
+    "currentUrl": "https://img1.wsimg.com/isteam/getty/2225868460",
+    "searchQuery": "professional business documents office desk paperwork",
+    "alternatives": [
+      "https://img1.wsimg.com/isteam/getty/2256026825",
+      "https://img1.wsimg.com/isteam/getty/2213243327"
+    ],
+    "userModified": false,
+    "createdAt": "2026-06-02T15:59:20.876Z",
+    "lastUpdated": "2026-06-02T15:59:20.876Z",
+    "gettyId": "2225868460",
+    "alternativeGettyIds": [
+      "2256026825",
+      "2213243327"
+    ],
+    "requestedSize": {
+      "width": 1400,
+      "height": 700,
+      "fit": "cover"
+    },
+    "orientations": "horizontal",
+    "minimumSize": "large"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "logo/horizontal": {
+    "mediaType": "logo",
+    "currentUrl": "https://isteam.wsimg.com/genai-assistant/logoagent/customer/64083b17-969a-47ac-9f40-4d4ee2de9b7a/session/337e6149-9c0d-4f68-8aa7-87b1b1306654/horizontal-transparent-320b6a82ce294cf3bfc4d1581b7a477b/logo-ja-print-studio-320b6a.png",
+    "searchQuery": "JA Print Studio",
+    "alternatives": [
+      "https://isteam.wsimg.com/genai-assistant/logoagent/customer/64083b17-969a-47ac-9f40-4d4ee2de9b7a/session/337e6149-9c0d-4f68-8aa7-87b1b1306654/horizontal-transparent-8046d672971e8888ff8c151125f2ec35/logo-ja-print-studio-8046d6.png",
+      "https://isteam.wsimg.com/genai-assistant/logoagent/customer/64083b17-969a-47ac-9f40-4d4ee2de9b7a/session/337e6149-9c0d-4f68-8aa7-87b1b1306654/horizontal-transparent-4451c924371915c6ed34a550bac26296/logo-ja-print-studio-4451c9.png"
+    ],
+    "solidUrlMap": {
+      "https://isteam.wsimg.com/genai-assistant/logoagent/customer/64083b17-969a-47ac-9f40-4d4ee2de9b7a/session/337e6149-9c0d-4f68-8aa7-87b1b1306654/horizontal-transparent-320b6a82ce294cf3bfc4d1581b7a477b/logo-ja-print-studio-320b6a.png": "https://isteam.wsimg.com/genai-assistant/logoagent/customer/64083b17-969a-47ac-9f40-4d4ee2de9b7a/session/337e6149-9c0d-4f68-8aa7-87b1b1306654/horizontal-solid-d0653777f4cd06610aa8f47acb1e2406/logo-ja-print-studio-d06537.png",
+      "https://isteam.wsimg.com/genai-assistant/logoagent/customer/64083b17-969a-47ac-9f40-4d4ee2de9b7a/session/337e6149-9c0d-4f68-8aa7-87b1b1306654/horizontal-transparent-8046d672971e8888ff8c151125f2ec35/logo-ja-print-studio-8046d6.png": "https://isteam.wsimg.com/genai-assistant/logoagent/customer/64083b17-969a-47ac-9f40-4d4ee2de9b7a/session/337e6149-9c0d-4f68-8aa7-87b1b1306654/horizontal-solid-37fac0c0d40a42cb09f0bb11de0f9db4/logo-ja-print-studio-37fac0.png",
+      "https://isteam.wsimg.com/genai-assistant/logoagent/customer/64083b17-969a-47ac-9f40-4d4ee2de9b7a/session/337e6149-9c0d-4f68-8aa7-87b1b1306654/horizontal-transparent-4451c924371915c6ed34a550bac26296/logo-ja-print-studio-4451c9.png": "https://isteam.wsimg.com/genai-assistant/logoagent/customer/64083b17-969a-47ac-9f40-4d4ee2de9b7a/session/337e6149-9c0d-4f68-8aa7-87b1b1306654/horizontal-solid-b72278de0e47daf35b9c5736070dbf4d/logo-ja-print-studio-b72278.png"
+    },
+    "reversedUrlMap": {
+      "https://isteam.wsimg.com/genai-assistant/logoagent/customer/64083b17-969a-47ac-9f40-4d4ee2de9b7a/session/337e6149-9c0d-4f68-8aa7-87b1b1306654/horizontal-transparent-320b6a82ce294cf3bfc4d1581b7a477b/logo-ja-print-studio-320b6a.png": "https://isteam.wsimg.com/genai-assistant/logoagent/customer/64083b17-969a-47ac-9f40-4d4ee2de9b7a/session/337e6149-9c0d-4f68-8aa7-87b1b1306654/horizontal-reversed-fbbf25019991d8c25b704063603b2653/logo-ja-print-studio-fbbf25.png",
+      "https://isteam.wsimg.com/genai-assistant/logoagent/customer/64083b17-969a-47ac-9f40-4d4ee2de9b7a/session/337e6149-9c0d-4f68-8aa7-87b1b1306654/horizontal-transparent-8046d672971e8888ff8c151125f2ec35/logo-ja-print-studio-8046d6.png": "https://isteam.wsimg.com/genai-assistant/logoagent/customer/64083b17-969a-47ac-9f40-4d4ee2de9b7a/session/337e6149-9c0d-4f68-8aa7-87b1b1306654/horizontal-reversed-83ee102e9b26e7784b310972b08e9187/logo-ja-print-studio-83ee10.png",
+      "https://isteam.wsimg.com/genai-assistant/logoagent/customer/64083b17-969a-47ac-9f40-4d4ee2de9b7a/session/337e6149-9c0d-4f68-8aa7-87b1b1306654/horizontal-transparent-4451c924371915c6ed34a550bac26296/logo-ja-print-studio-4451c9.png": "https://isteam.wsimg.com/genai-assistant/logoagent/customer/64083b17-969a-47ac-9f40-4d4ee2de9b7a/session/337e6149-9c0d-4f68-8aa7-87b1b1306654/horizontal-reversed-523a8b24f6e748003b283bdcdafd2054/logo-ja-print-studio-523a8b.png"
+    },
+    "logoSourceMap": {
+      "https://isteam.wsimg.com/genai-assistant/logoagent/customer/64083b17-969a-47ac-9f40-4d4ee2de9b7a/session/337e6149-9c0d-4f68-8aa7-87b1b1306654/horizontal-transparent-320b6a82ce294cf3bfc4d1581b7a477b/logo-ja-print-studio-320b6a.png": {
+        "sessionId": "337e6149-9c0d-4f68-8aa7-87b1b1306654",
+        "logoId": "320b6a82"
+      },
+      "https://isteam.wsimg.com/genai-assistant/logoagent/customer/64083b17-969a-47ac-9f40-4d4ee2de9b7a/session/337e6149-9c0d-4f68-8aa7-87b1b1306654/horizontal-transparent-8046d672971e8888ff8c151125f2ec35/logo-ja-print-studio-8046d6.png": {
+        "sessionId": "337e6149-9c0d-4f68-8aa7-87b1b1306654",
+        "logoId": "8046d672"
+      },
+      "https://isteam.wsimg.com/genai-assistant/logoagent/customer/64083b17-969a-47ac-9f40-4d4ee2de9b7a/session/337e6149-9c0d-4f68-8aa7-87b1b1306654/horizontal-transparent-4451c924371915c6ed34a550bac26296/logo-ja-print-studio-4451c9.png": {
+        "sessionId": "337e6149-9c0d-4f68-8aa7-87b1b1306654",
+        "logoId": "4451c924"
+      }
+    },
+    "userModified": false,
+    "createdAt": "2026-05-04T14:50:46.029Z",
+    "lastUpdated": "2026-05-04T14:50:46.029Z"
+  }
+}

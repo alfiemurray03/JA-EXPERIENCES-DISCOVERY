@@ -1,67 +1,40 @@
 const services = [
   {
-    name: "Quick Travel Support Call",
-    description: "A focused 30-minute phone or video conversation, followed by a short summary email.",
-    price: "£35",
-    delivery: "Appointment subject to availability",
-    features: ["General planning guidance", "Help narrowing your options", "Short summary email"]
+    name: "Free Discovery Enquiry",
+    description: "Tell us what you are considering and receive an initial recommendation for the most suitable next step.",
+    price: "£0",
+    socialPrice: "£0",
+    delivery: "1 to 3 working days",
+    revisions: "No revisions",
+    features: ["Initial enquiry review", "A simple service recommendation", "No detailed research or itinerary work"]
   },
   {
-    name: "Activity Finder",
-    description: "A shortlist of suitable third-party attractions and experiences for one destination.",
-    price: "£45",
-    delivery: "2–4 working days",
-    features: ["5–10 researched ideas", "Suitability notes", "Provider links where available"]
-  },
-  {
-    name: "Check Before You Book",
-    description: "A practical review of travel options or links you have already found.",
+    name: "Destination Discovery Plan",
+    description: "For customers who want to travel or enjoy an experience but need help deciding where to go.",
     price: "£49",
-    delivery: "3–5 working days",
-    features: ["Key public terms summarised", "Information gaps highlighted", "Questions to ask providers"]
+    socialPrice: "£29",
+    delivery: "3 to 5 working days",
+    revisions: "One minor revision",
+    features: ["Preferences and budget review", "Destination options", "Practical advantages and considerations", "Clear next steps"]
   },
   {
-    name: "Destination Finder",
-    description: "A shortlist for customers who need help deciding where to go.",
-    price: "£59",
-    delivery: "3–5 working days",
-    features: ["3–5 destination ideas", "Practical pros and considerations", "Official advice links where relevant"]
-  },
-  {
-    name: "Accommodation Area Guide",
-    description: "Compare neighbourhoods or areas before making your own accommodation booking.",
-    price: "£69",
-    delivery: "3–5 working days",
-    features: ["3–5 areas compared", "Transport and atmosphere notes", "Points to check before booking"]
-  },
-  {
-    name: "Mini Itinerary",
-    description: "A practical one-to-three-day outline with a sensible pace and daily flow.",
+    name: "Itinerary and Experience Planning Plan",
+    description: "For customers who know their destination and want a practical structure for what to do.",
     price: "£89",
-    delivery: "Around 5 working days",
-    features: ["Morning, afternoon and evening ideas", "Transport considerations", "One reasonable revision"]
+    socialPrice: "£55",
+    delivery: "5 to 7 working days",
+    revisions: "One minor revision",
+    features: ["Suggested day-by-day structure", "Activity and experience ideas", "Local area and practical notes", "Rest and flexible time"]
   },
   {
-    name: "Full Planning Pack",
-    description: "Our main personalised planning service for one destination and a three-to-seven-day trip.",
-    price: "£179",
-    delivery: "7–10 working days",
+    name: "Complete Discovery and Planning Guidance Plan",
+    description: "Our fullest destination discovery and planning service for a more detailed request.",
+    price: "£149",
+    socialPrice: "£95",
+    delivery: "7 to 10 working days",
+    revisions: "Two minor revisions",
     featured: true,
-    features: ["Area and destination guidance", "Itinerary and activity shortlist", "Transport basics and checklist"]
-  },
-  {
-    name: "Accessible Travel Research",
-    description: "Focused public-information research for customers with access, mobility or sensory needs.",
-    price: "From £149",
-    delivery: "Scope confirmed individually",
-    features: ["Public access details found", "Venue contacts", "Questions to confirm directly"]
-  },
-  {
-    name: "Complex Planning Pack",
-    description: "For multi-destination, group, longer or unusually detailed planning requests.",
-    price: "From £249",
-    delivery: "Normally 10–15 working days",
-    features: ["Individually agreed scope", "Complexity-based pricing", "Written delivery schedule"]
+    features: ["Destination and hotel-area research", "Accommodation examples", "Activity and itinerary research", "Indicative cost breakdowns", "General preparation notes"]
   }
 ];
 
@@ -75,15 +48,17 @@ const grid = document.querySelector("#pricingGrid");
 if (grid) {
   grid.innerHTML = services.map(service => `
     <article class="price-card${service.featured ? " featured" : ""}">
-      <span class="tag">${service.featured ? "Most complete" : "Planning service"}</span>
+      <span class="tag">${service.featured ? "Most comprehensive" : "Approved guidance plan"}</span>
       <h2>${escapeHtml(service.name)}</h2>
       <p>${escapeHtml(service.description)}</p>
-      <div class="price">${escapeHtml(service.price)} <small>one-off fee</small></div>
+      <div class="price">${escapeHtml(service.price)} <small>standard price</small></div>
+      <p class="social-price"><strong>${escapeHtml(service.socialPrice)}</strong> social tariff price</p>
       <ul class="feature-list">
         ${service.features.map(feature => `<li>${escapeHtml(feature)}</li>`).join("")}
         <li>${escapeHtml(service.delivery)}</li>
+        <li>${escapeHtml(service.revisions)}</li>
       </ul>
-      <a class="button" href="mailto:hello@jagroupservices.co.uk?subject=${encodeURIComponent(service.name)}%20enquiry">Enquire about this service</a>
+      <a class="button" href="/contact/?plan=${encodeURIComponent(service.name)}">Enquire about this plan</a>
     </article>
   `).join("");
 }

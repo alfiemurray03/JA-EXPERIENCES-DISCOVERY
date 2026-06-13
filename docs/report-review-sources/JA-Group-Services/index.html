@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <link rel="icon" type="image/jpeg" href="/images/367f316379e78929865b1677b6370686.jpg" id="favicon" />
+    <link rel="apple-touch-icon" href="/images/367f316379e78929865b1677b6370686.jpg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#2563EB" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="JA Group" />
+    <link rel="manifest" href="/manifest.json" />
+    <title>JA Group Services</title>
+    <!-- Trustpilot Widget Script -->
+    <script type="text/javascript" src="//widget.trustpilot.com/bootstrap/v5/tp.widget.bootstrap.min.js" async></script>
+    
+    <!-- Trustpilot Invitation Script -->
+    <script>
+      (function(w,d,s,r,n){w.TrustpilotObject=n;w[n]=w[n]||function(){(w[n].q=w[n].q||[]).push(arguments)};
+        a=d.createElement(s);a.async=1;a.src=r;a.type='text/java'+s;f=d.getElementsByTagName(s)[0];
+        f.parentNode.insertBefore(a,f)})(window,document,'script', 'https://invitejs.trustpilot.com/tp.min.js', 'tp');
+      tp('register', 'X9yj5o97kVRIPTnT');
+    </script>
+  <link rel="stylesheet" href="/src/styles/globals.css" />
+  </head>
+  <body class="fs-unmask-airo-app-builder">
+    <div id="app" class="fs-unmask-airo-app-builder"></div>
+    
+
+    <script type="module">
+      if (import.meta.env.MODE === 'development') {
+        import('/dev-tools/src/error-client.ts')
+      }
+      import('/src/main.tsx')
+    </script>
+    <script src="/analytics.js"></script>
+    
+    <!-- Animated Favicon -->
+    <script>
+      // Favicon animation - subtle pulse effect
+      let faviconPulse = 0;
+      let pulseDirection = 1;
+      
+      function animateFavicon() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 64;
+        canvas.height = 64;
+        const ctx = canvas.getContext('2d');
+        
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.src = '/images/367f316379e78929865b1677b6370686.jpg';
+        
+        img.onload = function() {
+          setInterval(() => {
+            // Clear canvas
+            ctx.clearRect(0, 0, 64, 64);
+            
+            // Update pulse
+            faviconPulse += pulseDirection * 0.02;
+            if (faviconPulse >= 1) pulseDirection = -1;
+            if (faviconPulse <= 0) pulseDirection = 1;
+            
+            // Calculate scale with subtle pulse (0.95 to 1.05)
+            const scale = 0.95 + (faviconPulse * 0.1);
+            const offset = (64 - (64 * scale)) / 2;
+            
+            // Draw image with scale
+            ctx.drawImage(img, offset, offset, 64 * scale, 64 * scale);
+            
+            // Update favicon
+            const favicon = document.getElementById('favicon');
+            if (favicon) {
+              favicon.href = canvas.toDataURL('image/png');
+            }
+          }, 50); // 20 FPS for smooth animation
+        };
+      }
+      
+      // Start animation when page loads
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', animateFavicon);
+      } else {
+        animateFavicon();
+      }
+    </script>
+  </body>
+</html>

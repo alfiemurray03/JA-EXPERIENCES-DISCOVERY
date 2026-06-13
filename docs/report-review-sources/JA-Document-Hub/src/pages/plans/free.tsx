@@ -1,0 +1,139 @@
+import { Link, useNavigate } from 'react-router-dom';
+import { Helmet } from '@dr.pogodin/react-helmet';
+import { useAuth } from '@/lib/auth-context';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { CheckCircle2, X, FileText, Download, Lock, ArrowLeft, AlertTriangle } from 'lucide-react';
+
+const INCLUDED = [
+  'Browse the full template catalogue (100+ templates)',
+  '1 free template demo',
+  'PDF export and download',
+];
+
+const NOT_INCLUDED = [
+  'Save drafts within the platform',
+  'Standard templates',
+  'Professional templates',
+  'Organisation templates',
+  'Custom branding or logo uploads',
+  'Multiple branding profiles',
+];
+
+export default function FreePlanPage() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  return (
+    <>
+      <Helmet>
+        <title>Free Plan — JA Document Hub</title>
+        <meta name="description" content="The JA Document Hub Free plan. Browse all templates, use 5 free templates, and export PDFs at no cost." />
+      </Helmet>
+
+      <div className="max-w-3xl mx-auto px-4 py-12">
+        <Link to="/pricing" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-8 transition-colors">
+          <ArrowLeft className="w-4 h-4" /> Back to Pricing
+        </Link>
+
+        {/* Header */}
+        <div className="flex items-start gap-4 mb-8">
+          <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center shrink-0">
+            <FileText className="w-6 h-6 text-slate-500" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <h1 className="text-3xl font-extrabold text-foreground">Free Plan</h1>
+              <Badge variant="secondary">£0 forever</Badge>
+            </div>
+            <p className="text-muted-foreground">For individuals who occasionally need a document for personal use.</p>
+          </div>
+        </div>
+
+        {/* Retention notice */}
+        <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4 mb-8">
+          <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div className="text-sm text-amber-800">
+            <p className="font-semibold mb-1">No draft saving on the Free plan</p>
+            <p>Free plan users cannot save drafts within the platform. Export your document immediately after creating it — there is no way to retrieve it later.</p>
+          </div>
+        </div>
+
+        {/* What's included */}
+        <div className="bg-card border border-border rounded-2xl p-6 mb-6">
+          <h2 className="font-bold text-foreground mb-4">What's included</h2>
+          <ul className="space-y-3">
+            {INCLUDED.map(f => (
+              <li key={f} className="flex items-start gap-3 text-sm text-foreground">
+                <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+                {f}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Not included */}
+        <div className="bg-card border border-border rounded-2xl p-6 mb-8">
+          <h2 className="font-bold text-foreground mb-4">Not included</h2>
+          <ul className="space-y-3">
+            {NOT_INCLUDED.map(f => (
+              <li key={f} className="flex items-start gap-3 text-sm text-muted-foreground">
+                <X className="w-4 h-4 mt-0.5 shrink-0" />
+                {f}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Template access */}
+        <div className="bg-card border border-border rounded-2xl p-6 mb-8">
+          <h2 className="font-bold text-foreground mb-3 flex items-center gap-2">
+            <Lock className="w-4 h-4 text-muted-foreground" /> Template Access
+          </h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            Free plan users can browse the entire template catalogue and see what's available on each plan. Only free templates can be used to create documents.
+          </p>
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="flex items-center gap-2 text-green-700 bg-green-50 rounded-lg px-3 py-2">
+              <CheckCircle2 className="w-4 h-4" /> 1 free template demo
+            </div>
+            <div className="flex items-center gap-2 text-muted-foreground bg-muted rounded-lg px-3 py-2">
+              <Lock className="w-4 h-4" /> Standard templates
+            </div>
+            <div className="flex items-center gap-2 text-muted-foreground bg-muted rounded-lg px-3 py-2">
+              <Lock className="w-4 h-4" /> Professional templates
+            </div>
+            <div className="flex items-center gap-2 text-muted-foreground bg-muted rounded-lg px-3 py-2">
+              <Lock className="w-4 h-4" /> Organisation templates
+            </div>
+          </div>
+        </div>
+
+        {/* Export reminder */}
+        <div className="flex items-start gap-3 bg-blue-50 border border-blue-200 rounded-xl p-4 mb-8">
+          <Download className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+          <div className="text-sm text-blue-800">
+            <p className="font-semibold mb-1">Always export your documents</p>
+            <p>Once you close a document on the Free plan, it cannot be retrieved. Download your PDF immediately after creating it.</p>
+          </div>
+        </div>
+
+        {/* CTA */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          {user ? (
+            <Button onClick={() => navigate('/builders')} className="flex-1">
+              Browse Builders
+            </Button>
+          ) : (
+            <Button onClick={() => navigate('/register')} className="flex-1">
+              Get Started Free
+            </Button>
+          )}
+          <Button variant="outline" asChild className="flex-1">
+            <Link to="/plans/standard">Upgrade to Standard →</Link>
+          </Button>
+        </div>
+      </div>
+    </>
+  );
+}
