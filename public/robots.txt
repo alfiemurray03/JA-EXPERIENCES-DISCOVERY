@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://experiences.jagroupservices.co.uk/sitemap.xml

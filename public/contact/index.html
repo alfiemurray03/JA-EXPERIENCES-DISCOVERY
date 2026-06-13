@@ -3,15 +3,43 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Free Discovery Enquiry | JA Experiences & Discovery</title>
-  <meta name="description" content="Start a free destination or experience discovery enquiry with JA Experiences & Discovery.">
+  <meta name="description" content="Submit a free destination or experience discovery enquiry to JA Experiences & Discovery.">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="/assets/css/ja-travel-rebuild.css">
 </head>
 <body><div id="siteShellHeader"></div><main id="main">
-  <section class="page-hero"><div class="container"><span class="eyebrow">Free Discovery Enquiry</span><h1>Tell us what you would like help discovering or planning.</h1><p>We aim to respond within one to three working days with an initial recommendation and the most suitable next step.</p></div></section>
-  <section class="section"><div class="container split">
-    <div class="panel"><h2>Helpful details to include</h2><ul class="check-list"><li>Where you are considering, if known</li><li>Approximate dates and length of stay</li><li>Number and type of travellers</li><li>Interests and approximate budget</li><li>What feels difficult or unclear</li><li>Any access, family or support needs you choose to share</li></ul><p class="subtle">The free enquiry does not include detailed destination comparison, a full itinerary, hotel-area research or cost breakdown work.</p></div>
-    <div class="panel"><span class="kicker">Contact JA</span><h2>Start by email or telephone</h2><p><strong>Email</strong><br><a href="mailto:hello@jagroupservices.co.uk?subject=Free%20Discovery%20Enquiry">hello@jagroupservices.co.uk</a></p><p><strong>Telephone</strong><br><a href="tel:+442038342790">020 3834 2790</a></p><p>Please do not send passport copies, payment card details, full medical records or benefit evidence by ordinary email. We will explain securely if any specific information is genuinely needed.</p><a class="button accent" href="mailto:hello@jagroupservices.co.uk?subject=Free%20Discovery%20Enquiry">Open a free enquiry email</a></div>
+  <section class="page-hero"><div class="container"><span class="eyebrow">Free Discovery Enquiry</span><h1>Tell us what you would like to discover or plan.</h1><p>There is no charge for this initial enquiry. We aim to reply within one to three working days with the most suitable next step.</p></div></section>
+  <section class="section"><div class="container enquiry-layout">
+    <aside class="enquiry-sidebar">
+      <span class="kicker">Before you begin</span><h2>Useful information to share</h2>
+      <ul class="check-list"><li>Where you are considering, if known</li><li>Approximate dates and trip length</li><li>Who is travelling</li><li>Your interests and budget range</li><li>What currently feels difficult</li><li>Access or family needs you choose to share</li></ul>
+      <div class="privacy-note"><strong>Please do not send:</strong> passport copies, payment card details, full medical records or benefit evidence through this form.</div>
+      <p><strong>Email:</strong><br><a href="mailto:hello@jagroupservices.co.uk">hello@jagroupservices.co.uk</a></p>
+      <p><strong>Telephone:</strong><br><a href="tel:+442038342790">020 3834 2790</a></p>
+    </aside>
+    <div class="form-card">
+      <h2>Start your enquiry</h2><p>Fields marked * are required.</p>
+      <form id="discoveryEnquiryForm">
+        <input type="hidden" name="startedAt" value="">
+        <div class="honeypot" aria-hidden="true"><label>Website<input name="website" type="text" tabindex="-1" autocomplete="off"></label></div>
+        <div class="form-grid">
+          <label>Full name *<input name="name" type="text" autocomplete="name" maxlength="100" required></label>
+          <label>Email address *<input name="email" type="email" autocomplete="email" maxlength="160" required></label>
+          <label>Telephone number<input name="telephone" type="tel" autocomplete="tel" maxlength="40"></label>
+          <label>Guidance option<select name="plan"><option>Free Discovery Enquiry</option><option>Destination Discovery Plan</option><option>Itinerary and Experience Planning Plan</option><option>Complete Discovery and Planning Guidance Plan</option><option>Not sure yet</option></select></label>
+          <label>Destination or type of place<input name="destination" type="text" maxlength="120" placeholder="For example: London, a sunny island, or not decided"></label>
+          <label>Dates or timeframe<input name="dates" type="text" maxlength="120" placeholder="For example: October 2026 or flexible"></label>
+          <label>Who is travelling?<input name="travellers" type="text" maxlength="120" placeholder="For example: two adults and one child"></label>
+          <label>Approximate budget<input name="budget" type="text" maxlength="120" placeholder="Only if you are comfortable sharing"></label>
+        </div>
+        <label>Access, family or other support needs<textarea name="supportNeeds" rows="4" maxlength="1500" placeholder="Only share information that is relevant to the guidance you need."></textarea></label>
+        <label>What would you like help with? *<textarea name="message" rows="7" maxlength="4000" required placeholder="Describe the decision, destination or experience you would like help with."></textarea></label>
+        <label class="checkbox-label"><input name="socialTariff" type="checkbox"> I would like information about the JA Experiences &amp; Discovery Social Tariff.</label>
+        <label class="checkbox-label"><input name="specialCategoryConsent" type="checkbox"> If I have voluntarily included disability, health or other sensitive information, I explicitly consent to JA Group Services Ltd using it only to assess and provide the support I requested.</label>
+        <label class="checkbox-label"><input name="privacyAccepted" type="checkbox" required> I have read the <a href="/legal/privacy/" target="_blank">privacy notice</a> and agree that JA Group Services Ltd may use this information to respond to my enquiry. *</label>
+        <button class="button accent" type="submit">Send free enquiry</button>
+      </form>
+      <div id="enquiryStatus" class="form-status" role="status" aria-live="polite"></div>
+    </div>
   </div></section>
-  <section class="section alt"><div class="container"><div class="section-heading"><span class="kicker">What happens next?</span><h2>A simple manual review</h2></div><div class="steps"><article class="step"><h3>We read your enquiry</h3><p>Your request is reviewed by a person rather than automatically converted into a purchase.</p></article><article class="step"><h3>We recommend a route</h3><p>We explain whether free signposting is enough or whether a paid guidance plan fits.</p></article><article class="step"><h3>You decide</h3><p>No paid work starts until the scope, fee, delivery time and revision allowance are confirmed.</p></article></div></div></section>
-</main><div id="siteShellFooter"></div><script src="/assets/js/site-shell.js"></script></body></html>
+</main><div id="siteShellFooter"></div><script src="/assets/js/site-shell.js"></script><script src="/assets/js/enquiry-form.js"></script></body></html>

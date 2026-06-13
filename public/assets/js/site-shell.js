@@ -11,7 +11,8 @@ document.addEventListener("DOMContentLoaded", () => {
       ["services", "/planning-services/", "Guidance plans"],
       ["destinations", "/destinations/", "Destinations"],
       ["experiences", "/experiences/", "Activities"],
-      ["how", "/how-it-works/", "How it works"]
+      ["how", "/how-it-works/", "How it works"],
+      ["about", "/about/", "About"]
     ];
 
     header.innerHTML = `
@@ -42,8 +43,9 @@ document.addEventListener("DOMContentLoaded", () => {
               <p>Clear destination guidance, itinerary ideas and access to independent activity providers.</p>
               <p><a href="mailto:hello@jagroupservices.co.uk">hello@jagroupservices.co.uk</a><br><a href="tel:+442038342790">020 3834 2790</a></p>
             </div>
-            <div class="footer-col"><h3>Get started</h3><a href="/contact/">Free Discovery Enquiry</a><a href="/planning-services/">Guidance plans</a><a href="/pricing/">Prices and social tariff</a><a href="/how-it-works/">How it works</a></div>
+            <div class="footer-col"><h3>Get started</h3><a href="/contact/">Free Discovery Enquiry</a><a href="/planning-services/">Guidance plans</a><a href="/pricing/">Plans and prices</a><a href="/social-tariff/">Social tariff</a><a href="/how-it-works/">How it works</a></div>
             <div class="footer-col"><h3>Discover</h3><a href="/destinations/">Destination guides</a><a href="/experiences/">Activities &amp; experiences</a><a href="/accommodation/">Selected partner hotels</a><a href="/booking-partners/">Booking partners</a><a href="/affiliate-disclosure/">Affiliate disclosure</a></div>
+            <div class="footer-col"><h3>Company</h3><a href="/about/">About the service</a><a href="/accessibility-support/">Accessibility support</a><a href="/faqs/">Frequently asked questions</a><a href="/complaints/">Complaints</a><a href="/sitemap/">Sitemap</a></div>
             <div class="footer-col"><h3>Legal</h3><a href="/legal/terms/">Terms of use</a><a href="/legal/privacy/">Privacy notice</a><a href="/legal/cookies/">Cookie policy</a><a href="/legal/provider-disclaimer/">Provider disclaimer</a></div>
           </div>
           <div class="footer-legal">© 2026 JA Group Services Ltd. Registered in England and Wales, company number 16314179.</div>

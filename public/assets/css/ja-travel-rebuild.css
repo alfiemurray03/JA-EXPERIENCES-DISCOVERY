@@ -238,7 +238,7 @@ tr:last-child td { border-bottom: 0; }
 .cta-band h2 { margin: 0 0 7px; font-size: 30px; }
 .cta-band p { margin: 0; color: rgba(255, 255, 255, .82); }
 .site-footer { padding: 56px 0 0; color: #cbd8e4; background: #0b2948; }
-.footer-grid { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 46px; }
+.footer-grid { display: grid; grid-template-columns: 1.5fr repeat(4, 1fr); gap: 34px; }
 .site-footer .brand { color: white; }
 .site-footer .brand small, .site-footer p, .site-footer a { color: #b7c7d6; }
 .footer-col h3 { margin: 0 0 16px; color: white; font-size: 15px; }
@@ -330,8 +330,48 @@ tr:last-child td { border-bottom: 0; }
 .destination-widget-heading h3 { margin: 5px 0 16px; font-size: 26px; }
 .destination-provider-widget { min-height: 390px; }
 
+.enquiry-layout { display: grid; grid-template-columns: .72fr 1.28fr; gap: 28px; align-items: start; }
+.enquiry-sidebar { position: sticky; top: 110px; padding: 30px; border-radius: var(--radius); color: white; background: linear-gradient(145deg, #0c3054, #1c6490); }
+.enquiry-sidebar h2 { margin: 8px 0 18px; color: white; font-size: 32px; }
+.enquiry-sidebar .kicker { color: #a9dfd8; }
+.enquiry-sidebar .check-list li::before { color: #8de0d5; }
+.enquiry-sidebar a { color: white; text-decoration: underline; }
+.privacy-note { margin: 24px 0; padding: 17px; border: 1px solid rgba(255,255,255,.2); border-radius: 12px; background: rgba(255,255,255,.09); font-size: 13px; }
+.form-card { padding: 32px; border: 1px solid var(--line); border-radius: var(--radius); background: white; box-shadow: var(--shadow); }
+.form-card h2 { margin: 0 0 6px; font-size: 34px; }
+.form-card > p { margin-top: 0; color: var(--muted); }
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.form-card label { display: grid; gap: 7px; margin-bottom: 18px; color: var(--ink); font-size: 13px; font-weight: 750; }
+.form-card input, .form-card select, .form-card textarea { width: 100%; padding: 12px 13px; border: 1px solid #cbd7df; border-radius: 9px; color: var(--ink); background: white; font: inherit; }
+.form-card input:focus, .form-card select:focus, .form-card textarea:focus { outline: 3px solid rgba(37,103,168,.18); border-color: var(--blue); }
+.form-card textarea { resize: vertical; }
+.checkbox-label { display: flex !important; grid-template-columns: auto 1fr; align-items: flex-start; gap: 10px !important; font-weight: 500 !important; }
+.checkbox-label input { width: 18px; height: 18px; margin-top: 2px; flex: 0 0 auto; }
+.honeypot { position: absolute; left: -9999px; }
+.form-status { margin-top: 18px; padding: 0; }
+.form-status.success, .form-status.error { padding: 18px; border-radius: 10px; }
+.form-status.success { border: 1px solid #acd7c8; color: #175b48; background: #ecf8f4; }
+.form-status.error { border: 1px solid #e6b8b8; color: #812e2e; background: #fff1f1; }
+button:disabled { cursor: wait; opacity: .7; }
+
+.content-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+.info-card { padding: 28px; border: 1px solid var(--line); border-radius: var(--radius); background: white; }
+.info-card h2, .info-card h3 { margin-top: 0; }
+.info-card p, .info-card li { color: var(--muted); }
+.faq-list { display: grid; gap: 12px; max-width: 900px; margin: 0 auto; }
+.faq-list details { padding: 20px 22px; border: 1px solid var(--line); border-radius: 12px; background: white; }
+.faq-list summary { cursor: pointer; color: var(--navy); font-family: "DM Sans", sans-serif; font-weight: 700; }
+.faq-list details p { margin-bottom: 0; color: var(--muted); }
+.sitemap-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.sitemap-grid section { padding: 24px; border: 1px solid var(--line); border-radius: 14px; background: white; }
+.sitemap-grid h2 { margin-top: 0; font-size: 20px; }
+.sitemap-grid a { display: block; margin: 8px 0; color: var(--blue); }
+
 @media (max-width: 900px) {
   .card-grid.four-up, .partner-widget-grid { grid-template-columns: repeat(2, 1fr); }
+  .enquiry-layout, .content-grid { grid-template-columns: 1fr; }
+  .enquiry-sidebar { position: static; }
+  .footer-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 620px) {
@@ -342,4 +382,6 @@ tr:last-child td { border-bottom: 0; }
   .service-row { grid-template-columns: 1fr; gap: 14px; }
   .service-meta { text-align: left; }
   .destination-widget-search, .search-action { grid-template-columns: 1fr; }
+  .form-grid, .sitemap-grid, .footer-grid { grid-template-columns: 1fr; }
+  .form-card, .enquiry-sidebar { padding: 23px; }
 }

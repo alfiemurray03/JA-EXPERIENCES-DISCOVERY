@@ -6,5 +6,9 @@
   "assets": {
     "directory": "./public",
     "binding": "ASSETS"
+  },
+
+  "vars": {
+    "ENQUIRY_TO_EMAIL": "hello@jagroupservices.co.uk"
   }
 }
