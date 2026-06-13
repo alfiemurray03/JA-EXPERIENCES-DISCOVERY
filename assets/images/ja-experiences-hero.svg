@@ -1,0 +1,13 @@
+<svg width="480" height="340" viewBox="0 0 480 340" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="480" height="340" rx="28" fill="#091722"/>
+  <circle cx="134" cy="112" r="60" fill="#38BDF8" fill-opacity="0.18"/>
+  <circle cx="348" cy="230" r="72" fill="#7DD3FC" fill-opacity="0.14"/>
+  <rect x="70" y="76" width="340" height="188" rx="24" fill="#10253A" stroke="#7DD3FC" stroke-opacity="0.35"/>
+  <path d="M118 218C158 152 220 122 280 138C326 151 362 188 394 236" stroke="#7DD3FC" stroke-width="8" stroke-linecap="round"/>
+  <path d="M132 126H314" stroke="#E0F2FE" stroke-width="8" stroke-linecap="round"/>
+  <path d="M132 162H262" stroke="#E0F2FE" stroke-width="6" stroke-linecap="round" opacity="0.9"/>
+  <path d="M132 196H226" stroke="#E0F2FE" stroke-width="6" stroke-linecap="round" opacity="0.85"/>
+  <rect x="296" y="104" width="48" height="48" rx="12" fill="#38BDF8" fill-opacity="0.18"/>
+  <rect x="296" y="164" width="66" height="20" rx="10" fill="#38BDF8" fill-opacity="0.22"/>
+  <text x="96" y="286" fill="#E0F2FE" font-family="Arial, Helvetica, sans-serif" font-size="18" letter-spacing="2">JA EXPERIENCES &amp; DISCOVERY</text>
+</svg>
