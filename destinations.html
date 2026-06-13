@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Destinations | JA Experiences &amp; Discovery</title>
-  <meta name="description" content="Destination discovery content being developed for JA Experiences & Discovery.">
+  <meta name="description" content="Destination and city widget content for JA Experiences and Discovery.">
   <meta name="robots" content="noindex, nofollow">
   <link rel="stylesheet" href="assets/css/styles.css">
   <script src="assets/js/main.js" defer></script>
@@ -15,8 +15,11 @@
   <header class="site-header">
     <div class="container nav-wrap">
       <a class="brand" href="index.html" aria-label="JA Experiences and Discovery home">
-        JA Experiences
-        <span>&amp; Discovery</span>
+        <span class="brand-mark">JA</span>
+        <span class="brand-text">
+          JA Experiences &amp; Discovery
+          <small>by JA Group Services</small>
+        </span>
       </a>
 
       <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
@@ -25,48 +28,589 @@
         <a href="index.html">Home</a>
         <a href="about.html">About</a>
         <a href="how-it-works.html">How it works</a>
-        <a href="plans-and-pricing.html">Plans &amp; Pricing</a>
+        <a href="plans-and-pricing.html">Plans</a>
         <a href="activities-and-experiences.html">Activities</a>
-        <a href="destinations.html">Destinations</a>
-        <a href="important-information.html">Important Information</a>
+        <a class="active" href="destinations.html">Destinations</a>
       </nav>
+
+      <div class="nav-actions">
+        <a class="btn btn-primary" href="free-discovery-enquiry.html">Preparing for launch</a>
+      </div>
     </div>
   </header>
 
   <main id="main">
     <section class="page-hero">
       <div class="container">
-        <div class="page-hero-panel">
-          <p class="breadcrumb"><a href="index.html">Home</a> / Destinations</p>
-          <p class="eyebrow">Destinations</p>
-          <h1>Destination and city guide content is being prepared.</h1>
-          <p class="lead">Explore the future direction for city, destination and experience discovery content.</p>
-        </div>
+        <p class="breadcrumb"><a href="index.html">Home</a> / Destinations</p>
+        <span class="kicker">Destinations</span>
+        <h1>Destinations and city guides.</h1>
+        <p class="lead">Browse selected city widgets and destination ideas with GetYourGuide-powered activity discovery.</p>
       </div>
     </section>
 
-    <section class="section">
+    <section class="section soft">
       <div class="container">
-        <h2 class="section-title">Destination discovery</h2>
-        <p class="section-lead">Destination content is being developed to support customers looking for city breaks, days out, attractions and experience-led travel ideas.</p>
-
-        <div class="grid grid-3">
-          <article class="card">
-            <span class="pill">City ideas</span>
-            <h3>City guides</h3>
-            <p>Planned city content will help customers explore things to do, attractions, neighbourhoods and experience ideas.</p>
-          </article>
-          <article class="card">
-            <span class="pill">Customer types</span>
-            <h3>Different needs</h3>
-            <p>Content may include family-friendly, couples, budget-aware and accessibility-aware discovery support.</p>
-          </article>
-          <article class="card">
-            <span class="pill">Activities</span>
-            <h3>Experience categories</h3>
-            <p>Activity pages may include attractions, museums, tours, food experiences, cultural ideas and seasonal inspiration.</p>
-          </article>
+        <div class="section-head">
+          <h2 class="section-title">Explore city activities and experiences.</h2>
+          <p class="section-lead">These city widgets help customers discover things to do in selected locations while keeping bookings with the third-party provider.</p>
         </div>
+
+<div class="ja-referral-notice">
+  <style>
+    .ja-referral-notice {
+      max-width: 1080px;
+      margin: 16px auto 0;
+      padding: 0;
+      border-radius: 18px;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      overflow: hidden;
+      font-family: Arial, Helvetica, sans-serif;
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.07);
+    }
+
+    .ja-referral-notice-inner {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      padding: 16px 18px;
+      border-left: 5px solid #f97316;
+    }
+
+    .ja-referral-notice-icon {
+      width: 34px;
+      height: 34px;
+      flex: 0 0 auto;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      background: #fff7ed;
+      color: #f97316;
+      font-size: 18px;
+      font-weight: 900;
+    }
+
+    .ja-referral-notice-content {
+      color: #4b5563;
+      font-size: 13px;
+      line-height: 1.6;
+      font-weight: 650;
+    }
+
+    .ja-referral-notice-content strong {
+      color: #111827;
+      font-weight: 950;
+    }
+
+    .ja-referral-notice-content a {
+      color: #2563eb;
+      font-weight: 900;
+      text-decoration: none;
+    }
+
+    .ja-referral-notice-content a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 700px) {
+      .ja-referral-notice {
+        margin: 14px 12px 0;
+        border-radius: 16px;
+      }
+
+      .ja-referral-notice-inner {
+        padding: 15px;
+        gap: 12px;
+      }
+
+      .ja-referral-notice-icon {
+        width: 32px;
+        height: 32px;
+      }
+
+      .ja-referral-notice-content {
+        font-size: 12.5px;
+      }
+    }
+  </style>
+
+  <div class="ja-referral-notice-inner">
+    <div class="ja-referral-notice-icon">i</div>
+
+    <div class="ja-referral-notice-content">
+      <strong>Referral notice:</strong>
+      JA Group Services Ltd acts as an online referral and discovery service only. Tours, tickets, activities and bookings are provided by GetYourGuide and/or the relevant third-party travel provider. JA Group Services Ltd is not the tour operator, travel provider, ticket issuer or booking agent.
+    </div>
+  </div>
+</div>
+
+<section id="ja-city-widgets">
+  <style>
+    #ja-city-widgets {
+      --navy:#071827;
+      --blue:#2563eb;
+      --blue-dark:#1d4ed8;
+      --orange:#f97316;
+      --soft:#f8fafc;
+      --line:#e5e7eb;
+      --text:#111827;
+      --muted:#6b7280;
+
+      max-width:1180px;
+      margin:0 auto;
+      font-family:Arial,Helvetica,sans-serif;
+      color:var(--text);
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:24px;
+      overflow:hidden;
+      box-shadow:0 20px 55px rgba(15,23,42,.12);
+    }
+
+    #ja-city-widgets * {
+      box-sizing:border-box;
+    }
+
+    #ja-city-widgets .ja-city-head {
+      display:grid;
+      grid-template-columns:1.1fr .9fr;
+      background:var(--navy);
+      color:#fff;
+    }
+
+    #ja-city-widgets .ja-city-copy {
+      padding:48px 34px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+    }
+
+    #ja-city-widgets .ja-city-badge {
+      width:max-content;
+      max-width:100%;
+      margin-bottom:16px;
+      padding:8px 13px;
+      border-radius:999px;
+      background:rgba(255,255,255,.1);
+      border:1px solid rgba(255,255,255,.18);
+      font-size:13px;
+      font-weight:900;
+    }
+
+    #ja-city-widgets h2 {
+      margin:0 0 14px;
+      max-width:650px;
+      font-size:clamp(34px,5vw,58px);
+      line-height:1;
+      letter-spacing:-1.8px;
+      font-weight:950;
+    }
+
+    #ja-city-widgets .ja-city-intro {
+      margin:0;
+      max-width:650px;
+      color:#d1d5db;
+      font-size:17px;
+      line-height:1.55;
+      font-weight:600;
+    }
+
+    #ja-city-widgets .ja-city-panel {
+      padding:34px;
+      background:
+        radial-gradient(circle at top right,rgba(249,115,22,.28),transparent 38%),
+        linear-gradient(135deg,#eff6ff,#fff7ed);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    #ja-city-widgets .ja-city-mini-card {
+      width:100%;
+      max-width:420px;
+      padding:22px;
+      border-radius:22px;
+      background:#fff;
+      box-shadow:0 20px 45px rgba(15,23,42,.18);
+    }
+
+    #ja-city-widgets .ja-city-mini-card strong {
+      display:block;
+      margin-bottom:8px;
+      color:var(--text);
+      font-size:22px;
+      line-height:1.15;
+      font-weight:950;
+    }
+
+    #ja-city-widgets .ja-city-mini-card span {
+      display:block;
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.5;
+      font-weight:700;
+    }
+
+    #ja-city-widgets .ja-city-main {
+      padding:28px 18px 38px;
+      background:var(--soft);
+    }
+
+    #ja-city-widgets .ja-city-topbar {
+      max-width:1080px;
+      margin:0 auto 18px;
+      padding:18px;
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:18px;
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:14px;
+      flex-wrap:wrap;
+    }
+
+    #ja-city-widgets .ja-city-topbar h3 {
+      margin:0 0 6px;
+      font-size:28px;
+      line-height:1.1;
+      letter-spacing:-.6px;
+      font-weight:950;
+    }
+
+    #ja-city-widgets .ja-city-topbar p {
+      margin:0;
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.5;
+      font-weight:650;
+    }
+
+    #ja-city-widgets .ja-city-grid {
+      max-width:1080px;
+      margin:0 auto;
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+      gap:16px;
+      align-items:start;
+    }
+
+    #ja-city-widgets .ja-city-card {
+      min-height:430px;
+      padding:18px;
+      border:1px solid var(--line);
+      border-radius:18px;
+      background:#fff;
+      box-shadow:0 10px 24px rgba(15,23,42,.06);
+      transition:.2s ease;
+    }
+
+    #ja-city-widgets .ja-city-card:hover {
+      transform:translateY(-3px);
+      border-color:var(--blue);
+      box-shadow:0 16px 34px rgba(15,23,42,.1);
+    }
+
+    #ja-city-widgets .ja-city-card-top {
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      margin-bottom:16px;
+    }
+
+    #ja-city-widgets .ja-city-icon {
+      width:50px;
+      height:50px;
+      display:grid;
+      place-items:center;
+      border-radius:14px;
+      background:#fff7ed;
+      color:var(--orange);
+      font-size:24px;
+      flex:0 0 auto;
+    }
+
+    #ja-city-widgets .ja-city-pill {
+      padding:8px 11px;
+      border-radius:999px;
+      background:#eff6ff;
+      border:1px solid #dbeafe;
+      color:var(--blue-dark);
+      font-size:12px;
+      line-height:1;
+      font-weight:900;
+      white-space:nowrap;
+    }
+
+    #ja-city-widgets .ja-city-card h4 {
+      margin:0 0 8px;
+      font-size:21px;
+      line-height:1.15;
+      font-weight:950;
+      letter-spacing:-.4px;
+    }
+
+    #ja-city-widgets .ja-city-card p {
+      margin:0 0 16px;
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.45;
+      font-weight:700;
+    }
+
+    #ja-city-widgets .ja-city-widget {
+      min-height:360px;
+      overflow:hidden;
+      padding:14px;
+      border:1px solid var(--line);
+      border-radius:16px;
+      background:#f9fafb;
+    }
+
+    #ja-city-widgets .ja-city-widget iframe {
+      width:100% !important;
+      max-width:100% !important;
+    }
+
+    #ja-city-widgets .ja-city-widget a {
+      color:var(--blue);
+      font-weight:900;
+    }
+
+    @media(max-width:760px) {
+      #ja-city-widgets {
+        border-radius:18px;
+      }
+
+      #ja-city-widgets .ja-city-head {
+        grid-template-columns:1fr;
+      }
+
+      #ja-city-widgets .ja-city-copy {
+        padding:38px 18px 26px;
+      }
+
+      #ja-city-widgets .ja-city-panel {
+        padding:0 18px 34px;
+      }
+
+      #ja-city-widgets h2 {
+        font-size:clamp(32px,11vw,48px);
+        letter-spacing:-1.3px;
+      }
+
+      #ja-city-widgets .ja-city-intro {
+        font-size:16px;
+      }
+
+      #ja-city-widgets .ja-city-main {
+        padding:22px 12px 30px;
+      }
+
+      #ja-city-widgets .ja-city-grid {
+        grid-template-columns:1fr;
+      }
+
+      #ja-city-widgets .ja-city-card {
+        min-height:410px;
+      }
+    }
+  </style>
+
+  <section class="ja-city-head">
+    <div class="ja-city-copy">
+      <div class="ja-city-badge">Powered by GetYourGuide</div>
+      <h2>Explore world-famous cities</h2>
+      <p class="ja-city-intro">
+        Browse city experiences, attraction tickets, guided tours and memorable activities from selected travel partners.
+      </p>
+    </div>
+
+    <div class="ja-city-panel">
+      <div class="ja-city-mini-card">
+        <strong>City guides made simple</strong>
+        <span>Discover things to do in popular cities worldwide, with GetYourGuide city widgets built in.</span>
+      </div>
+    </div>
+  </section>
+
+  <main class="ja-city-main">
+    <div class="ja-city-topbar">
+      <div>
+        <h3>Popular city experiences</h3>
+        <p>Explore selected city widgets with activities, tours and attractions.</p>
+      </div>
+    </div>
+
+    <section id="jaCityGrid" class="ja-city-grid"></section>
+  </main>
+
+  <script>
+    (function () {
+      const PARTNER_ID = "ZSEVDSG";
+
+      const cities = [
+        { icon: "🎡", name: "London", locationId: "57" },
+        { icon: "🗽", name: "New York", locationId: "16" },
+        { icon: "🌋", name: "Tenerife", locationId: "2603" },
+        { icon: "🏟️", name: "Rome", locationId: "33" },
+        { icon: "🏖️", name: "Barcelona", locationId: "45" },
+        { icon: "🏙️", name: "Dubai", locationId: "173" },
+        { icon: "🛶", name: "Amsterdam", locationId: "59" },
+        { icon: "🥨", name: "Munich", locationId: "36" },
+        { icon: "🌉", name: "San Francisco", locationId: "200" },
+        { icon: "🎭", name: "Paris", locationId: "42" },
+        { icon: "🎰", name: "Las Vegas", locationId: "67" },
+        { icon: "🏛️", name: "Athens", locationId: "91" }
+      ];
+
+      function escapeHtml(value) {
+        return String(value).replace(/[&<>"']/g, function (char) {
+          return {
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#039;"
+          }[char];
+        });
+      }
+
+      const grid = document.getElementById("jaCityGrid");
+
+      grid.innerHTML = cities.map(function (city) {
+        return `
+          <article class="ja-city-card">
+            <div class="ja-city-card-top">
+              <span class="ja-city-icon">${escapeHtml(city.icon)}</span>
+              <span class="ja-city-pill">${escapeHtml(city.name)}</span>
+            </div>
+
+            <h4>${escapeHtml(city.name)} City Guide</h4>
+            <p>Browse activities, attractions and tours for ${escapeHtml(city.name)}.</p>
+
+            <div class="ja-city-widget">
+              <div
+                data-gyg-href="https://widget.getyourguide.com/default/city.frame"
+                data-gyg-location-id="${escapeHtml(city.locationId)}"
+                data-gyg-locale-code="en-US"
+                data-gyg-widget="city"
+                data-gyg-partner-id="${PARTNER_ID}">
+              </div>
+            </div>
+          </article>
+        `;
+      }).join("");
+
+      const script = document.createElement("script");
+      script.async = true;
+      script.defer = true;
+      script.src = "https://widget.getyourguide.com/dist/pa.umd.production.min.js";
+      script.setAttribute("data-gyg-partner-id", PARTNER_ID);
+      document.body.appendChild(script);
+    })();
+  </script>
+</section>
+
+<div class="ja-disclaimer">
+  <style>
+    .ja-disclaimer {
+      max-width: 1080px;
+      margin: 28px auto 0;
+      padding: 20px 22px;
+      border-radius: 18px;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      color: #4b5563;
+      font-size: 14px;
+      line-height: 1.65;
+      font-family: Arial, Helvetica, sans-serif;
+      font-weight: 650;
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+    }
+
+    .ja-disclaimer-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      color: #111827;
+      font-size: 16px;
+      line-height: 1.3;
+      font-weight: 950;
+    }
+
+    .ja-disclaimer-icon {
+      width: 34px;
+      height: 34px;
+      flex: 0 0 auto;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      background: #fff7ed;
+      color: #f97316;
+      font-size: 18px;
+    }
+
+    .ja-disclaimer p {
+      margin: 0;
+    }
+
+    .ja-disclaimer strong {
+      color: #111827;
+      font-weight: 950;
+    }
+
+    .ja-disclaimer a {
+      color: #2563eb;
+      font-weight: 900;
+      text-decoration: none;
+    }
+
+    .ja-disclaimer a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 700px) {
+      .ja-disclaimer {
+        margin: 22px 12px 0;
+        padding: 18px;
+        border-radius: 16px;
+        font-size: 13px;
+      }
+
+      .ja-disclaimer-header {
+        align-items: flex-start;
+      }
+    }
+  </style>
+
+  <div class="ja-disclaimer-header">
+    <span class="ja-disclaimer-icon">ℹ</span>
+    <span>Affiliate and Booking Disclaimer</span>
+  </div>
+
+  <p>
+    <strong>JA Group Services Ltd acts as an online referral and discovery service only.</strong>
+    Activities, attractions, tours, tickets, experiences, availability, prices, booking terms, cancellation rules and customer support are provided by
+    <strong>GetYourGuide</strong> and/or the relevant third-party travel provider. Bookings are completed directly through GetYourGuide and are subject to GetYourGuide’s own terms, conditions and privacy notice.
+    JA Group Services Ltd is not the tour operator, travel provider, ticket issuer or booking agent, and may receive a commission for successful bookings made through links or widgets on this page using our affiliate partner ID.
+  </p>
+</div>
+      </div>
+    </section>
+
+    <section class="notice">
+      <p><strong>Customer responsibility:</strong> Customers remain responsible for arranging their own travel, transport, suitability checks and third-party bookings.</p>
+    </section>
+
+    <section class="cta-band">
+      <div class="container">
+        <h2>Preparing for launch</h2>
+        <p>Customer enquiry routes, paid guidance plans and selected partner hotel services are not yet open.</p>
+        <a class="btn btn-light" href="important-information.html">Read important information</a>
       </div>
     </section>
   </main>
@@ -75,21 +619,32 @@
     <div class="container">
       <div class="footer-grid">
         <div>
-          <h2>JA Experiences &amp; Discovery</h2>
-          <p>JA Experiences &amp; Discovery is a trading division and service line of JA Group Services Ltd, being developed to provide destination discovery, experience guidance and practical planning support.</p>
+          <a class="brand" href="index.html">
+            <span class="brand-mark">JA</span>
+            <span class="brand-text">
+              JA Experiences &amp; Discovery
+              <small>by JA Group Services</small>
+            </span>
+          </a>
+          <p>Destination discovery, experience guidance and practical planning support being developed by JA Group Services Ltd.</p>
         </div>
+
         <div>
-          <h3>Service pages</h3>
+          <h3>Service</h3>
           <div class="footer-links">
+            <a href="about.html">About</a>
+            <a href="how-it-works.html">How it works</a>
             <a href="plans-and-pricing.html">Plans &amp; Pricing</a>
+            <a href="activities-and-experiences.html">Activities &amp; Experiences</a>
+            <a href="destinations.html">Destinations</a>
             <a href="free-discovery-enquiry.html">Free Discovery Enquiry</a>
             <a href="social-tariff.html">Social Tariff</a>
             <a href="selected-partner-hotels.html">Selected Partner Hotels</a>
-            <a href="activities-and-experiences.html">Activities &amp; Experiences</a>
           </div>
         </div>
+
         <div>
-          <h3>Legal &amp; information</h3>
+          <h3>Support &amp; Legal</h3>
           <div class="footer-links">
             <a href="important-information.html">Important Information</a>
             <a href="affiliate-disclosure.html">Affiliate Disclosure</a>
@@ -103,8 +658,8 @@
       </div>
 
       <div class="footer-small">
-        <p>General enquiries: <a href="mailto:hello@jagroupservices.co.uk">hello@jagroupservices.co.uk</a> | Telephone: <a href="tel:+442038342790">020 3834 2790</a></p>
-        <p>&copy; 2026 JA Group Services Ltd and its licensors. All rights reserved.</p>
+        <span>&copy; 2026 JA Group Services Ltd. All rights reserved.</span>
+        <span>Pre-launch information site only.</span>
       </div>
     </div>
   </footer>
