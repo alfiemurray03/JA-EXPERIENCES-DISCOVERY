@@ -1,0 +1,6 @@
+/coming-soon/ /coming-soon/index.html 200
+/coming-soon/* /coming-soon/:splat 200
+/assets/* /assets/:splat 200
+/preview/ /preview/index.html 200
+/preview/* /preview/:splat 200
+/* /coming-soon/ 302
