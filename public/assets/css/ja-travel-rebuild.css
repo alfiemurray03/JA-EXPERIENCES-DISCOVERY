@@ -808,7 +808,8 @@ body:not(.hub-home) .page-hero h1 { font-family: var(--serif); font-size: clamp(
 .coming-partner a { padding-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,.45); font-size: 13px; font-weight: 700; }
 .coming-footer { padding: 75px 0 0; color: #b8c6d2; background: #061f36; }
 .coming-footer-grid { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 70px; }
-.coming-footer .coming-brand { margin-bottom: 18px; }
+.coming-footer-logo { width: 205px; min-height: 78px; display: grid; place-items: center; margin-bottom: 20px; padding: 13px 14px; background: white; }
+.coming-footer-logo img { display: block; width: 177px; height: auto; }
 .coming-footer p { color: #aebdca; font-size: 12px; line-height: 1.7; }
 .coming-footer-grid > div > strong { display: block; margin-bottom: 14px; color: white; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; }
 .coming-footer-grid > div > a:not(.coming-brand) { display: block; margin: 7px 0; color: #aebdca; font-size: 12px; }
