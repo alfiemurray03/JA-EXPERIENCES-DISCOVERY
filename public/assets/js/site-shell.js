@@ -5,6 +5,18 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (main && !main.id) main.id = "main";
 
+  function loadSharedStyles(path) {
+    if (document.querySelector(`link[href="${path}"]`)) return;
+
+    const stylesheet = document.createElement("link");
+    stylesheet.rel = "stylesheet";
+    stylesheet.href = path;
+    document.head.appendChild(stylesheet);
+  }
+
+  loadSharedStyles("/assets/includes/header.css");
+  loadSharedStyles("/assets/includes/footer.css");
+
   async function loadPartial(target, path) {
     if (!target) return;
 

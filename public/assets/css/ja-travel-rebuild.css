@@ -40,31 +40,7 @@ button, input, select, textarea { font: inherit; }
   font-size: 13px;
   font-weight: 600;
 }
-.site-header {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  border-bottom: 1px solid rgba(16, 36, 63, .1);
-  background: rgba(255, 255, 255, .96);
-  backdrop-filter: blur(12px);
-}
-.nav-shell { min-height: 76px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
-.brand { display: flex; align-items: center; gap: 11px; font-weight: 800; letter-spacing: -.02em; }
-.brand-mark {
-  display: grid;
-  width: 42px;
-  height: 42px;
-  place-items: center;
-  border-radius: 10px;
-  color: white;
-  background: linear-gradient(145deg, #2d72b6, #143e6a);
-  font-size: 17px;
-}
-.brand small { display: block; color: var(--muted); font-size: 11px; font-weight: 500; letter-spacing: 0; }
-.site-nav { display: flex; align-items: center; gap: 26px; font-size: 14px; font-weight: 650; }
-.site-nav a:hover, .site-nav a[aria-current="page"] { color: var(--blue); }
-.menu-toggle { display: none; min-height: 40px; padding: 0 13px; border: 1px solid var(--line); border-radius: 8px; color: var(--navy); background: white; font: inherit; font-weight: 750; }
-.nav-cta, .button {
+.button {
   display: inline-flex;
   min-height: 46px;
   align-items: center;
@@ -80,8 +56,8 @@ button, input, select, textarea { font: inherit; }
 .button.light { color: var(--navy); background: white; border-color: white; }
 .button.accent { color: white; border-color: var(--orange); background: var(--orange); }
 .button.accent:hover { border-color: var(--orange-dark); background: var(--orange-dark); }
-.button, .nav-cta { transition: transform .18s ease, background-color .18s ease, border-color .18s ease; }
-.button:hover, .nav-cta:hover { transform: translateY(-1px); }
+.button { transition: transform .18s ease, background-color .18s ease, border-color .18s ease; }
+.button:hover { transform: translateY(-1px); }
 .button:focus-visible, a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid rgba(249, 115, 22, .35); outline-offset: 3px; }
 
 .discovery-hero {
@@ -315,16 +291,6 @@ tr:last-child td { border-bottom: 0; }
 .cta-band .container { display: flex; align-items: center; justify-content: space-between; gap: 30px; }
 .cta-band h2 { margin: 0 0 7px; font-size: 30px; }
 .cta-band p { margin: 0; color: rgba(255, 255, 255, .82); }
-.site-footer { padding: 56px 0 0; color: #cbd8e4; background: #0b2948; }
-.footer-grid { display: grid; grid-template-columns: 1.5fr repeat(4, 1fr); gap: 34px; }
-.site-footer .brand { color: white; }
-.site-footer .brand small, .site-footer p, .site-footer a { color: #b7c7d6; }
-.footer-col h3 { margin: 0 0 16px; color: white; font-size: 15px; }
-.footer-col a { display: block; margin-bottom: 10px; font-size: 13px; }
-.footer-legal { margin-top: 42px; padding: 18px 0; border-top: 1px solid rgba(255, 255, 255, .1); font-size: 12px; }
-.footer-company { margin-top: 34px; padding-top: 24px; border-top: 1px solid rgba(255, 255, 255, .1); }
-.footer-company p { margin: 5px 0; font-size: 12px; }
-.footer-company + .footer-legal { margin-top: 18px; }
 .coming-soon-panel { max-width: 860px; margin: 0 auto; padding: 54px; border: 1px solid var(--line); border-radius: var(--radius); background: white; box-shadow: var(--shadow); text-align: center; }
 .coming-soon-panel .card-icon { margin: 0 auto 22px; }
 .coming-soon-panel h2 { margin: 0 0 14px; font-size: clamp(30px, 4vw, 44px); }
@@ -334,9 +300,6 @@ tr:last-child td { border-bottom: 0; }
 .affiliate-notice { margin-top: 24px; }
 
 @media (max-width: 900px) {
-  .menu-toggle { display: inline-flex; align-items: center; }
-  .site-nav { display: none; position: absolute; top: 76px; left: 20px; right: 20px; padding: 18px; border: 1px solid var(--line); border-radius: 12px; background: white; box-shadow: var(--shadow); }
-  .site-nav.open { display: grid; }
   .hero-grid, .split { grid-template-columns: 1fr; }
   .hero-card { max-width: 620px; }
   .card-grid, .price-grid, .steps { grid-template-columns: repeat(2, 1fr); }
@@ -357,11 +320,10 @@ tr:last-child td { border-bottom: 0; }
 @media (max-width: 620px) {
   .container { width: min(100% - 30px, 1180px); }
   .service-bar { font-size: 11px; }
-  .brand > span:last-child { font-size: 14px; }
   .hero { padding: 68px 0; }
   h1 { font-size: 43px; }
   .hero-copy > p, .page-hero p { font-size: 16px; }
-  .card-grid, .price-grid, .steps, .footer-grid { grid-template-columns: 1fr; }
+  .card-grid, .price-grid, .steps { grid-template-columns: 1fr; }
   .fact-grid, .itinerary-grid, .destination-directory-grid, .directory-tools, .directory-list { grid-template-columns: 1fr; }
   .fact { border-right: 0; border-bottom: 1px solid var(--line); }
   .destination-hero { min-height: 560px; padding-bottom: 58px; }
@@ -463,7 +425,6 @@ button:disabled { cursor: wait; opacity: .7; }
   .card-grid.four-up, .partner-widget-grid { grid-template-columns: repeat(2, 1fr); }
   .enquiry-layout, .content-grid { grid-template-columns: 1fr; }
   .enquiry-sidebar { position: static; }
-  .footer-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 620px) {
@@ -474,7 +435,7 @@ button:disabled { cursor: wait; opacity: .7; }
   .service-row { grid-template-columns: 1fr; gap: 14px; }
   .service-meta { text-align: left; }
   .destination-widget-search, .search-action { grid-template-columns: 1fr; }
-  .form-grid, .sitemap-grid, .footer-grid { grid-template-columns: 1fr; }
+  .form-grid, .sitemap-grid { grid-template-columns: 1fr; }
   .form-card, .enquiry-sidebar { padding: 23px; }
   .coming-soon-panel { padding: 32px 22px; }
   .discovery-hero { min-height: auto; background-position: 64% center; }
@@ -502,18 +463,6 @@ button:disabled { cursor: wait; opacity: .7; }
 
 body { background: #fff; }
 .container { width: min(1280px, calc(100% - 64px)); }
-.site-header { position: absolute; top: 0; left: 0; right: 0; color: white; border-bottom: 1px solid rgba(255,255,255,.2); background: transparent; backdrop-filter: none; }
-.site-header .nav-shell { min-height: 94px; }
-.site-header .brand { color: white; font-family: var(--serif); font-size: 20px; font-weight: 600; }
-.site-header .brand-mark { width: 38px; height: 38px; border: 1px solid rgba(255,255,255,.6); border-radius: 50%; background: transparent; font-family: "DM Sans", sans-serif; font-size: 13px; }
-.site-header .brand i { color: var(--hub-orange); font-style: normal; }
-.site-header .brand small { margin-top: -2px; color: rgba(255,255,255,.68); font-family: Inter, sans-serif; font-size: 9px; letter-spacing: .12em; text-transform: uppercase; }
-.site-header .site-nav { gap: 30px; font-size: 13px; font-weight: 600; }
-.site-header .site-nav a:hover, .site-header .site-nav a[aria-current="page"] { color: white; border-bottom-color: var(--hub-orange); }
-.site-header .site-nav > a:not(.nav-cta) { padding: 35px 0 31px; border-bottom: 2px solid transparent; }
-.site-header .nav-cta { min-height: 42px; padding: 0 18px; border-color: white; border-radius: 2px; color: var(--hub-navy); background: white; }
-.site-header .nav-cta:hover { color: white; background: transparent; }
-.site-header .menu-toggle { color: white; border-color: rgba(255,255,255,.55); background: transparent; }
 
 .hub-hero {
   position: relative;
@@ -613,23 +562,6 @@ body { background: #fff; }
 .hub-closing > .container > div { display: flex; justify-content: center; align-items: center; gap: 28px; margin-top: 38px; }
 .hub-closing > .container > div > a:not(.button) { padding-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,.5); font-size: 13px; }
 
-.site-footer { padding-top: 80px; background: #061f36; }
-.site-footer .brand { font-family: var(--serif); font-size: 19px; }
-.site-footer .brand-mark { border-radius: 50%; background: transparent; border: 1px solid #8fa3b4; }
-.footer-company-logo { display: inline-block; margin-bottom: 22px; }
-.footer-company-logo img { display: block; width: 150px; height: auto; }
-.footer-brand-column > p { max-width: 340px; }
-.footer-col h3 { color: #f5f7f8; font-family: Inter, sans-serif; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
-.site-footer a:hover { color: white; }
-.footer-company address { margin-top: 5px; color: #b7c7d6; font-size: 12px; font-style: normal; line-height: 1.65; }
-.footer-company address strong { color: #d8e2ea; }
-
-body:not(.hub-home) .site-header { position: relative; color: var(--hub-ink); border-bottom-color: var(--line); background: white; }
-body:not(.hub-home) .site-header .brand, body:not(.hub-home) .site-header .site-nav a { color: var(--hub-ink); }
-body:not(.hub-home) .site-header .brand-mark { color: white; border-color: var(--hub-navy); background: var(--hub-navy); }
-body:not(.hub-home) .site-header .brand small { color: #73808a; }
-body:not(.hub-home) .site-header .nav-cta { color: white; border-color: var(--hub-navy); background: var(--hub-navy); }
-body:not(.hub-home) .site-header .menu-toggle { color: var(--hub-navy); border-color: var(--line); }
 body:not(.hub-home) .page-hero { padding: 110px 0; background: var(--hub-navy); }
 body:not(.hub-home) .page-hero h1 { font-family: var(--serif); font-size: clamp(52px, 6vw, 80px); font-weight: 500; }
 
@@ -707,8 +639,6 @@ body:not(.hub-home) .page-hero h1 { font-family: var(--serif); font-size: clamp(
 
 @media (max-width: 900px) {
   .container { width: min(100% - 40px, 1280px); }
-  .site-header .site-nav { top: 78px; color: var(--hub-ink); }
-  .site-header .site-nav > a:not(.nav-cta) { padding: 10px 0; color: var(--hub-ink); }
   .hub-hero { min-height: 760px; }
   .editorial-heading, .experience-heading, .travel-for-grid, .guidance-grid, .partner-note-grid { grid-template-columns: 1fr; gap: 35px; }
   .destination-stories { grid-template-columns: 1fr 1fr; grid-template-rows: 440px 320px; }
@@ -728,9 +658,6 @@ body:not(.hub-home) .page-hero h1 { font-family: var(--serif); font-size: clamp(
 
 @media (max-width: 620px) {
   .container { width: min(100% - 30px, 1280px); }
-  .site-header .nav-shell { min-height: 76px; }
-  .site-header .brand { font-size: 16px; }
-  .site-header .brand small { display: none; }
   .hub-hero { min-height: 760px; background-position: 57% center; }
   .hub-hero-inner { padding-bottom: 42px; }
   .hub-hero h1 { font-size: 57px; }
@@ -770,12 +697,6 @@ body:not(.hub-home) .page-hero h1 { font-family: var(--serif); font-size: clamp(
 
 /* Public launch gate */
 .coming-soon-page { color: var(--hub-ink); background: white; }
-.coming-soon-page .site-header { position: absolute; color: white; border-bottom-color: rgba(255,255,255,.22); background: transparent; }
-.coming-soon-page .site-header .brand, .coming-soon-page .site-header .site-nav a { color: white; }
-.coming-soon-page .site-header .brand-mark { color: white; border-color: rgba(255,255,255,.65); background: transparent; }
-.coming-soon-page .site-header .brand small { color: rgba(255,255,255,.68); }
-.coming-soon-page .site-header .nav-cta { color: var(--hub-navy); border-color: white; background: white; }
-.coming-soon-page .site-header .menu-toggle { color: white; border-color: rgba(255,255,255,.55); background: transparent; }
 .coming-hero { position: relative; min-height: 790px; display: flex; align-items: flex-end; color: white; background: linear-gradient(90deg, rgba(4,24,41,.9), rgba(4,24,41,.48) 52%, rgba(4,24,41,.08)), linear-gradient(0deg, rgba(4,24,41,.45), transparent 35%), url("/assets/images/destinations/united-kingdom.jpg") center 55% / cover; }
 .coming-hero-inner { display: flex; align-items: end; justify-content: space-between; gap: 60px; padding-bottom: 75px; }
 .coming-copy { max-width: 800px; }
@@ -813,9 +734,6 @@ body:not(.hub-home) .page-hero h1 { font-family: var(--serif); font-size: clamp(
   .coming-hero-inner, .coming-partner .container { display: grid; grid-template-columns: 1fr; }
   .coming-status { width: min(100%, 360px); }
   .coming-intro-grid { grid-template-columns: 1fr; gap: 35px; }
-  .coming-soon-page .site-nav { background: white; }
-  .coming-soon-page .site-header .site-nav > a:not(.nav-cta) { color: var(--hub-ink); }
-  .coming-soon-page .site-header .nav-cta { color: white; border-color: var(--hub-navy); background: var(--hub-navy); }
 }
 
 @media (max-width: 620px) {
@@ -833,5 +751,4 @@ body:not(.hub-home) .page-hero h1 { font-family: var(--serif); font-size: clamp(
   .coming-pillars article, .coming-pillars article + article { padding: 30px 0; border-right: 0; border-bottom: 1px solid var(--line); }
   .coming-partner { padding: 75px 0; }
   .coming-partner h2 { font-size: 40px; }
-  .footer-company-logo img { width: 135px; }
 }
