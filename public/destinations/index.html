@@ -2,26 +2,76 @@
 <html lang="en-GB">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Destinations | JA Experiences & Discovery</title>
-  <link rel="stylesheet" href="/assets/css/styles.css">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Explore Travel Destinations | JA Experiences &amp; Discovery</title>
+  <meta name="description" content="Explore country, city, island and regional travel guides, with practical ideas for what to see, do and consider.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/ja-travel-rebuild.css">
 </head>
-<body>
-  <div id="site-header"></div>
-
-  <main class="page">
-    <div class="container">
-      <h1 class="page-title">Destinations</h1>
-      <p class="lead">This page is being prepared.</p>
-
-      <div class="placeholder-box">
-        This page is currently blank and will be developed later.
+<body data-page="destinations" class="destination-index">
+  <div id="siteShellHeader"></div>
+  <main id="main">
+    <section class="directory-hero">
+      <div class="container">
+        <p>Explore the world</p>
+        <h1>Where will your curiosity take you?</h1>
+        <form action="#browse" class="directory-hero-search">
+          <label for="heroDestinationSearch">Search countries, cities and regions</label>
+          <div><input id="heroDestinationSearch" type="search" placeholder="Try Portugal, London or the Amalfi Coast"><button type="submit">Search →</button></div>
+        </form>
       </div>
-    </div>
+    </section>
+
+    <section class="directory-featured">
+      <div class="container">
+        <header class="editorial-heading">
+          <div><span class="chapter">Featured guides</span><h2>Begin somewhere remarkable</h2></div>
+          <p>Explore practical introductions to places around the world, then follow the ideas that feel right for your trip.</p>
+        </header>
+        <div class="featured-destination-layout">
+          <a class="featured-main" href="/destinations/portugal/"><img src="/assets/images/destinations/portugal.jpg" alt="Porto waterfront in Portugal"><span>Portugal</span><small>Cities, coast and Atlantic islands</small></a>
+          <a href="/destinations/japan/"><img src="/assets/images/destinations/japan.jpg" alt="Mount Fuji in Japan"><span>Japan</span><small>Culture, cities and seasonal landscapes</small></a>
+          <a href="/destinations/italy/"><img src="/assets/images/destinations/italy.jpg" alt="Historic city in Italy"><span>Italy</span><small>Art, food and regional journeys</small></a>
+          <a href="/destinations/morocco/"><img src="/assets/images/destinations/morocco.jpg" alt="Mountain and palm landscape in Morocco"><span>Morocco</span><small>Old cities, mountains and desert colour</small></a>
+          <a href="/destinations/united-kingdom/"><img src="/assets/images/destinations/united-kingdom.jpg" alt="London and the River Thames"><span>United Kingdom</span><small>Heritage, cities, coast and countryside</small></a>
+        </div>
+      </div>
+    </section>
+
+    <section class="directory-browser" id="browse">
+      <div class="container">
+        <div class="browser-heading"><div><span class="chapter">All destinations</span><h2>Find your next place</h2></div><p>Search the full collection of country, city, island and regional guides.</p></div>
+        <div class="directory-tools">
+          <input id="destinationSearch" type="search" placeholder="Search destinations" aria-label="Search destinations">
+          <select id="destinationStatus" aria-label="Filter destination type"><option value="all">All guides</option><option value="country">Countries</option><option value="city">Cities and regions</option></select>
+        </div>
+        <p class="subtle" id="destinationCount">Loading destination guides...</p>
+        <div class="directory-list" id="allDestinations"></div>
+      </div>
+    </section>
+
+    <section class="directory-guidance">
+      <div class="container split-editorial">
+        <div><span class="chapter">Need a clearer direction?</span><h2>Turn inspiration into a plan.</h2></div>
+        <div><p>Tell us what you enjoy, who is travelling, your likely dates and the budget you have in mind. We can help narrow the options and organise the research.</p><a class="button accent" href="/enquiry/">Start a free enquiry</a></div>
+      </div>
+    </section>
   </main>
-
-  <div id="site-footer"></div>
-
+  <div id="siteShellFooter"></div>
   <script src="/assets/js/site-shell.js"></script>
+  <script src="/assets/js/destinations-data.js"></script>
+  <script src="/assets/js/destination-directory.js"></script>
+  <script>
+    document.querySelector(".directory-hero-search")?.addEventListener("submit", function (event) {
+      event.preventDefault();
+      const value = document.querySelector("#heroDestinationSearch").value;
+      const field = document.querySelector("#destinationSearch");
+      field.value = value;
+      field.dispatchEvent(new Event("input", { bubbles: true }));
+      document.querySelector("#browse").scrollIntoView({ behavior: "smooth" });
+    });
+  </script>
 </body>
 </html>
