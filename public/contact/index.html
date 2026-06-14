@@ -2,44 +2,37 @@
 <html lang="en-GB">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Free Discovery Enquiry | JA Experiences & Discovery</title>
-  <meta name="description" content="Submit a free destination or experience discovery enquiry to JA Experiences & Discovery.">
+  <title>Contact Us | JA Experiences & Discovery</title>
+  <meta name="description" content="Contact JA Experiences & Discovery for customer support, general enquiries, complaints and service information.">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="/assets/css/ja-travel-rebuild.css">
 </head>
-<body><div id="siteShellHeader"></div><main id="main">
-  <section class="page-hero"><div class="container"><span class="eyebrow">Free Discovery Enquiry</span><h1>Tell us what you would like to discover or plan.</h1><p>There is no charge for this initial enquiry. We aim to reply within one to three working days with the most suitable next step.</p></div></section>
+<body data-page="contact"><div id="siteShellHeader"></div><main id="main">
+  <section class="page-hero"><div class="container"><span class="eyebrow">Contact Us</span><h1>How can we help?</h1><p>Use this form for general enquiries, customer support, plans and pricing, social tariff questions, website issues, data protection or complaints.</p></div></section>
   <section class="section"><div class="container enquiry-layout">
     <aside class="enquiry-sidebar">
-      <span class="kicker">Before you begin</span><h2>Useful information to share</h2>
-      <ul class="check-list"><li>Where you are considering, if known</li><li>Approximate dates and trip length</li><li>Who is travelling</li><li>Your interests and budget range</li><li>What currently feels difficult</li><li>Access or family needs you choose to share</li></ul>
-      <div class="privacy-note"><strong>Please do not send:</strong> passport copies, payment card details, full medical records or benefit evidence through this form.</div>
-      <p><strong>Email:</strong><br><a href="mailto:hello@jagroupservices.co.uk">hello@jagroupservices.co.uk</a></p>
-      <p><strong>Telephone:</strong><br><a href="tel:+442038342790">020 3834 2790</a></p>
+      <span class="kicker">Contact information</span><h2>JA Group Services Ltd</h2>
+      <p><strong>Email</strong><br><a href="mailto:hello@jagroupservices.co.uk">hello@jagroupservices.co.uk</a></p>
+      <p><strong>Telephone</strong><br><a href="tel:+442038342790">020 3834 2790</a></p>
+      <p><strong>Registered Office</strong><br>167–169 Great Portland Street<br>5th Floor<br>London<br>W1W 5PF<br>United Kingdom</p>
+      <div class="privacy-note">For a new destination or activity guidance request, please use the dedicated <a href="/enquiry/">Free Discovery Enquiry</a>.</div>
     </aside>
     <div class="form-card">
-      <h2>Start your enquiry</h2><p>Fields marked * are required.</p>
-      <form id="discoveryEnquiryForm">
-        <input type="hidden" name="startedAt" value="">
+      <h2>Send a message</h2><p>Fields marked * are required.</p>
+      <form id="customerForm" data-form-type="contact">
+        <input type="hidden" name="startedAt" value=""><input type="hidden" name="formType" value="Contact Us">
         <div class="honeypot" aria-hidden="true"><label>Website<input name="website" type="text" tabindex="-1" autocomplete="off"></label></div>
         <div class="form-grid">
           <label>Full name *<input name="name" type="text" autocomplete="name" maxlength="100" required></label>
           <label>Email address *<input name="email" type="email" autocomplete="email" maxlength="160" required></label>
-          <label>Telephone number<input name="telephone" type="tel" autocomplete="tel" maxlength="40"></label>
-          <label>Guidance option<select name="plan"><option>Free Discovery Enquiry</option><option>Destination Discovery Plan</option><option>Itinerary and Experience Planning Plan</option><option>Complete Discovery and Planning Guidance Plan</option><option>Not sure yet</option></select></label>
-          <label>Destination or type of place<input name="destination" type="text" maxlength="120" placeholder="For example: London, a sunny island, or not decided"></label>
-          <label>Dates or timeframe<input name="dates" type="text" maxlength="120" placeholder="For example: October 2026 or flexible"></label>
-          <label>Who is travelling?<input name="travellers" type="text" maxlength="120" placeholder="For example: two adults and one child"></label>
-          <label>Approximate budget<input name="budget" type="text" maxlength="120" placeholder="Only if you are comfortable sharing"></label>
+          <label>Telephone number optional<input name="telephone" type="tel" autocomplete="tel" maxlength="40"></label>
+          <label>Enquiry type *<select name="enquiryType" required><option value="">Please select</option><option>General enquiry</option><option>Customer support</option><option>Activities and experiences</option><option>Plans and pricing</option><option>Social tariff</option><option>Website issue</option><option>Data protection</option><option>Complaint</option></select></label>
         </div>
-        <label>Access, family or other support needs<textarea name="supportNeeds" rows="4" maxlength="1500" placeholder="Only share information that is relevant to the guidance you need."></textarea></label>
-        <label>What would you like help with? *<textarea name="message" rows="7" maxlength="4000" required placeholder="Describe the decision, destination or experience you would like help with."></textarea></label>
-        <label class="checkbox-label"><input name="socialTariff" type="checkbox"> I would like information about the JA Experiences &amp; Discovery Social Tariff.</label>
-        <label class="checkbox-label"><input name="specialCategoryConsent" type="checkbox"> If I have voluntarily included disability, health or other sensitive information, I explicitly consent to JA Group Services Ltd using it only to assess and provide the support I requested.</label>
-        <label class="checkbox-label"><input name="privacyAccepted" type="checkbox" required> I have read the <a href="/legal/privacy/" target="_blank">privacy notice</a> and agree that JA Group Services Ltd may use this information to respond to my enquiry. *</label>
-        <button class="button accent" type="submit">Send free enquiry</button>
+        <label>Message *<textarea name="message" rows="8" maxlength="4000" required></textarea></label>
+        <label class="checkbox-label"><input name="privacyAccepted" type="checkbox" required> I agree that JA Group Services Ltd may use this information to respond to my enquiry. *</label>
+        <button class="button accent" type="submit">Send message</button>
       </form>
-      <div id="enquiryStatus" class="form-status" role="status" aria-live="polite"></div>
+      <div id="formStatus" class="form-status" role="status" aria-live="polite"></div>
     </div>
   </div></section>
 </main><div id="siteShellFooter"></div><script src="/assets/js/site-shell.js"></script><script src="/assets/js/enquiry-form.js"></script></body></html>

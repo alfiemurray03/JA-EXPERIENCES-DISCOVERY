@@ -58,7 +58,7 @@ if (grid) {
         <li>${escapeHtml(service.delivery)}</li>
         <li>${escapeHtml(service.revisions)}</li>
       </ul>
-      <a class="button" href="/contact/?plan=${encodeURIComponent(service.name)}">Enquire about this plan</a>
+      <a class="button" href="/enquiry/?plan=${encodeURIComponent(service.name)}">Enquire about this plan</a>
     </article>
   `).join("");
 }

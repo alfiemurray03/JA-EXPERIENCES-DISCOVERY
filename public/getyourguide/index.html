@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>GetYourGuide Activities | JA Experiences & Discovery</title>
+  <meta name="description" content="Explore selected GetYourGuide activities and experiences through JA Experiences & Discovery.">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="/assets/css/ja-travel-rebuild.css">
+</head>
+<body data-page="experiences"><div id="siteShellHeader"></div><main id="main">
+  <section class="page-hero experiences-hero"><div class="container"><span class="eyebrow">GetYourGuide</span><h1>Explore selected activities and experiences through our third-party affiliate partner.</h1><p>Use the approved GetYourGuide widgets to browse current activity information and availability.</p></div></section>
+  <section class="section alt"><div class="container">
+    <div class="destination-widget-search">
+      <div><span class="kicker">Destination activity search</span><h2>Where would you like to explore?</h2><p>Enter a country, city, island or region to load GetYourGuide activities for that destination.</p></div>
+      <form id="gygDestinationForm"><label for="gygDestination">Destination</label><div class="search-action"><input id="gygDestination" name="destination" type="search" placeholder="Try London, Madeira or New York" required><button class="button accent" type="submit">Find activities</button></div></form>
+    </div>
+    <div id="gygDestinationResult" class="destination-widget-result" hidden aria-live="polite"></div>
+    <div class="notice affiliate-notice"><strong>Affiliate disclosure:</strong> Bookings made through GetYourGuide are made with GetYourGuide or the relevant third-party provider. JA Group Services Ltd may receive a commission where eligible.</div>
+  </div></section>
+  <section class="section" id="featured"><div class="container">
+    <div class="section-heading left"><span class="kicker">Featured activities</span><h2>Selected activity widgets</h2><p>These are the GetYourGuide widgets supplied in the approved legacy asset package.</p></div>
+    <div id="jaFeaturedGrid" class="partner-widget-grid"></div>
+  </div></section>
+  <section class="section alt" id="cities"><div class="container">
+    <div class="section-heading left"><span class="kicker">Popular cities</span><h2>Explore activities by city</h2><p>Browse the twelve city widgets supplied for JA Experiences &amp; Discovery.</p></div>
+    <div id="jaCityGrid" class="partner-widget-grid city-widget-grid"></div>
+  </div></section>
+</main><div id="siteShellFooter"></div><script src="/assets/js/site-shell.js"></script><script src="/assets/js/getyourguide-widgets.js"></script></body></html>

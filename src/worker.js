@@ -46,15 +46,19 @@ async function submitEnquiry(request, env) {
     name: clean(body.name, 100),
     email: clean(body.email, 160).toLowerCase(),
     telephone: clean(body.telephone, 40),
+    formType: clean(body.formType, 80),
+    enquiryType: clean(body.enquiryType, 120),
     plan: clean(body.plan, 120),
     destination: clean(body.destination, 120),
     dates: clean(body.dates, 120),
     travellers: clean(body.travellers, 120),
+    travellerType: clean(body.travellerType, 120),
     budget: clean(body.budget, 120),
     supportNeeds: clean(body.supportNeeds, 1500),
     message: clean(body.message, 4000),
     socialTariff: Boolean(body.socialTariff),
     specialCategoryConsent: Boolean(body.specialCategoryConsent),
+    transportConfirmed: Boolean(body.transportConfirmed),
     privacyAccepted: Boolean(body.privacyAccepted)
   };
 
@@ -66,17 +70,23 @@ async function submitEnquiry(request, env) {
     return json({ ok: false, message: "Sensitive-information consent is required when support needs are included." }, 400);
   }
 
+  if (enquiry.formType === "Free Discovery Enquiry" && !enquiry.transportConfirmed) {
+    return json({ ok: false, message: "Please confirm that you understand the travel and transport responsibility." }, 400);
+  }
+
   if (!env.RESEND_API_KEY || !env.ENQUIRY_TO_EMAIL || !env.ENQUIRY_FROM_EMAIL) {
     console.error("Enquiry email environment variables are not configured.");
     return json({
       ok: false,
-      message: "Online enquiries are temporarily unavailable. Please email hello@jagroupservices.co.uk."
+      message: "Online forms are temporarily unavailable. Please try again later."
     }, 503);
   }
 
   const reference = `JED-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
   const rows = [
     ["Reference", reference],
+    ["Form", enquiry.formType || "Website enquiry"],
+    ["Enquiry type", enquiry.enquiryType || "Not specified"],
     ["Name", enquiry.name],
     ["Email", enquiry.email],
     ["Telephone", enquiry.telephone || "Not provided"],
@@ -84,6 +94,7 @@ async function submitEnquiry(request, env) {
     ["Destination", enquiry.destination || "Not decided"],
     ["Dates", enquiry.dates || "Not provided"],
     ["Travellers", enquiry.travellers || "Not provided"],
+    ["Traveller type", enquiry.travellerType || "Not provided"],
     ["Budget", enquiry.budget || "Not provided"],
     ["Social tariff requested", enquiry.socialTariff ? "Yes" : "No"],
     ["Support or access needs", enquiry.supportNeeds || "None provided"],
@@ -103,7 +114,7 @@ async function submitEnquiry(request, env) {
       from: env.ENQUIRY_FROM_EMAIL,
       to: [env.ENQUIRY_TO_EMAIL],
       reply_to: enquiry.email,
-      subject: `${reference}: ${enquiry.plan || "Free Discovery Enquiry"} from ${enquiry.name}`,
+      subject: `${reference}: ${enquiry.enquiryType || enquiry.formType || "Website enquiry"} from ${enquiry.name}`,
       html: `<h1>New JA Experiences &amp; Discovery enquiry</h1><table style="border-collapse:collapse;width:100%;max-width:760px" border="1" cellpadding="0" cellspacing="0">${htmlRows}</table>`
     })
   });
@@ -112,14 +123,14 @@ async function submitEnquiry(request, env) {
     console.error("Resend rejected enquiry email", emailResponse.status, await emailResponse.text());
     return json({
       ok: false,
-      message: "We could not send your enquiry. Please email hello@jagroupservices.co.uk."
+      message: "We could not send your form. Please try again later."
     }, 502);
   }
 
   return json({
     ok: true,
     reference,
-    message: "Thank you. Your enquiry has been sent to JA Experiences & Discovery."
+    message: "Thank you. Your form has been sent to JA Experiences & Discovery."
   });
 }
 
@@ -131,8 +142,8 @@ export default {
       "/activities/": "/experiences/",
       "/plans": "/pricing/",
       "/plans/": "/pricing/",
-      "/free-enquiry": "/contact/",
-      "/free-enquiry/": "/contact/"
+      "/free-enquiry": "/enquiry/",
+      "/free-enquiry/": "/enquiry/"
     };
 
     if (redirects[url.pathname]) {

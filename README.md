@@ -1,6 +1,8 @@
-# JA Experiences & Discovery
+# JA Experiences & Discovery Website
 
-Production website for **JA Experiences & Discovery**, a trading division and service line of JA Group Services Ltd.
+Public website for **JA Experiences & Discovery**, a trading division and service line of JA Group Services Ltd.
+
+Production domain: `experiences.jagroupservices.co.uk`
 
 ## Local preview
 
@@ -48,9 +50,11 @@ node scripts/generate-sitemap.mjs
 npx wrangler deploy
 ```
 
-## Operational boundaries
+## Launch notes
 
 - Activity bookings are completed with the named third-party provider.
 - No flights, visas, transfers, transport or package holidays are sold.
-- No selected partner hotel payments may be accepted until written supplier authority and the required operational controls are in place.
-- Stripe payment links must not be activated until the applicable customer terms, cancellation process and internal reconciliation controls are approved.
+- The enquiry and contact forms require the Cloudflare Worker email secrets described above.
+- Headout content will be added when the relevant approved partner material is ready.
+- The Privacy Policy, Terms and Conditions and Cookie Policy pages are holding pages and require final approved policies before the relevant public service features are fully launched.
+- No selected partner hotels are currently listed.
