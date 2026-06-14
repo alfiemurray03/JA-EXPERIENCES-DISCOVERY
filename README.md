@@ -1,5 +1,6 @@
 # JA Experiences & Discovery Website
 
+<<<<<<< HEAD
 Public website for **JA Experiences & Discovery**, a trading division and service line of JA Group Services Ltd.
 
 Production domain: `experiences.jagroupservices.co.uk`
@@ -58,3 +59,27 @@ npx wrangler deploy
 - Headout content will be added when the relevant approved partner material is ready.
 - The Privacy Policy, Terms and Conditions and Cookie Policy pages are holding pages and require final approved policies before the relevant public service features are fully launched.
 - No selected partner hotels are currently listed.
+=======
+## Purpose
+Public website for JA Experiences & Discovery, a trading division/service line of JA Group Services Ltd.
+
+## Local preview
+Open `index.html` in a browser, or use a simple static server from this folder:
+
+```bash
+python -m http.server 3000
+```
+
+Then visit http://localhost:3000/
+
+## Cloudflare Pages
+This site is built as static HTML, CSS and JavaScript and is ready for deployment to Cloudflare Pages from GitHub.
+
+## Production domain
+experiences.jagroupservices.co.uk
+
+## Notes
+- Form endpoints are configured as future-ready placeholders such as `/api/enquiries` and `/api/contact`.
+- Headout content will be added once partner material is available.
+- Legal pages are intentionally marked as coming soon until final approved policies are available.
+>>>>>>> eff9dcc (Build public JA Experiences & Discovery website)
