@@ -29,9 +29,10 @@
 
 .header-logo img {
   display: block;
-  height: 58px;
-  width: auto;
-  max-width: 220px;
+  width: 150px;
+  height: auto;
+  max-width: none;
+  max-height: none;
   object-fit: contain;
 }
 
