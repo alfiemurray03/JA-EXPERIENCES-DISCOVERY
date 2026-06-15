@@ -12,7 +12,7 @@
 
 .header-inner {
   max-width: 1320px;
-  min-height: 96px;
+  min-height: 112px;
   margin: 0 auto;
   padding: 0 34px;
   display: grid;
@@ -29,9 +29,9 @@
 
 .header-logo img {
   display: block;
+  height: 58px;
   width: auto;
-  height: 42px;
-  max-width: 170px;
+  max-width: 220px;
   object-fit: contain;
 }
 
