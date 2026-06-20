@@ -12,12 +12,12 @@
 }
 
 .header-inner {
-  max-width: 1320px;
+  max-width: 1440px;
   min-height: 90px;
   margin: 0 auto;
   padding: 0 42px;
   display: grid;
-  grid-template-columns: 230px 1fr auto;
+  grid-template-columns: 190px 1fr auto;
   align-items: center;
   gap: 28px;
 }
@@ -58,12 +58,12 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 24px;
+  gap: 16px;
 }
 
 .site-nav a {
   color: #111827;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 750;
   line-height: 1;
   text-decoration: none;
