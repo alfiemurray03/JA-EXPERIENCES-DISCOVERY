@@ -30,7 +30,7 @@
   font-size: clamp(48px, 6vw, 78px);
   font-weight: 600;
   line-height: 1;
-  letter-spacing: -0.045em;
+  letter-spacing: 0;
 }
 
 .home-clean h2 {
@@ -40,7 +40,7 @@
   font-size: clamp(36px, 4vw, 56px);
   font-weight: 600;
   line-height: 1.05;
-  letter-spacing: -0.035em;
+  letter-spacing: 0;
 }
 
 .home-clean h3 {
@@ -415,5 +415,129 @@
   .home-clean .clean-image-band,
   .home-clean .clean-final {
     padding: 68px 0;
+  }
+}
+
+/* 2026 homepage refresh */
+.home-clean .clean-hero {
+  min-height: 640px;
+  display: flex;
+  align-items: center;
+  padding: 76px 0;
+  color: #ffffff;
+  background:
+    linear-gradient(90deg, rgba(8, 42, 73, .92), rgba(8, 42, 73, .52)),
+    url("/assets/images/destinations/travel.jpg") center / cover;
+}
+
+.home-clean .clean-hero-grid {
+  grid-template-columns: minmax(0, 1fr) 380px;
+}
+
+.home-clean .clean-kicker,
+.home-clean .clean-heading span,
+.home-clean .clean-final span {
+  color: #e86f34;
+  letter-spacing: .11em;
+}
+
+.home-clean .clean-hero .clean-kicker {
+  color: #ffc09b;
+}
+
+.home-clean h1,
+.home-clean h2 {
+  letter-spacing: 0;
+}
+
+.home-clean .clean-hero h1 {
+  max-width: 780px;
+  color: #ffffff;
+  font-size: clamp(48px, 6vw, 76px);
+  line-height: 1;
+}
+
+.home-clean .clean-hero-copy > p {
+  max-width: 700px;
+  color: rgba(255, 255, 255, .88);
+  font-size: 19px;
+}
+
+.home-clean .clean-hero-card {
+  border: 0;
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.home-clean .clean-hero-card img {
+  height: 340px;
+}
+
+.home-clean .clean-section {
+  background: #fffdf9;
+}
+
+.home-clean .clean-section.soft {
+  background: #f6f1e8;
+}
+
+.home-clean .clean-card-grid article,
+.home-clean .clean-steps article,
+.home-clean .clean-price-grid article {
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.home-clean .clean-card-grid b,
+.home-clean .clean-steps strong {
+  border-radius: 8px;
+  background: #eef5f7;
+  color: #082a49;
+}
+
+.home-clean .clean-steps strong {
+  color: #ffffff;
+  background: #082a49;
+}
+
+.home-clean .clean-price-grid article {
+  min-height: 260px;
+}
+
+.home-clean .clean-image-band,
+.home-clean .clean-final {
+  background: #082a49;
+}
+
+.home-clean .clean-destination-cards a {
+  border-radius: 8px;
+}
+
+.home-clean .clean-strip {
+  background: #fff;
+}
+
+@media (max-width: 900px) {
+  .home-clean .clean-hero-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .home-clean .clean-hero-card {
+    max-width: 520px;
+  }
+}
+
+@media (max-width: 620px) {
+  .home-clean .clean-hero {
+    min-height: 700px;
+    padding: 70px 0;
+  }
+
+  .home-clean .clean-hero h1 {
+    font-size: 52px;
+  }
+
+  .home-clean .clean-hero-card {
+    display: none;
   }
 }

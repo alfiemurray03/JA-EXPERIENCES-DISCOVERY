@@ -123,7 +123,7 @@ button:disabled {
 
 h1, h2, h3 {
   font-family: "DM Sans", Inter, sans-serif;
-  letter-spacing: -.025em;
+  letter-spacing: 0;
 }
 
 h1 {

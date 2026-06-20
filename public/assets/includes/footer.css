@@ -1,7 +1,7 @@
 .site-footer {
-  background: #061f36;
+  background: #082a49;
   color: #ffffff;
-  padding: 46px 0 24px;
+  padding: 58px 0 26px;
   font-family: "Inter", "Segoe UI", Arial, sans-serif;
 }
 
@@ -13,7 +13,7 @@
 .footer-top {
   display: grid;
   grid-template-columns: minmax(240px, 1.7fr) repeat(4, minmax(130px, 1fr));
-  gap: 28px;
+  gap: 34px;
   align-items: start;
 }
 
@@ -32,7 +32,7 @@
 .footer-brand-text {
   max-width: 310px;
   margin: 0 0 18px;
-  color: rgba(255, 255, 255, 0.82);
+  color: rgba(255, 255, 255, 0.78);
   font-size: 0.95rem;
   line-height: 1.65;
 }
@@ -54,14 +54,14 @@
   color: #ffffff;
   font-size: 0.82rem;
   font-weight: 800;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
 .footer-col a {
   display: block;
   margin: 0 0 10px;
-  color: rgba(255, 255, 255, 0.78);
+  color: rgba(255, 255, 255, 0.76);
   font-size: 0.94rem;
   line-height: 1.35;
   text-decoration: none;
@@ -71,14 +71,14 @@
 .footer-contact a:focus-visible,
 .footer-col a:hover,
 .footer-col a:focus-visible {
-  color: #f97316;
+  color: #ffc09b;
   text-decoration: underline;
   text-underline-offset: 4px;
 }
 
 .footer-company {
   margin-top: 34px;
-  padding-top: 20px;
+  padding-top: 24px;
   border-top: 1px solid rgba(255, 255, 255, 0.16);
   color: rgba(255, 255, 255, 0.74);
   font-size: 0.9rem;
@@ -101,7 +101,7 @@
 .footer-bottom {
   margin-top: 22px;
   padding-top: 18px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
   color: rgba(255, 255, 255, 0.62);
   font-size: 0.84rem;
 }

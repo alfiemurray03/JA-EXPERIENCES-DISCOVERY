@@ -34,7 +34,7 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  backdrop-filter: blur(14px);
+  backdrop-filter: none;
 }
 
 .brand {
@@ -138,7 +138,7 @@ body {
   margin: 0;
   font-size: clamp(2.8rem, 6vw, 5rem);
   line-height: 0.98;
-  letter-spacing: -0.05em;
+  letter-spacing: 0;
 }
 
 .hero p {
@@ -223,7 +223,7 @@ body {
   margin: 0;
   color: var(--text);
   font-size: clamp(1.9rem, 4vw, 3rem);
-  letter-spacing: -0.04em;
+  letter-spacing: 0;
 }
 
 .section-heading p {

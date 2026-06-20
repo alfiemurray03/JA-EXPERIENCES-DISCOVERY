@@ -90,7 +90,7 @@ a { color: inherit; text-decoration: none; }
 
 h1, h2 {
   font-family: "DM Sans", Inter, sans-serif;
-  letter-spacing: -.03em;
+  letter-spacing: 0;
 }
 
 h1 {
