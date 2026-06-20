@@ -228,6 +228,6 @@ renderDestination();
 
 if (document.querySelector("#destinationGuide")) {
   const headoutScript = document.createElement("script");
-  headoutScript.src = "/assets/js/headout-widgets.js";
+  headoutScript.src = "/assets/js/headout-widgets.js?v=20260620-2";
   document.body.appendChild(headoutScript);
 }
