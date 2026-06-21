@@ -10,8 +10,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="/assets/css/ja-travel-rebuild.css?v=20260621-15">
-  <link rel="stylesheet" href="/assets/css/homepage-clean.css?v=20260621-15">
+  <link rel="stylesheet" href="/assets/css/ja-travel-rebuild.css?v=20260621-18">
+  <link rel="stylesheet" href="/assets/css/homepage-clean.css?v=20260621-18">
 
   <style>
     body {
@@ -53,7 +53,7 @@
 
     .account-hero-grid {
       display: grid;
-      grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+      grid-template-columns: minmax(0, 1.05fr) minmax(340px, 0.95fr);
       gap: clamp(2rem, 5vw, 4rem);
       align-items: center;
     }
@@ -75,12 +75,18 @@
       line-height: 1.65;
     }
 
-    .profile-card {
-      background: rgba(255, 255, 255, 0.96);
-      border: 1px solid rgba(255, 255, 255, 0.35);
+    .profile-card,
+    .account-panel,
+    .account-card {
+      background: #ffffff;
+      border: 1px solid #d8e2ea;
       border-radius: 28px;
-      padding: 1.5rem;
-      color: #08233c;
+      padding: 1.75rem;
+      box-shadow: 0 22px 60px rgba(8, 35, 60, 0.1);
+    }
+
+    .profile-card {
+      background: rgba(255, 255, 255, 0.97);
       box-shadow: 0 24px 70px rgba(0, 0, 0, 0.22);
     }
 
@@ -92,14 +98,14 @@
     }
 
     .profile-avatar {
-      width: 66px;
-      height: 66px;
-      border-radius: 22px;
+      width: 72px;
+      height: 72px;
+      border-radius: 24px;
       background: #f26a2e;
       color: #ffffff;
       display: grid;
       place-items: center;
-      font-size: 1.4rem;
+      font-size: 1.45rem;
       font-weight: 900;
       box-shadow: 0 14px 30px rgba(242, 106, 46, 0.3);
     }
@@ -107,7 +113,7 @@
     .profile-top h2 {
       margin: 0;
       color: #08233c;
-      font-size: 1.25rem;
+      font-size: 1.35rem;
       font-weight: 900;
     }
 
@@ -184,11 +190,14 @@
       justify-content: center;
       min-height: 48px;
       padding: 0 1.15rem;
+      border: 0;
       border-radius: 14px;
       background: #08233c;
       color: #ffffff;
+      font: inherit;
       font-weight: 900;
       text-decoration: none;
+      cursor: pointer;
       box-shadow: 0 14px 28px rgba(8, 35, 60, 0.16);
     }
 
@@ -216,18 +225,9 @@
       width: min(1180px, 100%);
       margin: 0 auto;
       display: grid;
-      grid-template-columns: 0.8fr 1.2fr;
+      grid-template-columns: 0.85fr 1.15fr;
       gap: 1.25rem;
       align-items: start;
-    }
-
-    .account-panel,
-    .account-card {
-      background: #ffffff;
-      border: 1px solid #d8e2ea;
-      border-radius: 26px;
-      padding: 1.75rem;
-      box-shadow: 0 20px 50px rgba(8, 35, 60, 0.08);
     }
 
     .account-panel h2,
@@ -235,7 +235,7 @@
       margin: 0 0 0.85rem;
       color: #08233c;
       font-family: "Playfair Display", Georgia, serif;
-      font-size: clamp(1.9rem, 3vw, 2.7rem);
+      font-size: clamp(1.9rem, 3vw, 2.65rem);
       line-height: 0.98;
       letter-spacing: -0.045em;
     }
@@ -247,27 +247,54 @@
       line-height: 1.65;
     }
 
-    .account-mini-list {
+    .profile-form {
       display: grid;
-      gap: 0.85rem;
-      margin: 1.2rem 0 0;
-      padding: 0;
-      list-style: none;
+      gap: 1rem;
+      margin-top: 1.25rem;
     }
 
-    .account-mini-list li {
-      border-radius: 18px;
-      background: #f7f9fb;
-      border: 1px solid #d8e2ea;
-      padding: 1rem;
-      color: #26384d;
-      line-height: 1.55;
-    }
-
-    .account-mini-list strong {
-      display: block;
-      margin-bottom: 0.25rem;
+    .profile-form label {
+      display: grid;
+      gap: 0.45rem;
       color: #08233c;
+      font-size: 0.82rem;
+      font-weight: 900;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .profile-form input,
+    .profile-form select,
+    .profile-form textarea {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #d8e2ea;
+      border-radius: 16px;
+      background: #f7f9fb;
+      color: #08233c;
+      font: inherit;
+      padding: 0.9rem 1rem;
+      outline: none;
+    }
+
+    .profile-form textarea {
+      min-height: 110px;
+      resize: vertical;
+    }
+
+    .profile-form small {
+      color: #526276;
+      font-weight: 600;
+      letter-spacing: 0;
+      text-transform: none;
+      line-height: 1.45;
+    }
+
+    .saved-message {
+      border-radius: 16px;
+      background: #eaf7f1;
+      color: #007a53;
+      padding: 0.85rem 1rem;
       font-weight: 900;
     }
 
@@ -312,8 +339,8 @@
           <span class="account-kicker">JA Secure Access</span>
           <h1>My account.</h1>
           <p>
-            Welcome to your secure JA Experiences &amp; Discovery profile.
-            This area is protected by JA Secure Access and Microsoft Entra sign-in.
+            Manage your JA Experiences &amp; Discovery profile, support preferences,
+            enquiry links and secure access details.
           </p>
 
           <div class="account-actions">
@@ -335,23 +362,38 @@
 
           <div class="profile-details">
             <div class="profile-row">
-              <span>Name</span>
+              <span>Display name</span>
               <strong id="profileNameDetail">Loading...</strong>
             </div>
 
             <div class="profile-row">
-              <span>Email address</span>
+              <span>Microsoft account name</span>
+              <strong id="profileLegalName">Loading...</strong>
+            </div>
+
+            <div class="profile-row">
+              <span>Sign-in email</span>
               <strong id="profileEmailDetail">Loading...</strong>
+            </div>
+
+            <div class="profile-row">
+              <span>Preferred contact email</span>
+              <strong id="profileContactEmail">Loading...</strong>
+            </div>
+
+            <div class="profile-row">
+              <span>Phone</span>
+              <strong id="profilePhone">Loading...</strong>
+            </div>
+
+            <div class="profile-row">
+              <span>Communication preference</span>
+              <strong id="profileComms">Loading...</strong>
             </div>
 
             <div class="profile-row">
               <span>Access provider</span>
               <strong id="profileProvider">JA Secure Access / Microsoft Entra</strong>
-            </div>
-
-            <div class="profile-row">
-              <span>Account status</span>
-              <strong>Protected access active</strong>
             </div>
           </div>
         </aside>
@@ -361,31 +403,52 @@
     <section class="account-section">
       <div class="account-dashboard">
         <aside class="account-panel">
-          <span class="account-kicker">Profile</span>
-          <h2>Account details</h2>
+          <span class="account-kicker">Profile settings</span>
+          <h2>Edit your profile</h2>
           <p>
-            Your profile information is supplied by JA Secure Access after Microsoft sign-in.
-            If your name or email is incorrect, update it in your Microsoft account.
+            Your Microsoft sign-in name and email are verified by JA Secure Access.
+            You can set a display name and contact preferences for this profile.
           </p>
 
-          <ul class="account-mini-list">
-            <li>
-              <strong>Security</strong>
-              Access is protected before this page loads.
-            </li>
-            <li>
-              <strong>Session</strong>
-              Sign out when using a shared or public computer.
-            </li>
-            <li>
-              <strong>Support matching</strong>
-              Use your payment email when contacting support about paid plans.
-            </li>
-          </ul>
+          <form class="profile-form" id="profileForm">
+            <label>
+              Display name
+              <input id="displayNameInput" type="text" autocomplete="name">
+              <small>This defaults to your Microsoft account name, but you can change how it appears here.</small>
+            </label>
 
-          <div class="account-actions">
-            <a class="account-button" href="/cdn-cgi/access/logout">Sign out</a>
-          </div>
+            <label>
+              Preferred contact email
+              <input id="contactEmailInput" type="email" autocomplete="email">
+              <small>This does not change your Microsoft sign-in email.</small>
+            </label>
+
+            <label>
+              Phone number
+              <input id="phoneInput" type="tel" autocomplete="tel">
+            </label>
+
+            <label>
+              Communication preference
+              <select id="communicationPreferenceInput">
+                <option>Email</option>
+                <option>Phone</option>
+                <option>Email first, phone if urgent</option>
+              </select>
+            </label>
+
+            <label>
+              Support notes
+              <textarea id="supportNotesInput" placeholder="Optional notes you want visible on this device, such as accessibility preferences or support reminders."></textarea>
+            </label>
+
+            <div class="account-actions">
+              <button class="account-button orange" type="submit">Save profile</button>
+              <button class="account-button" type="button" id="resetProfileButton">Reset saved profile</button>
+            </div>
+
+            <div class="saved-message" id="profileSavedMessage" hidden></div>
+          </form>
         </aside>
 
         <div class="account-card-grid">
@@ -393,8 +456,8 @@
             <span class="account-kicker">Requests</span>
             <h2>Support requests</h2>
             <p>
-              Start a new discovery enquiry or contact JA Experiences &amp; Discovery about
-              an existing planning request.
+              Start a new discovery enquiry or contact JA Experiences &amp; Discovery
+              about an existing planning request.
             </p>
             <a class="account-button orange" href="/enquiry/">Open enquiry form</a>
           </article>
@@ -403,8 +466,8 @@
             <span class="account-kicker">Payments</span>
             <h2>Planning plans</h2>
             <p>
-              View paid planning options. If you have already paid, keep your Stripe receipt
-              and payment email for support matching.
+              View paid planning options. Keep your Stripe receipt and payment email
+              for support matching.
             </p>
             <a class="account-button" href="/pricing/">View plans</a>
           </article>
@@ -413,37 +476,35 @@
             <span class="account-kicker">Guidance</span>
             <h2>Important information</h2>
             <p>
-              Review how JA Experiences &amp; Discovery works, including service scope,
-              third-party provider boundaries and customer responsibilities.
+              Review service scope, third-party provider boundaries and customer responsibilities.
             </p>
             <a class="account-button" href="/important-information/">Read guidance</a>
           </article>
 
           <article class="account-card">
-            <span class="account-kicker">Documents</span>
-            <h2>Travel support</h2>
+            <span class="account-kicker">Security</span>
+            <h2>Secure sign out</h2>
             <p>
-              Travel documentation support is guidance only and is not legal, immigration
-              or visa advice. We cannot guarantee application outcomes.
+              Sign out when using a shared device. JA Secure Access protects this page
+              before the account area loads.
             </p>
-            <a class="account-button" href="/travel-documentation-support/">View support</a>
+            <a class="account-button" href="/cdn-cgi/access/logout">Sign out</a>
           </article>
         </div>
       </div>
 
       <div class="account-note">
-        This secure account area is not a travel booking system. JA Experiences &amp; Discovery
-        provides discovery, planning and guidance support only. Third-party bookings remain subject
-        to the provider’s own terms, checks, cancellation rules and availability.
+        Profile edits are currently saved on this device only. A future database-backed profile can sync
+        display names, preferences and support details across devices. JA Experiences &amp; Discovery provides
+        discovery, planning and guidance support only and is not a travel booking system.
       </div>
     </section>
   </main>
 
   <div id="siteShellFooter"></div>
-  <script src="/assets/js/account-profile.js?v=20260621-17"></script>
-  <script src="/assets/js/site-shell.js?v=20260621-17"></script>
+
+  <script src="/assets/js/account-profile.js?v=20260621-18"></script>
+  <script src="/assets/js/access-header.js?v=20260621-18"></script>
+  <script src="/assets/js/site-shell.js?v=20260621-18"></script>
 </body>
 </html>
-
-
-
