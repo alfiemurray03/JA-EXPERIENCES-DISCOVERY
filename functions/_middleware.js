@@ -266,7 +266,8 @@ async function getSiteSettings(DB) {
         'comingsoon_enabled',
         'comingsoon_title',
         'comingsoon_message',
-        'comingsoon_eta'
+        'comingsoon_eta',
+        'site_theme_mode'
       )
     `).all();
 
@@ -280,9 +281,48 @@ async function getSiteSettings(DB) {
   } catch {
     return {
       maintenance_enabled: "false",
-      comingsoon_enabled: "false"
+      comingsoon_enabled: "false",
+      site_theme_mode: "dark"
     };
   }
+}
+
+function injectTheme(html, settings) {
+  const mode = ["light", "dark", "system"].includes(settings.site_theme_mode) ? settings.site_theme_mode : "dark";
+  const themeScript = `<script>document.documentElement.dataset.siteTheme=${JSON.stringify(mode)};</script>`;
+  const themeStyle = `<style>
+    html[data-site-theme="dark"] body {
+      background-color: #0b1220;
+      color-scheme: dark;
+    }
+    html[data-site-theme="dark"] .section,
+    html[data-site-theme="dark"] .page-hero,
+    html[data-site-theme="dark"] .info-card,
+    html[data-site-theme="dark"] .card,
+    html[data-site-theme="dark"] .panel,
+    html[data-site-theme="dark"] .notice {
+      background-color: #101827;
+      color: #f8fafc;
+      border-color: rgba(148, 163, 184, 0.24);
+    }
+    html[data-site-theme="dark"] p,
+    html[data-site-theme="dark"] li,
+    html[data-site-theme="dark"] .section-heading p {
+      color: #bdd0ea;
+    }
+    html[data-site-theme="light"] body {
+      color-scheme: light;
+    }
+    @media (prefers-color-scheme: dark) {
+      html[data-site-theme="system"] body {
+        background-color: #0b1220;
+        color-scheme: dark;
+      }
+    }
+  </style>`;
+
+  if (html.includes("</head>")) return html.replace("</head>", `${themeScript}${themeStyle}</head>`);
+  return `${themeScript}${themeStyle}${html}`;
 }
 
 export async function onRequest(context) {
@@ -301,7 +341,17 @@ export async function onRequest(context) {
       });
     }
 
-    return next();
+    const response = await next();
+    if (!env.DB || !(response.headers.get("Content-Type") || "").includes("text/html")) return response;
+    const settings = await getSiteSettings(env.DB);
+    const headers = new Headers(response.headers);
+    headers.set("Cache-Control", "no-store");
+    headers.delete("Content-Length");
+    return new Response(injectTheme(await response.text(), settings), {
+      status: response.status,
+      statusText: response.statusText,
+      headers
+    });
   }
 
   const bypass =
@@ -339,5 +389,17 @@ export async function onRequest(context) {
     });
   }
 
-  return next();
+  const response = await next();
+  const contentType = response.headers.get("Content-Type") || "";
+  if (!contentType.includes("text/html")) return response;
+
+  const html = await response.text();
+  const headers = new Headers(response.headers);
+  headers.set("Cache-Control", "no-store");
+  headers.delete("Content-Length");
+  return new Response(injectTheme(html, settings), {
+    status: response.status,
+    statusText: response.statusText,
+    headers
+  });
 }

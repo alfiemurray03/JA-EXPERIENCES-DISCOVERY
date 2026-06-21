@@ -108,6 +108,21 @@ async function ensureCustomerAdminColumns(DB) {
   }
 }
 
+async function ensureAuditLog(DB) {
+  await DB.prepare(`
+    CREATE TABLE IF NOT EXISTS admin_audit_log (
+      id TEXT PRIMARY KEY,
+      actor_email TEXT,
+      action TEXT,
+      entity_type TEXT,
+      entity_id TEXT,
+      summary TEXT,
+      metadata TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
+}
+
 async function getCustomer(DB, email) {
   return DB.prepare(`
     SELECT
@@ -173,6 +188,7 @@ export async function onRequest(context) {
   if (!(await isAllowedAdmin(env.DB, identity, env))) return json({ error: "Forbidden.", signedInAs: identity.email }, 403);
 
   await ensureCustomerAdminColumns(env.DB);
+  await ensureAuditLog(env.DB);
 
   const url = new URL(request.url);
   const email = String(url.searchParams.get("email") || "").trim().toLowerCase();
@@ -210,6 +226,18 @@ export async function onRequest(context) {
       status,
       notes,
       email
+    ).run();
+
+    await env.DB.prepare(`
+      INSERT INTO admin_audit_log (id, actor_email, action, entity_type, entity_id, summary, metadata)
+      VALUES (?, ?, ?, 'profiles', ?, ?, ?)
+    `).bind(
+      crypto.randomUUID(),
+      identity.email,
+      makeLifetime ? "lifetime_access_grant" : "lifetime_access_revoke",
+      email,
+      makeLifetime ? `Granted lifetime access to ${email}.` : `Revoked lifetime access for ${email}.`,
+      JSON.stringify({ lifetimePlanId, status })
     ).run();
 
     const customer = await getCustomer(env.DB, email);

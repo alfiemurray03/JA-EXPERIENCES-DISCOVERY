@@ -16,6 +16,12 @@ const sectionTitles = {
   system: "System / Issues",
   datarequests: "Data Protection Requests",
   systemreports: "System Reports",
+  closures: "Closure Requests",
+  analytics: "Analytics",
+  affiliate: "Affiliate Content",
+  appearance: "Appearance",
+  email: "Email (SMTP)",
+  audit: "Audit Log",
   comingsoon: "Coming Soon Page",
   maintenance: "Maintenance Mode"
 };
@@ -30,11 +36,15 @@ const iconPaths = {
   card: '<rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3 10h18"></path><path d="M7 15h3"></path>',
   settings: '<path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"></path><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21a2 2 0 1 1-4 0v-.2a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1A2 2 0 1 1 4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H3a2 2 0 1 1 0-4h.2a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1A2 2 0 1 1 7 4.2l.1.1a1.7 1.7 0 0 0 1.9.3h.1A1.7 1.7 0 0 0 10 3V3a2 2 0 1 1 4 0v.2a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1A2 2 0 1 1 19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9v.1A1.7 1.7 0 0 0 21 10h.1a2 2 0 1 1 0 4H21a1.7 1.7 0 0 0-1.6 1z"></path>',
   clock: '<circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path>',
-  file: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><path d="M8 13h8"></path><path d="M8 17h6"></path>'
+  file: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><path d="M8 13h8"></path><path d="M8 17h6"></path>',
+  chart: '<path d="M3 3v18h18"></path><path d="M8 17V9"></path><path d="M13 17V5"></path><path d="M18 17v-6"></path>',
+  link: '<path d="M10 13a5 5 0 0 0 7.1 0l2-2a5 5 0 0 0-7.1-7.1l-1.1 1.1"></path><path d="M14 11a5 5 0 0 0-7.1 0l-2 2A5 5 0 1 0 12 20.1l1.1-1.1"></path>',
+  palette: '<circle cx="13.5" cy="6.5" r=".5"></circle><circle cx="17.5" cy="10.5" r=".5"></circle><circle cx="8.5" cy="7.5" r=".5"></circle><circle cx="6.5" cy="12.5" r=".5"></circle><path d="M12 2a10 10 0 0 0 0 20h1.5a2.5 2.5 0 0 0 0-5H12a2 2 0 0 1 0-4h2a8 8 0 0 0 0-16z"></path>'
 };
 
-const dprStatuses = ["New", "In Review", "Awaiting Customer Information", "Awaiting Identity Verification", "Action Required", "Completed", "Refused / Not Applicable", "Closed"];
-const systemReportStatuses = ["New", "Investigating", "In Progress", "Escalated", "Fixed", "Closed", "Duplicate / Not Reproducible"];
+const dprStatuses = ["Received", "Verifying Identity", "In Progress", "Ready to Send", "Sent", "Closed", "Rejected"];
+const systemReportStatuses = ["Open", "In Progress", "Resolved", "Rejected"];
+const closureStatuses = ["Open", "In Progress", "Approved", "Rejected", "Completed"];
 const priorities = ["Low", "Normal", "High", "Urgent"];
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -129,6 +139,26 @@ function bindAdminActions() {
       openAdminRecordModal(action.dataset.section, action.dataset.id);
     }
 
+    if (type === "open-closure") {
+      openClosureModal(action.dataset.id || "");
+    }
+
+    if (type === "open-affiliate-block") {
+      openAffiliateModal(action.dataset.id || "");
+    }
+
+    if (type === "delete-affiliate-block") {
+      deleteAffiliateBlock(action.dataset.id);
+    }
+
+    if (type === "export-records") {
+      exportRecords(action.dataset.section, action.dataset.format || "csv");
+    }
+
+    if (type === "export-customer-data") {
+      exportCustomerData(action.dataset.email, action.dataset.format || "json");
+    }
+
     if (type === "close-modal") {
       closeModal();
     }
@@ -219,6 +249,7 @@ function setAdmin(admin) {
 
 function renderSection(section, data) {
   if (section === "overview") renderOverview(data.overview);
+  if (section === "analytics") renderAnalytics(data.analytics);
   if (section === "admins") renderAdmins(data.admins);
   if (section === "customers") renderCustomers(data.customers);
   if (section === "plans") renderPlans(data.plans);
@@ -231,6 +262,11 @@ function renderSection(section, data) {
   if (section === "system") renderSystem(data.system);
   if (section === "datarequests") renderDataRequests(data.datarequests);
   if (section === "systemreports") renderSystemReports(data.systemreports);
+  if (section === "closures") renderClosures(data.closures);
+  if (section === "affiliate") renderAffiliate(data.affiliate);
+  if (section === "appearance") renderAppearance(data.appearance);
+  if (section === "email") renderEmail(data.email, data.test);
+  if (section === "audit") renderAudit(data.audit);
 }
 
 function renderOverview(overview) {
@@ -244,6 +280,8 @@ function renderOverview(overview) {
       ${stat("Open issues", overview.openIssues)}
       ${stat("Data requests", overview.dataProtectionRequests)}
       ${stat("System reports", overview.systemReports)}
+      ${stat("Closure requests", overview.closureRequests)}
+      ${stat("Lifetime users", overview.lifetimeUsers)}
       ${stat("Coming Soon", overview.comingSoonStatus)}
       ${stat("Maintenance", overview.maintenanceStatus)}
       ${stat("Admins", overview.admins)}
@@ -259,13 +297,19 @@ function renderOverview(overview) {
       <div class="quick-grid">
         ${quick("admins", "shield", "Admin Users / Access", "Manage authorised admin accounts")}
         ${quick("customers", "users", "CRM / Customers", "Review customer records and Lifetime access")}
+        ${quick("analytics", "chart", "Analytics", "Review customers, enquiries, reports and plan changes")}
         ${quick("datarequests", "file", "Data Protection Requests", "Review UK GDPR and data rights requests")}
         ${quick("systemreports", "alert", "System Reports", "Track customer website and account issue reports")}
+        ${quick("closures", "shield", "Closure Requests", "Create and manage customer account closure workflows")}
         ${quick("plans", "plans", "Plans & Prices", "Configure service plan cards and Stripe IDs")}
         ${quick("stripe", "card", "Stripe API Controls", "Store keys and test account status")}
+        ${quick("email", "mail", "Email (SMTP)", "Configure outbound notifications and test attempts")}
+        ${quick("affiliate", "link", "Affiliate Content", "Manage affiliate widgets, notices and blocks")}
+        ${quick("appearance", "palette", "Appearance", "Control site-wide light and dark mode")}
         ${quick("comingsoon", "clock", "Coming Soon Page", "Control the public pre-launch page")}
         ${quick("maintenance", "shield", "Maintenance Mode", "Control public maintenance mode")}
         ${quick("policies", "file", "Legal Policies", "Edit draft and published policy records")}
+        ${quick("audit", "clock", "Audit Log", "Review sensitive admin activity history")}
         ${quick("system", "alert", "System / Issues", "Track operational issues")}
       </div>
     </div>
@@ -278,6 +322,46 @@ function quick(section, icon, title, text) {
       <span class="quick-icon">${iconSvg(icon)}</span>
       <span><strong>${escapeHtml(title)}</strong><span>${escapeHtml(text)}</span></span>
     </button>
+  `;
+}
+
+function renderAnalytics(analytics = {}) {
+  const rows = Object.entries({
+    "Total users": analytics.totalUsers,
+    "New users this month": analytics.newUsersThisMonth,
+    "Active users": analytics.activeUsers,
+    "Lifetime users": analytics.lifetimeUsers,
+    "Free users": analytics.freeUsers,
+    "Paid users": analytics.paidUsers,
+    "Bookings or referrals": analytics.totalBookingsOrReferrals,
+    "Total enquiries": analytics.totalEnquiries,
+    "Open support requests": analytics.openSupportRequests,
+    "Open data requests": analytics.openDataRequests,
+    "Open closure requests": analytics.openClosureRequests,
+    "Website/system reports": analytics.systemReportsSubmitted,
+    "Plan changes": analytics.planChanges,
+    "Email notification status": analytics.emailNotificationStatus
+  }).map(([label, value]) => `<tr><td><strong>${escapeHtml(label)}</strong></td><td>${escapeHtml(value ?? 0)}</td></tr>`).join("");
+
+  document.getElementById("adminPanel").innerHTML = `
+    <div class="section-head">
+      <div><h2>Analytics</h2><p>Operational dashboard for account, request, enquiry and notification activity.</p></div>
+      <div class="section-actions">
+        <button class="admin-button secondary" type="button" data-action="export-records" data-section="analytics" data-format="csv">Export CSV</button>
+      </div>
+    </div>
+    <div class="admin-grid">
+      ${stat("Total users", analytics.totalUsers || 0)}
+      ${stat("New this month", analytics.newUsersThisMonth || 0)}
+      ${stat("Lifetime users", analytics.lifetimeUsers || 0)}
+      ${stat("Total enquiries", analytics.totalEnquiries || 0)}
+      ${stat("Open data requests", analytics.openDataRequests || 0)}
+      ${stat("System reports", analytics.systemReportsSubmitted || 0)}
+    </div>
+    <div class="admin-card">
+      <div class="section-head"><div><h2>Performance Summary</h2><p>Use this table for a quick management snapshot. Date-range filters can be extended once booking/referral event data is available.</p></div></div>
+      ${table(["Metric", "Value"], rows)}
+    </div>
   `;
 }
 
@@ -848,6 +932,176 @@ function renderSystemReports(items = []) {
   });
 }
 
+function renderClosures(items = []) {
+  renderAdminRecordSection({
+    section: "closures",
+    title: "Closure Requests",
+    description: "Create, review, approve, reject and complete customer account closure requests.",
+    items,
+    statuses: closureStatuses,
+    columns: ["Reference", "Customer", "Status", "Assigned", "Updated", "Actions"],
+    row: (item) => `
+      <tr>
+        <td><strong>${escapeHtml(item.reference)}</strong><span>${escapeHtml(formatDate(item.created_at))}</span></td>
+        <td><strong>${escapeHtml(item.customer_name || "Customer")}</strong><span>${escapeHtml(item.customer_email || "")}</span></td>
+        <td>${badge(item.status || "Open", statusColour(item.status))}</td>
+        <td>${escapeHtml(item.assigned_admin_id || "Unassigned")}</td>
+        <td>${escapeHtml(formatDate(item.updated_at || item.created_at))}</td>
+        <td><button class="mini-button" type="button" data-action="open-closure" data-id="${escapeAttr(item.id)}">Open</button></td>
+      </tr>
+    `,
+    extraActions: `<button class="admin-button" type="button" data-action="open-closure">New closure request</button>`
+  });
+}
+
+function renderAffiliate(items = []) {
+  const rows = items.map((item) => `
+    <tr>
+      <td><strong>${escapeHtml(item.title)}</strong><span>${escapeHtml(item.block_type || "Content")} · Order ${escapeHtml(item.sort_order || 100)}</span></td>
+      <td>${Number(item.is_enabled) === 1 ? badge("Enabled", "green") : badge("Disabled", "red")}</td>
+      <td>${Number(item.is_published) === 1 ? badge("Published", "green") : badge("Draft", "")}</td>
+      <td>${escapeHtml(formatDate(item.updated_at || item.created_at))}</td>
+      <td>
+        <button class="mini-button" type="button" data-action="open-affiliate-block" data-id="${escapeAttr(item.id)}">Edit</button>
+        <button class="mini-button" type="button" data-action="delete-affiliate-block" data-id="${escapeAttr(item.id)}">Delete</button>
+      </td>
+    </tr>
+  `).join("");
+
+  document.getElementById("adminPanel").innerHTML = `
+    <div class="admin-card">
+      <div class="section-head">
+        <div><h2>Affiliate Content</h2><p>Manage affiliate page headings, widgets, CTA buttons, disclaimers, referral notices, featured content and FAQs without hardcoding.</p></div>
+        <div class="section-actions">
+          <button class="admin-button secondary" type="button" data-action="export-records" data-section="affiliate" data-format="csv">Export CSV</button>
+          <button class="admin-button" type="button" data-action="open-affiliate-block">New block</button>
+        </div>
+      </div>
+      <div class="admin-alert">Widget code is validated before saving. Script tags, javascript URLs and inline event handlers are blocked to reduce injection risk.</div>
+      ${table(["Block", "Enabled", "Published", "Updated", "Actions"], rows)}
+    </div>
+  `;
+}
+
+function renderAppearance(settings = {}) {
+  document.getElementById("adminPanel").innerHTML = `
+    <div class="admin-card">
+      <div class="section-head">
+        <div><h2>Appearance</h2><p>Control the website-wide colour mode for customer-facing pages, the customer account area and the admin portal where supported.</p></div>
+        ${badge((settings.site_theme_mode || "dark").replace(/^./, (c) => c.toUpperCase()))}
+      </div>
+      <form class="admin-form" id="appearanceForm">
+        <label class="admin-label">Colour mode
+          <select id="site_theme_mode">
+            <option value="light">Light Mode</option>
+            <option value="dark">Dark Mode</option>
+            <option value="system">System Default</option>
+          </select>
+        </label>
+        <button class="admin-button" type="submit">Save appearance</button>
+      </form>
+      <div id="appearanceSaved" class="admin-success" hidden></div>
+    </div>
+  `;
+  setValue("site_theme_mode", settings.site_theme_mode || "dark");
+  document.getElementById("appearanceForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const data = await api("appearance", { method: "POST", body: JSON.stringify({ site_theme_mode: getValue("site_theme_mode") }) });
+    state.data.appearance = data;
+    renderAppearance(data.appearance);
+    setSaved("appearanceSaved", "Appearance settings saved.");
+  });
+}
+
+function renderEmail(email = {}, test = null) {
+  document.getElementById("adminPanel").innerHTML = `
+    <div class="admin-card">
+      <div class="section-head">
+        <div><h2>Email (SMTP)</h2><p>Configure outbound email delivery for notifications and confirmations.</p></div>
+        ${email.configured ? badge("Configured", "green") : badge("Incomplete", "amber")}
+      </div>
+      <form class="admin-form" id="emailForm">
+        ${input("SMTP Host", "smtp_host")}
+        ${input("SMTP Port", "smtp_port", "number")}
+        ${input("SMTP Username", "smtp_username", "email")}
+        ${input("SMTP Password", "smtp_password", "password")}
+        ${input("From Name", "smtp_from_name")}
+        ${input("From Email", "smtp_from_email", "email")}
+        <label class="admin-label">Encryption/Security
+          <select id="smtp_security"><option>STARTTLS</option><option>TLS</option><option>None</option></select>
+        </label>
+        <div class="admin-alert">Leave SMTP Password blank to keep the existing stored value. Passwords are masked and are never returned by the API.</div>
+        <button class="admin-button" type="submit">Save email settings</button>
+      </form>
+      <div id="emailSaved" class="admin-success" hidden></div>
+    </div>
+    <div class="admin-card">
+      <div class="section-head"><div><h2>Test Notifications</h2><p>Fire a real test email to ADMIN_NOTIFICATION_EMAIL to verify the notification pipeline end-to-end.</p></div></div>
+      <form class="admin-form" id="testNotificationForm">
+        <label class="admin-label">Notification Type
+          <select id="notification_type"><option>New Signup</option><option>New Message</option><option>Support Request</option><option>Plan Change</option></select>
+        </label>
+        <div class="drawer-field"><span>ADMIN_NOTIFICATION_EMAIL</span><strong>${escapeHtml(email.admin_notification_email || "Not configured")}</strong></div>
+        <button class="admin-button" type="submit">Send Test Email</button>
+      </form>
+      ${test ? `<div class="${test.sent ? "admin-success" : "admin-alert"}" style="margin-top:1rem;">${escapeHtml(test.message || "")}</div>` : ""}
+    </div>
+  `;
+
+  setValue("smtp_host", email.smtp_host || "smtp.jagroupservices.co.uk");
+  setValue("smtp_port", email.smtp_port || "587");
+  setValue("smtp_username", email.smtp_username || "noreply@jagroupservices.co.uk");
+  setValue("smtp_password", email.smtp_password_masked || "");
+  setValue("smtp_from_name", email.smtp_from_name || "JA Smart Profile");
+  setValue("smtp_from_email", email.smtp_from_email || "noreply@jagroupservices.co.uk");
+  setValue("smtp_security", email.smtp_security || "STARTTLS");
+
+  document.getElementById("emailForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const password = getValue("smtp_password");
+    const data = await api("email", { method: "POST", body: JSON.stringify({
+      smtp_host: getValue("smtp_host"),
+      smtp_port: getValue("smtp_port"),
+      smtp_username: getValue("smtp_username"),
+      smtp_password: password.includes("••") ? "" : password,
+      smtp_from_name: getValue("smtp_from_name"),
+      smtp_from_email: getValue("smtp_from_email"),
+      smtp_security: getValue("smtp_security")
+    }) });
+    state.data.email = data;
+    renderEmail(data.email);
+    setSaved("emailSaved", "Email settings saved.");
+  });
+
+  document.getElementById("testNotificationForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const data = await api("email", { method: "POST", body: JSON.stringify({ action: "test", notification_type: getValue("notification_type") }) });
+    state.data.email = data;
+    renderEmail(data.email, data.test);
+  });
+}
+
+function renderAudit(items = []) {
+  const rows = items.map((item) => `
+    <tr>
+      <td><strong>${escapeHtml(item.action)}</strong><span>${escapeHtml(item.summary || "")}</span></td>
+      <td>${escapeHtml(item.actor_email || "system")}</td>
+      <td>${escapeHtml(item.entity_type || "")}</td>
+      <td>${escapeHtml(item.entity_id || "")}</td>
+      <td>${escapeHtml(formatDate(item.created_at))}</td>
+    </tr>
+  `).join("");
+  document.getElementById("adminPanel").innerHTML = `
+    <div class="admin-card">
+      <div class="section-head">
+        <div><h2>Audit Log</h2><p>Review sensitive admin activity including Lifetime access, plan, privacy, closure, SMTP and affiliate changes.</p></div>
+        <button class="admin-button secondary" type="button" data-action="export-records" data-section="audit" data-format="csv">Export CSV</button>
+      </div>
+      ${table(["Action", "Actor", "Entity", "Record", "Date"], rows)}
+    </div>
+  `;
+}
+
 function renderAdminRecordSection(config) {
   const rows = config.items.map(config.row).join("");
   const statusOptions = ["", ...config.statuses].map((status) => `<option value="${escapeAttr(status)}">${escapeHtml(status || "All statuses")}</option>`).join("");
@@ -856,6 +1110,10 @@ function renderAdminRecordSection(config) {
     <div class="admin-card">
       <div class="section-head">
         <div><h2>${escapeHtml(config.title)}</h2><p>${escapeHtml(config.description)}</p></div>
+        <div class="section-actions">
+          ${config.extraActions || ""}
+          <button class="admin-button secondary" type="button" data-action="export-records" data-section="${escapeAttr(config.section)}" data-format="csv">Export CSV</button>
+        </div>
       </div>
       <div class="admin-form" style="margin-bottom:1rem;">
         <label class="admin-label">Search<input id="${config.section}_search" type="search" placeholder="Search reference, customer or type"></label>
@@ -905,12 +1163,17 @@ function openAdminRecordModal(section, id) {
       <div class="drawer-field"><span>Attachments</span><strong>Not supported yet</strong></div>
     </div>
     <div class="admin-card" style="margin-top:1rem;"><h2>Customer message</h2><p style="white-space:pre-wrap;">${escapeHtml(message || "")}</p></div>
+    ${isDpr ? `<div class="section-actions" style="margin:1rem 0;">
+      <button class="admin-button secondary" type="button" data-action="export-customer-data" data-email="${escapeAttr(item.customer_email || item.user_id || "")}" data-format="json">Export Customer Data</button>
+      <button class="admin-button secondary" type="button" data-action="export-customer-data" data-email="${escapeAttr(item.customer_email || item.user_id || "")}" data-format="csv">Export Customer CSV</button>
+    </div>` : ""}
     <form class="admin-form single" id="adminRecordForm">
       <label class="admin-label">Status<select id="record_status">${statuses.map((status) => `<option value="${escapeAttr(status)}" ${status === item.status ? "selected" : ""}>${escapeHtml(status)}</option>`).join("")}</select></label>
       ${isDpr ? "" : `<label class="admin-label">Priority<select id="record_priority">${priorities.map((priority) => `<option value="${escapeAttr(priority)}" ${priority === item.priority ? "selected" : ""}>${escapeHtml(priority)}</option>`).join("")}</select></label>`}
       <label class="admin-label">Assigned admin<input id="record_assigned" type="email" value="${escapeAttr(item.assigned_admin_id || "")}"></label>
       ${textarea("Internal admin notes", "record_notes")}
       <button class="admin-button" type="submit">Save record</button>
+      ${isDpr ? `<button class="admin-button secondary" type="button" id="sendToDataSubjectButton">Send to Data Subject</button>` : ""}
       <div id="recordSaved" class="admin-success" hidden></div>
     </form>
     <div class="admin-card" style="margin-top:1rem;">
@@ -936,6 +1199,172 @@ function openAdminRecordModal(section, id) {
     renderSection(section, data);
     closeModal();
   });
+
+  document.getElementById("sendToDataSubjectButton")?.addEventListener("click", async () => {
+    const body = {
+      id: item.id,
+      reference: item.reference,
+      action: "mark_sent",
+      status: "Sent",
+      assigned_admin_id: getValue("record_assigned"),
+      internal_notes: getValue("record_notes")
+    };
+    const data = await api(section, { method: "POST", body: JSON.stringify(body) });
+    state.data[section] = data;
+    closeModal();
+    renderSection(section, data);
+  });
+}
+
+function openClosureModal(id = "") {
+  const item = (state.data.closures?.closures || []).find((record) => record.id === id) || {};
+  openModal(`
+    <div class="modal-head">
+      <div><h2>${id ? "Closure Request" : "New Closure Request"}</h2><p>Create, approve, reject or complete a customer account closure workflow.</p></div>
+      <button class="drawer-close" type="button" data-action="close-modal">×</button>
+    </div>
+    <form class="admin-form single" id="closureForm">
+      ${input("Customer email", "closure_customer_email", "email")}
+      ${input("Customer name", "closure_customer_name")}
+      <label class="admin-label">Status<select id="closure_status">${closureStatuses.map((status) => `<option value="${escapeAttr(status)}">${escapeHtml(status)}</option>`).join("")}</select></label>
+      ${input("Assigned admin", "closure_assigned_admin", "email")}
+      ${textarea("Reason", "closure_reason")}
+      ${textarea("Internal notes", "closure_internal_notes")}
+      <button class="admin-button" type="submit">Save closure request</button>
+    </form>
+    ${item.audit_log ? `<div class="admin-card" style="margin-top:1rem;"><h2>Request history</h2>${parseAudit(item.audit_log).map((event) => `<div class="drawer-field"><span>${escapeHtml(formatDate(event.timestamp))}</span><strong>${escapeHtml(event.type || "Event")}</strong></div>`).join("") || "<p>No history yet.</p>"}</div>` : ""}
+  `);
+  setValue("closure_customer_email", item.customer_email || "");
+  setValue("closure_customer_name", item.customer_name || "");
+  setValue("closure_status", item.status || "Open");
+  setValue("closure_assigned_admin", item.assigned_admin_id || "");
+  setValue("closure_reason", item.reason || "");
+  setValue("closure_internal_notes", item.internal_notes || "");
+
+  document.getElementById("closureForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const data = await api("closures", { method: "POST", body: JSON.stringify({
+      id: item.id || "",
+      customer_email: getValue("closure_customer_email"),
+      customer_name: getValue("closure_customer_name"),
+      status: getValue("closure_status"),
+      assigned_admin_id: getValue("closure_assigned_admin"),
+      reason: getValue("closure_reason"),
+      internal_notes: getValue("closure_internal_notes")
+    }) });
+    state.data.closures = data;
+    closeModal();
+    renderClosures(data.closures);
+  });
+}
+
+function openAffiliateModal(id = "") {
+  const item = (state.data.affiliate?.affiliate || []).find((record) => record.id === id) || {};
+  openModal(`
+    <div class="modal-head">
+      <div><h2>${id ? "Edit Affiliate Block" : "New Affiliate Block"}</h2><p>Blocks can be previewed in this admin record before being published by your public rendering layer.</p></div>
+      <button class="drawer-close" type="button" data-action="close-modal">×</button>
+    </div>
+    <form class="admin-form" id="affiliateForm">
+      <label class="admin-label">Block type<select id="affiliate_block_type"><option>Page heading</option><option>Intro text</option><option>Affiliate widget</option><option>CTA button</option><option>Disclaimer</option><option>Referral notice</option><option>Featured experience</option><option>FAQ</option><option>Legal notice</option></select></label>
+      ${input("Title", "affiliate_title")}
+      ${textarea("Body / intro text", "affiliate_body")}
+      ${textarea("Widget or integration code", "affiliate_widget_code")}
+      ${input("CTA label", "affiliate_cta_label")}
+      ${input("CTA URL", "affiliate_cta_url")}
+      ${textarea("Legal / referral notice", "affiliate_legal_notice")}
+      ${input("Sort order", "affiliate_sort_order", "number")}
+      <label class="check"><input id="affiliate_is_enabled" type="checkbox"> Enabled</label>
+      <label class="check"><input id="affiliate_is_published" type="checkbox"> Published</label>
+      <button class="admin-button" type="submit">Save affiliate block</button>
+      <div id="affiliateSaved" class="admin-success" hidden></div>
+    </form>
+    <div class="admin-card" style="margin-top:1rem;"><h2>Preview</h2><p>${escapeHtml(item.body || "Preview appears here after saving content.")}</p></div>
+  `);
+  setValue("affiliate_block_type", item.block_type || "Intro text");
+  setValue("affiliate_title", item.title || "");
+  setValue("affiliate_body", item.body || "");
+  setValue("affiliate_widget_code", item.widget_code || "");
+  setValue("affiliate_cta_label", item.cta_label || "");
+  setValue("affiliate_cta_url", item.cta_url || "");
+  setValue("affiliate_legal_notice", item.legal_notice || "");
+  setValue("affiliate_sort_order", item.sort_order || 100);
+  document.getElementById("affiliate_is_enabled").checked = Number(item.is_enabled ?? 1) === 1;
+  document.getElementById("affiliate_is_published").checked = Number(item.is_published || 0) === 1;
+
+  document.getElementById("affiliateForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    try {
+      const data = await api("affiliate", { method: "POST", body: JSON.stringify({
+        id: item.id || "",
+        block_type: getValue("affiliate_block_type"),
+        title: getValue("affiliate_title"),
+        body: getValue("affiliate_body"),
+        widget_code: getValue("affiliate_widget_code"),
+        cta_label: getValue("affiliate_cta_label"),
+        cta_url: getValue("affiliate_cta_url"),
+        legal_notice: getValue("affiliate_legal_notice"),
+        sort_order: Number(getValue("affiliate_sort_order") || 100),
+        is_enabled: document.getElementById("affiliate_is_enabled").checked,
+        is_published: document.getElementById("affiliate_is_published").checked
+      }) });
+      state.data.affiliate = data;
+      closeModal();
+      renderAffiliate(data.affiliate);
+    } catch (error) {
+      setSaved("affiliateSaved", error.message, true);
+    }
+  });
+}
+
+async function deleteAffiliateBlock(id) {
+  if (!id || !window.confirm("Delete this affiliate content block?")) return;
+  const data = await api("affiliate", { method: "POST", body: JSON.stringify({ action: "delete", id }) });
+  state.data.affiliate = data;
+  renderAffiliate(data.affiliate);
+}
+
+async function exportCustomerData(email, format = "json") {
+  if (!email) return window.alert("Customer email is missing.");
+  const data = await api("datarequests", { method: "POST", body: JSON.stringify({ action: "export_customer_data", customer_email: email, format }) });
+  downloadText(data.export.filename, data.export.content, format === "csv" ? "text/csv" : "application/json");
+}
+
+function exportRecords(section, format = "csv") {
+  const payload = state.data[section]?.[section] || state.data[section]?.[section === "analytics" ? "analytics" : section] || state.data[section] || {};
+  const records = Array.isArray(payload) ? payload : [payload];
+  const content = format === "json" ? JSON.stringify(records, null, 2) : rowsToCsv(records);
+  downloadText(`${section}-export.${format}`, content, format === "json" ? "application/json" : "text/csv");
+}
+
+function rowsToCsv(rows) {
+  if (!rows.length) return "";
+  const flatRows = rows.map((row) => flattenRecord(row));
+  const headers = [...new Set(flatRows.flatMap((row) => Object.keys(row)))];
+  return [headers.join(","), ...flatRows.map((row) => headers.map((key) => csvEscape(row[key])).join(","))].join("\n");
+}
+
+function flattenRecord(row) {
+  const output = {};
+  Object.entries(row || {}).forEach(([key, value]) => {
+    output[key] = typeof value === "object" && value !== null ? JSON.stringify(value) : value;
+  });
+  return output;
+}
+
+function csvEscape(value) {
+  const text = String(value ?? "");
+  return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+}
+
+function downloadText(filename, content, type) {
+  const blob = new Blob([content || ""], { type });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 function parseAudit(value) {
@@ -1105,6 +1534,11 @@ function renderCustomerDrawer(customer, plans = []) {
       ${textarea("Internal admin notes", "customer_admin_notes")}
       <button class="admin-button" type="submit">Save customer changes</button>
     </form>
+    <div class="section-actions" style="margin-top:1rem;">
+      <button class="admin-button secondary" type="button" data-action="open-closure" data-id="" id="customerClosureButton">Closure Request</button>
+      <button class="admin-button secondary" type="button" data-action="export-customer-data" data-email="${escapeAttr(customer.email)}" data-format="json">Export JSON</button>
+      <button class="admin-button secondary" type="button" data-action="export-customer-data" data-email="${escapeAttr(customer.email)}" data-format="csv">Export CSV</button>
+    </div>
     <div id="customerSaved" class="admin-success" hidden></div>
   `;
 
@@ -1134,6 +1568,13 @@ function renderCustomerDrawer(customer, plans = []) {
     }
     renderCustomerDrawer(data.customer, data.plans || plans);
     if (state.currentSection === "customers") loadSection("customers");
+  });
+
+  document.getElementById("customerClosureButton")?.addEventListener("click", () => {
+    state.data.closures = state.data.closures || { closures: [] };
+    openClosureModal("");
+    setValue("closure_customer_email", customer.email || "");
+    setValue("closure_customer_name", displayName || "");
   });
 }
 

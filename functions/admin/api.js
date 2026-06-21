@@ -1,4 +1,8 @@
 const DEFAULT_ADMIN_EMAIL = "alfieholywoodmurray@jagroupservices.co.uk";
+const CLOSURE_STATUSES = ["Open", "In Progress", "Approved", "Rejected", "Completed"];
+const DPR_STATUSES = ["Received", "Verifying Identity", "In Progress", "Ready to Send", "Sent", "Closed", "Rejected"];
+const SYSTEM_REPORT_STATUSES = ["Open", "In Progress", "Resolved", "Rejected"];
+const THEME_MODES = ["light", "dark", "system"];
 
 function json(data, status = 200) {
   return new Response(JSON.stringify(data, null, 2), {
@@ -73,6 +77,29 @@ function maskSecret(value, prefixLength = 7, suffixLength = 4) {
   const text = String(value);
   if (text.length <= prefixLength + suffixLength) return "••••••••";
   return `${text.slice(0, prefixLength)}••••••••${text.slice(-suffixLength)}`;
+}
+
+function safeJson(value, fallback = []) {
+  try {
+    const parsed = JSON.parse(value || "");
+    return parsed ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function csvEscape(value) {
+  const text = String(value ?? "");
+  return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+}
+
+function rowsToCsv(rows) {
+  if (!rows.length) return "";
+  const headers = Object.keys(rows[0]);
+  return [
+    headers.map(csvEscape).join(","),
+    ...rows.map((row) => headers.map((key) => csvEscape(row[key])).join(","))
+  ].join("\n");
 }
 
 async function safeAlter(DB, sql) {
@@ -264,6 +291,55 @@ async function ensureTables(DB, env) {
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
   `).run();
+
+  await DB.prepare(`
+    CREATE TABLE IF NOT EXISTS closure_requests (
+      id TEXT PRIMARY KEY,
+      reference TEXT UNIQUE,
+      customer_email TEXT,
+      customer_name TEXT,
+      requested_by TEXT,
+      reason TEXT,
+      status TEXT DEFAULT 'Open',
+      assigned_admin_id TEXT,
+      internal_notes TEXT,
+      audit_log TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      completed_at TEXT
+    )
+  `).run();
+
+  await DB.prepare(`
+    CREATE TABLE IF NOT EXISTS affiliate_content_blocks (
+      id TEXT PRIMARY KEY,
+      block_type TEXT,
+      title TEXT,
+      body TEXT,
+      widget_code TEXT,
+      cta_label TEXT,
+      cta_url TEXT,
+      legal_notice TEXT,
+      is_enabled INTEGER DEFAULT 1,
+      is_published INTEGER DEFAULT 0,
+      sort_order INTEGER DEFAULT 100,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
+
+  await DB.prepare(`
+    CREATE TABLE IF NOT EXISTS admin_audit_log (
+      id TEXT PRIMARY KEY,
+      actor_email TEXT,
+      action TEXT,
+      entity_type TEXT,
+      entity_id TEXT,
+      summary TEXT,
+      metadata TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
 }
 
 async function isAllowedAdmin(DB, identity, env) {
@@ -298,6 +374,21 @@ async function saveSettings(DB, settings) {
         updated_at = CURRENT_TIMESTAMP
     `).bind(key, value).run();
   }
+}
+
+async function writeAudit(DB, identity, action, entityType, entityId, summary, metadata = {}) {
+  await DB.prepare(`
+    INSERT INTO admin_audit_log (id, actor_email, action, entity_type, entity_id, summary, metadata)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `).bind(
+    crypto.randomUUID(),
+    auditActor(identity),
+    clean(action, 120),
+    clean(entityType, 120),
+    clean(entityId, 180),
+    clean(summary, 1000),
+    JSON.stringify(metadata)
+  ).run();
 }
 
 async function seedDefaults(DB) {
@@ -362,7 +453,7 @@ async function seedDefaults(DB) {
 }
 
 async function getOverview(DB) {
-  const [customers, plans, activePlans, policies, tickets, openIssues, admins, dpr, systemReports] = await Promise.all([
+  const [customers, plans, activePlans, policies, tickets, openIssues, admins, dpr, systemReports, closures, lifetime] = await Promise.all([
     DB.prepare(`SELECT COUNT(*) AS count FROM profiles`).first().catch(() => ({ count: 0 })),
     DB.prepare(`SELECT COUNT(*) AS count FROM service_plans`).first(),
     DB.prepare(`SELECT COUNT(*) AS count FROM service_plans WHERE is_active = 1`).first(),
@@ -371,7 +462,9 @@ async function getOverview(DB) {
     DB.prepare(`SELECT COUNT(*) AS count FROM system_events WHERE lower(status) NOT IN ('resolved', 'closed')`).first(),
     DB.prepare(`SELECT COUNT(*) AS count FROM admin_users`).first(),
     DB.prepare(`SELECT COUNT(*) AS count FROM data_protection_requests WHERE lower(status) NOT IN ('completed', 'closed', 'refused / not applicable')`).first(),
-    DB.prepare(`SELECT COUNT(*) AS count FROM system_reports WHERE lower(status) NOT IN ('fixed', 'closed', 'duplicate / not reproducible')`).first()
+    DB.prepare(`SELECT COUNT(*) AS count FROM system_reports WHERE lower(status) NOT IN ('resolved', 'rejected', 'fixed', 'closed', 'duplicate / not reproducible')`).first(),
+    DB.prepare(`SELECT COUNT(*) AS count FROM closure_requests WHERE lower(status) NOT IN ('completed', 'rejected')`).first(),
+    DB.prepare(`SELECT COUNT(*) AS count FROM profiles WHERE admin_lifetime = 1`).first()
   ]);
 
   const comingsoon = await getComingSoon(DB);
@@ -386,9 +479,58 @@ async function getOverview(DB) {
     openIssues: openIssues?.count || 0,
     dataProtectionRequests: dpr?.count || 0,
     systemReports: systemReports?.count || 0,
+    closureRequests: closures?.count || 0,
+    lifetimeUsers: lifetime?.count || 0,
     admins: admins?.count || 0,
     comingSoonStatus: comingsoon.comingsoon_enabled === "true" ? "On" : "Off",
     maintenanceStatus: maintenance.maintenance_enabled === "true" ? "On" : "Off"
+  };
+}
+
+async function getAnalytics(DB) {
+  const [
+    users,
+    newUsers,
+    lifetimeUsers,
+    freeUsers,
+    paidUsers,
+    enquiries,
+    supportOpen,
+    dprOpen,
+    closureOpen,
+    reports,
+    planChanges,
+    emailTests
+  ] = await Promise.all([
+    DB.prepare(`SELECT COUNT(*) AS count FROM profiles`).first().catch(() => ({ count: 0 })),
+    DB.prepare(`SELECT COUNT(*) AS count FROM profiles WHERE created_at >= datetime('now', 'start of month')`).first().catch(() => ({ count: 0 })),
+    DB.prepare(`SELECT COUNT(*) AS count FROM profiles WHERE admin_lifetime = 1`).first().catch(() => ({ count: 0 })),
+    DB.prepare(`SELECT COUNT(*) AS count FROM profiles WHERE COALESCE(admin_lifetime, 0) = 0`).first().catch(() => ({ count: 0 })),
+    DB.prepare(`SELECT COUNT(*) AS count FROM profiles WHERE admin_customer_status NOT IN ('Standard', 'Free')`).first().catch(() => ({ count: 0 })),
+    DB.prepare(`SELECT COUNT(*) AS count FROM enquiries`).first().catch(() => ({ count: 0 })),
+    DB.prepare(`SELECT COUNT(*) AS count FROM support_tickets WHERE lower(status) NOT IN ('resolved', 'closed')`).first().catch(() => ({ count: 0 })),
+    DB.prepare(`SELECT COUNT(*) AS count FROM data_protection_requests WHERE lower(status) NOT IN ('sent', 'closed', 'rejected', 'completed')`).first().catch(() => ({ count: 0 })),
+    DB.prepare(`SELECT COUNT(*) AS count FROM closure_requests WHERE lower(status) NOT IN ('completed', 'rejected')`).first().catch(() => ({ count: 0 })),
+    DB.prepare(`SELECT COUNT(*) AS count FROM system_reports`).first().catch(() => ({ count: 0 })),
+    DB.prepare(`SELECT COUNT(*) AS count FROM admin_audit_log WHERE action LIKE '%plan%' OR action LIKE '%lifetime%'`).first().catch(() => ({ count: 0 })),
+    DB.prepare(`SELECT COUNT(*) AS count FROM admin_audit_log WHERE action = 'test_notification'`).first().catch(() => ({ count: 0 }))
+  ]);
+
+  return {
+    totalUsers: users?.count || 0,
+    newUsersThisMonth: newUsers?.count || 0,
+    activeUsers: users?.count || 0,
+    lifetimeUsers: lifetimeUsers?.count || 0,
+    freeUsers: freeUsers?.count || 0,
+    paidUsers: paidUsers?.count || 0,
+    totalBookingsOrReferrals: 0,
+    totalEnquiries: enquiries?.count || 0,
+    openSupportRequests: supportOpen?.count || 0,
+    openDataRequests: dprOpen?.count || 0,
+    openClosureRequests: closureOpen?.count || 0,
+    systemReportsSubmitted: reports?.count || 0,
+    planChanges: planChanges?.count || 0,
+    emailNotificationStatus: emailTests?.count ? `${emailTests.count} test attempts logged` : "No test attempts logged"
   };
 }
 
@@ -655,6 +797,12 @@ async function saveDataProtectionRequest(DB, body, identity) {
   if (nextStatus !== current.status) {
     events.push({ type: "Status changed", actor: auditActor(identity), previousValue: current.status || "", newValue: nextStatus });
   }
+  if (body.action === "export_customer_data") {
+    events.push({ type: "Customer data exported", actor: auditActor(identity), newValue: clean(body.format, 20) || "json" });
+  }
+  if (body.action === "mark_sent") {
+    events.push({ type: "Data sent to subject", actor: auditActor(identity) });
+  }
   if (nextAssigned !== (current.assigned_admin_id || "")) {
     events.push({ type: "Assigned to admin", actor: auditActor(identity), previousValue: current.assigned_admin_id || "", newValue: nextAssigned });
   }
@@ -685,6 +833,14 @@ async function saveDataProtectionRequest(DB, body, identity) {
       updated_at = CURRENT_TIMESTAMP
     WHERE id = ?
   `).bind(nextStatus, nextAssigned, nextNotes, completedAt, auditLog, current.id).run();
+
+  if (body.action === "export_customer_data") {
+    await writeAudit(DB, identity, "data_request_export", "data_protection_requests", current.id, `Exported customer data for ${current.reference}.`, { reference: current.reference, format: clean(body.format, 20) || "json" });
+  } else if (body.action === "mark_sent") {
+    await writeAudit(DB, identity, "data_request_sent", "data_protection_requests", current.id, `Marked ${current.reference} as sent to data subject.`, { reference: current.reference });
+  } else if (events.length) {
+    await writeAudit(DB, identity, "data_request_update", "data_protection_requests", current.id, `Updated ${current.reference}.`, { reference: current.reference, status: nextStatus });
+  }
 
   return getDataProtectionRequests(DB);
 }
@@ -737,7 +893,256 @@ async function saveSystemReport(DB, body, identity) {
     WHERE id = ?
   `).bind(nextStatus, nextPriority, nextAssigned, nextNotes, resolvedAt, auditLog, current.id).run();
 
+  if (events.length) {
+    await writeAudit(DB, identity, "system_report_update", "system_reports", current.id, `Updated ${current.reference}.`, { reference: current.reference, status: nextStatus, priority: nextPriority });
+  }
+
   return getSystemReports(DB);
+}
+
+async function getClosureRequests(DB) {
+  return all(DB, `
+    SELECT id, reference, customer_email, customer_name, requested_by, reason, status,
+      assigned_admin_id, internal_notes, audit_log, created_at, updated_at, completed_at
+    FROM closure_requests
+    ORDER BY updated_at DESC, created_at DESC
+    LIMIT 500
+  `);
+}
+
+async function nextReference(DB, table, prefix) {
+  const row = await DB.prepare(`SELECT COUNT(*) AS count FROM ${table}`).first();
+  return `${prefix}-${String(Number(row?.count || 0) + 1).padStart(5, "0")}`;
+}
+
+async function saveClosureRequest(DB, body, identity) {
+  const id = clean(body.id, 120);
+  const status = CLOSURE_STATUSES.includes(clean(body.status, 80)) ? clean(body.status, 80) : "Open";
+  const customerEmail = cleanEmail(body.customer_email);
+  if (!customerEmail) throw new Error("Customer email is required for a closure request.");
+
+  if (!id) {
+    const reference = await nextReference(DB, "closure_requests", "CLR");
+    const auditLog = addAudit("[]", { type: "Closure request created", actor: auditActor(identity), newValue: status });
+    await DB.prepare(`
+      INSERT INTO closure_requests (
+        id, reference, customer_email, customer_name, requested_by, reason, status,
+        assigned_admin_id, internal_notes, audit_log
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(
+      crypto.randomUUID(),
+      reference,
+      customerEmail,
+      clean(body.customer_name, 180),
+      auditActor(identity),
+      clean(body.reason, 2000),
+      status,
+      clean(body.assigned_admin_id, 254),
+      clean(body.internal_notes, 6000),
+      auditLog
+    ).run();
+    await writeAudit(DB, identity, "closure_request_create", "closure_requests", reference, `Created closure request ${reference}.`, { customerEmail, status });
+    return getClosureRequests(DB);
+  }
+
+  const current = await DB.prepare(`SELECT * FROM closure_requests WHERE id = ?`).bind(id).first();
+  if (!current) throw new Error("Closure request not found.");
+
+  let auditLog = current.audit_log || "[]";
+  if (status !== current.status) auditLog = addAudit(auditLog, { type: "Status changed", actor: auditActor(identity), previousValue: current.status || "", newValue: status });
+  if (clean(body.assigned_admin_id, 254) !== (current.assigned_admin_id || "")) auditLog = addAudit(auditLog, { type: "Assigned to admin", actor: auditActor(identity), previousValue: current.assigned_admin_id || "", newValue: clean(body.assigned_admin_id, 254) });
+  if (clean(body.internal_notes, 6000) && clean(body.internal_notes, 6000) !== (current.internal_notes || "")) auditLog = addAudit(auditLog, { type: "Internal note added", actor: auditActor(identity) });
+
+  await DB.prepare(`
+    UPDATE closure_requests SET
+      status = ?,
+      assigned_admin_id = ?,
+      internal_notes = ?,
+      audit_log = ?,
+      completed_at = ?,
+      updated_at = CURRENT_TIMESTAMP
+    WHERE id = ?
+  `).bind(
+    status,
+    clean(body.assigned_admin_id, 254),
+    clean(body.internal_notes, 6000),
+    auditLog,
+    status === "Completed" ? (current.completed_at || new Date().toISOString()) : current.completed_at,
+    id
+  ).run();
+
+  await writeAudit(DB, identity, "closure_request_update", "closure_requests", id, `Updated closure request ${current.reference}.`, { reference: current.reference, status });
+  return getClosureRequests(DB);
+}
+
+async function getAffiliateContent(DB) {
+  return all(DB, `SELECT * FROM affiliate_content_blocks ORDER BY sort_order ASC, updated_at DESC LIMIT 500`);
+}
+
+function sanitiseWidgetCode(value) {
+  const code = clean(value, 8000);
+  if (!code) return "";
+  const lowered = code.toLowerCase();
+  if (lowered.includes("<script") || lowered.includes("javascript:") || lowered.includes("onerror=") || lowered.includes("onload=")) {
+    throw new Error("Unsafe widget code was blocked. Use approved embed snippets without script tags or inline event handlers.");
+  }
+  return code;
+}
+
+async function saveAffiliateContent(DB, body, identity) {
+  const id = clean(body.id, 120) || crypto.randomUUID();
+  if (body.action === "delete") {
+    await DB.prepare(`DELETE FROM affiliate_content_blocks WHERE id = ?`).bind(id).run();
+    await writeAudit(DB, identity, "affiliate_content_delete", "affiliate_content_blocks", id, "Deleted affiliate content block.", {});
+    return getAffiliateContent(DB);
+  }
+
+  const title = clean(body.title, 180);
+  if (!title) throw new Error("Content block title is required.");
+
+  await DB.prepare(`
+    INSERT INTO affiliate_content_blocks (
+      id, block_type, title, body, widget_code, cta_label, cta_url, legal_notice,
+      is_enabled, is_published, sort_order, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+    ON CONFLICT(id) DO UPDATE SET
+      block_type = excluded.block_type,
+      title = excluded.title,
+      body = excluded.body,
+      widget_code = excluded.widget_code,
+      cta_label = excluded.cta_label,
+      cta_url = excluded.cta_url,
+      legal_notice = excluded.legal_notice,
+      is_enabled = excluded.is_enabled,
+      is_published = excluded.is_published,
+      sort_order = excluded.sort_order,
+      updated_at = CURRENT_TIMESTAMP
+  `).bind(
+    id,
+    clean(body.block_type, 80) || "Content",
+    title,
+    clean(body.body, 12000),
+    sanitiseWidgetCode(body.widget_code),
+    clean(body.cta_label, 120),
+    clean(body.cta_url, 500),
+    clean(body.legal_notice, 4000),
+    body.is_enabled ? 1 : 0,
+    body.is_published ? 1 : 0,
+    Number(body.sort_order || 100)
+  ).run();
+
+  await writeAudit(DB, identity, "affiliate_content_save", "affiliate_content_blocks", id, `Saved affiliate content block ${title}.`, { published: Boolean(body.is_published), enabled: Boolean(body.is_enabled) });
+  return getAffiliateContent(DB);
+}
+
+async function getAppearance(DB) {
+  return settingMap(DB, ["site_theme_mode"], { site_theme_mode: "dark" });
+}
+
+async function saveAppearance(DB, body, identity) {
+  const mode = THEME_MODES.includes(clean(body.site_theme_mode, 20)) ? clean(body.site_theme_mode, 20) : "dark";
+  await saveSettings(DB, { site_theme_mode: mode });
+  await writeAudit(DB, identity, "appearance_update", "site_settings", "site_theme_mode", `Set site theme mode to ${mode}.`, { mode });
+  return getAppearance(DB);
+}
+
+async function getEmailSettings(DB, env) {
+  const settings = await settingMap(DB, [
+    "smtp_host", "smtp_port", "smtp_username", "smtp_password", "smtp_from_name", "smtp_from_email", "smtp_security"
+  ], {
+    smtp_host: "smtp.jagroupservices.co.uk",
+    smtp_port: "587",
+    smtp_username: "noreply@jagroupservices.co.uk",
+    smtp_from_name: "JA Smart Profile",
+    smtp_from_email: "noreply@jagroupservices.co.uk",
+    smtp_security: "STARTTLS"
+  });
+
+  return {
+    smtp_host: settings.smtp_host,
+    smtp_port: settings.smtp_port,
+    smtp_username: settings.smtp_username,
+    smtp_password_masked: maskSecret(settings.smtp_password || ""),
+    smtp_from_name: settings.smtp_from_name,
+    smtp_from_email: settings.smtp_from_email,
+    smtp_security: settings.smtp_security,
+    admin_notification_email: env.ADMIN_NOTIFICATION_EMAIL || "",
+    configured: Boolean(settings.smtp_host && settings.smtp_username && (settings.smtp_password || env.SMTP_PASSWORD))
+  };
+}
+
+async function saveEmailSettings(DB, body, env, identity) {
+  const current = await settingMap(DB, ["smtp_password"], {});
+  await saveSettings(DB, {
+    smtp_host: clean(body.smtp_host, 250) || "smtp.jagroupservices.co.uk",
+    smtp_port: clean(body.smtp_port, 10) || "587",
+    smtp_username: clean(body.smtp_username, 254) || "noreply@jagroupservices.co.uk",
+    smtp_password: clean(body.smtp_password, 500) || current.smtp_password || env.SMTP_PASSWORD || "",
+    smtp_from_name: clean(body.smtp_from_name, 180) || "JA Smart Profile",
+    smtp_from_email: clean(body.smtp_from_email, 254) || "noreply@jagroupservices.co.uk",
+    smtp_security: clean(body.smtp_security, 40) || "STARTTLS"
+  });
+  await writeAudit(DB, identity, "smtp_settings_update", "site_settings", "email", "Updated Email (SMTP) settings.", { host: clean(body.smtp_host, 250), username: clean(body.smtp_username, 254) });
+  return getEmailSettings(DB, env);
+}
+
+async function testNotification(DB, body, env, identity) {
+  const settings = await getEmailSettings(DB, env);
+  const notificationType = clean(body.notification_type, 80) || "New Signup";
+  const target = env.ADMIN_NOTIFICATION_EMAIL || "";
+  const canSend = Boolean(env.EMAIL_API_ENDPOINT && env.EMAIL_API_TOKEN && target);
+  let result = {
+    sent: false,
+    message: "Test notification was logged, but no HTTP email provider is configured for Cloudflare Pages Functions. Raw SMTP cannot be sent directly from this runtime.",
+    to: target,
+    notificationType
+  };
+
+  if (canSend) {
+    const response = await fetch(env.EMAIL_API_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${env.EMAIL_API_TOKEN}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        to: target,
+        from: settings.smtp_from_email,
+        fromName: settings.smtp_from_name,
+        subject: `JA Experiences test notification: ${notificationType}`,
+        text: `This is a ${notificationType} test notification from the JA Experiences admin centre.`
+      })
+    });
+    result = {
+      sent: response.ok,
+      message: response.ok ? "Test notification sent successfully." : `Email provider returned ${response.status}.`,
+      to: target,
+      notificationType
+    };
+  }
+
+  await writeAudit(DB, identity, "test_notification", "email", notificationType, result.message, { sent: result.sent, to: target, notificationType });
+  return result;
+}
+
+async function getAuditLog(DB) {
+  return all(DB, `SELECT * FROM admin_audit_log ORDER BY created_at DESC LIMIT 500`);
+}
+
+async function exportCustomerData(DB, customerEmail, format = "json") {
+  const email = cleanEmail(customerEmail);
+  if (!email) throw new Error("Customer email is required.");
+  const [profile, dataRequests, systemReports, closures] = await Promise.all([
+    DB.prepare(`SELECT * FROM profiles WHERE lower(email) = lower(?)`).bind(email).first(),
+    all(DB, `SELECT * FROM data_protection_requests WHERE lower(customer_email) = lower(?) OR lower(user_id) = lower(?)`, [email, email]),
+    all(DB, `SELECT * FROM system_reports WHERE lower(customer_email) = lower(?) OR lower(user_id) = lower(?)`, [email, email]),
+    all(DB, `SELECT * FROM closure_requests WHERE lower(customer_email) = lower(?)`, [email])
+  ]);
+  const payload = { profile, dataRequests, systemReports, closureRequests: closures };
+  if (format === "csv") {
+    return { format: "csv", filename: `${email}-customer-data.csv`, content: rowsToCsv([{ section: "profile", data: JSON.stringify(profile || {}) }, { section: "dataRequests", data: JSON.stringify(dataRequests) }, { section: "systemReports", data: JSON.stringify(systemReports) }, { section: "closureRequests", data: JSON.stringify(closures) }]) };
+  }
+  return { format: "json", filename: `${email}-customer-data.json`, content: JSON.stringify(payload, null, 2) };
 }
 
 async function getMaintenance(DB) {
@@ -898,6 +1303,7 @@ export async function onRequest(context) {
   try {
     if (request.method === "GET") {
       if (section === "overview") return json({ admin: identity, overview: await getOverview(env.DB) });
+      if (section === "analytics") return json({ admin: identity, analytics: await getAnalytics(env.DB) });
       if (section === "admins") return json({ admin: identity, admins: await getAdmins(env.DB, env) });
       if (section === "customers") {
         return json({
@@ -919,6 +1325,11 @@ export async function onRequest(context) {
       if (section === "system") return json({ admin: identity, system: await all(env.DB, `SELECT * FROM system_events ORDER BY updated_at DESC, created_at DESC LIMIT 500`) });
       if (section === "datarequests") return json({ admin: identity, datarequests: await getDataProtectionRequests(env.DB) });
       if (section === "systemreports") return json({ admin: identity, systemreports: await getSystemReports(env.DB) });
+      if (section === "closures") return json({ admin: identity, closures: await getClosureRequests(env.DB) });
+      if (section === "affiliate") return json({ admin: identity, affiliate: await getAffiliateContent(env.DB) });
+      if (section === "appearance") return json({ admin: identity, appearance: await getAppearance(env.DB) });
+      if (section === "email") return json({ admin: identity, email: await getEmailSettings(env.DB, env) });
+      if (section === "audit") return json({ admin: identity, audit: await getAuditLog(env.DB) });
       if (section === "maintenance") return json({ admin: identity, maintenance: await getMaintenance(env.DB) });
       if (section === "comingsoon") return json({ admin: identity, comingsoon: await getComingSoon(env.DB) });
       if (section === "stripe") return json({ admin: identity, stripe: await getStripe(env.DB, env, url.searchParams.get("test") === "1") });
@@ -926,18 +1337,39 @@ export async function onRequest(context) {
 
     if (request.method === "POST") {
       const body = await request.json().catch(() => ({}));
+      if (body.action === "export_customer_data") {
+        const exported = await exportCustomerData(env.DB, body.customer_email || body.user_id, clean(body.format, 20) || "json");
+        await writeAudit(env.DB, identity, "customer_data_export", "profiles", cleanEmail(body.customer_email || body.user_id), "Exported customer CRM data.", { format: exported.format });
+        return json({ export: exported, saved: true });
+      }
       if (section === "admins") {
         if (body.action === "remove") await removeAdmin(env.DB, body, identity, env);
         else await addAdmin(env.DB, body, identity);
+        await writeAudit(env.DB, identity, body.action === "remove" ? "admin_remove" : "admin_add", "admin_users", cleanEmail(body.email), `Updated admin access for ${cleanEmail(body.email)}.`, {});
         return json({ admins: await getAdmins(env.DB, env), saved: true });
       }
-      if (section === "plans") return json({ plans: await savePlan(env.DB, body), saved: true });
-      if (section === "policies") return json({ policies: await savePolicy(env.DB, body), saved: true });
+      if (section === "plans") {
+        const plans = await savePlan(env.DB, body);
+        await writeAudit(env.DB, identity, "plan_save", "service_plans", clean(body.id, 120), `Saved plan ${clean(body.plan_name, 180)}.`, {});
+        return json({ plans, saved: true });
+      }
+      if (section === "policies") {
+        const policies = await savePolicy(env.DB, body);
+        await writeAudit(env.DB, identity, "policy_save", "policy_pages", cleanSlug(body.slug), `Saved policy ${clean(body.title, 180)}.`, { status: clean(body.status, 80) });
+        return json({ policies, saved: true });
+      }
       if (section === "branding") return json({ branding: await saveBranding(env.DB, body), saved: true });
       if (section === "support") return json({ support: await saveSupport(env.DB, body), saved: true });
       if (section === "system") return json({ system: await saveSystemEvent(env.DB, body), saved: true });
       if (section === "datarequests") return json({ datarequests: await saveDataProtectionRequest(env.DB, body, identity), saved: true });
       if (section === "systemreports") return json({ systemreports: await saveSystemReport(env.DB, body, identity), saved: true });
+      if (section === "closures") return json({ closures: await saveClosureRequest(env.DB, body, identity), saved: true });
+      if (section === "affiliate") return json({ affiliate: await saveAffiliateContent(env.DB, body, identity), saved: true });
+      if (section === "appearance") return json({ appearance: await saveAppearance(env.DB, body, identity), saved: true });
+      if (section === "email") {
+        if (body.action === "test") return json({ email: await getEmailSettings(env.DB, env), test: await testNotification(env.DB, body, env, identity), saved: true });
+        return json({ email: await saveEmailSettings(env.DB, body, env, identity), saved: true });
+      }
       if (section === "maintenance") return json({ maintenance: await saveMaintenance(env.DB, body), saved: true });
       if (section === "comingsoon") return json({ comingsoon: await saveComingSoon(env.DB, body), saved: true });
       if (section === "stripe") return json({ stripe: await saveStripe(env.DB, body, env), saved: true });

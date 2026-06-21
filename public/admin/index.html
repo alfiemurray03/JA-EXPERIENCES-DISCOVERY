@@ -31,6 +31,40 @@
       --shadow: 0 18px 50px rgba(0, 0, 0, 0.22);
     }
 
+    html[data-site-theme="light"] {
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --panel-2: #edf3fa;
+      --panel-3: #ffffff;
+      --sidebar: #e8f0fa;
+      --sidebar-dark: #dbe8f7;
+      --line: #c7d6ea;
+      --line-soft: rgba(71, 85, 105, 0.18);
+      --text: #0f172a;
+      --muted: #475569;
+      --muted-2: #64748b;
+      color-scheme: light;
+    }
+
+    html[data-site-theme="light"] .admin-label input,
+    html[data-site-theme="light"] .admin-label select,
+    html[data-site-theme="light"] .admin-label textarea,
+    html[data-site-theme="light"] select,
+    html[data-site-theme="light"] .mini-button,
+    html[data-site-theme="light"] .drawer-close,
+    html[data-site-theme="light"] .admin-button.secondary,
+    html[data-site-theme="light"] .tab-button.active {
+      background: #f8fafc;
+      color: #0f172a;
+    }
+
+    html[data-site-theme="light"] td,
+    html[data-site-theme="light"] .quick-card span,
+    html[data-site-theme="light"] .plan-card span,
+    html[data-site-theme="light"] .policy-card span {
+      color: #334155;
+    }
+
     * {
       box-sizing: border-box;
     }
@@ -1188,6 +1222,8 @@
           <div class="nav-heading">Overview</div>
           <nav class="admin-nav" aria-label="Overview">
             <button data-section="overview" data-icon="dashboard" class="active">Dashboard</button>
+            <button data-section="analytics" data-icon="chart">Analytics</button>
+            <button data-section="audit" data-icon="clock">Audit Log</button>
           </nav>
         </div>
 
@@ -1198,6 +1234,7 @@
             <button data-section="customers" data-icon="users">CRM / Customers</button>
             <button data-section="datarequests" data-icon="file">Data Protection Requests</button>
             <button data-section="systemreports" data-icon="alert">System Reports</button>
+            <button data-section="closures" data-icon="shield">Closure Requests</button>
             <button data-section="support" data-icon="mail">Support</button>
             <button data-section="system" data-icon="alert">System / Issues</button>
           </nav>
@@ -1208,7 +1245,10 @@
           <nav class="admin-nav" aria-label="Configuration">
             <button data-section="plans" data-icon="plans">Plans &amp; Prices</button>
             <button data-section="stripe" data-icon="card">Stripe API Controls</button>
+            <button data-section="email" data-icon="mail">Email (SMTP)</button>
             <button data-section="branding" data-icon="settings">Company Branding</button>
+            <button data-section="appearance" data-icon="palette">Appearance</button>
+            <button data-section="affiliate" data-icon="link">Affiliate Content</button>
           </nav>
         </div>
 
@@ -1270,7 +1310,7 @@
     </main>
   </div>
 
-  <script src="/assets/js/admin-control.js?v=experiences-admin-control-3"></script>
+  <script src="/assets/js/admin-control.js?v=experiences-admin-control-4"></script>
 </body>
 </html>
 
