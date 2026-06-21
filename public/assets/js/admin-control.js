@@ -21,6 +21,7 @@ const sectionTitles = {
 document.addEventListener("DOMContentLoaded", () => {
   bindNav();
   bindAccountMenu();
+  bindAdminActions();
   loadSection("overview");
 });
 
@@ -62,6 +63,63 @@ function bindAccountMenu() {
   settings?.addEventListener("click", () => {
     menu.hidden = true;
     openAccountModal();
+  });
+}
+
+function bindAdminActions() {
+  document.addEventListener("click", async (event) => {
+    const action = event.target.closest("[data-action]");
+    if (!action) return;
+
+    const type = action.dataset.action;
+
+    if (type === "load-section") {
+      loadSection(action.dataset.section);
+    }
+
+    if (type === "remove-admin") {
+      removeAdmin(action.dataset.email);
+    }
+
+    if (type === "open-customer") {
+      openCustomerDrawer(action.dataset.email);
+    }
+
+    if (type === "open-plan") {
+      openPlanModal(action.dataset.id || "");
+    }
+
+    if (type === "close-modal") {
+      closeModal();
+    }
+
+    if (type === "close-customer") {
+      closeCustomerDrawer();
+    }
+
+    if (type === "refresh-stripe") {
+      refreshStripe();
+    }
+
+    if (type === "select-policy") {
+      selectPolicy(action.dataset.slug);
+    }
+
+    if (type === "toggle-policy-published") {
+      await togglePolicyPublished(action.dataset.slug, action.checked);
+    }
+  });
+
+  document.addEventListener("change", async (event) => {
+    const target = event.target;
+
+    if (target.matches("[data-plan-toggle]")) {
+      await togglePlan(target.dataset.planToggle, target.checked);
+    }
+
+    if (target.matches("[data-record-status]")) {
+      await updateRecordStatus(target.dataset.section, target.dataset.id, target.value);
+    }
   });
 }
 
@@ -170,7 +228,7 @@ function renderOverview(overview) {
 
 function quick(section, icon, title, text) {
   return `
-    <button class="quick-card" type="button" onclick="loadSection('${section}')">
+    <button class="quick-card" type="button" data-action="load-section" data-section="${escapeAttr(section)}">
       <span class="quick-icon">${icon}</span>
       <span><strong>${escapeHtml(title)}</strong><span>${escapeHtml(text)}</span></span>
     </button>
@@ -184,7 +242,7 @@ function renderAdmins(admins = []) {
       <td>${badge(admin.source === "default" ? "Default" : "Portal", admin.source === "default" ? "green" : "")}</td>
       <td>${escapeHtml(admin.created_by || "system")}</td>
       <td>${escapeHtml(formatDate(admin.updated_at || admin.created_at))}</td>
-      <td><button class="mini-button" type="button" onclick="removeAdmin('${escapeAttr(admin.email)}')">Remove</button></td>
+      <td><button class="mini-button" type="button" data-action="remove-admin" data-email="${escapeAttr(admin.email)}">Remove</button></td>
     </tr>
   `).join("");
 
@@ -214,7 +272,12 @@ function renderAdmins(admins = []) {
       method: "POST",
       body: JSON.stringify({ email: getValue("new_admin_email"), name: getValue("new_admin_name") })
     });
-    loadSection("admins");
+    await loadSection("admins");
+    const notice = document.getElementById("adminUserSaved");
+    if (notice) {
+      notice.hidden = false;
+      notice.textContent = "Admin added. They can access once their Microsoft Entra / Cloudflare Access account is authorised.";
+    }
   });
 }
 
@@ -237,7 +300,7 @@ function renderCustomers(customers = []) {
     const name = c.display_name || c.verified_name || c.email;
     const lifetime = Number(c.admin_lifetime || 0) === 1;
     return `
-      <tr class="customer-row-click" onclick="openCustomerDrawer('${escapeAttr(c.email)}')">
+      <tr class="customer-row-click" data-action="open-customer" data-email="${escapeAttr(c.email)}">
         <td><strong>${escapeHtml(name)}</strong><span>${escapeHtml(c.email || "")}</span></td>
         <td>${escapeHtml(c.contact_email || c.email || "")}</td>
         <td>${lifetime ? badge("Lifetime", "amber") : badge(c.admin_customer_status || "Standard")}</td>
@@ -271,7 +334,7 @@ function renderPlans(plans = []) {
           <span>${escapeHtml(plan.plan_type || "Service plan")}</span>
         </div>
         <label class="switch" title="Toggle plan active status">
-          <input type="checkbox" ${Number(plan.is_active) === 1 ? "checked" : ""} onchange="togglePlan('${escapeAttr(plan.id)}', this.checked)">
+          <input type="checkbox" data-plan-toggle="${escapeAttr(plan.id)}" ${Number(plan.is_active) === 1 ? "checked" : ""}>
           <span></span>
         </label>
       </div>
@@ -285,7 +348,7 @@ function renderPlans(plans = []) {
       <div class="section-actions">
         ${Number(plan.is_active) === 1 ? badge("Active", "green") : badge("Inactive", "red")}
         ${Number(plan.is_featured) === 1 ? badge("Featured", "amber") : ""}
-        <button class="mini-button" type="button" onclick="openPlanModal('${escapeAttr(plan.id)}')">Edit</button>
+        <button class="mini-button" type="button" data-action="open-plan" data-id="${escapeAttr(plan.id)}">Edit</button>
       </div>
     </article>
   `).join("");
@@ -296,7 +359,7 @@ function renderPlans(plans = []) {
         <h2>Manage Plans</h2>
         <p>Configure subscription-style plan cards and stored Stripe product/price IDs.</p>
       </div>
-      <button class="admin-button" type="button" onclick="openPlanModal()">New plan</button>
+      <button class="admin-button" type="button" data-action="open-plan">New plan</button>
     </div>
     <div class="plan-grid">${cards || emptyCard("No plans yet.")}</div>
   `;
@@ -313,7 +376,7 @@ function openPlanModal(id = "") {
   openModal(`
     <div class="modal-head">
       <div><h2>${id ? "Edit plan" : "New plan"}</h2><p>Plan settings are stored in D1 and do not alter public pricing output unless separately wired.</p></div>
-      <button class="drawer-close" type="button" onclick="closeModal()">×</button>
+      <button class="drawer-close" type="button" data-action="close-modal">×</button>
     </div>
     <form class="admin-form" id="planForm">
       ${input("Plan ID", "plan_id")}
@@ -391,7 +454,7 @@ function renderStripe(stripe = {}) {
         </div>
         <div class="section-actions">
           ${badge(stripe.mode || "Unknown", stripe.mode === "Live" ? "green" : "amber")}
-          <button class="admin-button secondary" type="button" onclick="refreshStripe()">Refresh status</button>
+          <button class="admin-button secondary" type="button" data-action="refresh-stripe">Refresh status</button>
         </div>
       </div>
 
@@ -484,12 +547,14 @@ function renderPolicies(policies = []) {
     state.selectedPolicy = policies[0]?.slug || null;
   }
   const selected = policies.find((policy) => policy.slug === state.selectedPolicy) || policies[0] || {};
+  const selectedPublished = selected.status === "published" || Number(selected.is_published) === 1;
 
   const cards = policies.map((policy) => `
-    <button class="policy-card" type="button" onclick="selectPolicy('${escapeAttr(policy.slug)}')">
+    <button class="policy-card ${policy.slug === selected.slug ? "active" : ""}" type="button" data-action="select-policy" data-slug="${escapeAttr(policy.slug)}">
       <div class="policy-top">
         <div>
           <strong>${escapeHtml(policy.title)}</strong>
+          <span>${escapeHtml(policy.slug)}</span>
           <span>v${escapeHtml(policy.version || "1.0")} · Effective ${escapeHtml(policy.effective_date || "Not set")}</span>
         </div>
         ${badge(policy.status === "published" || Number(policy.is_published) === 1 ? "Published" : "Draft", policy.status === "published" || Number(policy.is_published) === 1 ? "green" : "")}
@@ -498,7 +563,7 @@ function renderPolicies(policies = []) {
   `).join("");
 
   const tabs = policies.map((policy) => `
-    <button class="tab-button ${policy.slug === selected.slug ? "active" : ""}" type="button" onclick="selectPolicy('${escapeAttr(policy.slug)}')">${escapeHtml(shortPolicyName(policy.title))}</button>
+    <button class="tab-button ${policy.slug === selected.slug ? "active" : ""}" type="button" data-action="select-policy" data-slug="${escapeAttr(policy.slug)}">${escapeHtml(shortPolicyName(policy.title))}</button>
   `).join("");
 
   document.getElementById("adminPanel").innerHTML = `
@@ -509,11 +574,19 @@ function renderPolicies(policies = []) {
     <div class="tabs">${tabs}</div>
     <div class="admin-card">
       <div class="section-head">
-        <div><h2>${escapeHtml(selected.title || "Policy")}</h2><p>Edit the content, version and publication status.</p></div>
+        <div><h2>${escapeHtml(selected.title || "Policy")}</h2><p>Edit the slug, content, version and publication status.</p></div>
+        <div class="section-actions">
+          <label class="switch" title="Publish or unpublish policy">
+            <input type="checkbox" data-action="toggle-policy-published" data-slug="${escapeAttr(selected.slug || "")}" ${selectedPublished ? "checked" : ""}>
+            <span></span>
+          </label>
+          ${selectedPublished ? `<a class="admin-button secondary" href="/policies/${escapeAttr(selected.slug)}" target="_blank" rel="noopener">Public link</a>` : `<button class="admin-button secondary" type="button" disabled>Unpublished</button>`}
+        </div>
       </div>
       <form class="admin-form" id="policyForm">
-        <input type="hidden" id="policy_slug">
+        <input type="hidden" id="policy_original_slug">
         ${input("Policy title", "policy_title")}
+        ${input("Policy slug", "policy_slug")}
         ${input("Version", "policy_version")}
         ${input("Effective date", "policy_effective_date", "date")}
         <label class="admin-label">Status
@@ -536,6 +609,7 @@ function renderPolicies(policies = []) {
     </div>
   `;
 
+  setValue("policy_original_slug", selected.slug || "");
   setValue("policy_slug", selected.slug || "");
   setValue("policy_title", selected.title || "");
   setValue("policy_version", selected.version || "1.0");
@@ -558,8 +632,10 @@ function selectPolicy(slug) {
 
 async function savePolicy(event) {
   event.preventDefault();
+  const slug = slugify(getValue("policy_slug"));
   const body = {
-    slug: getValue("policy_slug"),
+    original_slug: getValue("policy_original_slug"),
+    slug,
     title: getValue("policy_title"),
     version: getValue("policy_version"),
     effective_date: getValue("policy_effective_date"),
@@ -570,7 +646,32 @@ async function savePolicy(event) {
   };
   const data = await api("policies", { method: "POST", body: JSON.stringify(body) });
   state.data.policies = data;
+  state.selectedPolicy = slug;
   renderPolicies(data.policies);
+  setSaved("policySaved", "Policy saved. Public pages update immediately when the policy is published.");
+}
+
+async function togglePolicyPublished(slug, isPublished) {
+  const policy = (state.data.policies?.policies || []).find((item) => item.slug === slug);
+  if (!policy) return;
+
+  const body = {
+    original_slug: policy.slug,
+    slug: policy.slug,
+    title: policy.title,
+    version: policy.version || "1.0",
+    effective_date: policy.effective_date || "",
+    status: isPublished ? "published" : "draft",
+    content_type: policy.content_type || "markdown",
+    content: policy.content || "",
+    is_published: isPublished
+  };
+
+  const data = await api("policies", { method: "POST", body: JSON.stringify(body) });
+  state.data.policies = data;
+  state.selectedPolicy = slug;
+  renderPolicies(data.policies);
+  setSaved("policySaved", isPublished ? "Policy published. The public URL is now live." : "Policy unpublished. The public URL now returns 404.");
 }
 
 function renderSupport(items = []) {
@@ -603,7 +704,7 @@ function renderRecordSection(title, description, items, section, fields) {
     <tr>
       <td><strong>${escapeHtml(item.subject || item.title)}</strong><span>${escapeHtml(item.customer_email || item.message || "")}</span></td>
       <td>
-        <select onchange="updateRecordStatus('${escapeAttr(section)}', '${escapeAttr(item.id)}', this.value)">
+        <select data-record-status data-section="${escapeAttr(section)}" data-id="${escapeAttr(item.id)}">
           ${["Open", "In Progress", "Resolved", "Closed"].map((status) => `<option value="${status}" ${status === item.status ? "selected" : ""}>${status}</option>`).join("")}
         </select>
       </td>
@@ -737,7 +838,7 @@ async function openCustomerDrawer(email) {
     <aside class="customer-drawer">
       <div class="drawer-head">
         <div><h2>Customer profile</h2><p>Loading customer record...</p></div>
-        <button class="drawer-close" type="button" onclick="closeCustomerDrawer()">×</button>
+        <button class="drawer-close" type="button" data-action="close-customer">×</button>
       </div>
       <div class="drawer-body"><div class="admin-loading">Loading customer...</div></div>
     </aside>
@@ -818,7 +919,7 @@ function openAccountModal() {
   openModal(`
     <div class="modal-head">
       <div><h2>Account settings</h2><p>Your admin identity is provided by Cloudflare Access and Microsoft Entra-compatible sign-in.</p></div>
-      <button class="drawer-close" type="button" onclick="closeModal()">×</button>
+      <button class="drawer-close" type="button" data-action="close-modal">×</button>
     </div>
     <div class="drawer-grid">
       <div class="drawer-field"><span>Name</span><strong>${escapeHtml(admin.name || "JA admin")}</strong></div>
@@ -911,6 +1012,15 @@ function escapeHtml(value) {
 
 function escapeAttr(value) {
   return escapeHtml(value).replaceAll("`", "&#096;");
+}
+
+function slugify(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .replace(/-{2,}/g, "-");
 }
 
 function formatDate(value) {

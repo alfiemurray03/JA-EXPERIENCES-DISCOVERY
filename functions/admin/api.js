@@ -56,6 +56,14 @@ function cleanEmail(value) {
   return clean(value, 254).toLowerCase();
 }
 
+function cleanSlug(value) {
+  return clean(value, 120)
+    .toLowerCase()
+    .replace(/[^a-z0-9-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .replace(/-{2,}/g, "-");
+}
+
 function isEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || ""));
 }
@@ -147,6 +155,7 @@ async function ensureTables(DB, env) {
       effective_date TEXT,
       status TEXT DEFAULT 'draft',
       is_published INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
   `).run();
@@ -154,6 +163,7 @@ async function ensureTables(DB, env) {
   await safeAlter(DB, `ALTER TABLE policy_pages ADD COLUMN version TEXT DEFAULT '1.0'`);
   await safeAlter(DB, `ALTER TABLE policy_pages ADD COLUMN effective_date TEXT`);
   await safeAlter(DB, `ALTER TABLE policy_pages ADD COLUMN status TEXT DEFAULT 'draft'`);
+  await safeAlter(DB, `ALTER TABLE policy_pages ADD COLUMN created_at TEXT DEFAULT CURRENT_TIMESTAMP`);
 
   await DB.prepare(`
     CREATE TABLE IF NOT EXISTS company_branding (
@@ -287,22 +297,20 @@ async function seedDefaults(DB) {
     ).run();
   }
 
-  const policyCount = await DB.prepare(`SELECT COUNT(*) AS count FROM policy_pages`).first();
-  if (!policyCount || Number(policyCount.count) === 0) {
-    const policies = [
-      ["terms-of-service", "Terms of Service", "# Terms of Service\n\nThese terms explain the basis on which JA Experiences & Discovery provides discovery, planning and guidance services.", "markdown", "1.0", "2026-06-21", "draft", 0],
-      ["privacy-policy", "Privacy Policy", "# Privacy Policy\n\nThis policy explains how JA Experiences & Discovery handles customer account, enquiry and service information.", "markdown", "1.0", "2026-06-21", "draft", 0],
-      ["cookie-policy", "Cookie Policy", "# Cookie Policy\n\nThis policy explains how cookies and similar technologies are used by JA Experiences & Discovery.", "markdown", "1.0", "2026-06-21", "draft", 0],
-      ["refund-policy", "Refund and Cancellation Policy", "# Refund and Cancellation Policy\n\nThis policy explains refunds, cancellations and service delivery boundaries for paid planning services.", "markdown", "1.0", "2026-06-21", "draft", 0],
-      ["affiliate-disclosure", "Affiliate Disclosure", "# Affiliate Disclosure\n\nJA Experiences & Discovery may earn commission from third-party providers where customers book through affiliate links.", "markdown", "1.0", "2026-06-21", "draft", 0]
-    ];
+  const policies = [
+    ["terms-of-service", "Terms of Service", "# Terms of Service\n\nThese terms explain the basis on which JA Experiences & Discovery provides discovery, planning and guidance services.", "markdown", "1.0", "2026-06-21", "draft", 0],
+    ["privacy-notice", "Privacy Notice", "# Privacy Notice\n\nThis notice explains how JA Experiences & Discovery handles customer account, enquiry and service information.", "markdown", "1.0", "2026-06-21", "draft", 0],
+    ["cookie-policy", "Cookie Policy", "# Cookie Policy\n\nThis policy explains how cookies and similar technologies are used by JA Experiences & Discovery.", "markdown", "1.0", "2026-06-21", "draft", 0],
+    ["refund-policy", "Refund and Cancellation Policy", "# Refund and Cancellation Policy\n\nThis policy explains refunds, cancellations and service delivery boundaries for paid planning services.", "markdown", "1.0", "2026-06-21", "draft", 0],
+    ["affiliate-disclosure", "Affiliate Disclosure", "# Affiliate Disclosure\n\nJA Experiences & Discovery may earn commission from third-party providers where customers book through affiliate links.", "markdown", "1.0", "2026-06-21", "draft", 0],
+    ["important-information", "Important Information", "# Important Information\n\nJA Experiences & Discovery provides planning and guidance support only. Third-party bookings remain subject to provider terms.", "markdown", "1.0", "2026-06-21", "draft", 0]
+  ];
 
-    for (const policy of policies) {
-      await DB.prepare(`
-        INSERT INTO policy_pages (slug, title, content, content_type, version, effective_date, status, is_published)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      `).bind(...policy).run();
-    }
+  for (const policy of policies) {
+    await DB.prepare(`
+      INSERT OR IGNORE INTO policy_pages (slug, title, content, content_type, version, effective_date, status, is_published)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(...policy).run();
   }
 }
 
@@ -417,10 +425,17 @@ async function savePlan(DB, body) {
 }
 
 async function savePolicy(DB, body) {
-  const slug = clean(body.slug, 120);
+  const slug = cleanSlug(body.slug);
+  const originalSlug = cleanSlug(body.original_slug || body.slug);
   if (!slug) throw new Error("Policy slug is required.");
 
   const status = body.is_published || body.status === "published" ? "published" : "draft";
+
+  if (originalSlug && originalSlug !== slug) {
+    const existing = await DB.prepare(`SELECT slug FROM policy_pages WHERE slug = ?`).bind(slug).first();
+    if (existing) throw new Error("A policy with this slug already exists.");
+  }
+
   await DB.prepare(`
     INSERT INTO policy_pages (slug, title, content, content_type, version, effective_date, status, is_published, updated_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
@@ -443,6 +458,10 @@ async function savePolicy(DB, body) {
     status,
     status === "published" ? 1 : 0
   ).run();
+
+  if (originalSlug && originalSlug !== slug) {
+    await DB.prepare(`DELETE FROM policy_pages WHERE slug = ?`).bind(originalSlug).run();
+  }
 
   return all(DB, `SELECT * FROM policy_pages ORDER BY title ASC`);
 }
