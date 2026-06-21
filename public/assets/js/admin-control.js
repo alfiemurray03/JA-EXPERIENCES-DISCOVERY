@@ -95,15 +95,15 @@ function renderOverview(overview) {
 
 function renderCustomers(customers) {
   const rows = customers.map((c) => `
-    <tr>
-      <td>
+    <tr class="customer-row-click">
+      <td onclick="openCustomerDrawer(c.email)">
         <strong>${escapeHtml(c.display_name || c.verified_name || c.email)}</strong>
         <span>${escapeHtml(c.email || "")}</span>
       </td>
-      <td>${escapeHtml(c.contact_email || c.email || "")}</td>
-      <td>${escapeHtml(c.phone || "Not added")}</td>
-      <td>${escapeHtml(c.communication_preference || "Email")}</td>
-      <td>${escapeHtml(formatDate(c.updated_at || c.created_at))}</td>
+      <td onclick="openCustomerDrawer(c.email)">${escapeHtml(c.contact_email || c.email || "")}</td>
+      <td onclick="openCustomerDrawer(c.email)">${escapeHtml(c.phone || "Not added")}</td>
+      <td onclick="openCustomerDrawer(c.email)">${escapeHtml(c.communication_preference || "Email")}</td>
+      <td onclick="openCustomerDrawer(c.email)">${escapeHtml(formatDate(c.updated_at || c.created_at))}</td>
     </tr>
   `).join("");
 
@@ -216,15 +216,15 @@ function renderStripe(stripe) {
   }
 
   const prices = (stripe.prices || []).map((price) => `
-    <tr>
-      <td>
+    <tr class="customer-row-click">
+      <td onclick="openCustomerDrawer(c.email)">
         <strong>${escapeHtml(price.product?.name || price.product || "Product")}</strong>
         <span>${escapeHtml(price.id)}</span>
       </td>
-      <td>${escapeHtml((price.currency || "").toUpperCase())}</td>
-      <td>${escapeHtml(formatMoney(price.unit_amount, price.currency))}</td>
-      <td>${price.active ? "Active" : "Inactive"}</td>
-      <td>${escapeHtml(price.type || "")}</td>
+      <td onclick="openCustomerDrawer(c.email)">${escapeHtml((price.currency || "").toUpperCase())}</td>
+      <td onclick="openCustomerDrawer(c.email)">${escapeHtml(formatMoney(price.unit_amount, price.currency))}</td>
+      <td onclick="openCustomerDrawer(c.email)">${price.active ? "Active" : "Inactive"}</td>
+      <td onclick="openCustomerDrawer(c.email)">${escapeHtml(price.type || "")}</td>
     </tr>
   `).join("");
 
@@ -364,14 +364,14 @@ async function savePolicy(event) {
 
 function renderSupport(items) {
   const rows = items.map((t) => `
-    <tr>
-      <td>
+    <tr class="customer-row-click">
+      <td onclick="openCustomerDrawer(c.email)">
         <strong>${escapeHtml(t.subject)}</strong>
         <span>${escapeHtml(t.customer_email)}</span>
       </td>
-      <td>${escapeHtml(t.status)}</td>
-      <td>${escapeHtml(t.priority)}</td>
-      <td>${escapeHtml(formatDate(t.updated_at || t.created_at))}</td>
+      <td onclick="openCustomerDrawer(c.email)">${escapeHtml(t.status)}</td>
+      <td onclick="openCustomerDrawer(c.email)">${escapeHtml(t.priority)}</td>
+      <td onclick="openCustomerDrawer(c.email)">${escapeHtml(formatDate(t.updated_at || t.created_at))}</td>
     </tr>
   `).join("");
 
@@ -417,15 +417,15 @@ function renderSupport(items) {
 
 function renderSystem(items) {
   const rows = items.map((e) => `
-    <tr>
-      <td>
+    <tr class="customer-row-click">
+      <td onclick="openCustomerDrawer(c.email)">
         <strong>${escapeHtml(e.title)}</strong>
         <span>${escapeHtml(e.message)}</span>
       </td>
-      <td>${escapeHtml(e.type)}</td>
-      <td>${escapeHtml(e.severity)}</td>
-      <td>${escapeHtml(e.status)}</td>
-      <td>${escapeHtml(formatDate(e.updated_at || e.created_at))}</td>
+      <td onclick="openCustomerDrawer(c.email)">${escapeHtml(e.type)}</td>
+      <td onclick="openCustomerDrawer(c.email)">${escapeHtml(e.severity)}</td>
+      <td onclick="openCustomerDrawer(c.email)">${escapeHtml(e.status)}</td>
+      <td onclick="openCustomerDrawer(c.email)">${escapeHtml(formatDate(e.updated_at || e.created_at))}</td>
     </tr>
   `).join("");
 
@@ -599,9 +599,9 @@ function table(headers, rows) {
     <div class="table-wrap">
       <table>
         <thead>
-          <tr>${headers.map((h) => `<th>${escapeHtml(h)}</th>`).join("")}</tr>
+          <tr class="customer-row-click">${headers.map((h) => `<th>${escapeHtml(h)}</th>`).join("")}</tr>
         </thead>
-        <tbody>${rows || `<tr><td colspan="${headers.length}">No records yet.</td></tr>`}</tbody>
+        <tbody>${rows || `<tr class="customer-row-click"><td colspan="${headers.length}">No records yet.</td></tr>`}</tbody>
       </table>
     </div>
   `;
@@ -656,3 +656,149 @@ function formatMoney(amount, currency) {
 }
 
 
+
+
+async function openCustomerDrawer(email) {
+  closeCustomerDrawer();
+
+  const drawer = document.createElement("div");
+  drawer.className = "customer-drawer-backdrop";
+  drawer.id = "customerDrawer";
+  drawer.innerHTML = `
+    <aside class="customer-drawer">
+      <div class="drawer-head">
+        <div>
+          <h2>Customer profile</h2>
+          <p>Loading customer record...</p>
+        </div>
+        <button class="drawer-close" type="button" onclick="closeCustomerDrawer()">×</button>
+      </div>
+
+      <div class="drawer-body">
+        <div class="admin-loading">Loading customer...</div>
+      </div>
+    </aside>
+  `;
+
+  document.body.appendChild(drawer);
+
+  try {
+    const response = await fetch(`/admin/customer?email=${encodeURIComponent(email)}`, {
+      credentials: "include",
+      cache: "no-store",
+      headers: { "Accept": "application/json" }
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) throw new Error(data.error || "Unable to load customer.");
+
+    renderCustomerDrawer(data.customer);
+  } catch (error) {
+    drawer.querySelector(".drawer-body").innerHTML = `<div class="admin-alert">${escapeHtml(error.message)}</div>`;
+  }
+}
+
+function closeCustomerDrawer() {
+  const drawer = document.getElementById("customerDrawer");
+  if (drawer) drawer.remove();
+}
+
+function renderCustomerDrawer(customer) {
+  const drawer = document.getElementById("customerDrawer");
+  if (!drawer) return;
+
+  const displayName = customer.display_name || customer.verified_name || customer.email;
+  const isLifetime = Number(customer.admin_lifetime || 0) === 1;
+
+  drawer.querySelector(".drawer-head p").textContent = customer.email || "";
+  drawer.querySelector(".drawer-body").innerHTML = `
+    <div class="customer-profile-head">
+      <div class="customer-avatar">${escapeHtml((displayName || "C").slice(0, 1).toUpperCase())}</div>
+      <div>
+        <strong>${escapeHtml(displayName)}</strong>
+        <span>${escapeHtml(customer.email || "")}</span>
+      </div>
+      <span class="customer-status ${isLifetime ? "lifetime" : ""}">
+        ${isLifetime ? "∞ Lifetime" : "Standard"}
+      </span>
+    </div>
+
+    <div class="drawer-grid">
+      <div class="drawer-field">
+        <span>Contact email</span>
+        <strong>${escapeHtml(customer.contact_email || customer.email || "Not added")}</strong>
+      </div>
+      <div class="drawer-field">
+        <span>Phone</span>
+        <strong>${escapeHtml(customer.phone || "Not added")}</strong>
+      </div>
+      <div class="drawer-field">
+        <span>Communication</span>
+        <strong>${escapeHtml(customer.communication_preference || "Email")}</strong>
+      </div>
+      <div class="drawer-field">
+        <span>Updated</span>
+        <strong>${escapeHtml(formatDate(customer.updated_at || customer.created_at))}</strong>
+      </div>
+    </div>
+
+    <form class="admin-form single" id="customerAdminForm">
+      <label class="check">
+        <input id="customer_lifetime" type="checkbox" ${isLifetime ? "checked" : ""}>
+        Make this customer a Lifetime customer
+      </label>
+
+      ${textarea("Internal admin notes", "customer_admin_notes")}
+
+      <button class="admin-button" type="submit">Save customer admin changes</button>
+    </form>
+
+    <div id="customerSaved" class="admin-success" hidden></div>
+
+    <div class="admin-alert">
+      Only authorised admin users can make this change. This action is protected by Cloudflare Access and the admin API.
+    </div>
+  `;
+
+  setValue("customer_admin_notes", customer.admin_notes || "");
+
+  document.getElementById("customerAdminForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const response = await fetch(`/admin/customer?email=${encodeURIComponent(customer.email)}`, {
+      method: "POST",
+      credentials: "include",
+      cache: "no-store",
+      headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        admin_lifetime: document.getElementById("customer_lifetime").checked,
+        admin_notes: getValue("customer_admin_notes")
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      document.getElementById("customerSaved").hidden = false;
+      document.getElementById("customerSaved").className = "admin-alert";
+      document.getElementById("customerSaved").textContent = data.error || "Unable to save customer.";
+      return;
+    }
+
+    document.getElementById("customerSaved").hidden = false;
+    document.getElementById("customerSaved").className = "admin-success";
+    document.getElementById("customerSaved").textContent = Number(data.customer.admin_lifetime || 0) === 1
+      ? "Customer is now marked as Lifetime."
+      : "Customer is now marked as Standard.";
+
+    renderCustomerDrawer(data.customer);
+
+    if (state.currentSection === "customers") {
+      loadSection("customers");
+    }
+  });
+}
