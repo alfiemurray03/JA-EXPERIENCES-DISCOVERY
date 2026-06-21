@@ -93,6 +93,7 @@ async function isAllowedAdmin(DB, identity, env) {
 async function ensureCustomerAdminColumns(DB) {
   const columns = [
     ["admin_lifetime", "INTEGER DEFAULT 0"],
+    ["admin_lifetime_plan_id", "TEXT"],
     ["admin_customer_status", "TEXT DEFAULT 'Standard'"],
     ["admin_notes", "TEXT"],
     ["admin_updated_at", "TEXT"]
@@ -118,6 +119,7 @@ async function getCustomer(DB, email) {
       communication_preference,
       support_notes,
       admin_lifetime,
+      admin_lifetime_plan_id,
       admin_customer_status,
       admin_notes,
       created_at,
@@ -126,6 +128,35 @@ async function getCustomer(DB, email) {
     FROM profiles
     WHERE lower(email) = lower(?)
   `).bind(email).first();
+}
+
+async function getPlans(DB) {
+  await DB.prepare(`
+    CREATE TABLE IF NOT EXISTS service_plans (
+      id TEXT PRIMARY KEY,
+      plan_name TEXT,
+      plan_type TEXT,
+      price_label TEXT,
+      price_pence INTEGER,
+      stripe_price_id TEXT,
+      delivery_time TEXT,
+      revisions TEXT,
+      description TEXT,
+      button_label TEXT,
+      is_active INTEGER DEFAULT 1,
+      is_featured INTEGER DEFAULT 0,
+      sort_order INTEGER DEFAULT 100,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
+
+  const result = await DB.prepare(`
+    SELECT id, plan_name, plan_type, is_active, sort_order
+    FROM service_plans
+    ORDER BY sort_order ASC, plan_name ASC
+  `).all();
+
+  return result.results || [];
 }
 
 export async function onRequest(context) {
@@ -153,7 +184,7 @@ export async function onRequest(context) {
 
     if (!customer) return json({ error: "Customer not found." }, 404);
 
-    return json({ admin: identity, customer });
+    return json({ admin: identity, customer, plans: await getPlans(env.DB) });
   }
 
   if (request.method === "POST") {
@@ -161,11 +192,13 @@ export async function onRequest(context) {
 
     const makeLifetime = Boolean(body.admin_lifetime);
     const notes = String(body.admin_notes || "").trim().slice(0, 4000);
+    const lifetimePlanId = makeLifetime ? String(body.admin_lifetime_plan_id || "").trim().slice(0, 120) : "";
     const status = makeLifetime ? "Lifetime" : "Standard";
 
     await env.DB.prepare(`
       UPDATE profiles SET
         admin_lifetime = ?,
+        admin_lifetime_plan_id = ?,
         admin_customer_status = ?,
         admin_notes = ?,
         admin_updated_at = CURRENT_TIMESTAMP,
@@ -173,6 +206,7 @@ export async function onRequest(context) {
       WHERE lower(email) = lower(?)
     `).bind(
       makeLifetime ? 1 : 0,
+      lifetimePlanId || null,
       status,
       notes,
       email
@@ -183,7 +217,8 @@ export async function onRequest(context) {
     return json({
       saved: true,
       admin: identity,
-      customer
+      customer,
+      plans: await getPlans(env.DB)
     });
   }
 

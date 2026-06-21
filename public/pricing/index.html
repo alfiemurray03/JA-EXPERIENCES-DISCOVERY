@@ -199,6 +199,23 @@
       border: 2px solid #f26a2e;
     }
 
+    .pricing-card-unavailable {
+      opacity: 0.72;
+    }
+
+    .pricing-card-unavailable .pricing-pill {
+      background: #fef2f2;
+      color: #b91c1c;
+    }
+
+    .pricing-button.disabled,
+    .pricing-button[aria-disabled="true"] {
+      background: #526276;
+      color: #ffffff;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
     .pricing-pill {
       width: max-content;
       max-width: 100%;
@@ -391,7 +408,6 @@
           JA Experiences &amp; Discovery provides guidance and planning support only.
         </p>
 
-```
     <div class="pricing-hero-actions">
       <a class="pricing-button orange" href="/enquiry/">Start a free enquiry</a>
       <a class="pricing-button light" href="#paid-plans">View paid plans</a>
@@ -624,12 +640,12 @@
   </p>
   <a class="pricing-button orange" href="/enquiry/">Start a free enquiry</a>
 </section>
-```
 
   </main>
 
   <div id="siteShellFooter"></div>
   <script src="/assets/js/site-shell.js?v=20260621-12"></script>
+  <script src="/assets/js/pricing-plans.js?v=20260621-1"></script>
 </body>
 </html>
 

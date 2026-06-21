@@ -25,11 +25,21 @@ document.addEventListener("DOMContentLoaded", () => {
     data.socialTariff = Boolean(form.elements.socialTariff?.checked);
     data.specialCategoryConsent = Boolean(form.elements.specialCategoryConsent?.checked);
     data.transportConfirmed = Boolean(form.elements.transportConfirmed?.checked);
+    data.termsAccepted = Boolean(form.elements.termsAccepted?.checked);
     data.privacyAccepted = Boolean(form.elements.privacyAccepted?.checked);
+    data.marketingConsent = Boolean(form.elements.marketingConsent?.checked);
 
     if (data.supportNeeds?.trim() && !data.specialCategoryConsent) {
       status.className = "form-status error";
       status.textContent = "Please confirm the sensitive-information consent, or remove the accessibility information.";
+      submit.disabled = false;
+      submit.textContent = originalText;
+      return;
+    }
+
+    if (!data.termsAccepted || !data.privacyAccepted) {
+      status.className = "form-status error";
+      status.textContent = "Please confirm the Terms of Service and Privacy Notice before sending your enquiry.";
       submit.disabled = false;
       submit.textContent = originalText;
       return;

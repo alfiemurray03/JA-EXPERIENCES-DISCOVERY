@@ -17,6 +17,7 @@ async function loadAccessProfile() {
 
     updateProfile(profile);
     populateForm(profile);
+    populateConsent(data.consent || {});
     bindProfileForm(profile);
   } catch (error) {
     showProfileError();
@@ -51,6 +52,12 @@ function populateForm(profile) {
   setValue("supportNotesInput", profile.supportNotes);
 }
 
+function populateConsent(consent) {
+  setChecked("termsAcceptedInput", Boolean(consent.termsAccepted));
+  setChecked("privacyAcceptedInput", Boolean(consent.privacyAccepted));
+  setChecked("marketingConsentInput", Boolean(consent.marketingConsent));
+}
+
 function bindProfileForm(profile) {
   const form = document.getElementById("profileForm");
   const resetButton = document.getElementById("resetProfileButton");
@@ -61,37 +68,59 @@ function bindProfileForm(profile) {
 
     form.addEventListener("submit", async function (event) {
       event.preventDefault();
+      if (savedMessage) {
+        savedMessage.hidden = true;
+      }
 
       const updatedProfile = {
         displayName: getValue("displayNameInput") || profile.verifiedName || profile.email,
         contactEmail: getValue("contactEmailInput") || profile.email,
         phone: getValue("phoneInput"),
         communicationPreference: getValue("communicationPreferenceInput") || "Email",
-        supportNotes: getValue("supportNotesInput")
+        supportNotes: getValue("supportNotesInput"),
+        termsAccepted: getChecked("termsAcceptedInput"),
+        privacyAccepted: getChecked("privacyAcceptedInput"),
+        marketingConsent: getChecked("marketingConsentInput")
       };
 
-      const response = await fetch("/account/profile", {
-        method: "POST",
-        credentials: "include",
-        cache: "no-store",
-        headers: {
-          "Accept": "application/json",
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(updatedProfile)
-      });
-
-      if (!response.ok) {
-        throw new Error("Profile could not be saved.");
+      if (!updatedProfile.termsAccepted || !updatedProfile.privacyAccepted) {
+        if (savedMessage) {
+          savedMessage.textContent = "Please confirm the Terms of Service and Privacy Notice before saving.";
+          savedMessage.hidden = false;
+        }
+        return;
       }
 
-      const data = await response.json();
-      updateProfile(data.profile);
-      populateForm(data.profile);
+      try {
+        const response = await fetch("/account/profile", {
+          method: "POST",
+          credentials: "include",
+          cache: "no-store",
+          headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(updatedProfile)
+        });
 
-      if (savedMessage) {
-        savedMessage.textContent = "Profile saved successfully. These details now sync through your JA Secure Access account.";
-        savedMessage.hidden = false;
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || "Profile could not be saved.");
+        }
+
+        updateProfile(data.profile);
+        populateForm(data.profile);
+        populateConsent(data.consent || {});
+
+        if (savedMessage) {
+          savedMessage.textContent = "Profile saved successfully. These details now sync through your JA Secure Access account.";
+          savedMessage.hidden = false;
+        }
+      } catch (error) {
+        if (savedMessage) {
+          savedMessage.textContent = error.message;
+          savedMessage.hidden = false;
+        }
       }
     });
   }
@@ -139,9 +168,21 @@ function setValue(id, value) {
   }
 }
 
+function setChecked(id, value) {
+  const element = document.getElementById(id);
+  if (element) {
+    element.checked = Boolean(value);
+  }
+}
+
 function getValue(id) {
   const element = document.getElementById(id);
   return element ? element.value.trim() : "";
+}
+
+function getChecked(id) {
+  const element = document.getElementById(id);
+  return element ? Boolean(element.checked) : false;
 }
 
 function initials(name, email) {

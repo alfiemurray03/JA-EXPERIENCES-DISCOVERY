@@ -99,6 +99,7 @@ async function ensureTables(DB, env) {
   `).run();
 
   await safeAlter(DB, `ALTER TABLE profiles ADD COLUMN admin_lifetime INTEGER DEFAULT 0`);
+  await safeAlter(DB, `ALTER TABLE profiles ADD COLUMN admin_lifetime_plan_id TEXT`);
   await safeAlter(DB, `ALTER TABLE profiles ADD COLUMN admin_customer_status TEXT DEFAULT 'Standard'`);
   await safeAlter(DB, `ALTER TABLE profiles ADD COLUMN admin_notes TEXT`);
   await safeAlter(DB, `ALTER TABLE profiles ADD COLUMN admin_updated_at TEXT`);
@@ -298,8 +299,8 @@ async function seedDefaults(DB) {
   }
 
   const policies = [
-    ["terms-of-service", "Terms of Service", "# Terms of Service\n\nThese terms explain the basis on which JA Experiences & Discovery provides discovery, planning and guidance services.", "markdown", "1.0", "2026-06-21", "draft", 0],
-    ["privacy-notice", "Privacy Notice", "# Privacy Notice\n\nThis notice explains how JA Experiences & Discovery handles customer account, enquiry and service information.", "markdown", "1.0", "2026-06-21", "draft", 0],
+    ["terms-of-service", "Terms of Service", "# Terms of Service\n\nThese terms explain the basis on which JA Experiences & Discovery provides discovery, planning and guidance services.", "markdown", "1.0", "2026-06-21", "published", 1],
+    ["privacy-notice", "Privacy Notice", "# Privacy Notice\n\nThis notice explains how JA Experiences & Discovery handles customer account, enquiry and service information.", "markdown", "1.0", "2026-06-21", "published", 1],
     ["cookie-policy", "Cookie Policy", "# Cookie Policy\n\nThis policy explains how cookies and similar technologies are used by JA Experiences & Discovery.", "markdown", "1.0", "2026-06-21", "draft", 0],
     ["refund-policy", "Refund and Cancellation Policy", "# Refund and Cancellation Policy\n\nThis policy explains refunds, cancellations and service delivery boundaries for paid planning services.", "markdown", "1.0", "2026-06-21", "draft", 0],
     ["affiliate-disclosure", "Affiliate Disclosure", "# Affiliate Disclosure\n\nJA Experiences & Discovery may earn commission from third-party providers where customers book through affiliate links.", "markdown", "1.0", "2026-06-21", "draft", 0],
@@ -711,7 +712,8 @@ export async function onRequest(context) {
           admin: identity,
           customers: await all(env.DB, `
             SELECT email, verified_name, display_name, contact_email, phone, communication_preference,
-              support_notes, admin_lifetime, admin_customer_status, admin_notes, created_at, updated_at
+              support_notes, admin_lifetime, admin_lifetime_plan_id, admin_customer_status, admin_notes,
+              created_at, updated_at
             FROM profiles
             ORDER BY updated_at DESC, created_at DESC
             LIMIT 500

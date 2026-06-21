@@ -59,11 +59,13 @@ async function submitEnquiry(request, env) {
     socialTariff: Boolean(body.socialTariff),
     specialCategoryConsent: Boolean(body.specialCategoryConsent),
     transportConfirmed: Boolean(body.transportConfirmed),
-    privacyAccepted: Boolean(body.privacyAccepted)
+    termsAccepted: Boolean(body.termsAccepted),
+    privacyAccepted: Boolean(body.privacyAccepted),
+    marketingConsent: Boolean(body.marketingConsent)
   };
 
-  if (!enquiry.name || !isValidEmail(enquiry.email) || !enquiry.message || !enquiry.privacyAccepted) {
-    return json({ ok: false, message: "Please complete your name, email, enquiry and privacy confirmation." }, 400);
+  if (!enquiry.name || !isValidEmail(enquiry.email) || !enquiry.message || !enquiry.termsAccepted || !enquiry.privacyAccepted) {
+    return json({ ok: false, message: "Please complete your name, email, enquiry, Terms confirmation and Privacy confirmation." }, 400);
   }
 
   if (enquiry.supportNeeds && !enquiry.specialCategoryConsent) {
@@ -98,6 +100,9 @@ async function submitEnquiry(request, env) {
     ["Budget", enquiry.budget || "Not provided"],
     ["Social tariff requested", enquiry.socialTariff ? "Yes" : "No"],
     ["Support or access needs", enquiry.supportNeeds || "None provided"],
+    ["Terms accepted", enquiry.termsAccepted ? "Yes" : "No"],
+    ["Privacy accepted", enquiry.privacyAccepted ? "Yes" : "No"],
+    ["Marketing consent", enquiry.marketingConsent ? "Yes" : "No"],
     ["Enquiry", enquiry.message]
   ];
   const htmlRows = rows.map(([label, value]) =>

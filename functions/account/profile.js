@@ -77,6 +77,51 @@ async function ensureProfileTable(DB) {
   `).run();
 }
 
+async function ensureConsentTable(DB) {
+  await DB.prepare(`
+    CREATE TABLE IF NOT EXISTS consent_records (
+      id TEXT PRIMARY KEY,
+      email TEXT,
+      source TEXT,
+      reference TEXT,
+      terms_accepted INTEGER DEFAULT 0,
+      terms_version TEXT,
+      terms_accepted_at TEXT,
+      privacy_accepted INTEGER DEFAULT 0,
+      privacy_version TEXT,
+      privacy_accepted_at TEXT,
+      marketing_consent INTEGER DEFAULT 0,
+      marketing_consent_at TEXT,
+      ip_hash TEXT,
+      user_agent TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
+}
+
+async function getLatestConsent(DB, email) {
+  await ensureConsentTable(DB);
+
+  const consent = await DB.prepare(`
+    SELECT terms_accepted, terms_accepted_at, privacy_accepted, privacy_accepted_at,
+      marketing_consent, marketing_consent_at, source
+    FROM consent_records
+    WHERE lower(email) = lower(?)
+    ORDER BY created_at DESC
+    LIMIT 1
+  `).bind(email).first();
+
+  return {
+    termsAccepted: Number(consent?.terms_accepted || 0) === 1,
+    termsAcceptedAt: consent?.terms_accepted_at || "",
+    privacyAccepted: Number(consent?.privacy_accepted || 0) === 1,
+    privacyAcceptedAt: consent?.privacy_accepted_at || "",
+    marketingConsent: Number(consent?.marketing_consent || 0) === 1,
+    marketingConsentAt: consent?.marketing_consent_at || "",
+    source: consent?.source || ""
+  };
+}
+
 async function getProfile(DB, identity) {
   await ensureProfileTable(DB);
 
@@ -145,8 +190,14 @@ async function getProfile(DB, identity) {
   return getProfile(DB, identity);
 }
 
-async function saveProfile(DB, identity, body) {
+async function saveProfile(DB, identity, body, request) {
   await ensureProfileTable(DB);
+
+  if (!body.termsAccepted || !body.privacyAccepted) {
+    const error = new Error("Terms of Service and Privacy Notice consent is required.");
+    error.status = 400;
+    throw error;
+  }
 
   const current = await getProfile(DB, identity);
 
@@ -188,7 +239,51 @@ async function saveProfile(DB, identity, body) {
     updated.supportNotes
   ).run();
 
+  await storeConsent(DB, {
+    email: identity.email,
+    source: "account-profile",
+    termsAccepted: Boolean(body.termsAccepted),
+    privacyAccepted: Boolean(body.privacyAccepted),
+    marketingConsent: Boolean(body.marketingConsent),
+    ipHash: await hashValue(request.headers.get("cf-connecting-ip") || ""),
+    userAgent: clean(request.headers.get("user-agent") || "", 500)
+  });
+
   return getProfile(DB, identity);
+}
+
+async function storeConsent(DB, consent) {
+  await ensureConsentTable(DB);
+
+  const now = new Date().toISOString();
+  await DB.prepare(`
+    INSERT INTO consent_records (
+      id, email, source, reference, terms_accepted, terms_version, terms_accepted_at,
+      privacy_accepted, privacy_version, privacy_accepted_at, marketing_consent,
+      marketing_consent_at, ip_hash, user_agent
+    ) VALUES (?, ?, ?, '', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).bind(
+    crypto.randomUUID(),
+    consent.email,
+    consent.source,
+    consent.termsAccepted ? 1 : 0,
+    "1.0",
+    consent.termsAccepted ? now : null,
+    consent.privacyAccepted ? 1 : 0,
+    "1.0",
+    consent.privacyAccepted ? now : null,
+    consent.marketingConsent ? 1 : 0,
+    consent.marketingConsent ? now : null,
+    consent.ipHash || "",
+    consent.userAgent || ""
+  ).run();
+}
+
+async function hashValue(value) {
+  if (!value) return "";
+  const data = new TextEncoder().encode(value);
+  const hash = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(hash)).map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 export async function onRequest(context) {
@@ -210,7 +305,8 @@ export async function onRequest(context) {
 
   if (request.method === "GET") {
     const profile = await getProfile(env.DB, identity);
-    return json({ profile });
+    const consent = await getLatestConsent(env.DB, identity.email);
+    return json({ profile, consent });
   }
 
   if (request.method === "POST") {
@@ -222,8 +318,13 @@ export async function onRequest(context) {
       body = {};
     }
 
-    const profile = await saveProfile(env.DB, identity, body);
-    return json({ profile, saved: true });
+    try {
+      const profile = await saveProfile(env.DB, identity, body, request);
+      const consent = await getLatestConsent(env.DB, identity.email);
+      return json({ profile, consent, saved: true });
+    } catch (error) {
+      return json({ error: error.message || "Profile could not be saved." }, error.status || 500);
+    }
   }
 
   return json({ error: "Method not allowed." }, 405);

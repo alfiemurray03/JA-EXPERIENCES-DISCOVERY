@@ -290,6 +290,23 @@
       line-height: 1.45;
     }
 
+    .profile-form .consent-label {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.75rem;
+      align-items: start;
+      color: #08233c;
+      font-weight: 700;
+      letter-spacing: 0;
+      text-transform: none;
+      line-height: 1.5;
+    }
+
+    .profile-form .consent-label input {
+      width: auto;
+      margin-top: 0.25rem;
+    }
+
     .saved-message {
       border-radius: 16px;
       background: #eaf7f1;
@@ -442,6 +459,21 @@
               <textarea id="supportNotesInput" placeholder="Optional notes you want visible on this device, such as accessibility preferences or support reminders."></textarea>
             </label>
 
+            <label class="consent-label">
+              <input id="termsAcceptedInput" type="checkbox" required>
+              <span>I accept the <a href="/policies/terms-of-service" target="_blank" rel="noopener">Terms of Service</a>. *</span>
+            </label>
+
+            <label class="consent-label">
+              <input id="privacyAcceptedInput" type="checkbox" required>
+              <span>I acknowledge the <a href="/policies/privacy-notice" target="_blank" rel="noopener">Privacy Notice</a> and understand that personal data will be handled by JA Group Services Ltd as Data Controller. *</span>
+            </label>
+
+            <label class="consent-label">
+              <input id="marketingConsentInput" type="checkbox">
+              <span>I would like to receive occasional JA Experiences &amp; Discovery service updates and understand I can withdraw consent at any time.</span>
+            </label>
+
             <div class="account-actions">
               <button class="account-button orange" type="submit">Save profile</button>
               <button class="account-button" type="button" id="resetProfileButton">Reset saved profile</button>
@@ -494,16 +526,15 @@
       </div>
 
       <div class="account-note">
-        Profile edits are currently saved on this device only. A future database-backed profile can sync
-        display names, preferences and support details across devices. JA Experiences &amp; Discovery provides
-        discovery, planning and guidance support only and is not a travel booking system.
+        Profile edits are saved securely to the JA Experiences &amp; Discovery customer profile database.
+        JA Experiences &amp; Discovery provides discovery, planning and guidance support only and is not a travel booking system.
       </div>
     </section>
   </main>
 
   <div id="siteShellFooter"></div>
 
-  <script src="/assets/js/account-profile.js?v=20260621-18"></script>
+  <script src="/assets/js/account-profile.js?v=20260621-19"></script>
   <script src="/assets/js/access-header.js?v=20260621-18"></script>
   <script src="/assets/js/site-shell.js?v=20260621-18"></script>
 </body>

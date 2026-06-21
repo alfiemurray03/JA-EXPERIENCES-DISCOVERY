@@ -299,11 +299,12 @@ function renderCustomers(customers = []) {
   const rows = customers.map((c) => {
     const name = c.display_name || c.verified_name || c.email;
     const lifetime = Number(c.admin_lifetime || 0) === 1;
+    const planSuffix = lifetime && c.admin_lifetime_plan_id ? ` (${c.admin_lifetime_plan_id})` : "";
     return `
       <tr class="customer-row-click" data-action="open-customer" data-email="${escapeAttr(c.email)}">
         <td><strong>${escapeHtml(name)}</strong><span>${escapeHtml(c.email || "")}</span></td>
         <td>${escapeHtml(c.contact_email || c.email || "")}</td>
-        <td>${lifetime ? badge("Lifetime", "amber") : badge(c.admin_customer_status || "Standard")}</td>
+        <td>${lifetime ? badge(`Lifetime${planSuffix}`, "amber") : badge(c.admin_customer_status || "Standard")}</td>
         <td>${escapeHtml(c.phone || "Not added")}</td>
         <td>${escapeHtml(c.communication_preference || "Email")}</td>
         <td>${escapeHtml(formatDate(c.updated_at || c.created_at))}</td>
@@ -853,7 +854,7 @@ async function openCustomerDrawer(email) {
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Unable to load customer.");
-    renderCustomerDrawer(data.customer);
+    renderCustomerDrawer(data.customer, data.plans || []);
   } catch (error) {
     drawer.querySelector(".drawer-body").innerHTML = `<div class="admin-alert">${escapeHtml(error.message)}</div>`;
   }
@@ -863,12 +864,16 @@ function closeCustomerDrawer() {
   document.getElementById("customerDrawer")?.remove();
 }
 
-function renderCustomerDrawer(customer) {
+function renderCustomerDrawer(customer, plans = []) {
   const drawer = document.getElementById("customerDrawer");
   if (!drawer) return;
 
   const displayName = customer.display_name || customer.verified_name || customer.email;
   const isLifetime = Number(customer.admin_lifetime || 0) === 1;
+  const planOptions = plans.map((plan) => {
+    const label = `${plan.plan_name || plan.id} - ${plan.plan_type || "Service plan"}${Number(plan.is_active || 0) === 1 ? "" : " (inactive)"}`;
+    return `<option value="${escapeAttr(plan.id)}" ${customer.admin_lifetime_plan_id === plan.id ? "selected" : ""}>${escapeHtml(label)}</option>`;
+  }).join("");
 
   drawer.querySelector(".drawer-head p").textContent = customer.email || "";
   drawer.querySelector(".drawer-body").innerHTML = `
@@ -881,10 +886,20 @@ function renderCustomerDrawer(customer) {
       <div class="drawer-field"><span>Contact email</span><strong>${escapeHtml(customer.contact_email || customer.email || "Not added")}</strong></div>
       <div class="drawer-field"><span>Phone</span><strong>${escapeHtml(customer.phone || "Not added")}</strong></div>
       <div class="drawer-field"><span>Communication</span><strong>${escapeHtml(customer.communication_preference || "Email")}</strong></div>
+      <div class="drawer-field"><span>Verified name</span><strong>${escapeHtml(customer.verified_name || "Not added")}</strong></div>
+      <div class="drawer-field"><span>Support notes</span><strong>${escapeHtml(customer.support_notes || "None recorded")}</strong></div>
+      <div class="drawer-field"><span>Lifetime plan</span><strong>${escapeHtml(customer.admin_lifetime_plan_id || "Not assigned")}</strong></div>
       <div class="drawer-field"><span>Updated</span><strong>${escapeHtml(formatDate(customer.updated_at || customer.created_at))}</strong></div>
     </div>
     <form class="admin-form single" id="customerAdminForm">
       <label class="check"><input id="customer_lifetime" type="checkbox" ${isLifetime ? "checked" : ""}> Mark this customer as Lifetime</label>
+      <label>
+        Lifetime service plan
+        <select id="customer_lifetime_plan" ${isLifetime ? "" : "disabled"}>
+          <option value="">Select a Lifetime plan</option>
+          ${planOptions}
+        </select>
+      </label>
       ${textarea("Internal admin notes", "customer_admin_notes")}
       <button class="admin-button" type="submit">Save customer changes</button>
     </form>
@@ -892,15 +907,21 @@ function renderCustomerDrawer(customer) {
   `;
 
   setValue("customer_admin_notes", customer.admin_notes || "");
+  document.getElementById("customer_lifetime").addEventListener("change", (event) => {
+    const planSelect = document.getElementById("customer_lifetime_plan");
+    if (planSelect) planSelect.disabled = !event.target.checked;
+  });
   document.getElementById("customerAdminForm").addEventListener("submit", async (event) => {
     event.preventDefault();
+    const lifetimeChecked = document.getElementById("customer_lifetime").checked;
     const response = await fetch(`/admin/customer?email=${encodeURIComponent(customer.email)}`, {
       method: "POST",
       credentials: "include",
       cache: "no-store",
       headers: { "Accept": "application/json", "Content-Type": "application/json" },
       body: JSON.stringify({
-        admin_lifetime: document.getElementById("customer_lifetime").checked,
+        admin_lifetime: lifetimeChecked,
+        admin_lifetime_plan_id: lifetimeChecked ? getValue("customer_lifetime_plan") : "",
         admin_notes: getValue("customer_admin_notes")
       })
     });
@@ -909,7 +930,7 @@ function renderCustomerDrawer(customer) {
       setSaved("customerSaved", data.error || "Unable to save customer.", true);
       return;
     }
-    renderCustomerDrawer(data.customer);
+    renderCustomerDrawer(data.customer, data.plans || plans);
     if (state.currentSection === "customers") loadSection("customers");
   });
 }
