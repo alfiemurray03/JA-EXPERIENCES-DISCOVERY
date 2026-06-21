@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Admin Control Centre | JA Experiences &amp; Discovery</title>
+  <meta name="robots" content="noindex,nofollow">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/assets/css/ja-travel-rebuild.css?v=admin-control-1">
+  <link rel="stylesheet" href="/assets/css/homepage-clean.css?v=admin-control-1">
+
+  <style>
+    body {
+      margin: 0;
+      background: #f7f4ed;
+      color: #08233c;
+      font-family: Inter, Arial, sans-serif;
+    }
+
+    .admin-shell {
+      display: grid;
+      grid-template-columns: 300px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    .admin-sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      background: #08233c;
+      color: #ffffff;
+      padding: 1.4rem;
+      box-sizing: border-box;
+    }
+
+    .admin-brand {
+      display: flex;
+      gap: 0.8rem;
+      align-items: center;
+      margin-bottom: 1.75rem;
+    }
+
+    .admin-logo {
+      width: 46px;
+      height: 46px;
+      border-radius: 14px;
+      background: #f26a2e;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+    }
+
+    .admin-brand strong {
+      display: block;
+      font-size: 1rem;
+      line-height: 1.1;
+    }
+
+    .admin-brand span {
+      display: block;
+      margin-top: 0.15rem;
+      color: rgba(255,255,255,0.68);
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .admin-nav {
+      display: grid;
+      gap: 0.45rem;
+    }
+
+    .admin-nav button {
+      width: 100%;
+      border: 0;
+      border-radius: 14px;
+      padding: 0.85rem 0.95rem;
+      background: transparent;
+      color: rgba(255,255,255,0.78);
+      font: inherit;
+      font-weight: 900;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .admin-nav button:hover,
+    .admin-nav button.active {
+      background: rgba(255,255,255,0.12);
+      color: #ffffff;
+    }
+
+    .admin-main {
+      padding: 1.4rem;
+      min-width: 0;
+    }
+
+    .admin-topbar {
+      background: #ffffff;
+      border: 1px solid #d8e2ea;
+      border-radius: 24px;
+      padding: 1.2rem;
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      align-items: center;
+      margin-bottom: 1.25rem;
+      box-shadow: 0 14px 34px rgba(8,35,60,0.08);
+    }
+
+    .admin-topbar h1 {
+      margin: 0;
+      font-family: "Playfair Display", Georgia, serif;
+      font-size: clamp(2rem, 4vw, 3.3rem);
+      line-height: 0.95;
+      letter-spacing: -0.05em;
+    }
+
+    .admin-topbar p {
+      margin: 0.45rem 0 0;
+      color: #526276;
+      line-height: 1.5;
+    }
+
+    .admin-user {
+      text-align: right;
+      min-width: 260px;
+    }
+
+    .admin-user strong,
+    .admin-user span {
+      display: block;
+    }
+
+    .admin-user span {
+      color: #526276;
+      margin-top: 0.2rem;
+      word-break: break-word;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      margin-top: 0.55rem;
+      border-radius: 999px;
+      background: #eaf7f1;
+      color: #007a53;
+      padding: 0.45rem 0.7rem;
+      font-size: 0.78rem;
+      font-weight: 900;
+    }
+
+    .admin-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .admin-card,
+    .admin-stat {
+      background: #ffffff;
+      border: 1px solid #d8e2ea;
+      border-radius: 24px;
+      padding: 1.35rem;
+      box-shadow: 0 14px 34px rgba(8,35,60,0.08);
+    }
+
+    .admin-card h2 {
+      margin: 0 0 0.75rem;
+      font-family: "Playfair Display", Georgia, serif;
+      font-size: clamp(1.8rem, 3vw, 2.55rem);
+      line-height: 0.98;
+      letter-spacing: -0.045em;
+    }
+
+    .admin-card p {
+      color: #526276;
+      line-height: 1.6;
+    }
+
+    .admin-stat span {
+      display: block;
+      color: #526276;
+      font-size: 0.76rem;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .admin-stat strong {
+      display: block;
+      margin-top: 0.45rem;
+      color: #08233c;
+      font-size: clamp(1.6rem, 4vw, 2.7rem);
+      font-weight: 900;
+      letter-spacing: -0.05em;
+    }
+
+    .admin-form {
+      display: grid;
+      gap: 1rem;
+      margin-top: 1.2rem;
+    }
+
+    .admin-label {
+      display: grid;
+      gap: 0.45rem;
+      color: #08233c;
+      font-size: 0.78rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .admin-label input,
+    .admin-label select,
+    .admin-label textarea,
+    select {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #d8e2ea;
+      border-radius: 14px;
+      background: #f7f9fb;
+      color: #08233c;
+      font: inherit;
+      padding: 0.85rem 0.95rem;
+    }
+
+    textarea {
+      min-height: 150px;
+      resize: vertical;
+    }
+
+    .check {
+      display: flex;
+      gap: 0.6rem;
+      align-items: center;
+      font-weight: 900;
+    }
+
+    .admin-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      padding: 0 1.15rem;
+      border: 0;
+      border-radius: 14px;
+      background: #08233c;
+      color: #ffffff;
+      font: inherit;
+      font-weight: 900;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .admin-button.orange {
+      background: #f26a2e;
+    }
+
+    .table-wrap {
+      margin-top: 1.2rem;
+      overflow-x: auto;
+      border: 1px solid #d8e2ea;
+      border-radius: 20px;
+      background: #ffffff;
+    }
+
+    table {
+      width: 100%;
+      min-width: 850px;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 1rem;
+      text-align: left;
+      border-bottom: 1px solid #e7edf2;
+      vertical-align: top;
+    }
+
+    th {
+      background: #f7f9fb;
+      color: #526276;
+      font-size: 0.74rem;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    td strong,
+    td span {
+      display: block;
+    }
+
+    td span {
+      margin-top: 0.2rem;
+      color: #526276;
+      font-size: 0.88rem;
+      word-break: break-word;
+    }
+
+    .admin-alert {
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      color: #7c2d12;
+      border-radius: 18px;
+      padding: 1rem;
+      font-weight: 800;
+    }
+
+    .admin-success {
+      background: #eaf7f1;
+      border: 1px solid #b7ead4;
+      color: #007a53;
+      border-radius: 18px;
+      padding: 1rem;
+      font-weight: 900;
+      margin-top: 1rem;
+    }
+
+    .admin-loading {
+      background: #ffffff;
+      border: 1px solid #d8e2ea;
+      border-radius: 20px;
+      padding: 1.25rem;
+      font-weight: 900;
+    }
+
+    @media (max-width: 980px) {
+      .admin-shell {
+        grid-template-columns: 1fr;
+      }
+
+      .admin-sidebar {
+        position: static;
+        height: auto;
+      }
+
+      .admin-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .admin-topbar {
+        display: block;
+      }
+
+      .admin-user {
+        text-align: left;
+        margin-top: 1rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="admin-shell">
+    <aside class="admin-sidebar">
+      <div class="admin-brand">
+        <div class="admin-logo">JA</div>
+        <div>
+          <strong>Admin Control Centre</strong>
+          <span>JA Experiences &amp; Discovery</span>
+        </div>
+      </div>
+
+      <nav class="admin-nav" aria-label="Admin navigation">
+        <button data-section="overview" class="active">Dashboard</button>
+        <button data-section="customers">CRM / Customers</button>
+        <button data-section="plans">Plans & Prices</button>
+        <button data-section="stripe">Stripe API Controls</button>
+        <button data-section="branding">Company Branding</button>
+        <button data-section="policies">Policies</button>
+        <button data-section="support">Support</button>
+        <button data-section="system">System / Issues</button>
+      </nav>
+    </aside>
+
+    <main class="admin-main">
+      <header class="admin-topbar">
+        <div>
+          <h1>Point of control.</h1>
+          <p>Manage the JA Experiences &amp; Discovery website, customers, plans, policies, support and systems.</p>
+        </div>
+
+        <div class="admin-user">
+          <strong id="adminName">Loading admin...</strong>
+          <span id="adminEmail">Checking secure access...</span>
+          <span class="status-pill" id="adminStatus">Checking access</span>
+        </div>
+      </header>
+
+      <section id="adminPanel">
+        <div class="admin-loading">Loading admin portal...</div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/assets/js/admin-control.js?v=admin-control-1"></script>
+</body>
+</html>
