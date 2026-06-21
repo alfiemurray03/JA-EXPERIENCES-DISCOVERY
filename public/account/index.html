@@ -440,74 +440,10 @@
   </main>
 
   <div id="siteShellFooter"></div>
-
-  <script>
-    async function loadAccessProfile() {
-      const fallbackName = "JA Secure Access user";
-      const fallbackEmail = "Signed in";
-
-      try {
-        const response = await fetch("/cdn-cgi/access/get-identity", {
-          credentials: "include",
-          cache: "no-store"
-        });
-
-        if (!response.ok) {
-          throw new Error("Identity response was not available.");
-        }
-
-        const identity = await response.json();
-
-        const email =
-          identity.email || identity.user_email || identity.username || identity.common_name || fallbackEmail;
-
-        const name =
-          identity.name || identity.user_name || identity.preferred_username || identity.common_name || email || fallbackName;
-
-        const provider =
-          identity.idp && identity.idp.name
-            ? identity.idp.name
-            : "JA Secure Access / Microsoft Entra";
-
-        updateProfile(name, email, provider);
-      } catch (error) {
-        updateProfile(fallbackName, fallbackEmail, "JA Secure Access / Microsoft Entra");
-      }
-    }
-
-    function updateProfile(name, email, provider) {
-      const displayName = name || "JA Secure Access user";
-      const displayEmail = email || "Signed in";
-
-      document.getElementById("profileName").textContent = displayName;
-      document.getElementById("profileName").classList.remove("loading-pulse");
-      document.getElementById("profileEmail").textContent = displayEmail;
-      document.getElementById("profileNameDetail").textContent = displayName;
-      document.getElementById("profileEmailDetail").textContent = displayEmail;
-      document.getElementById("profileProvider").textContent = provider;
-
-      document.getElementById("profileInitials").textContent = initials(displayName, displayEmail);
-    }
-
-    function initials(name, email) {
-      const source = name && name !== "JA Secure Access user" ? name : email;
-      const parts = String(source || "JA").replace(/@.*/, "").split(/[.\s_-]+/).filter(Boolean);
-
-      if (parts.length >= 2) {
-        return (parts[0][0] + parts[1][0]).toUpperCase();
-      }
-
-      if (parts.length === 1) {
-        return parts[0].slice(0, 2).toUpperCase();
-      }
-
-      return "JA";
-    }
-
-    loadAccessProfile();
-  </script>
-
-  <script src="/assets/js/site-shell.js?v=20260621-15"></script>
+  <script src="/assets/js/account-profile.js?v=20260621-17"></script>
+  <script src="/assets/js/site-shell.js?v=20260621-17"></script>
 </body>
 </html>
+
+
 
