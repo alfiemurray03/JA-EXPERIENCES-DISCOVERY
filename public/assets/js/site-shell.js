@@ -17,6 +17,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadSharedStyles("/assets/includes/header.css?v=20260621-1");
   loadSharedStyles("/assets/includes/footer.css?v=20260621-1");
 
+  let siteSettings = { branding: {}, theme: document.documentElement.dataset.siteTheme || "dark" };
+
+  try {
+    const settingsResponse = await fetch("/site-settings", { cache: "no-store" });
+    if (settingsResponse.ok) siteSettings = await settingsResponse.json();
+    if (siteSettings.theme) document.documentElement.dataset.siteTheme = siteSettings.theme;
+  } catch (error) {
+    console.warn("Site settings unavailable", error);
+  }
+
   async function loadPartial(target, path) {
     if (!target) return;
 
@@ -41,6 +51,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   const page = document.body.dataset.page || "";
   const activeLink = document.querySelector(`[data-nav-page="${page}"]`);
   activeLink?.setAttribute("aria-current", "page");
+
+  const branding = siteSettings.branding || {};
+  const serviceName = branding.service_name || branding.trading_name || "JA Experiences & Discovery";
+  document.querySelectorAll(".brand-name, [data-brand-name]").forEach((element) => {
+    element.textContent = serviceName;
+  });
+  document.querySelectorAll("[data-footer-notice]").forEach((element) => {
+    element.textContent = branding.footer_notice || "JA Experiences & Discovery is operated by JA Group Services Ltd.";
+  });
 
   const toggle = document.querySelector(".menu-toggle");
   const nav = document.querySelector("#siteNav");

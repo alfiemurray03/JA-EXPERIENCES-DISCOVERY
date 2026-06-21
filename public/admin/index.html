@@ -1211,8 +1211,9 @@
       <div class="admin-person">
         <div class="avatar">A</div>
         <div>
-          <strong>Alfie Holywood Murray</strong>
-          <span>Admin account</span>
+          <strong id="sidebarAdminName">Loading admin...</strong>
+          <span id="sidebarAdminEmail">Checking secure access...</span>
+          <span id="sidebarAdminAccess">Admin Access Verified</span>
         </div>
         <span class="role-pill">Admin</span>
       </div>
@@ -1225,6 +1226,11 @@
             <button data-section="analytics" data-icon="chart">Analytics</button>
             <button data-section="audit" data-icon="clock">Audit Log</button>
           </nav>
+        </div>
+
+        <div class="nav-group" id="favouritesGroup" hidden>
+          <div class="nav-heading">Favourites</div>
+          <nav class="admin-nav" id="favouritesNav" aria-label="Favourites"></nav>
         </div>
 
         <div class="nav-group">
@@ -1279,6 +1285,8 @@
           <strong>Dashboard</strong>
           <span>JA Experiences &amp; Discovery Administration</span>
         </div>
+
+        <button class="mini-button" type="button" id="pinSectionButton">Pin Page</button>
 
         <div class="admin-user" id="accountMenuButton" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">
           <div class="admin-user-text">

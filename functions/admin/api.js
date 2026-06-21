@@ -135,6 +135,10 @@ async function ensureTables(DB, env) {
     CREATE TABLE IF NOT EXISTS admin_users (
       email TEXT PRIMARY KEY,
       name TEXT,
+      role TEXT DEFAULT 'Admin',
+      status TEXT DEFAULT 'Active',
+      permissions TEXT,
+      favourites TEXT,
       source TEXT DEFAULT 'portal',
       created_by TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
@@ -142,10 +146,15 @@ async function ensureTables(DB, env) {
     )
   `).run();
 
+  await safeAlter(DB, `ALTER TABLE admin_users ADD COLUMN role TEXT DEFAULT 'Admin'`);
+  await safeAlter(DB, `ALTER TABLE admin_users ADD COLUMN status TEXT DEFAULT 'Active'`);
+  await safeAlter(DB, `ALTER TABLE admin_users ADD COLUMN permissions TEXT`);
+  await safeAlter(DB, `ALTER TABLE admin_users ADD COLUMN favourites TEXT`);
+
   for (const email of configuredAdmins(env)) {
     await DB.prepare(`
-      INSERT INTO admin_users (email, name, source, created_by, updated_at)
-      VALUES (?, ?, 'default', 'system', CURRENT_TIMESTAMP)
+      INSERT INTO admin_users (email, name, role, status, permissions, favourites, source, created_by, updated_at)
+      VALUES (?, ?, 'Admin', 'Active', '[]', '[]', 'default', 'system', CURRENT_TIMESTAMP)
       ON CONFLICT(email) DO UPDATE SET
         source = CASE WHEN admin_users.source = 'portal' THEN admin_users.source ELSE 'default' END,
         updated_at = CURRENT_TIMESTAMP
@@ -346,7 +355,7 @@ async function isAllowedAdmin(DB, identity, env) {
   if (!identity.email) return false;
   if (configuredAdmins(env).includes(identity.email)) return true;
 
-  const row = await DB.prepare(`SELECT email FROM admin_users WHERE lower(email) = lower(?)`).bind(identity.email).first();
+  const row = await DB.prepare(`SELECT email FROM admin_users WHERE lower(email) = lower(?) AND COALESCE(status, 'Active') != 'Suspended'`).bind(identity.email).first();
   return Boolean(row);
 }
 
@@ -540,7 +549,7 @@ async function getAdmins(DB, env) {
   const seen = new Set(rows.map((row) => row.email));
   for (const email of defaults) {
     if (!seen.has(email)) {
-      rows.push({ email, name: email, source: "default", created_by: "system", created_at: null, updated_at: null });
+      rows.push({ email, name: email, role: "Admin", status: "Active", permissions: "[]", favourites: "[]", source: "default", created_by: "system", created_at: null, updated_at: null });
     }
   }
   return rows.sort((a, b) => a.email.localeCompare(b.email));
@@ -551,12 +560,22 @@ async function addAdmin(DB, body, identity) {
   if (!isEmail(email)) throw new Error("Enter a valid admin email address.");
 
   await DB.prepare(`
-    INSERT INTO admin_users (email, name, source, created_by, updated_at)
-    VALUES (?, ?, 'portal', ?, CURRENT_TIMESTAMP)
+    INSERT INTO admin_users (email, name, role, status, permissions, source, created_by, updated_at)
+    VALUES (?, ?, ?, ?, ?, 'portal', ?, CURRENT_TIMESTAMP)
     ON CONFLICT(email) DO UPDATE SET
       name = excluded.name,
+      role = excluded.role,
+      status = excluded.status,
+      permissions = excluded.permissions,
       updated_at = CURRENT_TIMESTAMP
-  `).bind(email, clean(body.name || email, 180), identity.email).run();
+  `).bind(
+    email,
+    clean(body.name || email, 180),
+    clean(body.role, 80) || "Admin",
+    clean(body.status, 80) || "Active",
+    JSON.stringify(Array.isArray(body.permissions) ? body.permissions : []),
+    identity.email
+  ).run();
 }
 
 async function removeAdmin(DB, body, identity, env) {
@@ -569,6 +588,26 @@ async function removeAdmin(DB, body, identity, env) {
   if (email === identity.email && admins.length <= 1) throw new Error("You cannot remove the final admin account.");
 
   await DB.prepare(`DELETE FROM admin_users WHERE lower(email) = lower(?)`).bind(email).run();
+}
+
+async function saveAdminPreferences(DB, body, identity) {
+  const allowedSections = new Set(["overview", "analytics", "audit", "admins", "customers", "datarequests", "systemreports", "closures", "support", "system", "plans", "stripe", "email", "branding", "appearance", "affiliate", "comingsoon", "maintenance", "policies"]);
+  const favourites = Array.isArray(body.favourites)
+    ? body.favourites.map((item) => clean(item, 80)).filter((item) => allowedSections.has(item)).slice(0, 12)
+    : [];
+
+  await DB.prepare(`
+    UPDATE admin_users
+    SET favourites = ?, updated_at = CURRENT_TIMESTAMP
+    WHERE lower(email) = lower(?)
+  `).bind(JSON.stringify(favourites), identity.email).run();
+
+  return { favourites };
+}
+
+async function getAdminPreferences(DB, identity) {
+  const row = await DB.prepare(`SELECT favourites FROM admin_users WHERE lower(email) = lower(?)`).bind(identity.email).first();
+  return { favourites: safeJson(row?.favourites, []).filter(Boolean) };
 }
 
 async function savePlan(DB, body) {
@@ -1129,6 +1168,10 @@ async function getAuditLog(DB) {
   return all(DB, `SELECT * FROM admin_audit_log ORDER BY created_at DESC LIMIT 500`);
 }
 
+async function adminPayload(DB, identity) {
+  return { ...identity, preferences: await getAdminPreferences(DB, identity) };
+}
+
 async function exportCustomerData(DB, customerEmail, format = "json") {
   const email = cleanEmail(customerEmail);
   if (!email) throw new Error("Customer email is required.");
@@ -1302,12 +1345,15 @@ export async function onRequest(context) {
 
   try {
     if (request.method === "GET") {
-      if (section === "overview") return json({ admin: identity, overview: await getOverview(env.DB) });
-      if (section === "analytics") return json({ admin: identity, analytics: await getAnalytics(env.DB) });
-      if (section === "admins") return json({ admin: identity, admins: await getAdmins(env.DB, env) });
+      const admin = await adminPayload(env.DB, identity);
+      if (section === "overview") return json({ admin, overview: await getOverview(env.DB) });
+      if (section === "analytics") return json({ admin, analytics: await getAnalytics(env.DB) });
+      if (section === "audit") return json({ admin, audit: await getAuditLog(env.DB) });
+      if (section === "prefs") return json({ admin, preferences: admin.preferences });
+      if (section === "admins") return json({ admin, admins: await getAdmins(env.DB, env) });
       if (section === "customers") {
         return json({
-          admin: identity,
+          admin,
           customers: await all(env.DB, `
             SELECT email, verified_name, display_name, contact_email, phone, communication_preference,
               support_notes, admin_lifetime, admin_lifetime_plan_id, admin_customer_status, admin_notes,
@@ -1318,25 +1364,25 @@ export async function onRequest(context) {
           `)
         });
       }
-      if (section === "plans") return json({ admin: identity, plans: await all(env.DB, `SELECT * FROM service_plans ORDER BY sort_order ASC, plan_name ASC`) });
-      if (section === "policies") return json({ admin: identity, policies: await all(env.DB, `SELECT * FROM policy_pages ORDER BY title ASC`) });
-      if (section === "branding") return json({ admin: identity, branding: await env.DB.prepare(`SELECT * FROM company_branding WHERE id = 'main'`).first() });
-      if (section === "support") return json({ admin: identity, support: await all(env.DB, `SELECT * FROM support_tickets ORDER BY updated_at DESC, created_at DESC LIMIT 500`) });
-      if (section === "system") return json({ admin: identity, system: await all(env.DB, `SELECT * FROM system_events ORDER BY updated_at DESC, created_at DESC LIMIT 500`) });
-      if (section === "datarequests") return json({ admin: identity, datarequests: await getDataProtectionRequests(env.DB) });
-      if (section === "systemreports") return json({ admin: identity, systemreports: await getSystemReports(env.DB) });
-      if (section === "closures") return json({ admin: identity, closures: await getClosureRequests(env.DB) });
-      if (section === "affiliate") return json({ admin: identity, affiliate: await getAffiliateContent(env.DB) });
-      if (section === "appearance") return json({ admin: identity, appearance: await getAppearance(env.DB) });
-      if (section === "email") return json({ admin: identity, email: await getEmailSettings(env.DB, env) });
-      if (section === "audit") return json({ admin: identity, audit: await getAuditLog(env.DB) });
-      if (section === "maintenance") return json({ admin: identity, maintenance: await getMaintenance(env.DB) });
-      if (section === "comingsoon") return json({ admin: identity, comingsoon: await getComingSoon(env.DB) });
-      if (section === "stripe") return json({ admin: identity, stripe: await getStripe(env.DB, env, url.searchParams.get("test") === "1") });
+      if (section === "plans") return json({ admin, plans: await all(env.DB, `SELECT * FROM service_plans ORDER BY sort_order ASC, plan_name ASC`) });
+      if (section === "policies") return json({ admin, policies: await all(env.DB, `SELECT * FROM policy_pages ORDER BY title ASC`) });
+      if (section === "branding") return json({ admin, branding: await env.DB.prepare(`SELECT * FROM company_branding WHERE id = 'main'`).first() });
+      if (section === "support") return json({ admin, support: await all(env.DB, `SELECT * FROM support_tickets ORDER BY updated_at DESC, created_at DESC LIMIT 500`) });
+      if (section === "system") return json({ admin, system: await all(env.DB, `SELECT * FROM system_events ORDER BY updated_at DESC, created_at DESC LIMIT 500`) });
+      if (section === "datarequests") return json({ admin, datarequests: await getDataProtectionRequests(env.DB) });
+      if (section === "systemreports") return json({ admin, systemreports: await getSystemReports(env.DB) });
+      if (section === "closures") return json({ admin, closures: await getClosureRequests(env.DB) });
+      if (section === "affiliate") return json({ admin, affiliate: await getAffiliateContent(env.DB) });
+      if (section === "appearance") return json({ admin, appearance: await getAppearance(env.DB) });
+      if (section === "email") return json({ admin, email: await getEmailSettings(env.DB, env) });
+      if (section === "maintenance") return json({ admin, maintenance: await getMaintenance(env.DB) });
+      if (section === "comingsoon") return json({ admin, comingsoon: await getComingSoon(env.DB) });
+      if (section === "stripe") return json({ admin, stripe: await getStripe(env.DB, env, url.searchParams.get("test") === "1") });
     }
 
     if (request.method === "POST") {
       const body = await request.json().catch(() => ({}));
+      if (section === "prefs") return json({ preferences: await saveAdminPreferences(env.DB, body, identity), saved: true });
       if (body.action === "export_customer_data") {
         const exported = await exportCustomerData(env.DB, body.customer_email || body.user_id, clean(body.format, 20) || "json");
         await writeAudit(env.DB, identity, "customer_data_export", "profiles", cleanEmail(body.customer_email || body.user_id), "Exported customer CRM data.", { format: exported.format });
@@ -1358,9 +1404,21 @@ export async function onRequest(context) {
         await writeAudit(env.DB, identity, "policy_save", "policy_pages", cleanSlug(body.slug), `Saved policy ${clean(body.title, 180)}.`, { status: clean(body.status, 80) });
         return json({ policies, saved: true });
       }
-      if (section === "branding") return json({ branding: await saveBranding(env.DB, body), saved: true });
-      if (section === "support") return json({ support: await saveSupport(env.DB, body), saved: true });
-      if (section === "system") return json({ system: await saveSystemEvent(env.DB, body), saved: true });
+      if (section === "branding") {
+        const branding = await saveBranding(env.DB, body);
+        await writeAudit(env.DB, identity, "branding_update", "company_branding", "main", "Updated company branding.", { serviceName: clean(body.service_name, 180) });
+        return json({ branding, saved: true });
+      }
+      if (section === "support") {
+        const support = await saveSupport(env.DB, body);
+        await writeAudit(env.DB, identity, "support_update", "support_tickets", clean(body.id, 120), `Updated support ticket ${clean(body.subject, 250)}.`, { status: clean(body.status, 80), priority: clean(body.priority, 80) });
+        return json({ support, saved: true });
+      }
+      if (section === "system") {
+        const system = await saveSystemEvent(env.DB, body);
+        await writeAudit(env.DB, identity, "system_issue_update", "system_events", clean(body.id, 120), `Updated system issue ${clean(body.title, 250)}.`, { status: clean(body.status, 80), severity: clean(body.severity, 80) });
+        return json({ system, saved: true });
+      }
       if (section === "datarequests") return json({ datarequests: await saveDataProtectionRequest(env.DB, body, identity), saved: true });
       if (section === "systemreports") return json({ systemreports: await saveSystemReport(env.DB, body, identity), saved: true });
       if (section === "closures") return json({ closures: await saveClosureRequest(env.DB, body, identity), saved: true });
@@ -1370,9 +1428,21 @@ export async function onRequest(context) {
         if (body.action === "test") return json({ email: await getEmailSettings(env.DB, env), test: await testNotification(env.DB, body, env, identity), saved: true });
         return json({ email: await saveEmailSettings(env.DB, body, env, identity), saved: true });
       }
-      if (section === "maintenance") return json({ maintenance: await saveMaintenance(env.DB, body), saved: true });
-      if (section === "comingsoon") return json({ comingsoon: await saveComingSoon(env.DB, body), saved: true });
-      if (section === "stripe") return json({ stripe: await saveStripe(env.DB, body, env), saved: true });
+      if (section === "maintenance") {
+        const maintenance = await saveMaintenance(env.DB, body);
+        await writeAudit(env.DB, identity, "maintenance_update", "site_settings", "maintenance", `Maintenance mode ${body.maintenance_enabled ? "enabled" : "disabled"}.`, { enabled: Boolean(body.maintenance_enabled) });
+        return json({ maintenance, saved: true });
+      }
+      if (section === "comingsoon") {
+        const comingsoon = await saveComingSoon(env.DB, body);
+        await writeAudit(env.DB, identity, "comingsoon_update", "site_settings", "comingsoon", `Coming Soon page ${body.comingsoon_enabled ? "enabled" : "disabled"}.`, { enabled: Boolean(body.comingsoon_enabled) });
+        return json({ comingsoon, saved: true });
+      }
+      if (section === "stripe") {
+        const stripe = await saveStripe(env.DB, body, env);
+        await writeAudit(env.DB, identity, "stripe_settings_update", "site_settings", "stripe", "Updated Stripe API controls.", { tested: Boolean(body.test_connection), mode: stripe.mode });
+        return json({ stripe, saved: true });
+      }
     }
 
     return json({ error: "Method or section not allowed." }, 405);

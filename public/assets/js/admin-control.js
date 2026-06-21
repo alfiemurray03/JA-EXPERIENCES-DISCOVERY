@@ -1,7 +1,8 @@
 const state = {
   currentSection: "overview",
   data: {},
-  selectedPolicy: null
+  selectedPolicy: null,
+  favourites: []
 };
 
 const sectionTitles = {
@@ -52,6 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
   bindNav();
   bindAccountMenu();
   bindAdminActions();
+  bindFavouriteActions();
   loadSection("overview");
 });
 
@@ -216,6 +218,7 @@ async function loadSection(section) {
   document.querySelectorAll("[data-section]").forEach((button) => {
     button.classList.toggle("active", button.dataset.section === section);
   });
+  renderFavourites();
 
   const panel = document.getElementById("adminPanel");
   panel.innerHTML = `<div class="admin-loading">Loading ${escapeHtml(sectionTitles[section] || section)}...</div>`;
@@ -234,6 +237,7 @@ function setTopbar(section) {
   const title = sectionTitles[section] || "Dashboard";
   document.querySelector(".admin-topbar-title strong").textContent = title;
   document.querySelector(".admin-topbar-title span").textContent = "JA Experiences & Discovery Administration";
+  updatePinButton();
 }
 
 function setAdmin(admin) {
@@ -242,9 +246,77 @@ function setAdmin(admin) {
   setText("adminName", name);
   setText("adminEmail", email);
   setText("adminStatus", "Admin access verified");
+  setText("sidebarAdminName", name);
+  setText("sidebarAdminEmail", email);
+  setText("sidebarAdminAccess", "Admin Access Verified");
   document.querySelectorAll(".avatar").forEach((avatar) => {
     avatar.textContent = (name || email || "A").slice(0, 1).toUpperCase();
   });
+  state.favourites = Array.isArray(admin.preferences?.favourites) ? admin.preferences.favourites : state.favourites;
+  renderFavourites();
+}
+
+function bindFavouriteActions() {
+  document.getElementById("pinSectionButton")?.addEventListener("click", toggleCurrentFavourite);
+}
+
+function renderFavourites() {
+  const group = document.getElementById("favouritesGroup");
+  const nav = document.getElementById("favouritesNav");
+  if (!group || !nav) return;
+  const favourites = state.favourites.filter((section) => sectionTitles[section]);
+  group.hidden = favourites.length === 0;
+  nav.innerHTML = favourites.map((section, index) => `
+    <button data-section="${escapeAttr(section)}" data-icon="dashboard" class="${state.currentSection === section ? "active" : ""}">
+      <span>${escapeHtml(sectionTitles[section])}</span>
+      <span style="margin-left:auto;display:inline-flex;gap:.25rem;">
+        <span data-fav-move="${escapeAttr(section)}" data-dir="-1" title="Move up">↑</span>
+        <span data-fav-move="${escapeAttr(section)}" data-dir="1" title="Move down">↓</span>
+      </span>
+    </button>
+  `).join("");
+  decorateIcons();
+  nav.querySelectorAll("[data-section]").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      if (event.target.closest("[data-fav-move]")) return;
+      loadSection(button.dataset.section);
+    });
+  });
+  nav.querySelectorAll("[data-fav-move]").forEach((control) => {
+    control.addEventListener("click", async (event) => {
+      event.stopPropagation();
+      const section = control.dataset.favMove;
+      const from = state.favourites.indexOf(section);
+      const to = from + Number(control.dataset.dir || 0);
+      if (from < 0 || to < 0 || to >= state.favourites.length) return;
+      const next = [...state.favourites];
+      next.splice(from, 1);
+      next.splice(to, 0, section);
+      await saveFavourites(next);
+    });
+  });
+  updatePinButton();
+}
+
+function updatePinButton() {
+  const button = document.getElementById("pinSectionButton");
+  if (!button) return;
+  button.textContent = state.favourites.includes(state.currentSection) ? "Unpin Page" : "Pin Page";
+}
+
+async function toggleCurrentFavourite() {
+  const section = state.currentSection;
+  if (!sectionTitles[section]) return;
+  const next = state.favourites.includes(section)
+    ? state.favourites.filter((item) => item !== section)
+    : [...state.favourites, section];
+  await saveFavourites(next);
+}
+
+async function saveFavourites(favourites) {
+  const data = await api("prefs", { method: "POST", body: JSON.stringify({ favourites }) });
+  state.favourites = data.preferences?.favourites || favourites;
+  renderFavourites();
 }
 
 function renderSection(section, data) {
@@ -1008,6 +1080,7 @@ function renderAppearance(settings = {}) {
     event.preventDefault();
     const data = await api("appearance", { method: "POST", body: JSON.stringify({ site_theme_mode: getValue("site_theme_mode") }) });
     state.data.appearance = data;
+    document.documentElement.dataset.siteTheme = data.appearance?.site_theme_mode || getValue("site_theme_mode");
     renderAppearance(data.appearance);
     setSaved("appearanceSaved", "Appearance settings saved.");
   });
