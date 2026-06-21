@@ -3,68 +3,213 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Customer Account Access | JA Experiences & Discovery</title>
-  <meta name="description" content="Future customer account access for JA Experiences & Discovery through JA Group Services Secure Access.">
+  <title>Account | JA Experiences &amp; Discovery</title>
+  <meta name="description" content="Secure account area for JA Experiences & Discovery customers.">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/assets/css/ja-travel-rebuild.css?v=20260621-1">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/assets/css/ja-travel-rebuild.css?v=20260621-14">
+  <link rel="stylesheet" href="/assets/css/homepage-clean.css?v=20260621-14">
+
+  <style>
+    body {
+      margin: 0;
+      background: #fbf8f1;
+      color: #08233c;
+      font-family: Inter, Arial, sans-serif;
+    }
+
+    .account-hero {
+      padding: clamp(4rem, 7vw, 7rem) 1.5rem;
+      background:
+        linear-gradient(rgba(8, 35, 60, 0.84), rgba(8, 35, 60, 0.84)),
+        url("/assets/images/hero-travel.jpg");
+      background-size: cover;
+      background-position: center;
+      color: #ffffff;
+    }
+
+    .account-wrap {
+      width: min(1120px, 100%);
+      margin: 0 auto;
+    }
+
+    .account-kicker {
+      display: inline-block;
+      margin-bottom: 1rem;
+      color: #ffb38e;
+      font-size: 0.78rem;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .account-hero h1 {
+      max-width: 900px;
+      margin: 0;
+      font-family: "Playfair Display", Georgia, serif;
+      font-size: clamp(3rem, 7vw, 5.8rem);
+      line-height: 0.95;
+      letter-spacing: -0.055em;
+    }
+
+    .account-hero p {
+      max-width: 760px;
+      margin: 1.5rem 0 0;
+      color: rgba(255, 255, 255, 0.86);
+      font-size: clamp(1.05rem, 1.7vw, 1.3rem);
+      line-height: 1.65;
+    }
+
+    .account-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+      margin-top: 1.5rem;
+    }
+
+    .account-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      padding: 0 1.15rem;
+      border-radius: 14px;
+      background: #08233c;
+      color: #ffffff;
+      font-weight: 900;
+      text-decoration: none;
+      box-shadow: 0 14px 28px rgba(8, 35, 60, 0.16);
+    }
+
+    .account-button.orange {
+      background: #f26a2e;
+    }
+
+    .account-button.light {
+      background: #ffffff;
+      color: #08233c;
+    }
+
+    .account-section {
+      padding: clamp(4rem, 7vw, 6rem) 1.5rem;
+    }
+
+    .account-grid {
+      width: min(1120px, 100%);
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1.25rem;
+    }
+
+    .account-card {
+      background: #ffffff;
+      border: 1px solid #d8e2ea;
+      border-radius: 26px;
+      padding: 1.75rem;
+      box-shadow: 0 20px 50px rgba(8, 35, 60, 0.08);
+    }
+
+    .account-card h2 {
+      margin: 0 0 0.8rem;
+      color: #08233c;
+      font-family: "Playfair Display", Georgia, serif;
+      font-size: clamp(1.9rem, 3vw, 2.7rem);
+      line-height: 0.98;
+      letter-spacing: -0.045em;
+    }
+
+    .account-card p {
+      margin: 0 0 1.1rem;
+      color: #526276;
+      line-height: 1.65;
+    }
+
+    .account-note {
+      width: min(1120px, 100%);
+      margin: 1.25rem auto 0;
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      border-radius: 22px;
+      padding: 1.25rem;
+      color: #7c2d12;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 900px) {
+      .account-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </head>
 
-<body>
+<body data-page="account">
   <div id="siteShellHeader"></div>
 
   <main id="main">
-    <section class="page-hero">
-      <div class="container">
-        <span class="eyebrow">Customer account access</span>
-        <h1>JA Experiences &amp; Discovery account access is coming soon.</h1>
+    <section class="account-hero">
+      <div class="account-wrap">
+        <span class="account-kicker">JA Secure Access</span>
+        <h1>Your JA Experiences account.</h1>
         <p>
-          Account access is being developed to help customers manage enquiries and service requests securely. Until this is available, you can still submit a free enquiry using the form.
+          Welcome to the secure account area for JA Experiences &amp; Discovery.
+          This page is protected by JA Secure Access and Microsoft Entra sign-in.
         </p>
+
+        <div class="account-actions">
+          <a class="account-button orange" href="/enquiry/">Start a new enquiry</a>
+          <a class="account-button light" href="/pricing/">View plans</a>
+          <a class="account-button" href="/cdn-cgi/access/logout">Sign out</a>
+        </div>
       </div>
     </section>
 
-    <section class="section">
-      <div class="container content-grid">
-        <article class="info-card">
-          <h2>JA Group Services Secure Access</h2>
+    <section class="account-section">
+      <div class="account-grid">
+        <article class="account-card">
+          <span class="account-kicker">Requests</span>
+          <h2>Manage your support</h2>
           <p>
-            Future customer accounts are being prepared for JA Group Services Secure Access, powered by Microsoft Entra External ID.
+            Use this secure area to return to JA Experiences &amp; Discovery support,
+            start a new enquiry, or request help with a planning service.
           </p>
-          <p>
-            This access is not yet live. Please do not attempt to submit passwords, payment details or personal account information through this page.
-          </p>
+          <a class="account-button orange" href="/enquiry/">Open enquiry form</a>
         </article>
 
-        <article class="info-card">
-          <h2>Free enquiries remain available</h2>
+        <article class="account-card">
+          <span class="account-kicker">Payments</span>
+          <h2>Paid planning plans</h2>
           <p>
-            You do not need an account to start a Free Discovery Enquiry. The enquiry form remains free, accessible and available to all customers while account access is being developed.
+            If you have purchased a plan, keep your Stripe receipt and payment email.
+            These details help us match your request to your payment.
           </p>
-          <p>
-            <a class="button accent" href="/enquiry/">Start free enquiry</a>
-          </p>
+          <a class="account-button" href="/pricing/">View plan options</a>
         </article>
 
-        <article class="info-card">
-          <h2>Future account features</h2>
+        <article class="account-card">
+          <span class="account-kicker">Security</span>
+          <h2>Secure sign out</h2>
           <p>
-            Future account features may support enquiry tracking, service requests, customer communication and secure access to customer support information.
+            Your access is protected through Microsoft sign-in. Sign out when using
+            a shared device or public computer.
           </p>
+          <a class="account-button" href="/cdn-cgi/access/logout">Sign out</a>
         </article>
+      </div>
 
-        <article class="info-card">
-          <h2>Third-party bookings</h2>
-          <p>
-            Activity tickets, cancellations, refunds and booking changes remain the responsibility of the relevant third-party provider named on the customer’s booking confirmation.
-          </p>
-        </article>
+      <div class="account-note">
+        This secure account area is not a travel booking system. JA Experiences &amp; Discovery
+        provides discovery, planning and guidance support only. Third-party bookings remain subject
+        to the provider’s own terms, checks, cancellation rules and availability.
       </div>
     </section>
   </main>
 
   <div id="siteShellFooter"></div>
-  <script src="/assets/js/site-shell.js?v=20260621-1"></script>
+  <script src="/assets/js/site-shell.js?v=20260621-14"></script>
 </body>
 </html>
