@@ -2,7 +2,8 @@ const state = {
   currentSection: "overview",
   data: {},
   selectedPolicy: null,
-  favourites: []
+  favourites: [],
+  branding: {}
 };
 
 const sectionTitles = {
@@ -49,6 +50,7 @@ const closureStatuses = ["Open", "In Progress", "Approved", "Rejected", "Complet
 const priorities = ["Low", "Normal", "High", "Urgent"];
 
 document.addEventListener("DOMContentLoaded", () => {
+  applyAdminBranding();
   decorateIcons();
   bindNav();
   bindAccountMenu();
@@ -247,9 +249,58 @@ async function loadSection(section) {
 
 function setTopbar(section) {
   const title = sectionTitles[section] || "Dashboard";
+  const serviceName = getServiceName();
   document.querySelector(".admin-topbar-title strong").textContent = title;
-  document.querySelector(".admin-topbar-title span").textContent = "JA Experiences & Discovery Administration";
+  document.querySelector(".admin-topbar-title span").textContent = `${serviceName} Administration`;
   updatePinButton();
+}
+
+function getServiceName() {
+  const branding = state.branding || {};
+  return branding.service_name || branding.trading_name || "JA Experiences & Discovery";
+}
+
+async function applyAdminBranding() {
+  try {
+    const response = await fetch("/site-settings", { credentials: "include", cache: "no-store" });
+    if (!response.ok) return;
+    const data = await response.json();
+    state.branding = data.branding || {};
+  } catch {
+    state.branding = {};
+  }
+
+  const branding = state.branding || {};
+  const serviceName = getServiceName();
+  const businessName = branding.business_name || "JA Group Services Ltd";
+
+  document.title = `Admin Control Centre | ${serviceName}`;
+  document.querySelectorAll(".admin-brand span").forEach((element) => {
+    element.textContent = serviceName;
+  });
+  document.querySelectorAll(".admin-topbar-title span").forEach((element) => {
+    element.textContent = `${serviceName} Administration`;
+  });
+
+  const logo = document.querySelector(".admin-logo");
+  if (logo && branding.logo_url) {
+    logo.innerHTML = `<img src="${escapeAttr(branding.logo_url)}" alt="${escapeAttr(serviceName)} logo">`;
+    logo.classList.add("has-image");
+  }
+
+  let favicon = document.querySelector('link[rel="icon"]');
+  if (branding.favicon_url) {
+    if (!favicon) {
+      favicon = document.createElement("link");
+      favicon.rel = "icon";
+      document.head.appendChild(favicon);
+    }
+    favicon.href = branding.favicon_url;
+  }
+
+  document.querySelectorAll("[data-business-name]").forEach((element) => {
+    element.textContent = businessName;
+  });
 }
 
 function setAdmin(admin) {
@@ -739,6 +790,9 @@ function renderBranding(branding = {}) {
         ${input("Contact email", "contact_email", "email")}
         ${input("Phone", "phone")}
         ${input("Website", "website")}
+        ${textarea("Public brand text", "public_brand_text")}
+        ${input("Logo URL", "logo_url", "url")}
+        ${input("Favicon URL", "favicon_url", "url")}
         ${textarea("Registered notice", "registered_notice")}
         ${textarea("Footer notice", "footer_notice")}
         <button class="admin-button" type="submit">Save branding</button>
@@ -747,17 +801,20 @@ function renderBranding(branding = {}) {
     </div>
   `;
 
-  ["business_name", "trading_name", "service_name", "support_email", "contact_email", "phone", "website", "registered_notice", "footer_notice"].forEach((key) => {
+  ["business_name", "trading_name", "service_name", "support_email", "contact_email", "phone", "website", "public_brand_text", "logo_url", "favicon_url", "registered_notice", "footer_notice"].forEach((key) => {
     setValue(key, branding[key] || "");
   });
 
   document.getElementById("brandingForm").addEventListener("submit", async (event) => {
     event.preventDefault();
     const body = {};
-    ["business_name", "trading_name", "service_name", "support_email", "contact_email", "phone", "website", "registered_notice", "footer_notice"].forEach((key) => {
+    ["business_name", "trading_name", "service_name", "support_email", "contact_email", "phone", "website", "public_brand_text", "logo_url", "favicon_url", "registered_notice", "footer_notice"].forEach((key) => {
       body[key] = getValue(key);
     });
-    await api("branding", { method: "POST", body: JSON.stringify(body) });
+    const data = await api("branding", { method: "POST", body: JSON.stringify(body) });
+    state.data.branding = data;
+    state.branding = data.branding || body;
+    await applyAdminBranding();
     setSaved("brandingSaved", "Branding saved.");
   });
 }
@@ -1443,7 +1500,7 @@ async function importAffiliateContent() {
 
 async function createAdminBypass() {
   const data = await api("bypass", { method: "POST", body: JSON.stringify({ action: "create" }) });
-  window.alert(`Admin website access enabled until ${formatDate(data.bypass?.expires)}.`);
+  window.location.href = data.bypass?.redirect || "/";
 }
 
 async function removeAdminBypass() {

@@ -72,10 +72,27 @@ async function sha256(value) {
   return [...new Uint8Array(hash)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
+async function auditBypass(DB, row, action, summary, path) {
+  try {
+    await DB.prepare(`
+      INSERT INTO admin_audit_log (id, actor_email, action, entity_type, entity_id, summary, metadata)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).bind(
+      crypto.randomUUID(),
+      row.admin_email || "admin-bypass",
+      action,
+      "admin_bypass_sessions",
+      row.token_hash.slice(0, 12),
+      summary,
+      JSON.stringify({ path })
+    ).run();
+  } catch {
+    // Audit failure must not block a valid admin bypass cookie.
+  }
+}
+
 async function hasAdminBypass(request, env) {
   if (!env.DB) return false;
-  const email = getAccessIdentity(request);
-  if (!email || !(await isAdminRequest(request, env))) return false;
   const token = (request.headers.get("Cookie") || "")
     .split(";")
     .map((part) => part.trim())
@@ -86,14 +103,28 @@ async function hasAdminBypass(request, env) {
   try {
     const tokenHash = await sha256(token);
     const row = await env.DB.prepare(`
-      SELECT token_hash FROM admin_bypass_sessions
+      SELECT token_hash, admin_email, last_used_at FROM admin_bypass_sessions
       WHERE token_hash = ?
-        AND lower(admin_email) = lower(?)
         AND revoked_at IS NULL
         AND datetime(expires_at) > datetime('now')
-    `).bind(tokenHash, email).first();
-    if (!row) return false;
+    `).bind(tokenHash).first();
+    if (!row) {
+      const expired = await env.DB.prepare(`
+        SELECT token_hash, admin_email FROM admin_bypass_sessions
+        WHERE token_hash = ?
+          AND revoked_at IS NULL
+          AND datetime(expires_at) <= datetime('now')
+      `).bind(tokenHash).first();
+      if (expired) {
+        await env.DB.prepare(`UPDATE admin_bypass_sessions SET revoked_at = CURRENT_TIMESTAMP WHERE token_hash = ?`).bind(tokenHash).run();
+        await auditBypass(env.DB, expired, "admin_bypass_expired", "Admin live-site bypass session expired.", new URL(request.url).pathname);
+      }
+      return false;
+    }
     await env.DB.prepare(`UPDATE admin_bypass_sessions SET last_used_at = CURRENT_TIMESTAMP WHERE token_hash = ?`).bind(tokenHash).run();
+    if (!row.last_used_at) {
+      await auditBypass(env.DB, row, "admin_bypass_used", "Used admin live-site bypass session.", new URL(request.url).pathname);
+    }
     return true;
   } catch {
     return false;
@@ -102,6 +133,11 @@ async function hasAdminBypass(request, env) {
 
 function pageHtml(settings, mode) {
   const isComingSoon = mode === "coming-soon";
+  const serviceName = settings.service_name || settings.trading_name || "JA Experiences & Discovery";
+  const businessName = settings.business_name || "JA Group Services Ltd";
+  const publicBrandText = settings.public_brand_text || "Curated discovery, planning and experience guidance.";
+  const logoUrl = settings.logo_url || "";
+  const faviconUrl = settings.favicon_url || "";
 
   const title = isComingSoon
     ? settings.comingsoon_title || "JA Experiences & Discovery is coming soon."
@@ -123,7 +159,8 @@ function pageHtml(settings, mode) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>${escapeHtml(status)} | JA Experiences & Discovery</title>
+  <title>${escapeHtml(status)} | ${escapeHtml(serviceName)}</title>
+  ${faviconUrl ? `<link rel="icon" href="${escapeHtml(faviconUrl)}">` : ""}
   <meta name="robots" content="noindex,nofollow">
   <style>
     :root {
@@ -194,6 +231,15 @@ function pageHtml(settings, mode) {
       font-weight: 950;
       margin-bottom: 1.5rem;
       box-shadow: 0 18px 38px rgba(242,106,46,0.28);
+    }
+
+    .logo img {
+      width: 100%;
+      height: 100%;
+      border-radius: inherit;
+      object-fit: contain;
+      background: #ffffff;
+      padding: 0.35rem;
     }
 
     .kicker {
@@ -268,7 +314,7 @@ function pageHtml(settings, mode) {
 <body>
   <main class="wrap">
     <section class="card">
-      <div class="logo">JA</div>
+      <div class="logo">${logoUrl ? `<img src="${escapeHtml(logoUrl)}" alt="${escapeHtml(serviceName)} logo">` : "JA"}</div>
       <div class="kicker">${escapeHtml(kicker)}</div>
       <h1>${escapeHtml(title)}</h1>
       <p>${escapeHtml(message)}</p>
@@ -277,9 +323,9 @@ function pageHtml(settings, mode) {
 
     <aside class="side">
       <div>
-        <span class="pill">JA Experiences & Discovery</span>
-        <h2>Curated discovery, planning and experience guidance.</h2>
-        <p>Part of JA Group Services Ltd.</p>
+        <span class="pill">${escapeHtml(serviceName)}</span>
+        <h2>${escapeHtml(publicBrandText)}</h2>
+        <p>${escapeHtml(settings.footer_notice || `Part of ${businessName}.`)}</p>
       </div>
     </aside>
   </main>
@@ -289,7 +335,8 @@ function pageHtml(settings, mode) {
 
 async function getSiteSettings(DB) {
   try {
-    const result = await DB.prepare(`
+    const [result, branding] = await Promise.all([
+      DB.prepare(`
       SELECT key, value
       FROM site_settings
       WHERE key IN (
@@ -303,9 +350,11 @@ async function getSiteSettings(DB) {
         'comingsoon_eta',
         'site_theme_mode'
       )
-    `).all();
+    `).all(),
+      DB.prepare(`SELECT * FROM company_branding WHERE id = 'main'`).first().catch(() => null)
+    ]);
 
-    const settings = {};
+    const settings = { ...(branding || {}) };
 
     for (const row of result.results || []) {
       settings[row.key] = row.value;

@@ -225,12 +225,19 @@ async function ensureTables(DB, env) {
       website TEXT,
       registered_notice TEXT,
       footer_notice TEXT,
+      public_brand_text TEXT,
+      logo_url TEXT,
+      favicon_url TEXT,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
   `).run();
 
   await safeAlter(DB, `ALTER TABLE company_branding ADD COLUMN contact_email TEXT`);
   await safeAlter(DB, `ALTER TABLE company_branding ADD COLUMN registered_notice TEXT`);
+  await safeAlter(DB, `ALTER TABLE company_branding ADD COLUMN footer_notice TEXT`);
+  await safeAlter(DB, `ALTER TABLE company_branding ADD COLUMN public_brand_text TEXT`);
+  await safeAlter(DB, `ALTER TABLE company_branding ADD COLUMN logo_url TEXT`);
+  await safeAlter(DB, `ALTER TABLE company_branding ADD COLUMN favicon_url TEXT`);
 
   await DB.prepare(`
     CREATE TABLE IF NOT EXISTS support_tickets (
@@ -488,8 +495,8 @@ async function seedDefaults(DB) {
     await DB.prepare(`
       INSERT INTO company_branding (
         id, business_name, trading_name, service_name, support_email, contact_email,
-        phone, website, registered_notice, footer_notice
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        phone, website, registered_notice, footer_notice, public_brand_text, logo_url, favicon_url
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       "main",
       "JA Group Services Ltd",
@@ -500,7 +507,10 @@ async function seedDefaults(DB) {
       "",
       "https://experiences.jagroupservices.co.uk",
       "JA Experiences & Discovery is a service line of JA Group Services Ltd.",
-      "JA Experiences & Discovery is operated by JA Group Services Ltd."
+      "JA Experiences & Discovery is operated by JA Group Services Ltd.",
+      "Curated discovery, planning and experience guidance.",
+      "",
+      ""
     ).run();
   }
 
@@ -762,9 +772,9 @@ async function saveBranding(DB, body) {
   await DB.prepare(`
     INSERT INTO company_branding (
       id, business_name, trading_name, service_name, support_email, contact_email,
-      phone, website, registered_notice, footer_notice, updated_at
+      phone, website, registered_notice, footer_notice, public_brand_text, logo_url, favicon_url, updated_at
     )
-    VALUES ('main', ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+    VALUES ('main', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
     ON CONFLICT(id) DO UPDATE SET
       business_name = excluded.business_name,
       trading_name = excluded.trading_name,
@@ -775,6 +785,9 @@ async function saveBranding(DB, body) {
       website = excluded.website,
       registered_notice = excluded.registered_notice,
       footer_notice = excluded.footer_notice,
+      public_brand_text = excluded.public_brand_text,
+      logo_url = excluded.logo_url,
+      favicon_url = excluded.favicon_url,
       updated_at = CURRENT_TIMESTAMP
   `).bind(
     clean(body.business_name, 180),
@@ -785,7 +798,10 @@ async function saveBranding(DB, body) {
     clean(body.phone, 80),
     clean(body.website, 250),
     clean(body.registered_notice, 1000),
-    clean(body.footer_notice, 1000)
+    clean(body.footer_notice, 1000),
+    clean(body.public_brand_text, 500),
+    clean(body.logo_url, 500),
+    clean(body.favicon_url, 500)
   ).run();
 
   return DB.prepare(`SELECT * FROM company_branding WHERE id = 'main'`).first();
@@ -1116,6 +1132,27 @@ function existingAffiliateBlocks() {
       sort_order: 20
     },
     {
+      source_key: "headout-gallery-widget-template",
+      block_type: "Widget",
+      title: "Headout gallery widget template",
+      body: "Reusable Headout activity gallery placement for destination and experience pages. Use this as the admin-managed source for Headout embedded activity sections.",
+      widget_code: "<div data-affiliate-provider=\"headout\" data-hawt=\"gallery\" data-city=\"LONDON\" data-max-count=\"100\"></div>",
+      cta_label: "Open Headout",
+      cta_url: "/headout/",
+      legal_notice: "Headout widget placements must remain accompanied by the affiliate disclosure and third-party provider notice.",
+      sort_order: 25
+    },
+    {
+      source_key: "headout-integration-code",
+      block_type: "Integration code",
+      title: "Headout affiliate integration code",
+      body: "Primary Headout affiliate partner integration. Affiliate reference: JL2D9u. Keep script loading controlled by approved public page code; do not paste raw script tags into unmanaged content.",
+      cta_label: "View Headout page",
+      cta_url: "/headout/",
+      legal_notice: "Affiliate references must not be hidden from the required disclosure wording.",
+      sort_order: 28
+    },
+    {
       source_key: "getyourguide-page-heading",
       block_type: "Page heading",
       title: "GetYourGuide Activities",
@@ -1136,6 +1173,27 @@ function existingAffiliateBlocks() {
       sort_order: 40
     },
     {
+      source_key: "getyourguide-widget-template",
+      block_type: "Widget",
+      title: "GetYourGuide activity widget template",
+      body: "Reusable GetYourGuide placement for destination and attraction activity sections. This record keeps the widget configuration visible and manageable in the admin centre.",
+      widget_code: "<div data-affiliate-provider=\"getyourguide\" data-gyg-widget=\"activities\" data-gyg-locale=\"en-GB\" data-gyg-currency=\"GBP\"></div>",
+      cta_label: "Open GetYourGuide",
+      cta_url: "/getyourguide/",
+      legal_notice: "GetYourGuide activity widgets must be shown with the affiliate disclosure and third-party booking notice.",
+      sort_order: 45
+    },
+    {
+      source_key: "getyourguide-integration-code",
+      block_type: "Integration code",
+      title: "GetYourGuide partner integration",
+      body: "Secondary affiliate partner integration for activity, attraction and tour recommendations. Keep provider identifiers and widget placements managed through approved page templates and admin records.",
+      cta_label: "View GetYourGuide page",
+      cta_url: "/getyourguide/",
+      legal_notice: "Third-party provider terms, prices, availability and cancellation rules apply.",
+      sort_order: 48
+    },
+    {
       source_key: "experiences-provider-disclosure",
       block_type: "Referral notice",
       title: "Before booking",
@@ -1151,6 +1209,24 @@ function existingAffiliateBlocks() {
       body: "Some activity links, partner content or referral links may earn JA Group Services Ltd a commission after a qualifying booking.",
       legal_notice: "Affiliate bookings are made with the relevant third-party provider. The third-party provider is responsible for its own service, booking terms, pricing, refunds, cancellations and service delivery.",
       sort_order: 60
+    },
+    {
+      source_key: "destination-affiliate-browser-notice",
+      block_type: "Destination block",
+      title: "Destination activity browser notice",
+      body: "Destination activity pages should help customers compare current third-party activity options by country, city and interest before leaving JA Experiences & Discovery for booking.",
+      cta_label: "Browse activity partners",
+      cta_url: "/activities/",
+      legal_notice: "Customers should check suitability, accessibility, provider terms and cancellation conditions before booking.",
+      sort_order: 70
+    },
+    {
+      source_key: "affiliate-faq-provider-support",
+      block_type: "FAQ block",
+      title: "Who supports an affiliate booking?",
+      body: "The third-party provider or affiliate marketplace supports bookings, amendments, cancellations, refunds and service delivery. JA Group Services Ltd provides discovery and guidance information only.",
+      legal_notice: "JA Group Services Ltd is not the tour operator, travel agent or booking platform for third-party affiliate experiences.",
+      sort_order: 80
     }
   ];
 }
@@ -1164,13 +1240,14 @@ async function importAffiliateContent(DB, identity) {
       INSERT INTO affiliate_content_blocks (
         id, source_key, block_type, title, body, widget_code, cta_label, cta_url, legal_notice,
         is_enabled, is_published, sort_order, updated_at
-      ) VALUES (?, ?, ?, ?, ?, '', ?, ?, ?, 1, 1, ?, CURRENT_TIMESTAMP)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 1, ?, CURRENT_TIMESTAMP)
     `).bind(
       crypto.randomUUID(),
       block.source_key,
       block.block_type,
       block.title,
       block.body,
+      block.widget_code || "",
       block.cta_label || "",
       block.cta_url || "",
       block.legal_notice || "",
@@ -1610,7 +1687,7 @@ export async function onRequest(context) {
           return jsonWithHeaders({ bypass: { active: false }, saved: true }, { "Set-Cookie": removed.cookie });
         }
         const bypass = await createBypass(env.DB, identity);
-        return jsonWithHeaders({ bypass: { active: true, expires: bypass.expires }, saved: true }, { "Set-Cookie": bypass.cookie });
+        return jsonWithHeaders({ bypass: { active: true, expires: bypass.expires, redirect: "/" }, saved: true }, { "Set-Cookie": bypass.cookie });
       }
       if (body.action === "export_customer_data") {
         const exported = await exportCustomerData(env.DB, body.customer_email || body.user_id, clean(body.format, 20) || "json");

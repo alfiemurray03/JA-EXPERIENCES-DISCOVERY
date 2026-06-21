@@ -39,6 +39,15 @@
   box-shadow: 0 14px 30px rgba(0, 0, 0, 0.18);
 }
 
+.footer-service-mark img {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: contain;
+  background: #fff;
+  padding: 4px;
+}
+
 .footer-service-brand-text {
   display: grid;
   gap: 0.1rem;

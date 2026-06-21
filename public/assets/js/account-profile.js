@@ -1,5 +1,6 @@
 async function loadAccessProfile() {
   bindDashboardShell();
+  await applyAccountBranding();
   try {
     const response = await fetch("/account/profile", {
       credentials: "include",
@@ -24,6 +25,69 @@ async function loadAccessProfile() {
     bindAccountRequestForms();
   } catch (error) {
     showProfileError();
+  }
+}
+
+async function applyAccountBranding() {
+  let branding = {};
+  try {
+    const response = await fetch("/site-settings", { cache: "no-store" });
+    if (response.ok) {
+      const data = await response.json();
+      branding = data.branding || {};
+      if (data.theme) document.documentElement.dataset.siteTheme = data.theme;
+    }
+  } catch {
+    branding = {};
+  }
+
+  const serviceName = branding.service_name || branding.trading_name || "JA Experiences & Discovery";
+  const shortName = serviceName.replace(/\s*&\s*Discovery$/i, "");
+  const businessName = branding.business_name || "JA Group Services Ltd";
+
+  document.title = `My Account | ${serviceName}`;
+  const metaDescription = document.querySelector('meta[name="description"]');
+  if (metaDescription) {
+    metaDescription.content = `Secure ${serviceName} customer account dashboard protected by JA Secure Access.`;
+  }
+
+  document.querySelectorAll(".brand strong, .mobile-topbar strong").forEach((element) => {
+    element.textContent = shortName || serviceName;
+  });
+  document.querySelectorAll(".brand span").forEach((element) => {
+    element.textContent = "Customer account";
+  });
+  document.querySelectorAll("[data-service-name]").forEach((element) => {
+    element.textContent = serviceName;
+  });
+  document.querySelectorAll("[data-business-name]").forEach((element) => {
+    element.textContent = businessName;
+  });
+
+  const footerNote = document.getElementById("accountFooterNotice");
+  if (footerNote) {
+    footerNote.textContent = branding.footer_notice || `${serviceName} account data is managed by ${businessName}.`;
+  }
+
+  if (branding.logo_url) {
+    document.querySelectorAll(".brand-mark").forEach((element) => {
+      element.replaceChildren();
+      const image = document.createElement("img");
+      image.src = branding.logo_url;
+      image.alt = `${serviceName} logo`;
+      element.appendChild(image);
+      element.classList.add("has-logo");
+    });
+  }
+
+  if (branding.favicon_url) {
+    let favicon = document.querySelector('link[rel="icon"]');
+    if (!favicon) {
+      favicon = document.createElement("link");
+      favicon.rel = "icon";
+      document.head.appendChild(favicon);
+    }
+    favicon.href = branding.favicon_url;
   }
 }
 
