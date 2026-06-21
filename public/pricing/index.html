@@ -1,200 +1,145 @@
 <!doctype html>
-
 <html lang="en-GB">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-
   <title>Plans and Pricing | JA Experiences &amp; Discovery</title>
-  <meta name="description" content="Clear prices, delivery times and service boundaries for JA Experiences & Discovery guidance plans.">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/ja-travel-rebuild.css?v=20260621-9">
 
-  <link rel="stylesheet" href="/assets/css/ja-travel-rebuild.css?v=20260621-3">
-  <link rel="stylesheet" href="/assets/css/homepage-clean.css?v=20260621-3">
+  <style>
+    body{margin:0;background:#fbf8f1;color:#08233c;font-family:Inter,Arial,sans-serif}
+    .pricing-hero{padding:90px 20px;background:linear-gradient(135deg,#08233c,#0b4f84);color:#fff}
+    .pricing-wrap{max-width:1180px;margin:auto}
+    .pricing-hero h1{max-width:850px;margin:0 0 20px;font-family:"Playfair Display",serif;font-size:clamp(44px,7vw,86px);line-height:.95}
+    .pricing-hero p{max-width:720px;font-size:19px;line-height:1.7;color:rgba(255,255,255,.88)}
+    .pricing-actions{display:flex;gap:14px;flex-wrap:wrap;margin-top:30px}
+    .btn{display:inline-flex;align-items:center;justify-content:center;padding:14px 22px;border-radius:14px;font-weight:900;text-decoration:none}
+    .btn.orange{background:#f26a2e;color:#fff}.btn.white{background:#fff;color:#08233c}
+    .pricing-strip{background:#fff;border-bottom:1px solid #d8e2ea}
+    .strip-grid{max-width:1180px;margin:auto;display:grid;grid-template-columns:repeat(4,1fr)}
+    .strip-grid p{margin:0;padding:22px;text-align:center;border-left:1px solid #d8e2ea}
+    .strip-grid p:last-child{border-right:1px solid #d8e2ea}
+    .strip-grid strong{display:block;font-size:26px;color:#0b4f84}.strip-grid span{font-weight:700;color:#526276}
+    .section{padding:80px 20px}.section-head{text-align:center;max-width:760px;margin:0 auto 42px}
+    .section-head span{color:#f26a2e;font-weight:900;text-transform:uppercase;font-size:12px;letter-spacing:.12em}
+    .section-head h2{font-family:"Playfair Display",serif;font-size:clamp(36px,5vw,58px);line-height:1;margin:10px 0}
+    .cards{max-width:1180px;margin:auto;display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+    .card{background:#fff;border:1px solid #d8e2ea;border-radius:24px;padding:26px;display:flex;flex-direction:column;gap:18px;box-shadow:0 18px 45px rgba(8,35,60,.08)}
+    .card.featured{border:2px solid #f26a2e}
+    .pill{width:max-content;background:#eaf7f1;color:#00684a;border-radius:999px;padding:7px 11px;font-size:11px;font-weight:900;text-transform:uppercase}
+    .card h3{font-family:"Playfair Display",serif;font-size:32px;line-height:1;margin:0}
+    .card p{color:#526276;line-height:1.6;margin:0}.price{border-top:1px solid #d8e2ea;padding-top:14px}
+    .price strong{font-size:38px}.price span{font-size:13px;font-weight:800;color:#526276;margin-left:8px}
+    .card ul{list-style:none;padding:0;margin:0;display:grid;gap:10px}
+    .card li{font-size:14px;line-height:1.45;color:#26384d}.card li:before{content:"✓";color:#008768;font-weight:900;margin-right:8px}
+    .card .btn{margin-top:auto;background:#08233c;color:#fff}.card .btn.orange{background:#f26a2e}
+    .info{background:#fff}.info-grid{max-width:1180px;margin:auto;display:grid;grid-template-columns:1fr 1fr;gap:22px}
+    .panel{background:#fff;border:1px solid #d8e2ea;border-radius:22px;padding:28px}
+    .panel h2{font-family:"Playfair Display",serif;font-size:36px;line-height:1;margin:8px 0 14px}
+    .final{padding:80px 20px;background:#08233c;color:#fff;text-align:center}
+    .final h2{font-family:"Playfair Display",serif;font-size:clamp(34px,5vw,58px);line-height:1;max-width:850px;margin:10px auto 24px}
+    @media(max-width:1100px){.cards{grid-template-columns:repeat(2,1fr)}.strip-grid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:700px){.cards,.info-grid{grid-template-columns:1fr}.pricing-hero{padding:60px 20px}}
+  </style>
 </head>
 
-<body data-page="pricing" class="home-clean">
+<body data-page="pricing">
   <div id="siteShellHeader"></div>
 
   <main id="main">
-    <section class="pricing-page-hero">
-      <div class="container pricing-hero-inner">
-        <div class="pricing-hero-copy">
-          <span class="clean-kicker">Plans &amp; Pricing</span>
-          <h1>Simple travel discovery support, with clear prices before work begins.</h1>
-          <p>
-            Start with a free enquiry. If your request needs more detailed support, we will confirm the right plan, price, delivery time and scope before any paid work starts.
-          </p>
-
-```
-      <div class="clean-actions">
-        <a class="clean-button primary" href="/enquiry/">Start a free enquiry</a>
-        <a class="clean-button secondary" href="/social-tariff/">View social tariff</a>
+    <section class="pricing-hero">
+      <div class="pricing-wrap">
+        <h1>Simple travel discovery support, with clear prices before work begins.</h1>
+        <p>Start with a free enquiry. If your request needs more detailed support, we will confirm the right plan, price, delivery time and scope before any paid work starts.</p>
+        <div class="pricing-actions">
+          <a class="btn orange" href="/enquiry/">Start a free enquiry</a>
+          <a class="btn white" href="/social-tariff/">View social tariff</a>
+        </div>
       </div>
-    </div>
+    </section>
 
-    <aside class="pricing-hero-note">
-      <strong>Guidance only</strong>
-      <span>JA Experiences &amp; Discovery does not sell flights, transport or package holidays.</span>
-    </aside>
-  </div>
-</section>
+    <section class="pricing-strip">
+      <div class="strip-grid">
+        <p><strong>£0</strong><span>Free enquiry</span></p>
+        <p><strong>£49–£149</strong><span>Standard plans</span></p>
+        <p><strong>£29–£95</strong><span>Social tariff</span></p>
+        <p><strong>Email/PDF</strong><span>Written delivery</span></p>
+      </div>
+    </section>
 
-<section class="pricing-summary-strip">
-  <div class="container pricing-summary-grid">
-    <p><strong>£0</strong><span>Free enquiry</span></p>
-    <p><strong>£49–£149</strong><span>Standard plans</span></p>
-    <p><strong>£29–£95</strong><span>Social tariff</span></p>
-    <p><strong>Email/PDF</strong><span>Written delivery</span></p>
-  </div>
-</section>
+    <section class="section">
+      <div class="section-head">
+        <span>Board-approved service plans</span>
+        <h2>Choose the right level of support.</h2>
+        <p>All paid plans are guidance services. Customers remain responsible for their own bookings, provider checks and travel arrangements.</p>
+      </div>
 
-<section class="section pricing-plans-section">
-  <div class="container">
-    <div class="section-heading pricing-heading">
-      <span class="kicker">Board-approved service plans</span>
-      <h2>Choose the right level of support.</h2>
-      <p>All paid plans are guidance services. Customers remain responsible for their own bookings, provider checks and travel arrangements.</p>
-    </div>
+      <div class="cards">
+        <article class="card">
+          <span class="pill">Free starting point</span>
+          <h3>Free Discovery Enquiry</h3>
+          <p>For initial questions, basic recommendations and choosing the right support route.</p>
+          <div class="price"><strong>£0</strong><span>Free enquiry</span></div>
+          <ul><li>Delivery: 1 to 3 working days</li><li>Initial review and recommendation</li><li>No full itinerary preparation</li><li>No cost breakdown work</li></ul>
+          <a class="btn orange" href="/enquiry/">Start a free enquiry</a>
+        </article>
 
-    <div class="pricing-cards-v2">
-      <article class="pricing-card-v2">
-        <span class="pricing-pill">Free starting point</span>
-        <h3>Free Discovery Enquiry</h3>
-        <p class="pricing-summary">A simple starting point for initial questions, basic recommendations and choosing the right support route.</p>
+        <article class="card">
+          <span class="pill">Destination choice</span>
+          <h3>Destination Discovery Plan</h3>
+          <p>Helps you choose where to go based on dates, budget, interests and traveller type.</p>
+          <div class="price"><strong>£49</strong><span>Social tariff £29</span></div>
+          <ul><li>Delivery: 3 to 5 working days</li><li>Includes 1 minor revision</li><li>Destination guidance</li><li>Preparation notes</li></ul>
+          <a class="btn" href="/enquiry/">Request this plan</a>
+        </article>
 
-        <div class="pricing-price">
-          <strong>£0</strong>
-          <span>Free enquiry</span>
+        <article class="card">
+          <span class="pill">Already chosen</span>
+          <h3>Itinerary &amp; Experience Planning</h3>
+          <p>For customers who know where they are going and want help planning activities.</p>
+          <div class="price"><strong>£89</strong><span>Social tariff £55</span></div>
+          <ul><li>Delivery: 5 to 7 working days</li><li>Includes 1 minor revision</li><li>Activity ideas</li><li>Suggested trip structure</li></ul>
+          <a class="btn" href="/enquiry/">Request this plan</a>
+        </article>
+
+        <article class="card featured">
+          <span class="pill">Most complete</span>
+          <h3>Complete Planning Guidance</h3>
+          <p>Fuller support for destination guidance and practical planning in one written pack.</p>
+          <div class="price"><strong>£149</strong><span>Social tariff £95</span></div>
+          <ul><li>Delivery: 7 to 10 working days</li><li>Includes 2 minor revisions</li><li>Hotel area research where suitable</li><li>Itinerary ideas and cost notes</li></ul>
+          <a class="btn orange" href="/enquiry/">Request this plan</a>
+        </article>
+      </div>
+    </section>
+
+    <section class="section info">
+      <div class="info-grid">
+        <div class="panel">
+          <span class="pill">Important scope</span>
+          <h2>What these plans do not include</h2>
+          <p>JA Group Services Ltd does not sell flights, transport, transfers or package holidays. Affiliate activity bookings are made directly with the relevant third-party provider.</p>
         </div>
-
-        <ul>
-          <li>Delivery: 1 to 3 working days</li>
-          <li>Initial review and recommendation</li>
-          <li>No full itinerary preparation</li>
-          <li>No destination comparison or cost breakdown</li>
-        </ul>
-
-        <a class="pricing-button primary" href="/enquiry/">Start a free enquiry</a>
-      </article>
-
-      <article class="pricing-card-v2">
-        <span class="pricing-pill">Destination choice</span>
-        <h3>Destination Discovery Plan</h3>
-        <p class="pricing-summary">Helps you choose where to go based on your dates, budget, interests, preferences and traveller type.</p>
-
-        <div class="pricing-price">
-          <strong>£49</strong>
-          <span>Social tariff £29</span>
+        <div class="panel">
+          <span class="pill">Social tariff</span>
+          <h2>Reduced prices may be available</h2>
+          <p>Customers receiving Universal Credit, PIP, other accepted benefits or experiencing financial difficulty may ask to be considered for social tariff pricing.</p>
+          <a class="btn" href="/social-tariff/">Read about the social tariff</a>
         </div>
+      </div>
+    </section>
 
-        <ul>
-          <li>Delivery: 3 to 5 working days</li>
-          <li>Includes 1 minor revision</li>
-          <li>Destination guidance</li>
-          <li>General preparation points</li>
-        </ul>
-
-        <a class="pricing-button" href="/enquiry/">Request this plan</a>
-      </article>
-
-      <article class="pricing-card-v2">
-        <span class="pricing-pill">Already chosen</span>
-        <h3>Itinerary &amp; Experience Planning</h3>
-        <p class="pricing-summary">For customers who know where they are going and want help planning activities and experiences.</p>
-
-        <div class="pricing-price">
-          <strong>£89</strong>
-          <span>Social tariff £55</span>
-        </div>
-
-        <ul>
-          <li>Delivery: 5 to 7 working days</li>
-          <li>Includes 1 minor revision</li>
-          <li>Activity ideas</li>
-          <li>Suggested trip structure</li>
-        </ul>
-
-        <a class="pricing-button" href="/enquiry/">Request this plan</a>
-      </article>
-
-      <article class="pricing-card-v2 featured">
-        <span class="pricing-pill">Most complete</span>
-        <h3>Complete Planning Guidance</h3>
-        <p class="pricing-summary">Fuller support for destination guidance, practical planning and preparation notes in one written pack.</p>
-
-        <div class="pricing-price">
-          <strong>£149</strong>
-          <span>Social tariff £95</span>
-        </div>
-
-        <ul>
-          <li>Delivery: 7 to 10 working days</li>
-          <li>Includes 2 minor revisions</li>
-          <li>Hotel area research where suitable</li>
-          <li>Itinerary ideas and indicative cost notes</li>
-        </ul>
-
-        <a class="pricing-button primary" href="/enquiry/">Request this plan</a>
-      </article>
-    </div>
-  </div>
-</section>
-
-<section class="section alt pricing-info-section">
-  <div class="container split">
-    <div class="panel">
-      <span class="kicker">Important scope</span>
-      <h2>What these plans do not include</h2>
-      <ul class="check-list">
-        <li>JA Group Services Ltd does not sell flights or package holidays.</li>
-        <li>JA Group Services Ltd does not arrange transport, transfers, taxis, coaches, ferries, trains, car hire or flights.</li>
-        <li>Affiliate activity bookings are made directly with the relevant third-party provider.</li>
-        <li>Hotel-room-only bookings are not available unless written supplier or partner authority is in place.</li>
-      </ul>
-    </div>
-
-    <div class="panel">
-      <span class="kicker">Social tariff</span>
-      <h2>Reduced prices may be available</h2>
-      <p>Customers receiving Universal Credit, PIP, other accepted benefits or experiencing financial difficulty may ask to be considered for social tariff pricing.</p>
-      <p>Only the minimum necessary information will be requested, and any evidence will be handled carefully.</p>
-      <a class="button secondary" href="/social-tariff/">Read about the social tariff</a>
-    </div>
-  </div>
-</section>
-
-<section class="section pricing-payment-section">
-  <div class="container split">
-    <div class="panel">
-      <span class="kicker">Current payment journey</span>
-      <h2>Paid plans are requested first.</h2>
-      <p>During this stage, paid plans use the button text “Request this plan”. We confirm scope and suitability before any paid work begins.</p>
-    </div>
-
-    <div class="panel">
-      <span class="kicker">Stripe roadmap</span>
-      <h2>Secure online payments will come later.</h2>
-      <p>When Stripe is connected, paid-plan buttons may change to “Choose this plan” and payments will be processed securely through Stripe. The Free Discovery Enquiry will remain free.</p>
-    </div>
-  </div>
-</section>
-
-<section class="clean-final">
-  <div class="container">
-    <span>Begin with no obligation</span>
-    <h2>Send a free enquiry and we will help you choose the right next step.</h2>
-    <a class="clean-button primary" href="/enquiry/">Start a free enquiry</a>
-  </div>
-</section>
-```
-
+    <section class="final">
+      <h2>Send a free enquiry and we will help you choose the right next step.</h2>
+      <a class="btn orange" href="/enquiry/">Start a free enquiry</a>
+    </section>
   </main>
 
   <div id="siteShellFooter"></div>
-  <script src="/assets/js/site-shell.js?v=20260621-3"></script>
+  <script src="/assets/js/site-shell.js?v=20260621-9"></script>
 </body>
 </html>
