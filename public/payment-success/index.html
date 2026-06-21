@@ -1,0 +1,158 @@
+<!doctype html>
+
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Payment Received | JA Experiences &amp; Discovery</title>
+  <meta name="description" content="Thank you. Your JA Experiences and Discovery payment has been received.">
+  <link rel="stylesheet" href="/assets/css/ja-travel-rebuild.css">
+  <link rel="stylesheet" href="/assets/css/homepage-clean.css">
+  <style>
+    body {
+      margin: 0;
+      background: #fbf8f1;
+      color: #08233c;
+      font-family: Inter, Arial, sans-serif;
+    }
+
+```
+.payment-success {
+  min-height: 72vh;
+  display: grid;
+  place-items: center;
+  padding: 5rem 1.5rem;
+  background:
+    radial-gradient(circle at top left, rgba(242, 106, 46, 0.12), transparent 34rem),
+    linear-gradient(180deg, #ffffff 0%, #fbf8f1 100%);
+}
+
+.payment-success-card {
+  width: min(820px, 100%);
+  background: #ffffff;
+  border: 1px solid #d8e2ea;
+  border-radius: 28px;
+  padding: clamp(2rem, 5vw, 4rem);
+  box-shadow: 0 24px 70px rgba(8, 35, 60, 0.12);
+  text-align: center;
+}
+
+.payment-success-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 68px;
+  height: 68px;
+  border-radius: 999px;
+  background: #eaf7f1;
+  color: #007a53;
+  font-size: 2rem;
+  font-weight: 900;
+  margin-bottom: 1.25rem;
+}
+
+.payment-success-card h1 {
+  margin: 0 0 1rem;
+  color: #08233c;
+  font-size: clamp(2.4rem, 5vw, 4.3rem);
+  line-height: 1;
+  letter-spacing: -0.05em;
+}
+
+.payment-success-card p {
+  margin: 0 auto 1rem;
+  max-width: 650px;
+  color: #526276;
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+
+.payment-reference {
+  margin: 1.75rem auto 0;
+  max-width: 640px;
+  padding: 1rem;
+  border-radius: 16px;
+  background: #f4f7fa;
+  color: #526276;
+  font-size: 0.9rem;
+  word-break: break-word;
+}
+
+.payment-success-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 2rem;
+}
+
+.payment-success-actions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 1.25rem;
+  border-radius: 14px;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.payment-success-actions .primary {
+  background: #f26a2e;
+  color: #ffffff;
+}
+
+.payment-success-actions .secondary {
+  background: #08233c;
+  color: #ffffff;
+}
+```
+
+  </style>
+</head>
+
+<body data-page="payment-success">
+  <div id="siteShellHeader"></div>
+
+  <main id="main" class="payment-success">
+    <section class="payment-success-card" aria-labelledby="payment-success-title">
+      <div class="payment-success-mark" aria-hidden="true">✓</div>
+
+```
+  <h1 id="payment-success-title">Payment received</h1>
+
+  <p>
+    Thank you. Your payment has been sent securely through Stripe.
+  </p>
+
+  <p>
+    JA Experiences &amp; Discovery will review your request and contact you about the next steps for your selected service.
+  </p>
+
+  <div class="payment-reference" id="paymentReference" hidden></div>
+
+  <div class="payment-success-actions">
+    <a class="primary" href="/enquiry/">Send more details</a>
+    <a class="secondary" href="/">Return home</a>
+  </div>
+</section>
+```
+
+  </main>
+
+  <div id="siteShellFooter"></div>
+
+  <script src="/assets/js/site-shell.js"></script>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get("session_id");
+
+    if (sessionId) {
+      const reference = document.getElementById("paymentReference");
+      reference.hidden = false;
+      reference.textContent = "Stripe checkout reference: " + sessionId;
+    }
+  </script>
+
+</body>
+</html>
