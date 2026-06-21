@@ -279,10 +279,22 @@
     }
 
     .admin-user {
+      position: relative;
+      border: 0;
+      background: transparent;
+      color: inherit;
       display: flex;
       align-items: center;
       gap: 0.75rem;
       text-align: right;
+      cursor: pointer;
+      padding: 0.35rem;
+      border-radius: 12px;
+    }
+
+    .admin-user:hover,
+    .admin-user[aria-expanded="true"] {
+      background: rgba(255,255,255,0.04);
     }
 
     .admin-user-text strong,
@@ -311,6 +323,46 @@
       font-weight: 800;
       width: fit-content;
       margin-left: auto;
+    }
+
+    .account-menu {
+      position: absolute;
+      top: calc(100% + 0.6rem);
+      right: 0;
+      width: 240px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      padding: 0.45rem;
+      text-align: left;
+      z-index: 60;
+    }
+
+    .account-menu[hidden] {
+      display: none;
+    }
+
+    .account-menu button,
+    .account-menu a {
+      width: 100%;
+      border: 0;
+      border-radius: 9px;
+      background: transparent;
+      color: #bdd0ea;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.7rem 0.75rem;
+      font-weight: 750;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .account-menu button:hover,
+    .account-menu a:hover {
+      background: rgba(59,130,246,0.12);
+      color: #fff;
     }
 
     .admin-content {
@@ -373,6 +425,31 @@
     .admin-card {
       padding: 1.4rem;
       margin-bottom: 1rem;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+    }
+
+    .section-head h2,
+    .section-head p {
+      margin: 0;
+    }
+
+    .section-head p {
+      margin-top: 0.35rem;
+      color: var(--muted);
+    }
+
+    .section-actions {
+      display: flex;
+      gap: 0.6rem;
+      align-items: center;
+      flex-wrap: wrap;
     }
 
     .admin-card h2 {
@@ -510,6 +587,273 @@
 
     .admin-button:hover {
       filter: brightness(1.08);
+    }
+
+    .admin-button.secondary {
+      background: #0f1726;
+      border: 1px solid var(--line);
+      color: #bdd0ea;
+      box-shadow: none;
+    }
+
+    .admin-button.danger {
+      background: #7f1d1d;
+      box-shadow: none;
+    }
+
+    .mini-button {
+      min-height: 34px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      padding: 0 0.72rem;
+      background: #0f1726;
+      color: #dbeafe;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .mini-button:hover {
+      border-color: var(--blue);
+    }
+
+    .badge {
+      display: inline-flex;
+      width: fit-content;
+      align-items: center;
+      border-radius: 999px;
+      padding: 0.26rem 0.5rem;
+      font-size: 0.72rem;
+      font-weight: 900;
+      background: var(--blue-soft);
+      color: #93c5fd;
+      white-space: nowrap;
+    }
+
+    .badge.green {
+      background: var(--green-soft);
+      color: var(--green);
+    }
+
+    .badge.amber {
+      background: var(--amber-soft);
+      color: #fbbf24;
+    }
+
+    .badge.red {
+      background: var(--red-soft);
+      color: var(--red);
+    }
+
+    .switch {
+      position: relative;
+      display: inline-flex;
+      width: 54px;
+      height: 30px;
+      flex: 0 0 auto;
+    }
+
+    .switch input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .switch span {
+      width: 100%;
+      height: 100%;
+      border-radius: 999px;
+      background: #33445f;
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      transition: 0.16s ease;
+      cursor: pointer;
+    }
+
+    .switch span::after {
+      content: "";
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      background: #0f1726;
+      transition: 0.16s ease;
+    }
+
+    .switch input:checked + span {
+      background: var(--blue);
+    }
+
+    .switch input:checked + span::after {
+      left: 27px;
+      background: #dbeafe;
+    }
+
+    .quick-grid,
+    .plan-grid,
+    .policy-grid {
+      display: grid;
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+
+    .quick-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .plan-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .policy-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .quick-card,
+    .plan-card,
+    .policy-card,
+    .list-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 1rem;
+    }
+
+    .quick-card {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      cursor: pointer;
+      color: inherit;
+      text-align: left;
+    }
+
+    .quick-card:hover,
+    .plan-card:hover,
+    .policy-card:hover {
+      border-color: rgba(59,130,246,0.72);
+      background: #203047;
+    }
+
+    .quick-icon,
+    .small-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 11px;
+      display: grid;
+      place-items: center;
+      background: var(--blue-soft);
+      color: #60a5fa;
+      font-weight: 900;
+      flex: 0 0 auto;
+    }
+
+    .quick-card strong,
+    .quick-card span,
+    .plan-card strong,
+    .plan-card span,
+    .policy-card strong,
+    .policy-card span {
+      display: block;
+    }
+
+    .quick-card span,
+    .plan-card span,
+    .policy-card span {
+      color: var(--muted);
+      margin-top: 0.18rem;
+    }
+
+    .plan-top,
+    .policy-top,
+    .list-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.8rem;
+      align-items: flex-start;
+    }
+
+    .plan-meta {
+      display: grid;
+      gap: 0.45rem;
+      margin: 1rem 0;
+      color: #bdd0ea;
+    }
+
+    .plan-meta div {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      border-bottom: 1px solid var(--line-soft);
+      padding-bottom: 0.45rem;
+    }
+
+    .tabs {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 0.25rem;
+      background: var(--panel-2);
+      border: 1px solid var(--line-soft);
+      border-radius: 10px;
+      padding: 0.25rem;
+      margin: 1rem 0;
+    }
+
+    .tab-button {
+      border: 0;
+      border-radius: 8px;
+      background: transparent;
+      color: #bdd0ea;
+      padding: 0.55rem 0.85rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .tab-button.active {
+      background: #0f1726;
+      color: #fff;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: rgba(2, 6, 23, 0.68);
+      backdrop-filter: blur(6px);
+      display: grid;
+      place-items: center;
+      padding: 1rem;
+    }
+
+    .modal {
+      width: min(760px, 100%);
+      max-height: calc(100vh - 2rem);
+      overflow: auto;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      padding: 1.2rem;
+    }
+
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      align-items: flex-start;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--line-soft);
+      margin-bottom: 1rem;
+    }
+
+    .modal-head h2,
+    .modal-head p {
+      margin: 0;
+    }
+
+    .modal-head p {
+      color: var(--muted);
+      margin-top: 0.25rem;
     }
 
     .table-wrap {
@@ -753,7 +1097,10 @@
       }
 
       .admin-grid,
-      .admin-form {
+      .admin-form,
+      .quick-grid,
+      .plan-grid,
+      .policy-grid {
         grid-template-columns: 1fr;
       }
 
@@ -799,6 +1146,7 @@
         <div class="nav-group">
           <div class="nav-heading">Platform</div>
           <nav class="admin-nav" aria-label="Platform">
+            <button data-section="admins" data-icon="⛨">Admin Users / Access</button>
             <button data-section="customers" data-icon="👥">CRM / Customers</button>
             <button data-section="support" data-icon="✉">Support</button>
             <button data-section="system" data-icon="⚠">System / Issues</button>
@@ -842,13 +1190,17 @@
           <span>JA Experiences &amp; Discovery Administration</span>
         </div>
 
-        <div class="admin-user">
+        <div class="admin-user" id="accountMenuButton" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">
           <div class="admin-user-text">
             <strong id="adminName">Loading admin...</strong>
             <span id="adminEmail">Checking secure access...</span>
             <span class="status-pill" id="adminStatus">Checking access</span>
           </div>
           <div class="avatar">A</div>
+          <div class="account-menu" id="accountMenu" hidden>
+            <button type="button" id="accountSettingsButton">⚙ Account settings</button>
+            <a href="/cdn-cgi/access/logout">↩ Sign out</a>
+          </div>
         </div>
       </header>
 
@@ -868,7 +1220,7 @@
     </main>
   </div>
 
-  <script src="/assets/js/admin-control.js?v=smart-admin-style-1"></script>
+  <script src="/assets/js/admin-control.js?v=experiences-admin-control-2"></script>
 </body>
 </html>
 

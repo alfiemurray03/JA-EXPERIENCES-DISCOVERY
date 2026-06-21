@@ -71,11 +71,33 @@ function getAllowedAdmins(env) {
     .filter(Boolean);
 }
 
-function isAllowedAdmin(identity, env) {
-  if (!identity.email) return false;
+async function ensureAdminUsers(DB, env) {
+  await DB.prepare(`
+    CREATE TABLE IF NOT EXISTS admin_users (
+      email TEXT PRIMARY KEY,
+      name TEXT,
+      source TEXT DEFAULT 'portal',
+      created_by TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
 
-  const admins = getAllowedAdmins(env);
-  return admins.includes(identity.email);
+  for (const email of getAllowedAdmins(env)) {
+    await DB.prepare(`
+      INSERT INTO admin_users (email, name, source, created_by, updated_at)
+      VALUES (?, ?, 'default', 'system', CURRENT_TIMESTAMP)
+      ON CONFLICT(email) DO UPDATE SET updated_at = CURRENT_TIMESTAMP
+    `).bind(email, email).run();
+  }
+}
+
+async function isAllowedAdmin(DB, identity, env) {
+  if (!identity.email) return false;
+  if (getAllowedAdmins(env).includes(identity.email)) return true;
+
+  const admin = await DB.prepare(`SELECT email FROM admin_users WHERE lower(email) = lower(?)`).bind(identity.email).first();
+  return Boolean(admin);
 }
 
 async function ensureProfileTable(DB) {
@@ -107,7 +129,9 @@ export async function onRequest(context) {
     return json({ error: "Not signed in." }, 401);
   }
 
-  if (!isAllowedAdmin(identity, env)) {
+  await ensureAdminUsers(env.DB, env);
+
+  if (!(await isAllowedAdmin(env.DB, identity, env))) {
     return json({
       error: "Forbidden.",
       signedInAs: identity.email

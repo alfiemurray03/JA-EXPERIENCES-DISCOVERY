@@ -1,18 +1,67 @@
 const state = {
   currentSection: "overview",
-  data: {}
+  data: {},
+  selectedPolicy: null
+};
+
+const sectionTitles = {
+  overview: "Dashboard",
+  admins: "Admin Users / Access Control",
+  customers: "CRM / Customers",
+  plans: "Plans & Prices",
+  stripe: "Stripe API Controls",
+  branding: "Company Branding",
+  policies: "Legal Policies",
+  support: "Support",
+  system: "System / Issues",
+  comingsoon: "Coming Soon Page",
+  maintenance: "Maintenance Mode"
 };
 
 document.addEventListener("DOMContentLoaded", () => {
   bindNav();
+  bindAccountMenu();
   loadSection("overview");
 });
 
 function bindNav() {
   document.querySelectorAll("[data-section]").forEach((button) => {
-    button.addEventListener("click", () => {
-      loadSection(button.dataset.section);
-    });
+    button.addEventListener("click", () => loadSection(button.dataset.section));
+  });
+}
+
+function bindAccountMenu() {
+  const button = document.getElementById("accountMenuButton");
+  const menu = document.getElementById("accountMenu");
+  const settings = document.getElementById("accountSettingsButton");
+
+  if (!button || !menu) return;
+
+  button.addEventListener("click", (event) => {
+    if (event.target.closest("#accountMenu a") || event.target.closest("#accountMenu button")) return;
+    const open = menu.hidden;
+    menu.hidden = !open;
+    button.setAttribute("aria-expanded", String(open));
+  });
+
+  button.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    const open = menu.hidden;
+    menu.hidden = !open;
+    button.setAttribute("aria-expanded", String(open));
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!button.contains(event.target)) {
+      menu.hidden = true;
+      button.setAttribute("aria-expanded", "false");
+    }
+  });
+
+  settings?.addEventListener("click", () => {
+    menu.hidden = true;
+    openAccountModal();
   });
 }
 
@@ -27,43 +76,52 @@ async function api(section, options = {}) {
     ...options
   });
 
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.error || "Admin API problem.");
-  }
-
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || "Admin API problem.");
   return data;
 }
 
 async function loadSection(section) {
   state.currentSection = section;
+  setTopbar(section);
 
   document.querySelectorAll("[data-section]").forEach((button) => {
     button.classList.toggle("active", button.dataset.section === section);
   });
 
   const panel = document.getElementById("adminPanel");
-  panel.innerHTML = `<div class="admin-loading">Loading ${escapeHtml(section)}...</div>`;
+  panel.innerHTML = `<div class="admin-loading">Loading ${escapeHtml(sectionTitles[section] || section)}...</div>`;
 
   try {
     const data = await api(section);
     state.data[section] = data;
-
-    if (data.admin) {
-      setText("adminName", data.admin.name || "JA admin");
-      setText("adminEmail", data.admin.email || "");
-      setText("adminStatus", "Admin access verified");
-    }
-
+    if (data.admin) setAdmin(data.admin);
     renderSection(section, data);
   } catch (error) {
     panel.innerHTML = `<div class="admin-alert">${escapeHtml(error.message)}</div>`;
   }
 }
 
+function setTopbar(section) {
+  const title = sectionTitles[section] || "Dashboard";
+  document.querySelector(".admin-topbar-title strong").textContent = title;
+  document.querySelector(".admin-topbar-title span").textContent = "JA Experiences & Discovery Administration";
+}
+
+function setAdmin(admin) {
+  const email = admin.email || "";
+  const name = admin.name && admin.name !== email ? admin.name : email.split("@")[0] || "JA admin";
+  setText("adminName", name);
+  setText("adminEmail", email);
+  setText("adminStatus", "Admin access verified");
+  document.querySelectorAll(".avatar").forEach((avatar) => {
+    avatar.textContent = (name || email || "A").slice(0, 1).toUpperCase();
+  });
+}
+
 function renderSection(section, data) {
   if (section === "overview") renderOverview(data.overview);
+  if (section === "admins") renderAdmins(data.admins);
   if (section === "customers") renderCustomers(data.customers);
   if (section === "plans") renderPlans(data.plans);
   if (section === "stripe") renderStripe(data.stripe);
@@ -84,504 +142,710 @@ function renderOverview(overview) {
       ${stat("Policies", overview.policies)}
       ${stat("Support tickets", overview.supportTickets)}
       ${stat("Open issues", overview.openIssues)}
+      ${stat("Coming Soon", overview.comingSoonStatus)}
+      ${stat("Maintenance", overview.maintenanceStatus)}
+      ${stat("Admins", overview.admins)}
     </div>
 
     <div class="admin-card">
-      <h2>Admin Control Centre</h2>
-      <p>This is the central control point for JA Experiences & Discovery. Use the sidebar to manage CRM records, service plans, Stripe checks, company branding, policies, support and system issues.</p>
+      <div class="section-head">
+        <div>
+          <h2>Admin Control Centre</h2>
+          <p>Manage CRM records, access control, service plans, Stripe checks, company details, policies, support, system issues and public site status.</p>
+        </div>
+      </div>
+      <div class="quick-grid">
+        ${quick("admins", "⛨", "Admin Users / Access", "Manage authorised admin accounts")}
+        ${quick("customers", "👥", "CRM / Customers", "Review customer records and Lifetime access")}
+        ${quick("plans", "▣", "Plans & Prices", "Configure service plan cards and Stripe IDs")}
+        ${quick("stripe", "▤", "Stripe API Controls", "Store keys and test account status")}
+        ${quick("comingsoon", "◌", "Coming Soon Page", "Control the public pre-launch page")}
+        ${quick("maintenance", "⛨", "Maintenance Mode", "Control public maintenance mode")}
+        ${quick("policies", "▧", "Legal Policies", "Edit draft and published policy records")}
+        ${quick("system", "⚠", "System / Issues", "Track operational issues")}
+      </div>
     </div>
   `;
 }
 
-function renderCustomers(customers) {
-  const rows = customers.map((c) => `
-    <tr class="customer-row-click">
-      <td onclick="openCustomerDrawer(c.email)">
-        <strong>${escapeHtml(c.display_name || c.verified_name || c.email)}</strong>
-        <span>${escapeHtml(c.email || "")}</span>
-      </td>
-      <td onclick="openCustomerDrawer(c.email)">${escapeHtml(c.contact_email || c.email || "")}</td>
-      <td onclick="openCustomerDrawer(c.email)">${escapeHtml(c.phone || "Not added")}</td>
-      <td onclick="openCustomerDrawer(c.email)">${escapeHtml(c.communication_preference || "Email")}</td>
-      <td onclick="openCustomerDrawer(c.email)">${escapeHtml(formatDate(c.updated_at || c.created_at))}</td>
+function quick(section, icon, title, text) {
+  return `
+    <button class="quick-card" type="button" onclick="loadSection('${section}')">
+      <span class="quick-icon">${icon}</span>
+      <span><strong>${escapeHtml(title)}</strong><span>${escapeHtml(text)}</span></span>
+    </button>
+  `;
+}
+
+function renderAdmins(admins = []) {
+  const rows = admins.map((admin) => `
+    <tr>
+      <td><strong>${escapeHtml(admin.email)}</strong><span>${escapeHtml(admin.name || "Admin user")}</span></td>
+      <td>${badge(admin.source === "default" ? "Default" : "Portal", admin.source === "default" ? "green" : "")}</td>
+      <td>${escapeHtml(admin.created_by || "system")}</td>
+      <td>${escapeHtml(formatDate(admin.updated_at || admin.created_at))}</td>
+      <td><button class="mini-button" type="button" onclick="removeAdmin('${escapeAttr(admin.email)}')">Remove</button></td>
     </tr>
   `).join("");
 
   document.getElementById("adminPanel").innerHTML = `
     <div class="admin-card">
-      <h2>CRM / Customers</h2>
-      <p>Customer profile records saved through JA Secure Access and the account profile database.</p>
-      ${table(["Customer", "Contact email", "Phone", "Preference", "Updated"], rows)}
+      <div class="section-head">
+        <div>
+          <h2>Admin Users / Access Control</h2>
+          <p>Add or remove Cloudflare Access-authenticated admin email addresses. Default environment admins remain protected.</p>
+        </div>
+      </div>
+
+      <form class="admin-form" id="adminUserForm">
+        ${input("Admin email", "new_admin_email", "email")}
+        ${input("Display name", "new_admin_name")}
+        <button class="admin-button" type="submit">Add admin</button>
+      </form>
+
+      <div id="adminUserSaved" class="admin-success" hidden></div>
+      ${table(["Admin", "Source", "Added by", "Updated", "Actions"], rows)}
     </div>
   `;
+
+  document.getElementById("adminUserForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    await api("admins", {
+      method: "POST",
+      body: JSON.stringify({ email: getValue("new_admin_email"), name: getValue("new_admin_name") })
+    });
+    loadSection("admins");
+  });
 }
 
-function renderPlans(plans) {
-  const options = plans.map((p) => `<option value="${escapeHtml(p.id)}">${escapeHtml(p.plan_name)}</option>`).join("");
+async function removeAdmin(email) {
+  const ok = window.confirm(`Remove admin access for ${email}?`);
+  if (!ok) return;
+  try {
+    await api("admins", {
+      method: "POST",
+      body: JSON.stringify({ action: "remove", email })
+    });
+    loadSection("admins");
+  } catch (error) {
+    window.alert(error.message);
+  }
+}
+
+function renderCustomers(customers = []) {
+  const rows = customers.map((c) => {
+    const name = c.display_name || c.verified_name || c.email;
+    const lifetime = Number(c.admin_lifetime || 0) === 1;
+    return `
+      <tr class="customer-row-click" onclick="openCustomerDrawer('${escapeAttr(c.email)}')">
+        <td><strong>${escapeHtml(name)}</strong><span>${escapeHtml(c.email || "")}</span></td>
+        <td>${escapeHtml(c.contact_email || c.email || "")}</td>
+        <td>${lifetime ? badge("Lifetime", "amber") : badge(c.admin_customer_status || "Standard")}</td>
+        <td>${escapeHtml(c.phone || "Not added")}</td>
+        <td>${escapeHtml(c.communication_preference || "Email")}</td>
+        <td>${escapeHtml(formatDate(c.updated_at || c.created_at))}</td>
+      </tr>
+    `;
+  }).join("");
 
   document.getElementById("adminPanel").innerHTML = `
     <div class="admin-card">
-      <h2>Plans & Prices</h2>
-      <p>Edit plan details, public price labels, active status, featured status and linked Stripe Price IDs.</p>
-
-      <label class="admin-label">Select plan
-        <select id="planSelect">${options}</select>
-      </label>
-
-      <form class="admin-form" id="planForm">
-        <input type="hidden" id="plan_id">
-
-        ${input("Plan name", "plan_name")}
-        ${input("Plan type", "plan_type")}
-        ${input("Price label", "price_label")}
-        ${input("Price pence", "price_pence", "number")}
-        ${input("Stripe Price ID", "stripe_price_id")}
-        ${input("Delivery time", "delivery_time")}
-        ${input("Revisions", "revisions")}
-        ${textarea("Description", "description")}
-        ${input("Button label", "button_label")}
-        ${input("Sort order", "sort_order", "number")}
-
-        <label class="check"><input id="is_active" type="checkbox"> Active / visible</label>
-        <label class="check"><input id="is_featured" type="checkbox"> Featured</label>
-
-        <button class="admin-button orange" type="submit">Save plan</button>
-      </form>
-
-      <div id="planSaved" class="admin-success" hidden></div>
+      <div class="section-head">
+        <div>
+          <h2>CRM / Customers</h2>
+          <p>Customer profile records from D1. Open a customer to manage Lifetime status and internal admin notes.</p>
+        </div>
+      </div>
+      <div class="admin-alert">Customer data displayed here is confidential and subject to UK GDPR. Access is logged by the platform perimeter; use it only for legitimate business purposes.</div>
+      ${table(["Customer", "Contact email", "Status", "Phone", "Preference", "Updated"], rows)}
     </div>
   `;
-
-  const select = document.getElementById("planSelect");
-  select.addEventListener("change", () => fillPlan(plans.find((p) => p.id === select.value)));
-
-  document.getElementById("planForm").addEventListener("submit", savePlan);
-  fillPlan(plans[0]);
 }
 
-function fillPlan(plan) {
+function renderPlans(plans = []) {
+  const cards = plans.map((plan) => `
+    <article class="plan-card">
+      <div class="plan-top">
+        <div>
+          <strong>${escapeHtml(plan.plan_name)}</strong>
+          <span>${escapeHtml(plan.plan_type || "Service plan")}</span>
+        </div>
+        <label class="switch" title="Toggle plan active status">
+          <input type="checkbox" ${Number(plan.is_active) === 1 ? "checked" : ""} onchange="togglePlan('${escapeAttr(plan.id)}', this.checked)">
+          <span></span>
+        </label>
+      </div>
+      <div class="plan-meta">
+        <div><span>Price</span><strong>${escapeHtml(plan.price_label || "Not set")}</strong></div>
+        <div><span>Delivery</span><strong>${escapeHtml(plan.delivery_time || "Not set")}</strong></div>
+        <div><span>Revisions</span><strong>${escapeHtml(plan.revisions || "Not set")}</strong></div>
+        <div><span>Stripe product</span><strong>${escapeHtml(plan.stripe_product_id || "Not stored")}</strong></div>
+        <div><span>Stripe price</span><strong>${escapeHtml(plan.stripe_price_id || "Not stored")}</strong></div>
+      </div>
+      <div class="section-actions">
+        ${Number(plan.is_active) === 1 ? badge("Active", "green") : badge("Inactive", "red")}
+        ${Number(plan.is_featured) === 1 ? badge("Featured", "amber") : ""}
+        <button class="mini-button" type="button" onclick="openPlanModal('${escapeAttr(plan.id)}')">Edit</button>
+      </div>
+    </article>
+  `).join("");
+
+  document.getElementById("adminPanel").innerHTML = `
+    <div class="section-head">
+      <div>
+        <h2>Manage Plans</h2>
+        <p>Configure subscription-style plan cards and stored Stripe product/price IDs.</p>
+      </div>
+      <button class="admin-button" type="button" onclick="openPlanModal()">New plan</button>
+    </div>
+    <div class="plan-grid">${cards || emptyCard("No plans yet.")}</div>
+  `;
+}
+
+async function togglePlan(id, isActive) {
+  const plan = (state.data.plans?.plans || []).find((item) => item.id === id);
   if (!plan) return;
-
-  setValue("plan_id", plan.id);
-  setValue("plan_name", plan.plan_name);
-  setValue("plan_type", plan.plan_type);
-  setValue("price_label", plan.price_label);
-  setValue("price_pence", plan.price_pence);
-  setValue("stripe_price_id", plan.stripe_price_id);
-  setValue("delivery_time", plan.delivery_time);
-  setValue("revisions", plan.revisions);
-  setValue("description", plan.description);
-  setValue("button_label", plan.button_label);
-  setValue("sort_order", plan.sort_order);
-
-  document.getElementById("is_active").checked = Number(plan.is_active) === 1;
-  document.getElementById("is_featured").checked = Number(plan.is_featured) === 1;
+  await savePlan({ ...plan, is_active: isActive, is_featured: Number(plan.is_featured) === 1 });
 }
 
-async function savePlan(event) {
-  event.preventDefault();
+function openPlanModal(id = "") {
+  const plan = (state.data.plans?.plans || []).find((item) => item.id === id) || {};
+  openModal(`
+    <div class="modal-head">
+      <div><h2>${id ? "Edit plan" : "New plan"}</h2><p>Plan settings are stored in D1 and do not alter public pricing output unless separately wired.</p></div>
+      <button class="drawer-close" type="button" onclick="closeModal()">×</button>
+    </div>
+    <form class="admin-form" id="planForm">
+      ${input("Plan ID", "plan_id")}
+      ${input("Plan name", "plan_name")}
+      ${input("Plan type", "plan_type")}
+      ${input("Price label", "price_label")}
+      ${input("Price pence", "price_pence", "number")}
+      ${input("Delivery time", "delivery_time")}
+      ${input("Revisions", "revisions")}
+      ${input("Stripe product ID", "stripe_product_id")}
+      ${input("Stripe price ID", "stripe_price_id")}
+      ${input("Button label", "button_label")}
+      ${input("Sort order", "sort_order", "number")}
+      ${textarea("Description", "description")}
+      <label class="check"><input id="is_active" type="checkbox"> Active</label>
+      <label class="check"><input id="is_featured" type="checkbox"> Featured</label>
+      <button class="admin-button" type="submit">Save plan</button>
+    </form>
+  `);
 
-  const body = {
-    id: getValue("plan_id"),
-    plan_name: getValue("plan_name"),
-    plan_type: getValue("plan_type"),
-    price_label: getValue("price_label"),
-    price_pence: Number(getValue("price_pence") || 0),
-    stripe_price_id: getValue("stripe_price_id"),
-    delivery_time: getValue("delivery_time"),
-    revisions: getValue("revisions"),
-    description: getValue("description"),
-    button_label: getValue("button_label"),
-    sort_order: Number(getValue("sort_order") || 100),
-    is_active: document.getElementById("is_active").checked,
-    is_featured: document.getElementById("is_featured").checked
-  };
-
-  const data = await api("plans", {
-    method: "POST",
-    body: JSON.stringify(body)
+  const derivedId = plan.id || `plan_${Date.now()}`;
+  setValue("plan_id", derivedId);
+  document.getElementById("plan_id").disabled = Boolean(id);
+  ["plan_name", "plan_type", "price_label", "price_pence", "delivery_time", "revisions", "stripe_product_id", "stripe_price_id", "button_label", "sort_order", "description"].forEach((key) => {
+    setValue(key, plan[key] || "");
   });
+  document.getElementById("is_active").checked = Number(plan.is_active ?? 1) === 1;
+  document.getElementById("is_featured").checked = Number(plan.is_featured || 0) === 1;
 
-  document.getElementById("planSaved").hidden = false;
-  document.getElementById("planSaved").textContent = "Plan saved.";
+  document.getElementById("planForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    await savePlan({
+      id: getValue("plan_id") || derivedId,
+      plan_name: getValue("plan_name"),
+      plan_type: getValue("plan_type"),
+      price_label: getValue("price_label"),
+      price_pence: Number(getValue("price_pence") || 0),
+      delivery_time: getValue("delivery_time"),
+      revisions: getValue("revisions"),
+      stripe_product_id: getValue("stripe_product_id"),
+      stripe_price_id: getValue("stripe_price_id"),
+      button_label: getValue("button_label"),
+      sort_order: Number(getValue("sort_order") || 100),
+      description: getValue("description"),
+      is_active: document.getElementById("is_active").checked,
+      is_featured: document.getElementById("is_featured").checked
+    });
+    closeModal();
+  });
+}
+
+async function savePlan(plan) {
+  const data = await api("plans", { method: "POST", body: JSON.stringify(plan) });
+  state.data.plans = data;
   renderPlans(data.plans);
 }
 
-function renderStripe(stripe) {
-  if (!stripe || !stripe.configured) {
-    document.getElementById("adminPanel").innerHTML = `
-      <div class="admin-alert">${escapeHtml(stripe?.message || "Stripe is not configured.")}</div>
-    `;
-    return;
-  }
-
-  const prices = (stripe.prices || []).map((price) => `
-    <tr class="customer-row-click">
-      <td onclick="openCustomerDrawer(c.email)">
-        <strong>${escapeHtml(price.product?.name || price.product || "Product")}</strong>
-        <span>${escapeHtml(price.id)}</span>
-      </td>
-      <td onclick="openCustomerDrawer(c.email)">${escapeHtml((price.currency || "").toUpperCase())}</td>
-      <td onclick="openCustomerDrawer(c.email)">${escapeHtml(formatMoney(price.unit_amount, price.currency))}</td>
-      <td onclick="openCustomerDrawer(c.email)">${price.active ? "Active" : "Inactive"}</td>
-      <td onclick="openCustomerDrawer(c.email)">${escapeHtml(price.type || "")}</td>
+function renderStripe(stripe = {}) {
+  const productRows = (stripe.products || []).map((product) => `
+    <tr>
+      <td><strong>${escapeHtml(product.name)}</strong><span>${escapeHtml(product.id)}</span></td>
+      <td>${escapeHtml(product.price_id)}</td>
+      <td>${escapeHtml(formatMoney(product.amount, product.currency))}</td>
+      <td>${escapeHtml(product.interval || "")}</td>
+      <td>${product.active ? badge("Active", "green") : badge("Inactive", "red")}</td>
     </tr>
   `).join("");
 
   document.getElementById("adminPanel").innerHTML = `
     <div class="admin-card">
-      <h2>Stripe API Controls</h2>
-      <p>Read-only Stripe checks for now. Refunds, price creation and destructive actions should be added later with confirmation.</p>
+      <div class="section-head">
+        <div>
+          <h2>Stripe API Controls</h2>
+          <p>Store Stripe keys securely in D1-compatible settings. Secret values are masked after saving.</p>
+        </div>
+        <div class="section-actions">
+          ${badge(stripe.mode || "Unknown", stripe.mode === "Live" ? "green" : "amber")}
+          <button class="admin-button secondary" type="button" onclick="refreshStripe()">Refresh status</button>
+        </div>
+      </div>
 
       <div class="admin-grid">
-        ${stat("Stripe account", stripe.account?.id || "Connected")}
+        ${stat("Configured", stripe.configured ? "Yes" : "No")}
         ${stat("Charges", stripe.account?.charges_enabled ? "Enabled" : "Check")}
         ${stat("Payouts", stripe.account?.payouts_enabled ? "Enabled" : "Check")}
       </div>
 
-      ${table(["Product", "Currency", "Amount", "Status", "Type"], prices)}
+      <form class="admin-form" id="stripeForm">
+        ${input("Publishable key", "stripe_publishable_key")}
+        ${input("Secret key", "stripe_secret_key", "password")}
+        ${input("Webhook signing secret", "stripe_webhook_secret", "password")}
+        <div class="admin-alert">Leave secret fields blank to keep existing values. Do not paste live keys unless you intend the admin platform to use them.</div>
+        <button class="admin-button" type="submit">Save Stripe settings</button>
+      </form>
+
+      <div class="admin-card" style="margin-top:1rem;">
+        <h2>Connection Status</h2>
+        <p>${escapeHtml(stripe.message || "Stripe has not been checked yet.")}</p>
+        <p>Publishable key: ${escapeHtml(stripe.publishable_key_masked || "Missing")} · Secret key: ${escapeHtml(stripe.secret_key_masked || "Missing")} · Webhook: ${escapeHtml(stripe.webhook_secret_masked || "Missing")}</p>
+      </div>
+
+      ${table(["Product", "Price ID", "Amount", "Interval", "Status"], productRows)}
     </div>
   `;
+
+  setValue("stripe_publishable_key", stripe.publishable_key_masked || "");
+  document.getElementById("stripeForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const publishable = getValue("stripe_publishable_key");
+    const body = {
+      publishable_key: publishable.includes("••") ? "" : publishable,
+      secret_key: getValue("stripe_secret_key"),
+      webhook_signing_secret: getValue("stripe_webhook_secret"),
+      test_connection: true
+    };
+    const data = await api("stripe", { method: "POST", body: JSON.stringify(body) });
+    state.data.stripe = data;
+    renderStripe(data.stripe);
+  });
 }
 
-function renderBranding(branding) {
+async function refreshStripe() {
+  const response = await fetch("/admin/api?section=stripe&test=1", { credentials: "include", cache: "no-store" });
+  const data = await response.json();
+  if (!response.ok) window.alert(data.error || "Stripe check failed.");
+  else renderStripe(data.stripe);
+}
+
+function renderBranding(branding = {}) {
   document.getElementById("adminPanel").innerHTML = `
     <div class="admin-card">
-      <h2>Company Branding Info</h2>
-      <p>Manage core business/service details stored in D1.</p>
-
+      <div class="section-head">
+        <div><h2>Company Branding</h2><p>Edit business and service information stored in D1. Public branding is not changed by this screen unless wired separately.</p></div>
+      </div>
       <form class="admin-form" id="brandingForm">
         ${input("Business name", "business_name")}
         ${input("Trading name", "trading_name")}
         ${input("Service name", "service_name")}
         ${input("Support email", "support_email", "email")}
+        ${input("Contact email", "contact_email", "email")}
         ${input("Phone", "phone")}
         ${input("Website", "website")}
+        ${textarea("Registered notice", "registered_notice")}
         ${textarea("Footer notice", "footer_notice")}
-
-        <button class="admin-button orange" type="submit">Save branding</button>
+        <button class="admin-button" type="submit">Save branding</button>
       </form>
-
       <div id="brandingSaved" class="admin-success" hidden></div>
     </div>
   `;
 
-  ["business_name", "trading_name", "service_name", "support_email", "phone", "website", "footer_notice"].forEach((key) => {
-    setValue(key, branding?.[key] || "");
+  ["business_name", "trading_name", "service_name", "support_email", "contact_email", "phone", "website", "registered_notice", "footer_notice"].forEach((key) => {
+    setValue(key, branding[key] || "");
   });
 
   document.getElementById("brandingForm").addEventListener("submit", async (event) => {
     event.preventDefault();
-
     const body = {};
-    ["business_name", "trading_name", "service_name", "support_email", "phone", "website", "footer_notice"].forEach((key) => {
+    ["business_name", "trading_name", "service_name", "support_email", "contact_email", "phone", "website", "registered_notice", "footer_notice"].forEach((key) => {
       body[key] = getValue(key);
     });
-
-    await api("branding", {
-      method: "POST",
-      body: JSON.stringify(body)
-    });
-
-    document.getElementById("brandingSaved").hidden = false;
-    document.getElementById("brandingSaved").textContent = "Branding saved.";
+    await api("branding", { method: "POST", body: JSON.stringify(body) });
+    setSaved("brandingSaved", "Branding saved.");
   });
 }
 
-function renderPolicies(policies) {
-  const options = policies.map((p) => `<option value="${escapeHtml(p.slug)}">${escapeHtml(p.title)}</option>`).join("");
+function renderPolicies(policies = []) {
+  if (!state.selectedPolicy || !policies.some((policy) => policy.slug === state.selectedPolicy)) {
+    state.selectedPolicy = policies[0]?.slug || null;
+  }
+  const selected = policies.find((policy) => policy.slug === state.selectedPolicy) || policies[0] || {};
+
+  const cards = policies.map((policy) => `
+    <button class="policy-card" type="button" onclick="selectPolicy('${escapeAttr(policy.slug)}')">
+      <div class="policy-top">
+        <div>
+          <strong>${escapeHtml(policy.title)}</strong>
+          <span>v${escapeHtml(policy.version || "1.0")} · Effective ${escapeHtml(policy.effective_date || "Not set")}</span>
+        </div>
+        ${badge(policy.status === "published" || Number(policy.is_published) === 1 ? "Published" : "Draft", policy.status === "published" || Number(policy.is_published) === 1 ? "green" : "")}
+      </div>
+    </button>
+  `).join("");
+
+  const tabs = policies.map((policy) => `
+    <button class="tab-button ${policy.slug === selected.slug ? "active" : ""}" type="button" onclick="selectPolicy('${escapeAttr(policy.slug)}')">${escapeHtml(shortPolicyName(policy.title))}</button>
+  `).join("");
 
   document.getElementById("adminPanel").innerHTML = `
+    <div class="section-head">
+      <div><h2>Legal Policies</h2><p>Manage policy content, versioning and draft/published status in D1.</p></div>
+    </div>
+    <div class="policy-grid">${cards}</div>
+    <div class="tabs">${tabs}</div>
     <div class="admin-card">
-      <h2>Publishable Policies</h2>
-      <p>Edit policy content as HTML or plain text. The next wiring step is rendering these onto public policy pages.</p>
-
-      <label class="admin-label">Select policy
-        <select id="policySelect">${options}</select>
-      </label>
-
+      <div class="section-head">
+        <div><h2>${escapeHtml(selected.title || "Policy")}</h2><p>Edit the content, version and publication status.</p></div>
+      </div>
       <form class="admin-form" id="policyForm">
         <input type="hidden" id="policy_slug">
-
-        ${input("Title", "policy_title")}
-
+        ${input("Policy title", "policy_title")}
+        ${input("Version", "policy_version")}
+        ${input("Effective date", "policy_effective_date", "date")}
+        <label class="admin-label">Status
+          <select id="policy_status">
+            <option value="draft">Draft</option>
+            <option value="published">Published</option>
+          </select>
+        </label>
         <label class="admin-label">Content type
           <select id="policy_content_type">
+            <option value="markdown">Markdown</option>
             <option value="html">HTML</option>
             <option value="text">Plain text</option>
           </select>
         </label>
-
-        ${textarea("Content", "policy_content")}
-
-        <label class="check"><input id="policy_is_published" type="checkbox"> Published</label>
-
-        <button class="admin-button orange" type="submit">Save policy</button>
+        ${textarea("Policy content", "policy_content")}
+        <button class="admin-button" type="submit">Save policy</button>
       </form>
-
       <div id="policySaved" class="admin-success" hidden></div>
     </div>
   `;
 
-  const select = document.getElementById("policySelect");
-  select.addEventListener("change", () => fillPolicy(policies.find((p) => p.slug === select.value)));
+  setValue("policy_slug", selected.slug || "");
+  setValue("policy_title", selected.title || "");
+  setValue("policy_version", selected.version || "1.0");
+  setValue("policy_effective_date", selected.effective_date || "");
+  setValue("policy_status", selected.status || (Number(selected.is_published) === 1 ? "published" : "draft"));
+  setValue("policy_content_type", selected.content_type || "markdown");
+  setValue("policy_content", selected.content || "");
 
   document.getElementById("policyForm").addEventListener("submit", savePolicy);
-  fillPolicy(policies[0]);
 }
 
-function fillPolicy(policy) {
-  if (!policy) return;
+function shortPolicyName(title) {
+  return String(title || "Policy").replace(" Policy", "").replace("Terms of Service", "Terms");
+}
 
-  setValue("policy_slug", policy.slug);
-  setValue("policy_title", policy.title);
-  setValue("policy_content_type", policy.content_type || "html");
-  setValue("policy_content", policy.content);
-
-  document.getElementById("policy_is_published").checked = Number(policy.is_published) === 1;
+function selectPolicy(slug) {
+  state.selectedPolicy = slug;
+  renderPolicies(state.data.policies?.policies || []);
 }
 
 async function savePolicy(event) {
   event.preventDefault();
-
   const body = {
     slug: getValue("policy_slug"),
     title: getValue("policy_title"),
+    version: getValue("policy_version"),
+    effective_date: getValue("policy_effective_date"),
+    status: getValue("policy_status"),
     content_type: getValue("policy_content_type"),
     content: getValue("policy_content"),
-    is_published: document.getElementById("policy_is_published").checked
+    is_published: getValue("policy_status") === "published"
   };
-
-  const data = await api("policies", {
-    method: "POST",
-    body: JSON.stringify(body)
-  });
-
-  document.getElementById("policySaved").hidden = false;
-  document.getElementById("policySaved").textContent = "Policy saved.";
+  const data = await api("policies", { method: "POST", body: JSON.stringify(body) });
+  state.data.policies = data;
   renderPolicies(data.policies);
 }
 
-function renderSupport(items) {
-  const rows = items.map((t) => `
-    <tr class="customer-row-click">
-      <td onclick="openCustomerDrawer(c.email)">
-        <strong>${escapeHtml(t.subject)}</strong>
-        <span>${escapeHtml(t.customer_email)}</span>
+function renderSupport(items = []) {
+  renderRecordSection("Support", "Customer support requests and admin-created support records.", items, "support", [
+    ["Customer email", "support_customer_email", "email"],
+    ["Subject", "support_subject", "text"],
+    ["Status", "support_status", "text"],
+    ["Priority", "support_priority", "text"],
+    ["Notes", "support_notes", "textarea"]
+  ]);
+  setValue("support_status", "Open");
+  setValue("support_priority", "Normal");
+}
+
+function renderSystem(items = []) {
+  renderRecordSection("System / Issues", "Track site issues, deployment notes, bugs and operational events.", items, "system", [
+    ["Title", "system_title", "text"],
+    ["Type", "system_type", "text"],
+    ["Severity", "system_severity", "text"],
+    ["Status", "system_status", "text"],
+    ["Message", "system_message", "textarea"]
+  ]);
+  setValue("system_type", "General");
+  setValue("system_severity", "Info");
+  setValue("system_status", "Open");
+}
+
+function renderRecordSection(title, description, items, section, fields) {
+  const rows = items.map((item) => `
+    <tr>
+      <td><strong>${escapeHtml(item.subject || item.title)}</strong><span>${escapeHtml(item.customer_email || item.message || "")}</span></td>
+      <td>
+        <select onchange="updateRecordStatus('${escapeAttr(section)}', '${escapeAttr(item.id)}', this.value)">
+          ${["Open", "In Progress", "Resolved", "Closed"].map((status) => `<option value="${status}" ${status === item.status ? "selected" : ""}>${status}</option>`).join("")}
+        </select>
       </td>
-      <td onclick="openCustomerDrawer(c.email)">${escapeHtml(t.status)}</td>
-      <td onclick="openCustomerDrawer(c.email)">${escapeHtml(t.priority)}</td>
-      <td onclick="openCustomerDrawer(c.email)">${escapeHtml(formatDate(t.updated_at || t.created_at))}</td>
+      <td>${escapeHtml(item.priority || item.severity || "")}</td>
+      <td>${escapeHtml(formatDate(item.updated_at || item.created_at))}</td>
     </tr>
   `).join("");
 
   document.getElementById("adminPanel").innerHTML = `
     <div class="admin-card">
-      <h2>Support</h2>
-      <p>Create and track basic support records. Customer messaging can be added later.</p>
-
-      <form class="admin-form" id="supportForm">
-        ${input("Customer email", "support_customer_email", "email")}
-        ${input("Subject", "support_subject")}
-        ${input("Status", "support_status")}
-        ${input("Priority", "support_priority")}
-        ${textarea("Notes", "support_notes")}
-
-        <button class="admin-button orange" type="submit">Save support ticket</button>
+      <div class="section-head"><div><h2>${escapeHtml(title)}</h2><p>${escapeHtml(description)}</p></div></div>
+      <form class="admin-form" id="${section}Form">
+        ${fields.map(([label, id, type]) => type === "textarea" ? textarea(label, id) : input(label, id, type)).join("")}
+        <button class="admin-button" type="submit">Save ${section === "support" ? "support ticket" : "system issue"}</button>
       </form>
-
-      ${table(["Ticket", "Status", "Priority", "Updated"], rows)}
+      ${table([section === "support" ? "Ticket" : "Issue", "Status", "Priority", "Updated"], rows)}
     </div>
   `;
 
-  document.getElementById("support_status").value = "Open";
-  document.getElementById("support_priority").value = "Normal";
-
-  document.getElementById("supportForm").addEventListener("submit", async (event) => {
+  document.getElementById(`${section}Form`).addEventListener("submit", async (event) => {
     event.preventDefault();
-
-    await api("support", {
-      method: "POST",
-      body: JSON.stringify({
-        customer_email: getValue("support_customer_email"),
-        subject: getValue("support_subject"),
-        status: getValue("support_status"),
-        priority: getValue("support_priority"),
-        notes: getValue("support_notes")
-      })
-    });
-
-    loadSection("support");
+    const body = section === "support"
+      ? {
+          customer_email: getValue("support_customer_email"),
+          subject: getValue("support_subject"),
+          status: getValue("support_status"),
+          priority: getValue("support_priority"),
+          notes: getValue("support_notes")
+        }
+      : {
+          title: getValue("system_title"),
+          type: getValue("system_type"),
+          severity: getValue("system_severity"),
+          status: getValue("system_status"),
+          message: getValue("system_message")
+        };
+    await api(section, { method: "POST", body: JSON.stringify(body) });
+    loadSection(section);
   });
 }
 
-function renderSystem(items) {
-  const rows = items.map((e) => `
-    <tr class="customer-row-click">
-      <td onclick="openCustomerDrawer(c.email)">
-        <strong>${escapeHtml(e.title)}</strong>
-        <span>${escapeHtml(e.message)}</span>
-      </td>
-      <td onclick="openCustomerDrawer(c.email)">${escapeHtml(e.type)}</td>
-      <td onclick="openCustomerDrawer(c.email)">${escapeHtml(e.severity)}</td>
-      <td onclick="openCustomerDrawer(c.email)">${escapeHtml(e.status)}</td>
-      <td onclick="openCustomerDrawer(c.email)">${escapeHtml(formatDate(e.updated_at || e.created_at))}</td>
-    </tr>
-  `).join("");
+async function updateRecordStatus(section, id, status) {
+  const collection = state.data[section]?.[section] || [];
+  const item = collection.find((record) => record.id === id);
+  if (!item) return;
 
-  document.getElementById("adminPanel").innerHTML = `
-    <div class="admin-card">
-      <h2>System / System Issues</h2>
-      <p>Track site issues, deployment notes, bugs, admin notes and operational events.</p>
+  const body = section === "support"
+    ? { ...item, status }
+    : { ...item, status };
 
-      <form class="admin-form" id="systemForm">
-        ${input("Title", "system_title")}
-        ${input("Type", "system_type")}
-        ${input("Severity", "system_severity")}
-        ${input("Status", "system_status")}
-        ${textarea("Message", "system_message")}
+  await api(section, { method: "POST", body: JSON.stringify(body) });
+  loadSection(section);
+}
 
-        <button class="admin-button orange" type="submit">Save system event</button>
-      </form>
-
-      ${table(["Issue", "Type", "Severity", "Status", "Updated"], rows)}
-    </div>
-  `;
-
-  document.getElementById("system_type").value = "General";
-  document.getElementById("system_severity").value = "Info";
-  document.getElementById("system_status").value = "Open";
-
-  document.getElementById("systemForm").addEventListener("submit", async (event) => {
-    event.preventDefault();
-
-    await api("system", {
-      method: "POST",
-      body: JSON.stringify({
-        title: getValue("system_title"),
-        type: getValue("system_type"),
-        severity: getValue("system_severity"),
-        status: getValue("system_status"),
-        message: getValue("system_message")
-      })
-    });
-
-    loadSection("system");
+function renderComingSoon(settings = {}) {
+  renderStatusForm("comingsoon", settings, {
+    title: "Coming Soon Page",
+    description: "Switch the public website into a pre-launch page while keeping the admin portal available.",
+    enabledKey: "comingsoon_enabled",
+    titleKey: "comingsoon_title",
+    messageKey: "comingsoon_message",
+    etaKey: "comingsoon_eta",
+    enabledLabel: "Coming soon page enabled",
+    titleLabel: "Public coming soon title",
+    messageLabel: "Public coming soon message",
+    etaLabel: "Estimated launch time"
   });
 }
 
+function renderMaintenance(settings = {}) {
+  renderStatusForm("maintenance", settings, {
+    title: "Maintenance Mode",
+    description: "Bring the public website down for maintenance while keeping the admin portal available.",
+    enabledKey: "maintenance_enabled",
+    titleKey: "maintenance_title",
+    messageKey: "maintenance_message",
+    etaKey: "maintenance_eta",
+    enabledLabel: "Maintenance mode enabled",
+    titleLabel: "Public maintenance title",
+    messageLabel: "Public maintenance message",
+    etaLabel: "Estimated return time"
+  });
+}
 
-
-function renderComingSoon(settings) {
-  const enabled = settings && settings.comingsoon_enabled === "true";
-
+function renderStatusForm(section, settings, labels) {
   document.getElementById("adminPanel").innerHTML = `
     <div class="admin-card">
-      <h2>Coming Soon Page</h2>
-      <p>Switch the public website into a polished pre-launch page while keeping the admin portal available.</p>
-
-      <form class="admin-form" id="comingSoonForm">
-        <label class="check">
-          <input id="comingsoon_enabled" type="checkbox">
-          Coming soon page enabled
-        </label>
-
-        ${input("Public coming soon title", "comingsoon_title")}
-        ${textarea("Public coming soon message", "comingsoon_message")}
-        ${input("Estimated launch time", "comingsoon_eta")}
-
-        <button class="admin-button orange" type="submit">Save coming soon settings</button>
-      </form>
-
-      <div id="comingSoonSaved" class="admin-success" hidden></div>
-
-      <div class="admin-alert" style="margin-top: 1rem;">
-        Maintenance Mode takes priority. If Maintenance Mode is also enabled, visitors will see the maintenance page instead.
+      <div class="section-head">
+        <div><h2>${escapeHtml(labels.title)}</h2><p>${escapeHtml(labels.description)}</p></div>
+        ${badge(settings[labels.enabledKey] === "true" ? "On" : "Off", settings[labels.enabledKey] === "true" ? "green" : "")}
       </div>
-    </div>
-  `;
-
-  document.getElementById("comingsoon_enabled").checked = enabled;
-  setValue("comingsoon_title", settings?.comingsoon_title || "JA Experiences & Discovery is coming soon.");
-  setValue("comingsoon_message", settings?.comingsoon_message || "Our new experiences and discovery service is being prepared. Please check back soon.");
-  setValue("comingsoon_eta", settings?.comingsoon_eta || "");
-
-  document.getElementById("comingSoonForm").addEventListener("submit", async (event) => {
-    event.preventDefault();
-
-    const data = await api("comingsoon", {
-      method: "POST",
-      body: JSON.stringify({
-        comingsoon_enabled: document.getElementById("comingsoon_enabled").checked,
-        comingsoon_title: getValue("comingsoon_title"),
-        comingsoon_message: getValue("comingsoon_message"),
-        comingsoon_eta: getValue("comingsoon_eta")
-      })
-    });
-
-    document.getElementById("comingSoonSaved").hidden = false;
-    document.getElementById("comingSoonSaved").textContent = data.comingsoon.comingsoon_enabled === "true"
-      ? "Coming soon page is ON. Public visitors will now see the pre-launch page."
-      : "Coming soon page is OFF. The normal public website is live again.";
-
-    renderComingSoon(data.comingsoon);
-  });
-}
-function renderMaintenance(settings) {
-  const enabled = settings && settings.maintenance_enabled === "true";
-
-  document.getElementById("adminPanel").innerHTML = `
-    <div class="admin-card">
-      <h2>Maintenance Mode</h2>
-      <p>Bring the public website down for maintenance while keeping the admin portal available.</p>
-
-      <form class="admin-form" id="maintenanceForm">
+      <form class="admin-form" id="${section}Form">
         <label class="check">
-          <input id="maintenance_enabled" type="checkbox">
-          Maintenance mode enabled
+          <span class="switch"><input id="${labels.enabledKey}" type="checkbox"><span></span></span>
+          ${escapeHtml(labels.enabledLabel)}
         </label>
-
-        ${input("Public maintenance title", "maintenance_title")}
-        ${textarea("Public maintenance message", "maintenance_message")}
-        ${input("Estimated return time", "maintenance_eta")}
-
-        <button class="admin-button orange" type="submit">Save maintenance settings</button>
+        ${input(labels.titleLabel, labels.titleKey)}
+        ${textarea(labels.messageLabel, labels.messageKey)}
+        ${input(labels.etaLabel, labels.etaKey)}
+        <button class="admin-button" type="submit">Save ${escapeHtml(labels.title.toLowerCase())} settings</button>
       </form>
-
-      <div id="maintenanceSaved" class="admin-success" hidden></div>
-
-      <div class="admin-alert" style="margin-top: 1rem;">
-        When enabled, public visitors will see the maintenance page. The admin portal, Cloudflare Access and assets remain available.
-      </div>
+      <div id="${section}Saved" class="admin-success" hidden></div>
+      <div class="admin-alert" style="margin-top:1rem;">Maintenance Mode takes priority over Coming Soon Mode. The admin portal and Cloudflare Access routes remain available.</div>
     </div>
   `;
 
-  document.getElementById("maintenance_enabled").checked = enabled;
-  setValue("maintenance_title", settings?.maintenance_title || "We’ll be back shortly.");
-  setValue("maintenance_message", settings?.maintenance_message || "JA Experiences & Discovery is temporarily unavailable while essential maintenance is carried out.");
-  setValue("maintenance_eta", settings?.maintenance_eta || "");
+  document.getElementById(labels.enabledKey).checked = settings[labels.enabledKey] === "true";
+  setValue(labels.titleKey, settings[labels.titleKey] || "");
+  setValue(labels.messageKey, settings[labels.messageKey] || "");
+  setValue(labels.etaKey, settings[labels.etaKey] || "");
 
-  document.getElementById("maintenanceForm").addEventListener("submit", async (event) => {
+  document.getElementById(`${section}Form`).addEventListener("submit", async (event) => {
     event.preventDefault();
-
-    const data = await api("maintenance", {
-      method: "POST",
-      body: JSON.stringify({
-        maintenance_enabled: document.getElementById("maintenance_enabled").checked,
-        maintenance_title: getValue("maintenance_title"),
-        maintenance_message: getValue("maintenance_message"),
-        maintenance_eta: getValue("maintenance_eta")
-      })
-    });
-
-    document.getElementById("maintenanceSaved").hidden = false;
-    document.getElementById("maintenanceSaved").textContent = data.maintenance.maintenance_enabled === "true"
-      ? "Maintenance mode is ON. The public website is now showing the maintenance page."
-      : "Maintenance mode is OFF. The public website is live again.";
-
-    renderMaintenance(data.maintenance);
+    const body = {
+      [labels.enabledKey]: document.getElementById(labels.enabledKey).checked,
+      [labels.titleKey]: getValue(labels.titleKey),
+      [labels.messageKey]: getValue(labels.messageKey),
+      [labels.etaKey]: getValue(labels.etaKey)
+    };
+    const data = await api(section, { method: "POST", body: JSON.stringify(body) });
+    renderSection(section, data);
   });
 }
+
+async function openCustomerDrawer(email) {
+  closeCustomerDrawer();
+  const drawer = document.createElement("div");
+  drawer.className = "customer-drawer-backdrop";
+  drawer.id = "customerDrawer";
+  drawer.innerHTML = `
+    <aside class="customer-drawer">
+      <div class="drawer-head">
+        <div><h2>Customer profile</h2><p>Loading customer record...</p></div>
+        <button class="drawer-close" type="button" onclick="closeCustomerDrawer()">×</button>
+      </div>
+      <div class="drawer-body"><div class="admin-loading">Loading customer...</div></div>
+    </aside>
+  `;
+  document.body.appendChild(drawer);
+
+  try {
+    const response = await fetch(`/admin/customer?email=${encodeURIComponent(email)}`, {
+      credentials: "include",
+      cache: "no-store",
+      headers: { "Accept": "application/json" }
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Unable to load customer.");
+    renderCustomerDrawer(data.customer);
+  } catch (error) {
+    drawer.querySelector(".drawer-body").innerHTML = `<div class="admin-alert">${escapeHtml(error.message)}</div>`;
+  }
+}
+
+function closeCustomerDrawer() {
+  document.getElementById("customerDrawer")?.remove();
+}
+
+function renderCustomerDrawer(customer) {
+  const drawer = document.getElementById("customerDrawer");
+  if (!drawer) return;
+
+  const displayName = customer.display_name || customer.verified_name || customer.email;
+  const isLifetime = Number(customer.admin_lifetime || 0) === 1;
+
+  drawer.querySelector(".drawer-head p").textContent = customer.email || "";
+  drawer.querySelector(".drawer-body").innerHTML = `
+    <div class="customer-profile-head">
+      <div class="customer-avatar">${escapeHtml((displayName || "C").slice(0, 1).toUpperCase())}</div>
+      <div><strong>${escapeHtml(displayName)}</strong><span>${escapeHtml(customer.email || "")}</span></div>
+      <span class="customer-status ${isLifetime ? "lifetime" : ""}">${isLifetime ? "Lifetime" : "Standard"}</span>
+    </div>
+    <div class="drawer-grid">
+      <div class="drawer-field"><span>Contact email</span><strong>${escapeHtml(customer.contact_email || customer.email || "Not added")}</strong></div>
+      <div class="drawer-field"><span>Phone</span><strong>${escapeHtml(customer.phone || "Not added")}</strong></div>
+      <div class="drawer-field"><span>Communication</span><strong>${escapeHtml(customer.communication_preference || "Email")}</strong></div>
+      <div class="drawer-field"><span>Updated</span><strong>${escapeHtml(formatDate(customer.updated_at || customer.created_at))}</strong></div>
+    </div>
+    <form class="admin-form single" id="customerAdminForm">
+      <label class="check"><input id="customer_lifetime" type="checkbox" ${isLifetime ? "checked" : ""}> Mark this customer as Lifetime</label>
+      ${textarea("Internal admin notes", "customer_admin_notes")}
+      <button class="admin-button" type="submit">Save customer changes</button>
+    </form>
+    <div id="customerSaved" class="admin-success" hidden></div>
+  `;
+
+  setValue("customer_admin_notes", customer.admin_notes || "");
+  document.getElementById("customerAdminForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const response = await fetch(`/admin/customer?email=${encodeURIComponent(customer.email)}`, {
+      method: "POST",
+      credentials: "include",
+      cache: "no-store",
+      headers: { "Accept": "application/json", "Content-Type": "application/json" },
+      body: JSON.stringify({
+        admin_lifetime: document.getElementById("customer_lifetime").checked,
+        admin_notes: getValue("customer_admin_notes")
+      })
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      setSaved("customerSaved", data.error || "Unable to save customer.", true);
+      return;
+    }
+    renderCustomerDrawer(data.customer);
+    if (state.currentSection === "customers") loadSection("customers");
+  });
+}
+
+function openAccountModal() {
+  const admin = state.data[state.currentSection]?.admin || {};
+  openModal(`
+    <div class="modal-head">
+      <div><h2>Account settings</h2><p>Your admin identity is provided by Cloudflare Access and Microsoft Entra-compatible sign-in.</p></div>
+      <button class="drawer-close" type="button" onclick="closeModal()">×</button>
+    </div>
+    <div class="drawer-grid">
+      <div class="drawer-field"><span>Name</span><strong>${escapeHtml(admin.name || "JA admin")}</strong></div>
+      <div class="drawer-field"><span>Email</span><strong>${escapeHtml(admin.email || "")}</strong></div>
+      <div class="drawer-field"><span>Session</span><strong>Cloudflare Access</strong></div>
+      <div class="drawer-field"><span>Role</span><strong>Admin</strong></div>
+    </div>
+    <a class="admin-button" href="/cdn-cgi/access/logout" style="display:inline-flex;align-items:center;text-decoration:none;">Sign out</a>
+  `);
+}
+
+function openModal(content) {
+  closeModal();
+  const backdrop = document.createElement("div");
+  backdrop.className = "modal-backdrop";
+  backdrop.id = "adminModal";
+  backdrop.innerHTML = `<div class="modal">${content}</div>`;
+  backdrop.addEventListener("click", (event) => {
+    if (event.target === backdrop) closeModal();
+  });
+  document.body.appendChild(backdrop);
+}
+
+function closeModal() {
+  document.getElementById("adminModal")?.remove();
+}
+
 function stat(label, value) {
   return `<article class="admin-stat"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></article>`;
 }
@@ -598,13 +862,27 @@ function table(headers, rows) {
   return `
     <div class="table-wrap">
       <table>
-        <thead>
-          <tr class="customer-row-click">${headers.map((h) => `<th>${escapeHtml(h)}</th>`).join("")}</tr>
-        </thead>
-        <tbody>${rows || `<tr class="customer-row-click"><td colspan="${headers.length}">No records yet.</td></tr>`}</tbody>
+        <thead><tr>${headers.map((h) => `<th>${escapeHtml(h)}</th>`).join("")}</tr></thead>
+        <tbody>${rows || `<tr><td colspan="${headers.length}">No records yet.</td></tr>`}</tbody>
       </table>
     </div>
   `;
+}
+
+function badge(label, colour = "") {
+  return `<span class="badge ${escapeHtml(colour)}">${escapeHtml(label)}</span>`;
+}
+
+function emptyCard(text) {
+  return `<div class="list-card">${escapeHtml(text)}</div>`;
+}
+
+function setSaved(id, message, isError = false) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.hidden = false;
+  el.className = isError ? "admin-alert" : "admin-success";
+  el.textContent = message;
 }
 
 function setText(id, value) {
@@ -631,174 +909,21 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
+function escapeAttr(value) {
+  return escapeHtml(value).replaceAll("`", "&#096;");
+}
+
 function formatDate(value) {
   if (!value) return "Not available";
-
   const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return date.toLocaleString("en-GB", {
-    dateStyle: "medium",
-    timeStyle: "short"
-  });
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" });
 }
 
 function formatMoney(amount, currency) {
-  if (amount === null || amount === undefined) return "";
-
+  if (amount === null || amount === undefined || amount === "") return "";
   return new Intl.NumberFormat("en-GB", {
     style: "currency",
     currency: (currency || "gbp").toUpperCase()
   }).format(Number(amount) / 100);
-}
-
-
-
-
-async function openCustomerDrawer(email) {
-  closeCustomerDrawer();
-
-  const drawer = document.createElement("div");
-  drawer.className = "customer-drawer-backdrop";
-  drawer.id = "customerDrawer";
-  drawer.innerHTML = `
-    <aside class="customer-drawer">
-      <div class="drawer-head">
-        <div>
-          <h2>Customer profile</h2>
-          <p>Loading customer record...</p>
-        </div>
-        <button class="drawer-close" type="button" onclick="closeCustomerDrawer()">×</button>
-      </div>
-
-      <div class="drawer-body">
-        <div class="admin-loading">Loading customer...</div>
-      </div>
-    </aside>
-  `;
-
-  document.body.appendChild(drawer);
-
-  try {
-    const response = await fetch(`/admin/customer?email=${encodeURIComponent(email)}`, {
-      credentials: "include",
-      cache: "no-store",
-      headers: { "Accept": "application/json" }
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) throw new Error(data.error || "Unable to load customer.");
-
-    renderCustomerDrawer(data.customer);
-  } catch (error) {
-    drawer.querySelector(".drawer-body").innerHTML = `<div class="admin-alert">${escapeHtml(error.message)}</div>`;
-  }
-}
-
-function closeCustomerDrawer() {
-  const drawer = document.getElementById("customerDrawer");
-  if (drawer) drawer.remove();
-}
-
-function renderCustomerDrawer(customer) {
-  const drawer = document.getElementById("customerDrawer");
-  if (!drawer) return;
-
-  const displayName = customer.display_name || customer.verified_name || customer.email;
-  const isLifetime = Number(customer.admin_lifetime || 0) === 1;
-
-  drawer.querySelector(".drawer-head p").textContent = customer.email || "";
-  drawer.querySelector(".drawer-body").innerHTML = `
-    <div class="customer-profile-head">
-      <div class="customer-avatar">${escapeHtml((displayName || "C").slice(0, 1).toUpperCase())}</div>
-      <div>
-        <strong>${escapeHtml(displayName)}</strong>
-        <span>${escapeHtml(customer.email || "")}</span>
-      </div>
-      <span class="customer-status ${isLifetime ? "lifetime" : ""}">
-        ${isLifetime ? "∞ Lifetime" : "Standard"}
-      </span>
-    </div>
-
-    <div class="drawer-grid">
-      <div class="drawer-field">
-        <span>Contact email</span>
-        <strong>${escapeHtml(customer.contact_email || customer.email || "Not added")}</strong>
-      </div>
-      <div class="drawer-field">
-        <span>Phone</span>
-        <strong>${escapeHtml(customer.phone || "Not added")}</strong>
-      </div>
-      <div class="drawer-field">
-        <span>Communication</span>
-        <strong>${escapeHtml(customer.communication_preference || "Email")}</strong>
-      </div>
-      <div class="drawer-field">
-        <span>Updated</span>
-        <strong>${escapeHtml(formatDate(customer.updated_at || customer.created_at))}</strong>
-      </div>
-    </div>
-
-    <form class="admin-form single" id="customerAdminForm">
-      <label class="check">
-        <input id="customer_lifetime" type="checkbox" ${isLifetime ? "checked" : ""}>
-        Make this customer a Lifetime customer
-      </label>
-
-      ${textarea("Internal admin notes", "customer_admin_notes")}
-
-      <button class="admin-button" type="submit">Save customer admin changes</button>
-    </form>
-
-    <div id="customerSaved" class="admin-success" hidden></div>
-
-    <div class="admin-alert">
-      Only authorised admin users can make this change. This action is protected by Cloudflare Access and the admin API.
-    </div>
-  `;
-
-  setValue("customer_admin_notes", customer.admin_notes || "");
-
-  document.getElementById("customerAdminForm").addEventListener("submit", async (event) => {
-    event.preventDefault();
-
-    const response = await fetch(`/admin/customer?email=${encodeURIComponent(customer.email)}`, {
-      method: "POST",
-      credentials: "include",
-      cache: "no-store",
-      headers: {
-        "Accept": "application/json",
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        admin_lifetime: document.getElementById("customer_lifetime").checked,
-        admin_notes: getValue("customer_admin_notes")
-      })
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      document.getElementById("customerSaved").hidden = false;
-      document.getElementById("customerSaved").className = "admin-alert";
-      document.getElementById("customerSaved").textContent = data.error || "Unable to save customer.";
-      return;
-    }
-
-    document.getElementById("customerSaved").hidden = false;
-    document.getElementById("customerSaved").className = "admin-success";
-    document.getElementById("customerSaved").textContent = Number(data.customer.admin_lifetime || 0) === 1
-      ? "Customer is now marked as Lifetime."
-      : "Customer is now marked as Standard.";
-
-    renderCustomerDrawer(data.customer);
-
-    if (state.currentSection === "customers") {
-      loadSection("customers");
-    }
-  });
 }

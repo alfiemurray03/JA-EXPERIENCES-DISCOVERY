@@ -7,6 +7,65 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
+function decodeJwtPayload(jwt) {
+  try {
+    if (!jwt || !jwt.includes(".")) return {};
+    const payload = jwt.split(".")[1];
+    const normalised = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalised.padEnd(normalised.length + ((4 - normalised.length % 4) % 4), "=");
+    return JSON.parse(atob(padded));
+  } catch {
+    return {};
+  }
+}
+
+function getAccessIdentity(request) {
+  const emailHeader =
+    request.headers.get("cf-access-authenticated-user-email") ||
+    request.headers.get("CF-Access-Authenticated-User-Email") ||
+    "";
+
+  const jwt =
+    request.headers.get("cf-access-jwt-assertion") ||
+    request.headers.get("CF-Access-Jwt-Assertion") ||
+    "";
+
+  const tokenIdentity = decodeJwtPayload(jwt);
+  const email = emailHeader || tokenIdentity.email || tokenIdentity.user_email || tokenIdentity.username || "";
+
+  return String(email || "").trim().toLowerCase();
+}
+
+function configuredAdmins(env) {
+  const raw = env.ADMIN_EMAILS || env.ADMIN_EMAIL || "alfieholywoodmurray@jagroupservices.co.uk";
+  return String(raw).split(",").map((email) => email.trim().toLowerCase()).filter(Boolean);
+}
+
+async function isAdminRequest(request, env) {
+  const email = getAccessIdentity(request);
+  if (!email) return false;
+  if (configuredAdmins(env).includes(email)) return true;
+  if (!env.DB) return false;
+
+  try {
+    await env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS admin_users (
+        email TEXT PRIMARY KEY,
+        name TEXT,
+        source TEXT DEFAULT 'portal',
+        created_by TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+      )
+    `).run();
+
+    const admin = await env.DB.prepare(`SELECT email FROM admin_users WHERE lower(email) = lower(?)`).bind(email).first();
+    return Boolean(admin);
+  } catch {
+    return false;
+  }
+}
+
 function pageHtml(settings, mode) {
   const isComingSoon = mode === "coming-soon";
 
@@ -230,6 +289,20 @@ export async function onRequest(context) {
   const { request, env, next } = context;
   const url = new URL(request.url);
   const path = url.pathname;
+
+  if (path === "/admin" || path === "/admin/" || path.startsWith("/admin/index")) {
+    if (!(await isAdminRequest(request, env))) {
+      return new Response("Forbidden", {
+        status: 403,
+        headers: {
+          "Content-Type": "text/plain; charset=utf-8",
+          "Cache-Control": "no-store"
+        }
+      });
+    }
+
+    return next();
+  }
 
   const bypass =
     path.startsWith("/admin") ||

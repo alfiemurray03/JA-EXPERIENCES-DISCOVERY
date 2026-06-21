@@ -1,3 +1,5 @@
+const DEFAULT_ADMIN_EMAIL = "alfieholywoodmurray@jagroupservices.co.uk";
+
 function json(data, status = 200) {
   return new Response(JSON.stringify(data, null, 2), {
     status,
@@ -32,21 +34,8 @@ function getAccessIdentity(request) {
     "";
 
   const tokenIdentity = decodeJwtPayload(jwt);
-
-  const email =
-    emailHeader ||
-    tokenIdentity.email ||
-    tokenIdentity.user_email ||
-    tokenIdentity.username ||
-    "";
-
-  const name =
-    tokenIdentity.name ||
-    tokenIdentity.common_name ||
-    tokenIdentity.user_name ||
-    tokenIdentity.preferred_username ||
-    email ||
-    "";
+  const email = emailHeader || tokenIdentity.email || tokenIdentity.user_email || tokenIdentity.username || "";
+  const name = tokenIdentity.name || tokenIdentity.common_name || tokenIdentity.user_name || tokenIdentity.preferred_username || email || "";
 
   return {
     email: String(email || "").trim().toLowerCase(),
@@ -54,20 +43,39 @@ function getAccessIdentity(request) {
   };
 }
 
-function getAllowedAdmins(env) {
-  const raw = env.ADMIN_EMAILS || env.ADMIN_EMAIL || "alfieholywoodmurray@jagroupservices.co.uk";
+function configuredAdmins(env) {
+  const raw = env.ADMIN_EMAILS || env.ADMIN_EMAIL || DEFAULT_ADMIN_EMAIL;
   return String(raw).split(",").map((email) => email.trim().toLowerCase()).filter(Boolean);
-}
-
-function isAllowedAdmin(identity, env) {
-  return identity.email && getAllowedAdmins(env).includes(identity.email);
 }
 
 function clean(value, max = 2000) {
   return String(value || "").trim().slice(0, max);
 }
 
-async function ensureTables(DB) {
+function cleanEmail(value) {
+  return clean(value, 254).toLowerCase();
+}
+
+function isEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || ""));
+}
+
+function maskSecret(value, prefixLength = 7, suffixLength = 4) {
+  if (!value) return "";
+  const text = String(value);
+  if (text.length <= prefixLength + suffixLength) return "••••••••";
+  return `${text.slice(0, prefixLength)}••••••••${text.slice(-suffixLength)}`;
+}
+
+async function safeAlter(DB, sql) {
+  try {
+    await DB.prepare(sql).run();
+  } catch {
+    // D1 throws if the column already exists. That is expected during safe migrations.
+  }
+}
+
+async function ensureTables(DB, env) {
   await DB.prepare(`
     CREATE TABLE IF NOT EXISTS profiles (
       email TEXT PRIMARY KEY,
@@ -81,6 +89,32 @@ async function ensureTables(DB) {
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
   `).run();
+
+  await safeAlter(DB, `ALTER TABLE profiles ADD COLUMN admin_lifetime INTEGER DEFAULT 0`);
+  await safeAlter(DB, `ALTER TABLE profiles ADD COLUMN admin_customer_status TEXT DEFAULT 'Standard'`);
+  await safeAlter(DB, `ALTER TABLE profiles ADD COLUMN admin_notes TEXT`);
+  await safeAlter(DB, `ALTER TABLE profiles ADD COLUMN admin_updated_at TEXT`);
+
+  await DB.prepare(`
+    CREATE TABLE IF NOT EXISTS admin_users (
+      email TEXT PRIMARY KEY,
+      name TEXT,
+      source TEXT DEFAULT 'portal',
+      created_by TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
+
+  for (const email of configuredAdmins(env)) {
+    await DB.prepare(`
+      INSERT INTO admin_users (email, name, source, created_by, updated_at)
+      VALUES (?, ?, 'default', 'system', CURRENT_TIMESTAMP)
+      ON CONFLICT(email) DO UPDATE SET
+        source = CASE WHEN admin_users.source = 'portal' THEN admin_users.source ELSE 'default' END,
+        updated_at = CURRENT_TIMESTAMP
+    `).bind(email, email).run();
+  }
 
   await DB.prepare(`
     CREATE TABLE IF NOT EXISTS service_plans (
@@ -101,16 +135,25 @@ async function ensureTables(DB) {
     )
   `).run();
 
+  await safeAlter(DB, `ALTER TABLE service_plans ADD COLUMN stripe_product_id TEXT`);
+
   await DB.prepare(`
     CREATE TABLE IF NOT EXISTS policy_pages (
       slug TEXT PRIMARY KEY,
       title TEXT,
       content TEXT,
-      content_type TEXT DEFAULT 'html',
-      is_published INTEGER DEFAULT 1,
+      content_type TEXT DEFAULT 'markdown',
+      version TEXT DEFAULT '1.0',
+      effective_date TEXT,
+      status TEXT DEFAULT 'draft',
+      is_published INTEGER DEFAULT 0,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
   `).run();
+
+  await safeAlter(DB, `ALTER TABLE policy_pages ADD COLUMN version TEXT DEFAULT '1.0'`);
+  await safeAlter(DB, `ALTER TABLE policy_pages ADD COLUMN effective_date TEXT`);
+  await safeAlter(DB, `ALTER TABLE policy_pages ADD COLUMN status TEXT DEFAULT 'draft'`);
 
   await DB.prepare(`
     CREATE TABLE IF NOT EXISTS company_branding (
@@ -119,12 +162,17 @@ async function ensureTables(DB) {
       trading_name TEXT,
       service_name TEXT,
       support_email TEXT,
+      contact_email TEXT,
       phone TEXT,
       website TEXT,
+      registered_notice TEXT,
       footer_notice TEXT,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
   `).run();
+
+  await safeAlter(DB, `ALTER TABLE company_branding ADD COLUMN contact_email TEXT`);
+  await safeAlter(DB, `ALTER TABLE company_branding ADD COLUMN registered_notice TEXT`);
 
   await DB.prepare(`
     CREATE TABLE IF NOT EXISTS support_tickets (
@@ -161,80 +209,116 @@ async function ensureTables(DB) {
   `).run();
 }
 
+async function isAllowedAdmin(DB, identity, env) {
+  if (!identity.email) return false;
+  if (configuredAdmins(env).includes(identity.email)) return true;
+
+  const row = await DB.prepare(`SELECT email FROM admin_users WHERE lower(email) = lower(?)`).bind(identity.email).first();
+  return Boolean(row);
+}
+
+async function all(DB, sql, bindings = []) {
+  const statement = DB.prepare(sql);
+  const result = bindings.length ? await statement.bind(...bindings).all() : await statement.all();
+  return result.results || [];
+}
+
+async function settingMap(DB, keys, defaults = {}) {
+  const placeholders = keys.map(() => "?").join(", ");
+  const rows = await all(DB, `SELECT key, value FROM site_settings WHERE key IN (${placeholders})`, keys);
+  const settings = { ...defaults };
+  for (const row of rows) settings[row.key] = row.value;
+  return settings;
+}
+
+async function saveSettings(DB, settings) {
+  for (const [key, value] of Object.entries(settings)) {
+    await DB.prepare(`
+      INSERT INTO site_settings (key, value, updated_at)
+      VALUES (?, ?, CURRENT_TIMESTAMP)
+      ON CONFLICT(key) DO UPDATE SET
+        value = excluded.value,
+        updated_at = CURRENT_TIMESTAMP
+    `).bind(key, value).run();
+  }
+}
+
 async function seedDefaults(DB) {
   const planCount = await DB.prepare(`SELECT COUNT(*) AS count FROM service_plans`).first();
 
   if (!planCount || Number(planCount.count) === 0) {
     const plans = [
-      ["destination_discovery_standard", "Destination Discovery Plan", "Standard", "£49", 4900, "price_1TkZu2DZzb3r6Q3cuhKd6KTt", "3–5 working days", "1 minor revision", "A focused destination discovery plan for early-stage trip ideas.", "Buy now securely", 1, 1, 10],
-      ["itinerary_experience_standard", "Itinerary and Experience Planning Plan", "Standard", "£89", 8900, "price_1TkZuJDZzb3r6Q3c9cEy41Iw", "5–7 working days", "1 minor revision", "A structured itinerary and experience planning service.", "Buy now securely", 1, 1, 20],
-      ["complete_planning_standard", "Complete Discovery and Planning Guidance Plan", "Standard", "£149", 14900, "price_1TkZucDZzb3r6Q3cGVNcyvIF", "7–10 working days", "2 minor revisions", "A complete discovery and planning guidance package.", "Buy now securely", 1, 1, 30],
-      ["destination_discovery_social", "Destination Discovery Social Tariff", "Social tariff", "£29", 2900, "price_1TkZuuDZzb3r6Q3c2C6jQuvo", "3–5 working days", "1 minor revision", "Reduced-rate destination discovery plan.", "Buy now securely", 1, 0, 40],
-      ["itinerary_experience_social", "Itinerary Planning Social Tariff", "Social tariff", "£55", 5500, "price_1TkZv0DZzb3r6Q3cOh6tjkIM", "5–7 working days", "1 minor revision", "Reduced-rate itinerary and experience planning service.", "Buy now securely", 1, 0, 50],
-      ["complete_planning_social", "Complete Planning Social Tariff", "Social tariff", "£95", 9500, "price_1TkZvDDZzb3r6Q3csGxh4vSL", "7–10 working days", "2 minor revisions", "Reduced-rate complete planning guidance package.", "Buy now securely", 1, 0, 60]
+      ["destination_discovery_standard", "Destination Discovery Plan", "Standard", "£49", 4900, "prod_destination_discovery", "price_1TkZu2DZzb3r6Q3cuhKd6KTt", "3-5 working days", "1 minor revision", "A focused destination discovery plan for early-stage trip ideas.", "Buy now securely", 1, 1, 10],
+      ["itinerary_experience_standard", "Itinerary and Experience Planning Plan", "Standard", "£89", 8900, "prod_itinerary_experience", "price_1TkZuJDZzb3r6Q3c9cEy41Iw", "5-7 working days", "1 minor revision", "A structured itinerary and experience planning service.", "Buy now securely", 1, 1, 20],
+      ["complete_planning_standard", "Complete Discovery and Planning Guidance Plan", "Standard", "£149", 14900, "prod_complete_planning", "price_1TkZucDZzb3r6Q3cGVNcyvIF", "7-10 working days", "2 minor revisions", "A complete discovery and planning guidance package.", "Buy now securely", 1, 1, 30],
+      ["destination_discovery_social", "Destination Discovery Social Tariff", "Social tariff", "£29", 2900, "prod_destination_social", "price_1TkZuuDZzb3r6Q3c2C6jQuvo", "3-5 working days", "1 minor revision", "Reduced-rate destination discovery plan.", "Buy now securely", 1, 0, 40],
+      ["itinerary_experience_social", "Itinerary Planning Social Tariff", "Social tariff", "£55", 5500, "prod_itinerary_social", "price_1TkZv0DZzb3r6Q3cOh6tjkIM", "5-7 working days", "1 minor revision", "Reduced-rate itinerary and experience planning service.", "Buy now securely", 1, 0, 50],
+      ["complete_planning_social", "Complete Planning Social Tariff", "Social tariff", "£95", 9500, "prod_complete_social", "price_1TkZvDDZzb3r6Q3csGxh4vSL", "7-10 working days", "2 minor revisions", "Reduced-rate complete planning guidance package.", "Buy now securely", 1, 0, 60]
     ];
 
     for (const plan of plans) {
       await DB.prepare(`
         INSERT INTO service_plans (
-          id, plan_name, plan_type, price_label, price_pence, stripe_price_id,
+          id, plan_name, plan_type, price_label, price_pence, stripe_product_id, stripe_price_id,
           delivery_time, revisions, description, button_label, is_active, is_featured, sort_order
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).bind(...plan).run();
     }
   }
 
   const branding = await DB.prepare(`SELECT id FROM company_branding WHERE id = 'main'`).first();
-
   if (!branding) {
     await DB.prepare(`
       INSERT INTO company_branding (
-        id, business_name, trading_name, service_name, support_email, phone, website, footer_notice
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        id, business_name, trading_name, service_name, support_email, contact_email,
+        phone, website, registered_notice, footer_notice
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       "main",
       "JA Group Services Ltd",
       "JA Experiences & Discovery",
       "JA Experiences & Discovery",
       "support@jagroupservices.co.uk",
+      "hello@jagroupservices.co.uk",
       "",
       "https://experiences.jagroupservices.co.uk",
-      "JA Experiences & Discovery is a service line of JA Group Services Ltd."
+      "JA Experiences & Discovery is a service line of JA Group Services Ltd.",
+      "JA Experiences & Discovery is operated by JA Group Services Ltd."
     ).run();
   }
 
   const policyCount = await DB.prepare(`SELECT COUNT(*) AS count FROM policy_pages`).first();
-
   if (!policyCount || Number(policyCount.count) === 0) {
     const policies = [
-      ["privacy-notice", "Privacy Notice", "<p>This privacy notice explains how JA Experiences & Discovery handles customer account, enquiry and service information.</p>", "html", 1],
-      ["terms-of-service", "Terms of Service", "<p>These terms explain the basis on which JA Experiences & Discovery provides discovery, planning and guidance services.</p>", "html", 1],
-      ["refund-policy", "Refund and Cancellation Policy", "<p>This policy explains refunds, cancellations and service delivery boundaries for paid planning services.</p>", "html", 1],
-      ["affiliate-disclosure", "Affiliate Disclosure", "<p>JA Experiences & Discovery may earn commission from third-party providers where customers book through affiliate links.</p>", "html", 1],
-      ["important-information", "Important Information", "<p>JA Experiences & Discovery provides planning and guidance support only. Third-party bookings remain subject to provider terms.</p>", "html", 1]
+      ["terms-of-service", "Terms of Service", "# Terms of Service\n\nThese terms explain the basis on which JA Experiences & Discovery provides discovery, planning and guidance services.", "markdown", "1.0", "2026-06-21", "draft", 0],
+      ["privacy-policy", "Privacy Policy", "# Privacy Policy\n\nThis policy explains how JA Experiences & Discovery handles customer account, enquiry and service information.", "markdown", "1.0", "2026-06-21", "draft", 0],
+      ["cookie-policy", "Cookie Policy", "# Cookie Policy\n\nThis policy explains how cookies and similar technologies are used by JA Experiences & Discovery.", "markdown", "1.0", "2026-06-21", "draft", 0],
+      ["refund-policy", "Refund and Cancellation Policy", "# Refund and Cancellation Policy\n\nThis policy explains refunds, cancellations and service delivery boundaries for paid planning services.", "markdown", "1.0", "2026-06-21", "draft", 0],
+      ["affiliate-disclosure", "Affiliate Disclosure", "# Affiliate Disclosure\n\nJA Experiences & Discovery may earn commission from third-party providers where customers book through affiliate links.", "markdown", "1.0", "2026-06-21", "draft", 0]
     ];
 
     for (const policy of policies) {
       await DB.prepare(`
-        INSERT INTO policy_pages (slug, title, content, content_type, is_published)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO policy_pages (slug, title, content, content_type, version, effective_date, status, is_published)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `).bind(...policy).run();
     }
   }
 }
 
-async function all(DB, sql) {
-  const result = await DB.prepare(sql).all();
-  return result.results || [];
-}
-
 async function getOverview(DB) {
-  const customers = await DB.prepare(`SELECT COUNT(*) AS count FROM profiles`).first().catch(() => ({ count: 0 }));
-  const plans = await DB.prepare(`SELECT COUNT(*) AS count FROM service_plans`).first();
-  const activePlans = await DB.prepare(`SELECT COUNT(*) AS count FROM service_plans WHERE is_active = 1`).first();
-  const policies = await DB.prepare(`SELECT COUNT(*) AS count FROM policy_pages`).first();
-  const tickets = await DB.prepare(`SELECT COUNT(*) AS count FROM support_tickets`).first();
-  const issues = await DB.prepare(`SELECT COUNT(*) AS count FROM system_events WHERE status != 'Resolved'`).first();
+  const [customers, plans, activePlans, policies, tickets, openIssues, admins] = await Promise.all([
+    DB.prepare(`SELECT COUNT(*) AS count FROM profiles`).first().catch(() => ({ count: 0 })),
+    DB.prepare(`SELECT COUNT(*) AS count FROM service_plans`).first(),
+    DB.prepare(`SELECT COUNT(*) AS count FROM service_plans WHERE is_active = 1`).first(),
+    DB.prepare(`SELECT COUNT(*) AS count FROM policy_pages`).first(),
+    DB.prepare(`SELECT COUNT(*) AS count FROM support_tickets`).first(),
+    DB.prepare(`SELECT COUNT(*) AS count FROM system_events WHERE lower(status) NOT IN ('resolved', 'closed')`).first(),
+    DB.prepare(`SELECT COUNT(*) AS count FROM admin_users`).first()
+  ]);
+
+  const comingsoon = await getComingSoon(DB);
+  const maintenance = await getMaintenance(DB);
 
   return {
     customers: customers?.count || 0,
@@ -242,26 +326,83 @@ async function getOverview(DB) {
     activePlans: activePlans?.count || 0,
     policies: policies?.count || 0,
     supportTickets: tickets?.count || 0,
-    openIssues: issues?.count || 0
+    openIssues: openIssues?.count || 0,
+    admins: admins?.count || 0,
+    comingSoonStatus: comingsoon.comingsoon_enabled === "true" ? "On" : "Off",
+    maintenanceStatus: maintenance.maintenance_enabled === "true" ? "On" : "Off"
   };
 }
 
-async function savePlan(DB, body) {
-  const id = clean(body.id, 120);
-  if (!id) throw new Error("Plan ID is required.");
+async function getAdmins(DB, env) {
+  const rows = await all(DB, `SELECT * FROM admin_users ORDER BY email ASC`);
+  const defaults = configuredAdmins(env);
+  const seen = new Set(rows.map((row) => row.email));
+  for (const email of defaults) {
+    if (!seen.has(email)) {
+      rows.push({ email, name: email, source: "default", created_by: "system", created_at: null, updated_at: null });
+    }
+  }
+  return rows.sort((a, b) => a.email.localeCompare(b.email));
+}
+
+async function addAdmin(DB, body, identity) {
+  const email = cleanEmail(body.email);
+  if (!isEmail(email)) throw new Error("Enter a valid admin email address.");
 
   await DB.prepare(`
-    UPDATE service_plans SET
-      plan_name = ?, plan_type = ?, price_label = ?, price_pence = ?,
-      stripe_price_id = ?, delivery_time = ?, revisions = ?, description = ?,
-      button_label = ?, is_active = ?, is_featured = ?, sort_order = ?,
+    INSERT INTO admin_users (email, name, source, created_by, updated_at)
+    VALUES (?, ?, 'portal', ?, CURRENT_TIMESTAMP)
+    ON CONFLICT(email) DO UPDATE SET
+      name = excluded.name,
       updated_at = CURRENT_TIMESTAMP
-    WHERE id = ?
+  `).bind(email, clean(body.name || email, 180), identity.email).run();
+}
+
+async function removeAdmin(DB, body, identity, env) {
+  const email = cleanEmail(body.email);
+  if (!isEmail(email)) throw new Error("Admin email is required.");
+
+  const admins = await getAdmins(DB, env);
+  if (admins.length <= 1) throw new Error("The last remaining admin cannot be removed.");
+  if (configuredAdmins(env).includes(email)) throw new Error("Default environment admins cannot be removed from the portal.");
+  if (email === identity.email && admins.length <= 1) throw new Error("You cannot remove the final admin account.");
+
+  await DB.prepare(`DELETE FROM admin_users WHERE lower(email) = lower(?)`).bind(email).run();
+}
+
+async function savePlan(DB, body) {
+  const id = clean(body.id, 120) || crypto.randomUUID();
+  const planName = clean(body.plan_name, 180);
+  if (!planName) throw new Error("Plan name is required.");
+
+  await DB.prepare(`
+    INSERT INTO service_plans (
+      id, plan_name, plan_type, price_label, price_pence, stripe_product_id, stripe_price_id,
+      delivery_time, revisions, description, button_label, is_active, is_featured, sort_order, updated_at
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+    ON CONFLICT(id) DO UPDATE SET
+      plan_name = excluded.plan_name,
+      plan_type = excluded.plan_type,
+      price_label = excluded.price_label,
+      price_pence = excluded.price_pence,
+      stripe_product_id = excluded.stripe_product_id,
+      stripe_price_id = excluded.stripe_price_id,
+      delivery_time = excluded.delivery_time,
+      revisions = excluded.revisions,
+      description = excluded.description,
+      button_label = excluded.button_label,
+      is_active = excluded.is_active,
+      is_featured = excluded.is_featured,
+      sort_order = excluded.sort_order,
+      updated_at = CURRENT_TIMESTAMP
   `).bind(
-    clean(body.plan_name, 180),
+    id,
+    planName,
     clean(body.plan_type, 80),
     clean(body.price_label, 40),
     Number(body.price_pence || 0),
+    clean(body.stripe_product_id, 180),
     clean(body.stripe_price_id, 180),
     clean(body.delivery_time, 120),
     clean(body.revisions, 120),
@@ -269,8 +410,7 @@ async function savePlan(DB, body) {
     clean(body.button_label, 80) || "Buy now securely",
     body.is_active ? 1 : 0,
     body.is_featured ? 1 : 0,
-    Number(body.sort_order || 100),
-    id
+    Number(body.sort_order || 100)
   ).run();
 
   return all(DB, `SELECT * FROM service_plans ORDER BY sort_order ASC, plan_name ASC`);
@@ -280,21 +420,28 @@ async function savePolicy(DB, body) {
   const slug = clean(body.slug, 120);
   if (!slug) throw new Error("Policy slug is required.");
 
+  const status = body.is_published || body.status === "published" ? "published" : "draft";
   await DB.prepare(`
-    INSERT INTO policy_pages (slug, title, content, content_type, is_published, updated_at)
-    VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+    INSERT INTO policy_pages (slug, title, content, content_type, version, effective_date, status, is_published, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
     ON CONFLICT(slug) DO UPDATE SET
       title = excluded.title,
       content = excluded.content,
       content_type = excluded.content_type,
+      version = excluded.version,
+      effective_date = excluded.effective_date,
+      status = excluded.status,
       is_published = excluded.is_published,
       updated_at = CURRENT_TIMESTAMP
   `).bind(
     slug,
     clean(body.title, 180),
     clean(body.content, 20000),
-    clean(body.content_type, 20) || "html",
-    body.is_published ? 1 : 0
+    clean(body.content_type, 20) || "markdown",
+    clean(body.version, 40) || "1.0",
+    clean(body.effective_date, 40),
+    status,
+    status === "published" ? 1 : 0
   ).run();
 
   return all(DB, `SELECT * FROM policy_pages ORDER BY title ASC`);
@@ -303,17 +450,19 @@ async function savePolicy(DB, body) {
 async function saveBranding(DB, body) {
   await DB.prepare(`
     INSERT INTO company_branding (
-      id, business_name, trading_name, service_name, support_email, phone,
-      website, footer_notice, updated_at
+      id, business_name, trading_name, service_name, support_email, contact_email,
+      phone, website, registered_notice, footer_notice, updated_at
     )
-    VALUES ('main', ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+    VALUES ('main', ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
     ON CONFLICT(id) DO UPDATE SET
       business_name = excluded.business_name,
       trading_name = excluded.trading_name,
       service_name = excluded.service_name,
       support_email = excluded.support_email,
+      contact_email = excluded.contact_email,
       phone = excluded.phone,
       website = excluded.website,
+      registered_notice = excluded.registered_notice,
       footer_notice = excluded.footer_notice,
       updated_at = CURRENT_TIMESTAMP
   `).bind(
@@ -321,8 +470,10 @@ async function saveBranding(DB, body) {
     clean(body.trading_name, 180),
     clean(body.service_name, 180),
     clean(body.support_email, 180),
+    clean(body.contact_email, 180),
     clean(body.phone, 80),
     clean(body.website, 250),
+    clean(body.registered_notice, 1000),
     clean(body.footer_notice, 1000)
   ).run();
 
@@ -331,7 +482,6 @@ async function saveBranding(DB, body) {
 
 async function saveSupport(DB, body) {
   const id = clean(body.id, 120) || crypto.randomUUID();
-
   await DB.prepare(`
     INSERT INTO support_tickets (id, customer_email, subject, status, priority, notes, updated_at)
     VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
@@ -356,7 +506,6 @@ async function saveSupport(DB, body) {
 
 async function saveSystemEvent(DB, body) {
   const id = clean(body.id, 120) || crypto.randomUUID();
-
   await DB.prepare(`
     INSERT INTO system_events (id, type, severity, title, message, status, updated_at)
     VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
@@ -380,132 +529,141 @@ async function saveSystemEvent(DB, body) {
 }
 
 async function getMaintenance(DB) {
-  const defaults = {
+  return settingMap(DB, [
+    "maintenance_enabled",
+    "maintenance_title",
+    "maintenance_message",
+    "maintenance_eta"
+  ], {
     maintenance_enabled: "false",
-    maintenance_title: "We’ll be back shortly.",
+    maintenance_title: "We'll be back shortly.",
     maintenance_message: "JA Experiences & Discovery is temporarily unavailable while essential maintenance is carried out.",
     maintenance_eta: ""
-  };
-
-  const result = await DB.prepare(`
-    SELECT key, value
-    FROM site_settings
-    WHERE key IN (
-      'maintenance_enabled',
-      'maintenance_title',
-      'maintenance_message',
-      'maintenance_eta'
-    )
-  `).all();
-
-  const settings = { ...defaults };
-
-  for (const row of result.results || []) {
-    settings[row.key] = row.value;
-  }
-
-  return settings;
+  });
 }
 
 async function saveMaintenance(DB, body) {
-  const settings = {
+  await saveSettings(DB, {
     maintenance_enabled: body.maintenance_enabled ? "true" : "false",
-    maintenance_title: clean(body.maintenance_title, 180) || "We’ll be back shortly.",
+    maintenance_title: clean(body.maintenance_title, 180) || "We'll be back shortly.",
     maintenance_message: clean(body.maintenance_message, 1000) || "JA Experiences & Discovery is temporarily unavailable while essential maintenance is carried out.",
     maintenance_eta: clean(body.maintenance_eta, 180)
-  };
-
-  for (const [key, value] of Object.entries(settings)) {
-    await DB.prepare(`
-      INSERT INTO site_settings (key, value, updated_at)
-      VALUES (?, ?, CURRENT_TIMESTAMP)
-      ON CONFLICT(key) DO UPDATE SET
-        value = excluded.value,
-        updated_at = CURRENT_TIMESTAMP
-    `).bind(key, value).run();
-  }
+  });
 
   return getMaintenance(DB);
 }
 
-
 async function getComingSoon(DB) {
-  const defaults = {
+  return settingMap(DB, [
+    "comingsoon_enabled",
+    "comingsoon_title",
+    "comingsoon_message",
+    "comingsoon_eta"
+  ], {
     comingsoon_enabled: "false",
     comingsoon_title: "JA Experiences & Discovery is coming soon.",
     comingsoon_message: "Our new experiences and discovery service is being prepared. Please check back soon.",
     comingsoon_eta: ""
-  };
-
-  const result = await DB.prepare(`
-    SELECT key, value
-    FROM site_settings
-    WHERE key IN (
-      'comingsoon_enabled',
-      'comingsoon_title',
-      'comingsoon_message',
-      'comingsoon_eta'
-    )
-  `).all();
-
-  const settings = { ...defaults };
-
-  for (const row of result.results || []) {
-    settings[row.key] = row.value;
-  }
-
-  return settings;
+  });
 }
 
 async function saveComingSoon(DB, body) {
-  const settings = {
+  await saveSettings(DB, {
     comingsoon_enabled: body.comingsoon_enabled ? "true" : "false",
     comingsoon_title: clean(body.comingsoon_title, 180) || "JA Experiences & Discovery is coming soon.",
     comingsoon_message: clean(body.comingsoon_message, 1000) || "Our new experiences and discovery service is being prepared. Please check back soon.",
     comingsoon_eta: clean(body.comingsoon_eta, 180)
-  };
-
-  for (const [key, value] of Object.entries(settings)) {
-    await DB.prepare(`
-      INSERT INTO site_settings (key, value, updated_at)
-      VALUES (?, ?, CURRENT_TIMESTAMP)
-      ON CONFLICT(key) DO UPDATE SET
-        value = excluded.value,
-        updated_at = CURRENT_TIMESTAMP
-    `).bind(key, value).run();
-  }
+  });
 
   return getComingSoon(DB);
 }
-async function getStripe(env) {
-  if (!env.STRIPE_SECRET_KEY) {
-    return { configured: false, message: "STRIPE_SECRET_KEY is not configured." };
-  }
 
-  const accountResponse = await fetch("https://api.stripe.com/v1/account", {
-    headers: { "Authorization": `Bearer ${env.STRIPE_SECRET_KEY}` }
-  });
+async function getStripeSettings(DB, env) {
+  const stored = await settingMap(DB, [
+    "stripe_publishable_key",
+    "stripe_secret_key",
+    "stripe_webhook_signing_secret"
+  ], {});
 
-  const account = await accountResponse.json();
-
-  const pricesResponse = await fetch("https://api.stripe.com/v1/prices?limit=20&expand[]=data.product", {
-    headers: { "Authorization": `Bearer ${env.STRIPE_SECRET_KEY}` }
-  });
-
-  const prices = await pricesResponse.json();
+  const publishableKey = stored.stripe_publishable_key || env.STRIPE_PUBLISHABLE_KEY || "";
+  const secretKey = stored.stripe_secret_key || env.STRIPE_SECRET_KEY || "";
+  const webhookSecret = stored.stripe_webhook_signing_secret || env.STRIPE_WEBHOOK_SECRET || "";
 
   return {
-    configured: true,
-    account: {
-      id: account.id,
-      charges_enabled: account.charges_enabled,
-      payouts_enabled: account.payouts_enabled,
-      country: account.country,
-      default_currency: account.default_currency
-    },
-    prices: prices.data || [],
-    note: "Stripe controls are read-only in this admin version."
+    publishableKey,
+    secretKey,
+    webhookSecret,
+    source: {
+      publishable: stored.stripe_publishable_key ? "D1" : publishableKey ? "environment" : "missing",
+      secret: stored.stripe_secret_key ? "D1" : secretKey ? "environment" : "missing",
+      webhook: stored.stripe_webhook_signing_secret ? "D1" : webhookSecret ? "environment" : "missing"
+    }
   };
+}
+
+async function getStripe(DB, env, test = false) {
+  const settings = await getStripeSettings(DB, env);
+  const configured = Boolean(settings.secretKey);
+  const stripe = {
+    configured,
+    mode: settings.secretKey.startsWith("sk_live_") ? "Live" : settings.secretKey.startsWith("sk_test_") ? "Test" : "Unknown",
+    publishable_key_masked: maskSecret(settings.publishableKey, 10, 6),
+    secret_key_masked: maskSecret(settings.secretKey),
+    webhook_secret_masked: maskSecret(settings.webhookSecret, 7, 5),
+    source: settings.source,
+    account: null,
+    products: [],
+    message: configured ? "Stripe secret key is configured." : "Stripe secret key is not configured."
+  };
+
+  if (!configured || !test) return stripe;
+
+  const accountResponse = await fetch("https://api.stripe.com/v1/account", {
+    headers: { "Authorization": `Bearer ${settings.secretKey}` }
+  });
+  const account = await accountResponse.json();
+
+  if (!accountResponse.ok) {
+    stripe.message = account.error?.message || "Stripe account check failed.";
+    return stripe;
+  }
+
+  const pricesResponse = await fetch("https://api.stripe.com/v1/prices?limit=20&expand[]=data.product", {
+    headers: { "Authorization": `Bearer ${settings.secretKey}` }
+  });
+  const prices = await pricesResponse.json();
+
+  stripe.account = {
+    id: account.id,
+    charges_enabled: account.charges_enabled,
+    payouts_enabled: account.payouts_enabled,
+    country: account.country,
+    default_currency: account.default_currency
+  };
+  stripe.products = (prices.data || []).map((price) => ({
+    id: price.product?.id || price.product || "",
+    name: price.product?.name || "Stripe product",
+    active: price.active,
+    price_id: price.id,
+    currency: price.currency,
+    amount: price.unit_amount,
+    interval: price.recurring?.interval || price.type
+  }));
+  stripe.message = "Stripe connection checked successfully.";
+
+  return stripe;
+}
+
+async function saveStripe(DB, body, env) {
+  const current = await getStripeSettings(DB, env);
+  const updates = {
+    stripe_publishable_key: clean(body.publishable_key, 300) || current.publishableKey,
+    stripe_secret_key: clean(body.secret_key, 300) || current.secretKey,
+    stripe_webhook_signing_secret: clean(body.webhook_signing_secret, 300) || current.webhookSecret
+  };
+
+  await saveSettings(DB, updates);
+  return getStripe(DB, env, Boolean(body.test_connection));
 }
 
 export async function onRequest(context) {
@@ -513,13 +671,14 @@ export async function onRequest(context) {
 
   if (!env.DB) return json({ error: "Database binding DB is missing." }, 500);
 
-  const identity = getAccessIdentity(request);
-
-  if (!identity.email) return json({ error: "Not signed in." }, 401);
-  if (!isAllowedAdmin(identity, env)) return json({ error: "Forbidden.", signedInAs: identity.email }, 403);
-
-  await ensureTables(env.DB);
+  await ensureTables(env.DB, env);
   await seedDefaults(env.DB);
+
+  const identity = getAccessIdentity(request);
+  if (!identity.email) return json({ error: "Not signed in." }, 401);
+  if (!(await isAllowedAdmin(env.DB, identity, env))) {
+    return json({ error: "Forbidden.", signedInAs: identity.email }, 403);
+  }
 
   const url = new URL(request.url);
   const section = url.searchParams.get("section") || "overview";
@@ -527,7 +686,19 @@ export async function onRequest(context) {
   try {
     if (request.method === "GET") {
       if (section === "overview") return json({ admin: identity, overview: await getOverview(env.DB) });
-      if (section === "customers") return json({ admin: identity, customers: await all(env.DB, `SELECT email, verified_name, display_name, contact_email, phone, communication_preference, support_notes, created_at, updated_at FROM profiles ORDER BY updated_at DESC, created_at DESC LIMIT 500`) });
+      if (section === "admins") return json({ admin: identity, admins: await getAdmins(env.DB, env) });
+      if (section === "customers") {
+        return json({
+          admin: identity,
+          customers: await all(env.DB, `
+            SELECT email, verified_name, display_name, contact_email, phone, communication_preference,
+              support_notes, admin_lifetime, admin_customer_status, admin_notes, created_at, updated_at
+            FROM profiles
+            ORDER BY updated_at DESC, created_at DESC
+            LIMIT 500
+          `)
+        });
+      }
       if (section === "plans") return json({ admin: identity, plans: await all(env.DB, `SELECT * FROM service_plans ORDER BY sort_order ASC, plan_name ASC`) });
       if (section === "policies") return json({ admin: identity, policies: await all(env.DB, `SELECT * FROM policy_pages ORDER BY title ASC`) });
       if (section === "branding") return json({ admin: identity, branding: await env.DB.prepare(`SELECT * FROM company_branding WHERE id = 'main'`).first() });
@@ -535,11 +706,16 @@ export async function onRequest(context) {
       if (section === "system") return json({ admin: identity, system: await all(env.DB, `SELECT * FROM system_events ORDER BY updated_at DESC, created_at DESC LIMIT 500`) });
       if (section === "maintenance") return json({ admin: identity, maintenance: await getMaintenance(env.DB) });
       if (section === "comingsoon") return json({ admin: identity, comingsoon: await getComingSoon(env.DB) });
-      if (section === "stripe") return json({ admin: identity, stripe: await getStripe(env) });
+      if (section === "stripe") return json({ admin: identity, stripe: await getStripe(env.DB, env, url.searchParams.get("test") === "1") });
     }
 
     if (request.method === "POST") {
       const body = await request.json().catch(() => ({}));
+      if (section === "admins") {
+        if (body.action === "remove") await removeAdmin(env.DB, body, identity, env);
+        else await addAdmin(env.DB, body, identity);
+        return json({ admins: await getAdmins(env.DB, env), saved: true });
+      }
       if (section === "plans") return json({ plans: await savePlan(env.DB, body), saved: true });
       if (section === "policies") return json({ policies: await savePolicy(env.DB, body), saved: true });
       if (section === "branding") return json({ branding: await saveBranding(env.DB, body), saved: true });
@@ -547,6 +723,7 @@ export async function onRequest(context) {
       if (section === "system") return json({ system: await saveSystemEvent(env.DB, body), saved: true });
       if (section === "maintenance") return json({ maintenance: await saveMaintenance(env.DB, body), saved: true });
       if (section === "comingsoon") return json({ comingsoon: await saveComingSoon(env.DB, body), saved: true });
+      if (section === "stripe") return json({ stripe: await saveStripe(env.DB, body, env), saved: true });
     }
 
     return json({ error: "Method or section not allowed." }, 405);
@@ -554,4 +731,3 @@ export async function onRequest(context) {
     return json({ error: error.message || "Admin API error." }, 500);
   }
 }
-
