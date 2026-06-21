@@ -1,64 +1,432 @@
-const services = [
-  {
-    name: "Free Discovery Enquiry",
-    description: "Tell us what you are considering and receive an initial recommendation for the most suitable next step.",
-    price: "£0",
-    socialPrice: "£0",
-    delivery: "1 to 3 working days",
-    revisions: "No revisions",
-    features: ["Initial enquiry review", "A simple service recommendation", "No detailed research or itinerary work"]
-  },
-  {
-    name: "Destination Discovery Plan",
-    description: "For customers who want to travel or enjoy an experience but need help deciding where to go.",
-    price: "£49",
-    socialPrice: "£29",
-    delivery: "3 to 5 working days",
-    revisions: "One minor revision",
-    features: ["Preferences and budget review", "Destination options", "Practical advantages and considerations", "Clear next steps"]
-  },
-  {
-    name: "Itinerary and Experience Planning Plan",
-    description: "For customers who know their destination and want a practical structure for what to do.",
-    price: "£89",
-    socialPrice: "£55",
-    delivery: "5 to 7 working days",
-    revisions: "One minor revision",
-    features: ["Suggested day-by-day structure", "Activity and experience ideas", "Local area and practical notes", "Rest and flexible time"]
-  },
-  {
-    name: "Complete Discovery and Planning Guidance Plan",
-    description: "Our fullest destination discovery and planning service for a more detailed request.",
-    price: "£149",
-    socialPrice: "£95",
-    delivery: "7 to 10 working days",
-    revisions: "Two minor revisions",
-    featured: true,
-    features: ["Destination and hotel-area research", "Accommodation examples", "Activity and itinerary research", "Indicative cost breakdowns", "General preparation notes"]
-  }
-];
-
-function escapeHtml(value) {
-  return String(value).replace(/[&<>"']/g, character => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#039;"
-  })[character]);
+:root {
+--ja-navy: #08233c;
+--ja-blue: #0b4f84;
+--ja-orange: #f26a2e;
+--ja-cream: #fbf8f1;
+--ja-soft: #f3f6f8;
+--ja-text: #10243a;
+--ja-muted: #526276;
+--ja-border: rgba(8, 38, 66, 0.12);
+--ja-shadow: 0 22px 70px rgba(8, 38, 66, 0.12);
 }
 
-const grid = document.querySelector("#pricingGrid");
-if (grid) {
-  grid.innerHTML = services.map(service => `
-    <article class="price-card${service.featured ? " featured" : ""}">
-      <span class="tag">${service.featured ? "Most comprehensive" : "Approved guidance plan"}</span>
-      <h2>${escapeHtml(service.name)}</h2>
-      <p>${escapeHtml(service.description)}</p>
-      <div class="price">${escapeHtml(service.price)} <small>standard price</small></div>
-      <p class="social-price"><strong>${escapeHtml(service.socialPrice)}</strong> social tariff price</p>
-      <ul class="feature-list">
-        ${service.features.map(feature => `<li>${escapeHtml(feature)}</li>`).join("")}
-        <li>${escapeHtml(service.delivery)}</li>
-        <li>${escapeHtml(service.revisions)}</li>
-      </ul>
-      <a class="button" href="/enquiry/?plan=${encodeURIComponent(service.name)}">Enquire about this plan</a>
-    </article>
-  `).join("");
+.home-clean {
+background: var(--ja-cream);
+color: var(--ja-text);
+}
+
+.clean-hero {
+position: relative;
+min-height: 680px;
+display: flex;
+align-items: center;
+background:
+linear-gradient(90deg, rgba(8, 35, 60, 0.92), rgba(8, 35, 60, 0.7), rgba(8, 35, 60, 0.28)),
+url("/assets/images/destinations/travel.jpg") center/cover no-repeat;
+color: #fff;
+overflow: hidden;
+}
+
+.clean-hero-grid {
+display: grid;
+grid-template-columns: minmax(0, 1fr) 420px;
+gap: 4rem;
+align-items: center;
+}
+
+.clean-kicker {
+display: inline-flex;
+margin-bottom: 1.1rem;
+color: var(--ja-orange);
+font-size: 0.82rem;
+font-weight: 900;
+letter-spacing: 0.11em;
+text-transform: uppercase;
+}
+
+.clean-hero h1,
+.pricing-page-hero h1 {
+margin: 0 0 1.2rem;
+font-family: "Playfair Display", serif;
+font-size: clamp(3.2rem, 7vw, 6.8rem);
+line-height: 0.92;
+letter-spacing: -0.06em;
+}
+
+.clean-hero p {
+max-width: 760px;
+margin: 0;
+color: rgba(255,255,255,0.9);
+font-size: 1.25rem;
+line-height: 1.7;
+}
+
+.clean-actions {
+display: flex;
+flex-wrap: wrap;
+gap: 0.85rem;
+margin-top: 2rem;
+}
+
+.clean-button {
+display: inline-flex;
+justify-content: center;
+align-items: center;
+min-height: 48px;
+padding: 0.95rem 1.35rem;
+border-radius: 14px;
+font-weight: 900;
+text-decoration: none;
+transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.clean-button.primary {
+background: var(--ja-orange);
+color: #fff;
+box-shadow: 0 18px 36px rgba(242, 106, 46, 0.25);
+}
+
+.clean-button.secondary {
+background: #fff;
+color: var(--ja-navy);
+}
+
+.clean-button:hover {
+transform: translateY(-1px);
+}
+
+.clean-hero-card {
+overflow: hidden;
+border-radius: 24px;
+background: #fff;
+color: var(--ja-navy);
+box-shadow: var(--ja-shadow);
+}
+
+.clean-hero-card img {
+width: 100%;
+height: 260px;
+object-fit: cover;
+display: block;
+}
+
+.clean-hero-card div {
+display: grid;
+gap: 0.45rem;
+padding: 1.5rem;
+}
+
+.clean-hero-card strong {
+font-size: 1.35rem;
+}
+
+.clean-hero-card span {
+color: var(--ja-muted);
+line-height: 1.55;
+}
+
+.clean-strip {
+background: #fff;
+border-bottom: 1px solid var(--ja-border);
+}
+
+.clean-strip-grid {
+display: grid;
+grid-template-columns: repeat(4, 1fr);
+}
+
+.clean-strip-grid p {
+margin: 0;
+padding: 1.35rem 1rem;
+text-align: center;
+border-left: 1px solid var(--ja-border);
+}
+
+.clean-strip-grid p:last-child {
+border-right: 1px solid var(--ja-border);
+}
+
+.clean-strip-grid strong {
+display: block;
+color: var(--ja-blue);
+font-size: 1.45rem;
+font-weight: 900;
+}
+
+.clean-strip-grid span {
+color: var(--ja-muted);
+font-weight: 700;
+}
+
+.clean-final {
+padding: 5rem 0;
+background: var(--ja-navy);
+color: #fff;
+text-align: center;
+}
+
+.clean-final span {
+color: var(--ja-orange);
+font-size: 0.78rem;
+font-weight: 900;
+letter-spacing: 0.1em;
+text-transform: uppercase;
+}
+
+.clean-final h2 {
+max-width: 860px;
+margin: 0.9rem auto 1.8rem;
+font-family: "Playfair Display", serif;
+font-size: clamp(2.2rem, 4.5vw, 4.3rem);
+line-height: 1;
+letter-spacing: -0.045em;
+}
+
+/* Pricing page v2 */
+
+.pricing-page-hero {
+padding: 5.5rem 0 4rem;
+background:
+linear-gradient(135deg, rgba(8, 35, 60, 0.92), rgba(8, 35, 60, 0.72)),
+url("/assets/images/destinations/travel.jpg") center/cover no-repeat;
+color: #fff;
+}
+
+.pricing-hero-inner {
+display: grid;
+grid-template-columns: minmax(0, 1fr) 360px;
+gap: 2rem;
+align-items: end;
+}
+
+.pricing-hero-copy p {
+max-width: 720px;
+margin: 0;
+color: rgba(255,255,255,0.9);
+font-size: 1.12rem;
+line-height: 1.7;
+}
+
+.pricing-hero-note {
+display: grid;
+gap: 0.55rem;
+padding: 1.5rem;
+border-radius: 22px;
+background: #fff;
+color: var(--ja-navy);
+box-shadow: 0 24px 70px rgba(0,0,0,0.18);
+}
+
+.pricing-hero-note strong {
+font-size: 1.15rem;
+}
+
+.pricing-hero-note span {
+color: var(--ja-muted);
+line-height: 1.55;
+}
+
+.pricing-summary-strip {
+background: #fff;
+border-bottom: 1px solid var(--ja-border);
+}
+
+.pricing-summary-grid {
+display: grid;
+grid-template-columns: repeat(4, 1fr);
+}
+
+.pricing-summary-grid p {
+margin: 0;
+padding: 1.3rem 1rem;
+border-left: 1px solid var(--ja-border);
+text-align: center;
+}
+
+.pricing-summary-grid p:last-child {
+border-right: 1px solid var(--ja-border);
+}
+
+.pricing-summary-grid strong {
+display: block;
+color: var(--ja-blue);
+font-size: 1.35rem;
+font-weight: 900;
+}
+
+.pricing-summary-grid span {
+color: var(--ja-muted);
+font-weight: 700;
+font-size: 0.9rem;
+}
+
+.pricing-plans-section {
+background: var(--ja-cream);
+}
+
+.pricing-heading {
+max-width: 760px;
+margin-inline: auto;
+text-align: center;
+}
+
+.pricing-cards-v2 {
+display: grid;
+grid-template-columns: repeat(4, minmax(0, 1fr));
+gap: 1.25rem;
+align-items: stretch;
+}
+
+.pricing-card-v2 {
+display: flex;
+flex-direction: column;
+gap: 1rem;
+min-height: 100%;
+padding: 1.45rem;
+border: 1px solid var(--ja-border);
+border-radius: 24px;
+background: #fff;
+box-shadow: 0 18px 50px rgba(8, 38, 66, 0.08);
+}
+
+.pricing-card-v2.featured {
+border: 2px solid var(--ja-orange);
+box-shadow: 0 22px 60px rgba(242, 106, 46, 0.16);
+}
+
+.pricing-pill {
+width: fit-content;
+padding: 0.42rem 0.72rem;
+border-radius: 999px;
+background: #eaf7f1;
+color: #00684a;
+font-size: 0.66rem;
+font-weight: 900;
+text-transform: uppercase;
+letter-spacing: 0.06em;
+}
+
+.pricing-card-v2 h3 {
+margin: 0;
+color: var(--ja-navy);
+font-family: "Playfair Display", serif;
+font-size: clamp(1.75rem, 2.05vw, 2.25rem);
+line-height: 1;
+letter-spacing: -0.04em;
+}
+
+.pricing-summary {
+margin: 0;
+color: var(--ja-muted);
+font-size: 0.95rem;
+line-height: 1.55;
+}
+
+.pricing-price {
+display: flex;
+align-items: baseline;
+gap: 0.6rem;
+padding-top: 0.85rem;
+border-top: 1px solid var(--ja-border);
+}
+
+.pricing-price strong {
+color: var(--ja-navy);
+font-size: 2.1rem;
+font-weight: 900;
+letter-spacing: -0.04em;
+}
+
+.pricing-price span {
+color: var(--ja-muted);
+font-size: 0.84rem;
+font-weight: 800;
+}
+
+.pricing-card-v2 ul {
+display: grid;
+gap: 0.65rem;
+margin: 0;
+padding: 0;
+list-style: none;
+}
+
+.pricing-card-v2 li {
+position: relative;
+padding-left: 1.35rem;
+color: #26384d;
+font-size: 0.9rem;
+line-height: 1.45;
+}
+
+.pricing-card-v2 li::before {
+content: "✓";
+position: absolute;
+left: 0;
+top: 0;
+color: #008768;
+font-weight: 900;
+}
+
+.pricing-button {
+display: inline-flex;
+justify-content: center;
+align-items: center;
+margin-top: auto;
+padding: 0.9rem 1rem;
+border-radius: 14px;
+background: var(--ja-navy);
+color: #fff;
+font-weight: 900;
+text-decoration: none;
+transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.pricing-button.primary {
+background: var(--ja-orange);
+}
+
+.pricing-button:hover {
+transform: translateY(-1px);
+box-shadow: 0 14px 28px rgba(8, 38, 66, 0.16);
+}
+
+@media (max-width: 1180px) {
+.clean-hero-grid,
+.pricing-hero-inner {
+grid-template-columns: 1fr;
+}
+
+.clean-hero-card,
+.pricing-hero-note {
+max-width: 540px;
+}
+
+.pricing-cards-v2 {
+grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+}
+
+@media (max-width: 760px) {
+.clean-hero {
+min-height: auto;
+padding: 4rem 0;
+}
+
+.pricing-page-hero {
+padding: 4rem 0 3rem;
+}
+
+.clean-strip-grid,
+.pricing-summary-grid {
+grid-template-columns: repeat(2, 1fr);
+}
+
+.pricing-cards-v2 {
+grid-template-columns: 1fr;
+}
+
+.pricing-card-v2 {
+padding: 1.25rem;
+}
 }
