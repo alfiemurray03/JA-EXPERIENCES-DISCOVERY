@@ -25,7 +25,40 @@ planName: "Complete Planning Social Tariff",
 },
 };
 
+export async function onRequestGet({ request, env }) {
+const url = new URL(request.url);
+const planCode = String(url.searchParams.get("plan") || "").trim();
+
+if (!planCode) {
+return Response.redirect("/pricing/", 302);
+}
+
+return createCheckoutSession(planCode, env);
+}
+
 export async function onRequestPost({ request, env }) {
+try {
+const formData = await request.formData();
+const planCode = String(formData.get("plan") || "").trim();
+
+```
+return createCheckoutSession(planCode, env);
+```
+
+} catch (error) {
+console.error("Checkout form error:", error);
+
+```
+return jsonResponse(
+  { error: "Unexpected error while reading the selected plan." },
+  500
+);
+```
+
+}
+}
+
+async function createCheckoutSession(planCode, env) {
 try {
 if (!env.STRIPE_SECRET_KEY) {
 return jsonResponse(
@@ -34,8 +67,7 @@ return jsonResponse(
 );
 }
 
-const formData = await request.formData();
-const planCode = String(formData.get("plan") || "").trim();
+```
 const selectedPlan = PRICE_MAP[planCode];
 
 if (!selectedPlan) {
@@ -109,20 +141,19 @@ if (!session.url) {
 }
 
 return Response.redirect(session.url, 303);
+```
 
 } catch (error) {
 console.error("Checkout session error:", error);
 
+```
 return jsonResponse(
   { error: "Unexpected error while creating Stripe Checkout." },
   500
 );
+```
 
 }
-}
-
-export async function onRequestGet() {
-return Response.redirect("/pricing/", 302);
 }
 
 function jsonResponse(data, status = 200) {
