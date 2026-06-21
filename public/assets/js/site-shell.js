@@ -65,3 +65,24 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
 
+
+
+/* JA Secure Access header account label loader */
+(function () {
+  function loadAccessHeaderScript() {
+    if (document.querySelector('script[src*="/assets/js/access-header.js"]')) {
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = "/assets/js/access-header.js?v=20260621-20";
+    script.defer = true;
+    document.body.appendChild(script);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", loadAccessHeaderScript);
+  } else {
+    loadAccessHeaderScript();
+  }
+})();

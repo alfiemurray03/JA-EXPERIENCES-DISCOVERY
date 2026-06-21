@@ -1,51 +1,19 @@
-const JA_PROFILE_STORAGE_KEY = "ja_secure_profile_v1";
-
 async function loadAccessProfile() {
   try {
-    const response = await fetch("/cdn-cgi/access/get-identity", {
+    const response = await fetch("/account/profile", {
       credentials: "include",
-      cache: "no-store"
+      cache: "no-store",
+      headers: {
+        "Accept": "application/json"
+      }
     });
 
     if (!response.ok) {
-      throw new Error("Identity response was not available.");
+      throw new Error("Profile response was not available.");
     }
 
-    const identity = await response.json();
-
-    const email =
-      identity.email ||
-      identity.user_email ||
-      identity.username ||
-      identity.common_name ||
-      "Signed in";
-
-    const legalName =
-      identity.name ||
-      identity.user_name ||
-      identity.preferred_username ||
-      identity.common_name ||
-      email ||
-      "JA Secure Access user";
-
-    const provider =
-      identity.idp && identity.idp.name
-        ? identity.idp.name
-        : "JA Secure Access / Microsoft Entra";
-
-    const savedProfile = getSavedProfile(email);
-    const displayName = savedProfile.displayName || legalName;
-
-    const profile = {
-      email,
-      legalName,
-      displayName,
-      provider,
-      contactEmail: savedProfile.contactEmail || email,
-      phone: savedProfile.phone || "",
-      communicationPreference: savedProfile.communicationPreference || "Email",
-      supportNotes: savedProfile.supportNotes || ""
-    };
+    const data = await response.json();
+    const profile = data.profile;
 
     updateProfile(profile);
     populateForm(profile);
@@ -55,31 +23,16 @@ async function loadAccessProfile() {
   }
 }
 
-function getSavedProfile(email) {
-  try {
-    const allProfiles = JSON.parse(localStorage.getItem(JA_PROFILE_STORAGE_KEY) || "{}");
-    return allProfiles[email] || {};
-  } catch {
-    return {};
-  }
-}
-
-function saveProfile(email, profile) {
-  const allProfiles = JSON.parse(localStorage.getItem(JA_PROFILE_STORAGE_KEY) || "{}");
-  allProfiles[email] = profile;
-  localStorage.setItem(JA_PROFILE_STORAGE_KEY, JSON.stringify(allProfiles));
-}
-
 function updateProfile(profile) {
   setText("profileName", profile.displayName);
   setText("profileEmail", profile.email);
   setText("profileNameDetail", profile.displayName);
-  setText("profileLegalName", profile.legalName);
+  setText("profileLegalName", profile.verifiedName);
   setText("profileEmailDetail", profile.email);
   setText("profileContactEmail", profile.contactEmail);
   setText("profilePhone", profile.phone || "Not added");
-  setText("profileComms", profile.communicationPreference);
-  setText("profileProvider", profile.provider);
+  setText("profileComms", profile.communicationPreference || "Email");
+  setText("profileProvider", "JA Secure Access / Microsoft Entra");
   setText("profileInitials", initials(profile.displayName, profile.email));
 
   const profileName = document.getElementById("profileName");
@@ -94,7 +47,7 @@ function populateForm(profile) {
   setValue("displayNameInput", profile.displayName);
   setValue("contactEmailInput", profile.contactEmail);
   setValue("phoneInput", profile.phone);
-  setValue("communicationPreferenceInput", profile.communicationPreference);
+  setValue("communicationPreferenceInput", profile.communicationPreference || "Email");
   setValue("supportNotesInput", profile.supportNotes);
 }
 
@@ -103,40 +56,60 @@ function bindProfileForm(profile) {
   const resetButton = document.getElementById("resetProfileButton");
   const savedMessage = document.getElementById("profileSavedMessage");
 
-  if (form) {
-    form.addEventListener("submit", function (event) {
+  if (form && !form.dataset.bound) {
+    form.dataset.bound = "true";
+
+    form.addEventListener("submit", async function (event) {
       event.preventDefault();
 
       const updatedProfile = {
-        displayName: getValue("displayNameInput") || profile.legalName,
+        displayName: getValue("displayNameInput") || profile.verifiedName || profile.email,
         contactEmail: getValue("contactEmailInput") || profile.email,
         phone: getValue("phoneInput"),
         communicationPreference: getValue("communicationPreferenceInput") || "Email",
         supportNotes: getValue("supportNotesInput")
       };
 
-      saveProfile(profile.email, updatedProfile);
+      const response = await fetch("/account/profile", {
+        method: "POST",
+        credentials: "include",
+        cache: "no-store",
+        headers: {
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(updatedProfile)
+      });
 
-      const mergedProfile = {
-        ...profile,
-        ...updatedProfile
-      };
+      if (!response.ok) {
+        throw new Error("Profile could not be saved.");
+      }
 
-      updateProfile(mergedProfile);
+      const data = await response.json();
+      updateProfile(data.profile);
+      populateForm(data.profile);
 
       if (savedMessage) {
-        savedMessage.textContent = "Profile saved on this device.";
+        savedMessage.textContent = "Profile saved successfully. These details now sync through your JA Secure Access account.";
         savedMessage.hidden = false;
       }
     });
   }
 
-  if (resetButton) {
-    resetButton.addEventListener("click", function () {
-      const allProfiles = JSON.parse(localStorage.getItem(JA_PROFILE_STORAGE_KEY) || "{}");
-      delete allProfiles[profile.email];
-      localStorage.setItem(JA_PROFILE_STORAGE_KEY, JSON.stringify(allProfiles));
-      window.location.reload();
+  if (resetButton && !resetButton.dataset.bound) {
+    resetButton.dataset.bound = "true";
+
+    resetButton.addEventListener("click", async function () {
+      setValue("displayNameInput", profile.verifiedName || profile.email);
+      setValue("contactEmailInput", profile.email);
+      setValue("phoneInput", "");
+      setValue("communicationPreferenceInput", "Email");
+      setValue("supportNotesInput", "");
+
+      if (savedMessage) {
+        savedMessage.textContent = "Fields reset. Click Save profile to confirm.";
+        savedMessage.hidden = false;
+      }
     });
   }
 }
@@ -172,8 +145,8 @@ function getValue(id) {
 }
 
 function initials(name, email) {
-  const source = name && name !== "JA Secure Access user" ? name : email;
-  const parts = String(source || "JA")
+  const source = name || email || "JA";
+  const parts = String(source)
     .replace(/@.*/, "")
     .split(/[.\s_-]+/)
     .filter(Boolean);
