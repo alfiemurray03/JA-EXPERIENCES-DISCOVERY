@@ -1,4 +1,5 @@
 async function loadAccessProfile() {
+  bindDashboardShell();
   try {
     const response = await fetch("/account/profile", {
       credentials: "include",
@@ -29,6 +30,9 @@ async function loadAccessProfile() {
 function updateProfile(profile) {
   setText("profileName", profile.displayName);
   setText("profileEmail", profile.email);
+  setText("sidebarName", profile.displayName);
+  setText("sidebarEmail", profile.email);
+  setText("welcomeName", firstName(profile.displayName, profile.email));
   setText("profileNameDetail", profile.displayName);
   setText("profileLegalName", profile.verifiedName);
   setText("profileEmailDetail", profile.email);
@@ -37,6 +41,23 @@ function updateProfile(profile) {
   setText("profileComms", profile.communicationPreference || "Email");
   setText("profileProvider", "JA Secure Access / Microsoft Entra");
   setText("profileInitials", initials(profile.displayName, profile.email));
+  setText("sidebarInitials", initials(profile.displayName, profile.email));
+  setText("currentPlanName", profile.currentPlan || "Standard");
+  setText("currentPlanType", profile.currentPlanType || profile.customerStatus || "Standard");
+  setText("statBenefitsText", profile.lifetimeAccess ? "Lifetime access" : "Secure access");
+  setText("benefitsSummary", profile.lifetimeAccess
+    ? "Lifetime access is active on this account, alongside secure customer profile management, data rights requests and system reporting."
+    : "Secure account access, customer profile management, data rights requests and system reporting.");
+  setText("lifetimeAccessText", profile.lifetimeAccess ? "Enabled" : "Not enabled");
+  setText("statBenefits", profile.lifetimeAccess ? "2" : "1");
+
+  setBadge("profilePlanBadge", profile.lifetimeAccess ? "Lifetime" : (profile.currentPlanType || profile.customerStatus || "Standard"), profile.lifetimeAccess ? "amber" : "");
+  setBadge("planStatusBadge", profile.lifetimeAccess ? "Lifetime" : "Active", profile.lifetimeAccess ? "amber" : "green");
+
+  const lifetimeBadge = document.getElementById("lifetimeBadge");
+  if (lifetimeBadge) {
+    lifetimeBadge.hidden = !profile.lifetimeAccess;
+  }
 
   const profileName = document.getElementById("profileName");
   if (profileName) {
@@ -44,6 +65,26 @@ function updateProfile(profile) {
   }
 
   window.dispatchEvent(new Event("ja-profile-updated"));
+}
+
+function bindDashboardShell() {
+  const button = document.getElementById("mobileMenuButton");
+  if (button && !button.dataset.bound) {
+    button.dataset.bound = "true";
+    button.addEventListener("click", () => {
+      document.body.classList.toggle("sidebar-open");
+    });
+  }
+
+  document.querySelectorAll("[data-account-nav]").forEach((link) => {
+    if (link.dataset.bound) return;
+    link.dataset.bound = "true";
+    link.addEventListener("click", () => {
+      document.body.classList.remove("sidebar-open");
+      document.querySelectorAll("[data-account-nav]").forEach((item) => item.classList.remove("active"));
+      link.classList.add("active");
+    });
+  });
 }
 
 function populateForm(profile) {
@@ -156,10 +197,17 @@ async function loadAccountRequests() {
     if (!response.ok) throw new Error(data.error || "Requests could not be loaded.");
     renderDataProtectionRequests(data.dataProtectionRequests || []);
     renderSystemReports(data.systemReports || []);
+    updateRequestStats(data.dataProtectionRequests || [], data.systemReports || []);
   } catch (error) {
     setText("dprList", error.message);
     setText("sysList", error.message);
   }
+}
+
+function updateRequestStats(dataRequests, systemReports) {
+  const totalSupport = dataRequests.length + systemReports.length;
+  setText("statSupport", String(totalSupport));
+  setText("statMessages", String(totalSupport));
 }
 
 function bindAccountRequestForms() {
@@ -289,6 +337,13 @@ function setText(id, value) {
   }
 }
 
+function setBadge(id, text, colour) {
+  const element = document.getElementById(id);
+  if (!element) return;
+  element.textContent = text || "";
+  element.className = `badge ${colour || ""}`.trim();
+}
+
 function setValue(id, value) {
   const element = document.getElementById(id);
   if (element) {
@@ -345,6 +400,12 @@ function initials(name, email) {
   }
 
   return "JA";
+}
+
+function firstName(name, email) {
+  const source = String(name || email || "there").trim();
+  if (!source || source.includes("@")) return "there";
+  return source.split(/\s+/)[0] || "there";
 }
 
 document.addEventListener("DOMContentLoaded", loadAccessProfile);

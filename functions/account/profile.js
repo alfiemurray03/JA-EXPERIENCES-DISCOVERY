@@ -75,6 +75,18 @@ async function ensureProfileTable(DB) {
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
   `).run();
+
+  await safeAlter(DB, `ALTER TABLE profiles ADD COLUMN admin_lifetime INTEGER DEFAULT 0`);
+  await safeAlter(DB, `ALTER TABLE profiles ADD COLUMN admin_lifetime_plan_id TEXT`);
+  await safeAlter(DB, `ALTER TABLE profiles ADD COLUMN admin_customer_status TEXT DEFAULT 'Standard'`);
+}
+
+async function safeAlter(DB, sql) {
+  try {
+    await DB.prepare(sql).run();
+  } catch {
+    // Existing D1 databases may already have this column.
+  }
 }
 
 async function ensureConsentTable(DB) {
@@ -134,6 +146,9 @@ async function getProfile(DB, identity) {
       phone,
       communication_preference,
       support_notes,
+      admin_lifetime,
+      admin_lifetime_plan_id,
+      admin_customer_status,
       created_at,
       updated_at
     FROM profiles
@@ -141,6 +156,7 @@ async function getProfile(DB, identity) {
   `).bind(identity.email).first();
 
   if (existing) {
+    const plan = await getProfilePlan(DB, existing.admin_lifetime_plan_id);
     return {
       email: existing.email,
       verifiedName: existing.verified_name || identity.verifiedName,
@@ -149,6 +165,10 @@ async function getProfile(DB, identity) {
       phone: existing.phone || "",
       communicationPreference: existing.communication_preference || "Email",
       supportNotes: existing.support_notes || "",
+      lifetimeAccess: Number(existing.admin_lifetime || 0) === 1,
+      customerStatus: existing.admin_customer_status || "Standard",
+      currentPlan: plan?.plan_name || existing.admin_customer_status || "Standard",
+      currentPlanType: plan?.plan_type || existing.admin_customer_status || "Standard",
       createdAt: existing.created_at,
       updatedAt: existing.updated_at
     };
@@ -162,6 +182,10 @@ async function getProfile(DB, identity) {
     phone: "",
     communicationPreference: "Email",
     supportNotes: "",
+    lifetimeAccess: false,
+    customerStatus: "Standard",
+    currentPlan: "Standard",
+    currentPlanType: "Standard",
     createdAt: null,
     updatedAt: null
   };
@@ -188,6 +212,15 @@ async function getProfile(DB, identity) {
   ).run();
 
   return getProfile(DB, identity);
+}
+
+async function getProfilePlan(DB, planId) {
+  if (!planId) return null;
+  try {
+    return await DB.prepare(`SELECT id, plan_name, plan_type FROM service_plans WHERE id = ?`).bind(planId).first();
+  } catch {
+    return null;
+  }
 }
 
 async function saveProfile(DB, identity, body, request) {

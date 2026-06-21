@@ -4,342 +4,550 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>My Account | JA Experiences &amp; Discovery</title>
-  <meta name="description" content="Secure JA Experiences & Discovery account profile protected by JA Secure Access.">
+  <meta name="description" content="Secure JA Experiences & Discovery customer account dashboard protected by JA Secure Access.">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-
-  <link rel="stylesheet" href="/assets/css/ja-travel-rebuild.css?v=20260621-18">
-  <link rel="stylesheet" href="/assets/css/homepage-clean.css?v=20260621-18">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
   <style>
+    :root {
+      --bg: #0b1220;
+      --sidebar: #1b2738;
+      --sidebar-dark: #152033;
+      --panel: #1d2a3c;
+      --panel-soft: #223149;
+      --panel-deep: #101827;
+      --line: #334761;
+      --line-soft: rgba(148, 163, 184, 0.2);
+      --text: #f8fafc;
+      --muted: #9fb8d8;
+      --blue: #3b82f6;
+      --blue-soft: rgba(59, 130, 246, 0.16);
+      --green: #22c55e;
+      --green-soft: rgba(34, 197, 94, 0.15);
+      --amber: #fbbf24;
+      --amber-soft: rgba(251, 191, 36, 0.15);
+      --red: #fb7185;
+      --red-soft: rgba(251, 113, 133, 0.16);
+      --radius: 14px;
+      --shadow: 0 24px 70px rgba(0, 0, 0, 0.24);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
     body {
       margin: 0;
-      background: #fbf8f1;
-      color: #08233c;
+      background: var(--bg);
+      color: var(--text);
       font-family: Inter, Arial, sans-serif;
-    }
-
-    .account-page {
       min-height: 100vh;
-      background: #fbf8f1;
     }
 
-    .account-hero {
-      padding: clamp(4rem, 7vw, 6.5rem) 1.5rem;
-      background:
-        linear-gradient(rgba(8, 35, 60, 0.86), rgba(8, 35, 60, 0.86)),
-        url("/assets/images/hero-travel.jpg");
-      background-size: cover;
-      background-position: center;
-      color: #ffffff;
+    a { color: inherit; }
+
+    .account-shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 320px minmax(0, 1fr);
     }
 
-    .account-wrap {
-      width: min(1180px, 100%);
-      margin: 0 auto;
+    .account-sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      background: var(--sidebar);
+      border-right: 1px solid var(--line-soft);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 40;
     }
 
-    .account-kicker {
-      display: inline-block;
-      margin-bottom: 1rem;
-      color: #ffb38e;
-      font-size: 0.76rem;
+    .brand {
+      min-height: 92px;
+      padding: 1.5rem 1.25rem;
+      display: flex;
+      gap: 0.85rem;
+      align-items: center;
+      border-bottom: 1px solid var(--line-soft);
+    }
+
+    .brand-mark,
+    .avatar {
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      background: var(--blue);
+      color: #fff;
+      font-weight: 900;
+    }
+
+    .brand-mark {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+    }
+
+    .brand strong,
+    .user-card strong {
+      display: block;
+      line-height: 1.2;
+    }
+
+    .brand span,
+    .user-card span {
+      display: block;
+      color: var(--muted);
+      margin-top: 0.2rem;
+      font-size: 0.86rem;
+      line-height: 1.35;
+    }
+
+    .user-card {
+      padding: 1.25rem;
+      display: flex;
+      gap: 0.85rem;
+      align-items: center;
+      border-bottom: 1px solid var(--line-soft);
+      min-width: 0;
+    }
+
+    .avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 999px;
+      background: #1d4ed8;
+      color: #bfdbfe;
+    }
+
+    .user-card div:last-child { min-width: 0; }
+
+    .user-card strong,
+    .user-card span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .nav-wrap {
+      padding: 1rem 0.85rem;
+      overflow: auto;
+    }
+
+    .nav-heading {
+      margin: 1.05rem 0 0.45rem;
+      padding: 0 0.8rem;
+      color: #7d97b9;
+      font-size: 0.72rem;
       font-weight: 900;
       letter-spacing: 0.12em;
       text-transform: uppercase;
     }
 
-    .account-hero-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1.05fr) minmax(340px, 0.95fr);
-      gap: clamp(2rem, 5vw, 4rem);
+    .nav-link {
+      width: 100%;
+      min-height: 50px;
+      border-radius: 12px;
+      display: flex;
       align-items: center;
+      gap: 0.75rem;
+      padding: 0 0.8rem;
+      color: #bdd0ea;
+      text-decoration: none;
+      font-weight: 700;
     }
 
-    .account-hero h1 {
-      max-width: 820px;
-      margin: 0;
-      font-family: "Playfair Display", Georgia, serif;
-      font-size: clamp(3rem, 7vw, 5.8rem);
-      line-height: 0.95;
-      letter-spacing: -0.055em;
+    .nav-link:hover,
+    .nav-link.active {
+      background: var(--blue);
+      color: #fff;
+      box-shadow: 0 14px 34px rgba(59, 130, 246, 0.22);
     }
 
-    .account-hero p {
-      max-width: 740px;
-      margin: 1.4rem 0 0;
-      color: rgba(255, 255, 255, 0.86);
-      font-size: clamp(1.05rem, 1.7vw, 1.28rem);
-      line-height: 1.65;
+    .nav-link svg,
+    .card-icon svg,
+    .mobile-menu-button svg {
+      width: 19px;
+      height: 19px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex: 0 0 auto;
     }
 
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 1rem 1.25rem 1.25rem;
+      border-top: 1px solid var(--line-soft);
+      background: var(--sidebar-dark);
+    }
+
+    .dashboard-main {
+      min-width: 0;
+      padding: 2rem clamp(1rem, 3vw, 3rem) 3rem;
+    }
+
+    .mobile-topbar {
+      display: none;
+      position: sticky;
+      top: 0;
+      z-index: 35;
+      margin: -2rem -1rem 1.25rem;
+      padding: 0.8rem 1rem;
+      background: rgba(11, 18, 32, 0.96);
+      border-bottom: 1px solid var(--line-soft);
+      backdrop-filter: blur(12px);
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .mobile-menu-button {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: #fff;
+      border-radius: 10px;
+      min-width: 44px;
+      min-height: 44px;
+      display: grid;
+      place-items: center;
+    }
+
+    .content-wrap {
+      width: min(1280px, 100%);
+      margin: 0 auto;
+      display: grid;
+      gap: 1.5rem;
+    }
+
+    .dashboard-hero {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      align-items: flex-start;
+      padding-top: 0.75rem;
+    }
+
+    .eyebrow {
+      display: block;
+      color: var(--blue);
+      font-size: 0.75rem;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 0.65rem;
+    }
+
+    h1,
+    h2,
+    h3,
+    p { margin-top: 0; }
+
+    h1 {
+      margin-bottom: 0.45rem;
+      font-size: clamp(2rem, 4vw, 3.1rem);
+      letter-spacing: -0.045em;
+      line-height: 1.04;
+    }
+
+    h2 {
+      font-size: 1.25rem;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.4rem;
+    }
+
+    p {
+      color: var(--muted);
+      line-height: 1.6;
+      margin-bottom: 1rem;
+    }
+
+    .dashboard-card,
+    .profile-card,
+    .account-panel,
+    .account-card,
+    .account-record,
+    .quick-action-card,
+    .stat-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: none;
+    }
+
+    .dashboard-card,
     .profile-card,
     .account-panel,
     .account-card {
-      background: #ffffff;
-      border: 1px solid #d8e2ea;
-      border-radius: 28px;
-      padding: 1.75rem;
-      box-shadow: 0 22px 60px rgba(8, 35, 60, 0.1);
+      padding: 1.5rem;
     }
 
     .profile-card {
-      background: rgba(255, 255, 255, 0.97);
-      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.22);
-    }
-
-    .profile-top {
       display: flex;
-      gap: 1rem;
+      gap: 1.2rem;
       align-items: center;
-      margin-bottom: 1.2rem;
     }
 
     .profile-avatar {
-      width: 72px;
-      height: 72px;
-      border-radius: 24px;
-      background: #f26a2e;
-      color: #ffffff;
+      width: 76px;
+      height: 76px;
+      border-radius: 999px;
+      background: #1d4ed8;
+      color: #60a5fa;
       display: grid;
       place-items: center;
-      font-size: 1.45rem;
+      font-size: 1.5rem;
       font-weight: 900;
-      box-shadow: 0 14px 30px rgba(242, 106, 46, 0.3);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+      flex: 0 0 auto;
     }
 
-    .profile-top h2 {
-      margin: 0;
-      color: #08233c;
-      font-size: 1.35rem;
-      font-weight: 900;
-    }
-
+    .profile-top h2,
     .profile-top p {
-      margin: 0.25rem 0 0;
-      color: #526276;
-      font-size: 0.92rem;
-      line-height: 1.35;
-      word-break: break-word;
+      margin: 0;
     }
 
-    .profile-status {
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.8rem;
+    }
+
+    .badge {
       display: inline-flex;
       align-items: center;
-      gap: 0.45rem;
-      margin-top: 0.8rem;
+      gap: 0.35rem;
+      width: fit-content;
       border-radius: 999px;
-      background: #eaf7f1;
-      color: #007a53;
-      padding: 0.45rem 0.7rem;
-      font-size: 0.78rem;
+      background: var(--blue-soft);
+      color: #60a5fa;
+      padding: 0.35rem 0.65rem;
+      font-size: 0.76rem;
       font-weight: 900;
     }
 
-    .profile-status::before {
-      content: "";
-      width: 0.55rem;
-      height: 0.55rem;
-      border-radius: 999px;
-      background: #00a86b;
+    .badge.green { background: var(--green-soft); color: var(--green); }
+    .badge.amber { background: var(--amber-soft); color: var(--amber); }
+    .badge.red { background: var(--red-soft); color: var(--red); }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 1rem;
+    }
+
+    .stat-card {
+      min-height: 116px;
+      padding: 1.1rem;
+    }
+
+    .stat-card span {
+      display: block;
+      color: var(--muted);
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+
+    .stat-card strong {
+      display: block;
+      font-size: 2rem;
+      letter-spacing: -0.04em;
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      align-items: start;
+    }
+
+    .wide { grid-column: 1 / -1; }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+    }
+
+    .section-head p { margin-bottom: 0; }
+
+    .quick-actions {
+      display: grid;
+      gap: 0.65rem;
+    }
+
+    .quick-action-card {
+      min-height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.85rem 1rem;
+      text-decoration: none;
+      font-weight: 800;
+    }
+
+    .quick-action-card span {
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 0.85rem;
     }
 
     .profile-details {
       display: grid;
-      gap: 0.75rem;
-      margin-top: 1.1rem;
+      gap: 0.7rem;
     }
 
     .profile-row {
-      background: #f7f9fb;
-      border: 1px solid #d8e2ea;
-      border-radius: 16px;
-      padding: 0.9rem;
+      display: grid;
+      grid-template-columns: 190px minmax(0, 1fr);
+      gap: 1rem;
+      align-items: center;
+      border-top: 1px solid var(--line-soft);
+      padding-top: 0.8rem;
     }
 
     .profile-row span {
-      display: block;
-      margin-bottom: 0.25rem;
-      color: #526276;
-      font-size: 0.74rem;
-      font-weight: 900;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 800;
     }
 
     .profile-row strong {
-      display: block;
-      color: #08233c;
-      font-size: 0.98rem;
-      line-height: 1.35;
-      word-break: break-word;
-    }
-
-    .account-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.8rem;
-      margin-top: 1.5rem;
-    }
-
-    .account-button {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 48px;
-      padding: 0 1.15rem;
-      border: 0;
-      border-radius: 14px;
-      background: #08233c;
-      color: #ffffff;
-      font: inherit;
-      font-weight: 900;
-      text-decoration: none;
-      cursor: pointer;
-      box-shadow: 0 14px 28px rgba(8, 35, 60, 0.16);
-    }
-
-    .account-button.orange {
-      background: #f26a2e;
-    }
-
-    .account-button.light {
-      background: #ffffff;
-      color: #08233c;
-    }
-
-    .account-button.outline {
-      background: transparent;
-      border: 1px solid rgba(255, 255, 255, 0.45);
-      color: #ffffff;
-      box-shadow: none;
-    }
-
-    .account-section {
-      padding: clamp(4rem, 7vw, 6rem) 1.5rem;
-    }
-
-    .account-dashboard {
-      width: min(1180px, 100%);
-      margin: 0 auto;
-      display: grid;
-      grid-template-columns: 0.85fr 1.15fr;
-      gap: 1.25rem;
-      align-items: start;
-    }
-
-    .account-panel h2,
-    .account-card h2 {
-      margin: 0 0 0.85rem;
-      color: #08233c;
-      font-family: "Playfair Display", Georgia, serif;
-      font-size: clamp(1.9rem, 3vw, 2.65rem);
-      line-height: 0.98;
-      letter-spacing: -0.045em;
-    }
-
-    .account-panel p,
-    .account-card p {
-      margin: 0 0 1.1rem;
-      color: #526276;
-      line-height: 1.65;
+      overflow-wrap: anywhere;
     }
 
     .profile-form {
       display: grid;
       gap: 1rem;
-      margin-top: 1.25rem;
+      margin-top: 1rem;
     }
 
     .profile-form label {
       display: grid;
       gap: 0.45rem;
-      color: #08233c;
+      color: #dbeafe;
       font-size: 0.82rem;
       font-weight: 900;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
     }
 
     .profile-form input,
     .profile-form select,
     .profile-form textarea {
       width: 100%;
-      box-sizing: border-box;
-      border: 1px solid #d8e2ea;
-      border-radius: 16px;
-      background: #f7f9fb;
-      color: #08233c;
+      min-height: 50px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--panel-deep);
+      color: #fff;
       font: inherit;
-      padding: 0.9rem 1rem;
+      padding: 0.85rem 0.95rem;
       outline: none;
     }
 
     .profile-form textarea {
-      min-height: 110px;
+      min-height: 122px;
       resize: vertical;
     }
 
+    .profile-form input:focus,
+    .profile-form select:focus,
+    .profile-form textarea:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.16);
+    }
+
     .profile-form small {
-      color: #526276;
-      font-weight: 600;
-      letter-spacing: 0;
-      text-transform: none;
+      color: var(--muted);
       line-height: 1.45;
+      font-weight: 600;
     }
 
     .profile-form .consent-label {
-      display: grid;
       grid-template-columns: auto 1fr;
-      gap: 0.75rem;
       align-items: start;
-      color: #08233c;
-      font-weight: 700;
-      letter-spacing: 0;
-      text-transform: none;
+      gap: 0.75rem;
+      color: #dbeafe;
       line-height: 1.5;
+      font-weight: 650;
     }
 
     .profile-form .consent-label input {
       width: auto;
+      min-height: auto;
       margin-top: 0.25rem;
     }
 
-    .saved-message {
-      border-radius: 16px;
-      background: #eaf7f1;
-      color: #007a53;
+    .button-row,
+    .account-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 0.75rem;
+    }
+
+    .account-button {
+      min-height: 50px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.55rem;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--panel-deep);
+      color: #fff;
+      padding: 0 1rem;
+      font: inherit;
+      font-weight: 850;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .account-button.primary,
+    .account-button.orange {
+      background: var(--blue);
+      border-color: var(--blue);
+      box-shadow: 0 14px 30px rgba(59, 130, 246, 0.22);
+    }
+
+    .account-button.light {
+      background: #fff;
+      color: #0b1220;
+    }
+
+    .saved-message,
+    .account-note {
+      border-radius: 12px;
       padding: 0.85rem 1rem;
-      font-weight: 900;
+      background: var(--green-soft);
+      color: #bbf7d0;
+      border: 1px solid rgba(34, 197, 94, 0.28);
+      font-weight: 750;
+      line-height: 1.5;
     }
 
-    .account-card-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 1.25rem;
-    }
-
-    .account-requests {
-      width: min(1180px, 100%);
-      margin: 1.25rem auto 0;
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 1.25rem;
+    .account-note {
+      background: var(--amber-soft);
+      border-color: rgba(251, 191, 36, 0.3);
+      color: #fde68a;
     }
 
     .account-record-list {
       display: grid;
-      gap: 0.8rem;
+      gap: 0.75rem;
       margin-top: 1rem;
     }
 
     .account-record {
-      border: 1px solid #d8e2ea;
-      border-radius: 16px;
-      background: #f7f9fb;
       padding: 1rem;
+      background: var(--panel-soft);
     }
 
     .account-record strong,
@@ -348,317 +556,274 @@
     }
 
     .account-record span {
-      color: #526276;
-      line-height: 1.5;
+      color: var(--muted);
       margin-top: 0.25rem;
+      line-height: 1.45;
     }
 
     .account-status {
-      display: inline-flex;
+      display: inline-flex !important;
       width: fit-content;
-      margin-top: 0.65rem;
+      margin-top: 0.65rem !important;
       border-radius: 999px;
-      background: #eaf7f1;
-      color: #007a53;
+      background: var(--blue-soft);
+      color: #93c5fd !important;
       padding: 0.35rem 0.65rem;
       font-size: 0.78rem;
       font-weight: 900;
     }
 
-    .account-note {
-      width: min(1180px, 100%);
-      margin: 1.25rem auto 0;
-      background: #fff7ed;
-      border: 1px solid #fed7aa;
-      border-radius: 22px;
-      padding: 1.25rem;
-      color: #7c2d12;
-      line-height: 1.6;
+    .loading-pulse { opacity: 0.7; }
+
+    @media (max-width: 1180px) {
+      .account-shell { grid-template-columns: 280px minmax(0, 1fr); }
+      .stats-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .dashboard-grid { grid-template-columns: 1fr; }
     }
 
-    .loading-pulse {
-      opacity: 0.7;
-    }
-
-    @media (max-width: 980px) {
-      .account-hero-grid,
-      .account-dashboard,
-      .account-card-grid,
-      .account-requests {
-        grid-template-columns: 1fr;
+    @media (max-width: 860px) {
+      .account-shell { display: block; }
+      .account-sidebar {
+        position: fixed;
+        inset: 0 auto 0 0;
+        width: min(320px, 86vw);
+        transform: translateX(-105%);
+        transition: transform 0.2s ease;
       }
+      body.sidebar-open .account-sidebar { transform: translateX(0); }
+      .mobile-topbar { display: flex; }
+      .dashboard-main { padding: 2rem 1rem 2.5rem; }
+      .dashboard-hero,
+      .section-head,
+      .profile-card {
+        display: grid;
+      }
+      .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .profile-row { grid-template-columns: 1fr; gap: 0.3rem; }
+    }
+
+    @media (max-width: 560px) {
+      .stats-grid { grid-template-columns: 1fr; }
+      .dashboard-main { padding-inline: 0.8rem; }
+      .dashboard-card,
+      .profile-card,
+      .account-panel,
+      .account-card { padding: 1.1rem; }
+      h1 { font-size: 2rem; }
     }
   </style>
 </head>
 
 <body data-page="account" class="account-page">
-  <div id="siteShellHeader"></div>
-
-  <main id="main">
-    <section class="account-hero">
-      <div class="account-wrap account-hero-grid">
+  <div class="account-shell">
+    <aside class="account-sidebar" id="accountSidebar">
+      <div class="brand">
+        <div class="brand-mark">JA</div>
         <div>
-          <span class="account-kicker">JA Secure Access</span>
-          <h1>My account.</h1>
-          <p>
-            Manage your JA Experiences &amp; Discovery profile, support preferences,
-            enquiry links and secure access details.
-          </p>
-
-          <div class="account-actions">
-            <a class="account-button orange" href="/enquiry/">Start a new enquiry</a>
-            <a class="account-button light" href="/pricing/">View plans</a>
-            <a class="account-button outline" href="/cdn-cgi/access/logout">Sign out</a>
-          </div>
+          <strong>JA Experiences</strong>
+          <span>Customer account</span>
         </div>
+      </div>
 
-        <aside class="profile-card" aria-label="Signed in profile">
-          <div class="profile-top">
+      <div class="user-card">
+        <div class="avatar" id="sidebarInitials">JA</div>
+        <div>
+          <strong id="sidebarName">Loading...</strong>
+          <span id="sidebarEmail">Checking secure access session...</span>
+        </div>
+      </div>
+
+      <nav class="nav-wrap" aria-label="Customer dashboard navigation">
+        <div class="nav-heading">Dashboard</div>
+        <a class="nav-link active" href="#overview" data-account-nav><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect></svg>Overview</a>
+        <a class="nav-link" href="#profile" data-account-nav><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg>My account</a>
+        <a class="nav-link" href="#plans" data-account-nav><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3 10h18"></path></svg>Plans &amp; billing</a>
+        <a class="nav-link" href="#privacy" data-account-nav><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-2.9 8.4-7 10-4.1-1.6-7-5.5-7-10V6l7-3z"></path></svg>Data &amp; privacy</a>
+        <a class="nav-link" href="#support" data-account-nav><svg viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"></path></svg>Messages &amp; reports</a>
+        <div class="nav-heading">Actions</div>
+        <a class="nav-link" href="/enquiry/"><svg viewBox="0 0 24 24"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>New enquiry</a>
+        <a class="nav-link" href="/pricing/"><svg viewBox="0 0 24 24"><path d="M7 7h10"></path><path d="M7 12h10"></path><path d="M7 17h6"></path></svg>View benefits</a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <a class="account-button" href="/cdn-cgi/access/logout">Sign out</a>
+      </div>
+    </aside>
+
+    <main class="dashboard-main" id="main">
+      <div class="mobile-topbar">
+        <strong>JA Experiences</strong>
+        <button class="mobile-menu-button" type="button" id="mobileMenuButton" aria-label="Open account navigation"><svg viewBox="0 0 24 24"><path d="M4 7h16"></path><path d="M4 12h16"></path><path d="M4 17h16"></path></svg></button>
+      </div>
+
+      <div class="content-wrap">
+        <section class="dashboard-hero" id="overview">
+          <div>
+            <span class="eyebrow">Customer dashboard</span>
+            <h1>Welcome back, <span id="welcomeName">there</span></h1>
+            <p>Manage your account, plan, data rights, messages and website reports from one secure dashboard.</p>
+          </div>
+          <div class="badge-row">
+            <span class="badge green">Secure account</span>
+            <span class="badge amber" id="lifetimeBadge" hidden>Lifetime</span>
+          </div>
+        </section>
+
+        <section class="stats-grid" aria-label="Account statistics">
+          <article class="stat-card"><span>Bookings</span><strong id="statBookings">0</strong><span>Managed outside this account</span></article>
+          <article class="stat-card"><span>Saved experiences</span><strong id="statSaved">0</strong><span>Saved items</span></article>
+          <article class="stat-card"><span>Messages</span><strong id="statMessages">0</strong><span>Unread items</span></article>
+          <article class="stat-card"><span>Support requests</span><strong id="statSupport">0</strong><span>Data and system records</span></article>
+          <article class="stat-card"><span>Active benefits</span><strong id="statBenefits">1</strong><span id="statBenefitsText">Secure access</span></article>
+        </section>
+
+        <section class="dashboard-grid">
+          <article class="dashboard-card">
+            <div class="section-head">
+              <div><h2>Quick Actions</h2><p>Common account tasks and support options.</p></div>
+            </div>
+            <div class="quick-actions">
+              <a class="quick-action-card" href="#profile"><strong>Edit Account</strong><span>Update profile details</span></a>
+              <a class="quick-action-card" href="#plans"><strong>View Bookings</strong><span>Review current plan and support scope</span></a>
+              <a class="quick-action-card" href="#privacy"><strong>Manage Data Requests</strong><span>Submit UK data rights requests</span></a>
+              <a class="quick-action-card" href="#support"><strong>Contact Support</strong><span>Report website or account issues</span></a>
+              <a class="quick-action-card" href="/pricing/"><strong>View Public/Member Benefits</strong><span>Open plans and pricing</span></a>
+            </div>
+          </article>
+
+          <aside class="profile-card" aria-label="Signed in profile">
             <div class="profile-avatar" id="profileInitials">JA</div>
-            <div>
+            <div class="profile-top">
               <h2 id="profileName" class="loading-pulse">Loading profile...</h2>
               <p id="profileEmail">Checking secure access session...</p>
-              <span class="profile-status">Signed in securely</span>
+              <div class="badge-row">
+                <span class="badge green">Signed in securely</span>
+                <span class="badge amber" id="profilePlanBadge">Standard</span>
+              </div>
             </div>
-          </div>
+          </aside>
+        </section>
 
-          <div class="profile-details">
-            <div class="profile-row">
-              <span>Display name</span>
-              <strong id="profileNameDetail">Loading...</strong>
+        <section class="dashboard-grid" id="profile">
+          <article class="account-panel">
+            <div class="section-head">
+              <div><h2>My account</h2><p>Your verified sign-in details and preferred contact information.</p></div>
             </div>
-
-            <div class="profile-row">
-              <span>Microsoft account name</span>
-              <strong id="profileLegalName">Loading...</strong>
+            <div class="profile-details">
+              <div class="profile-row"><span>Display name</span><strong id="profileNameDetail">Loading...</strong></div>
+              <div class="profile-row"><span>Microsoft account name</span><strong id="profileLegalName">Loading...</strong></div>
+              <div class="profile-row"><span>Sign-in email</span><strong id="profileEmailDetail">Loading...</strong></div>
+              <div class="profile-row"><span>Preferred contact email</span><strong id="profileContactEmail">Loading...</strong></div>
+              <div class="profile-row"><span>Phone</span><strong id="profilePhone">Loading...</strong></div>
+              <div class="profile-row"><span>Communication preference</span><strong id="profileComms">Loading...</strong></div>
+              <div class="profile-row"><span>Access provider</span><strong id="profileProvider">JA Secure Access / Microsoft Entra</strong></div>
             </div>
+          </article>
 
-            <div class="profile-row">
-              <span>Sign-in email</span>
-              <strong id="profileEmailDetail">Loading...</strong>
+          <article class="account-panel">
+            <div class="section-head">
+              <div><h2>Edit account details</h2><p>Changes are saved to your secure customer profile.</p></div>
             </div>
+            <form class="profile-form" id="profileForm">
+              <label>Display name<input id="displayNameInput" type="text" autocomplete="name"><small>This defaults to your Microsoft account name, but you can change how it appears here.</small></label>
+              <label>Preferred contact email<input id="contactEmailInput" type="email" autocomplete="email"><small>This does not change your Microsoft sign-in email.</small></label>
+              <label>Phone number<input id="phoneInput" type="tel" autocomplete="tel"></label>
+              <label>Communication preference<select id="communicationPreferenceInput"><option>Email</option><option>Phone</option><option>Email first, phone if urgent</option></select></label>
+              <label>Support notes<textarea id="supportNotesInput" placeholder="Optional notes such as accessibility preferences or support reminders."></textarea></label>
+              <label class="consent-label"><input id="termsAcceptedInput" type="checkbox" required><span>I accept the <a href="/policies/terms-of-service" target="_blank" rel="noopener">Terms of Service</a>. *</span></label>
+              <label class="consent-label"><input id="privacyAcceptedInput" type="checkbox" required><span>I acknowledge the <a href="/policies/privacy-notice" target="_blank" rel="noopener">Privacy Notice</a> and understand that personal data will be handled by JA Group Services Ltd as Data Controller. *</span></label>
+              <label class="consent-label"><input id="marketingConsentInput" type="checkbox"><span>I would like to receive occasional JA Experiences &amp; Discovery service updates and understand I can withdraw consent at any time.</span></label>
+              <div class="button-row">
+                <button class="account-button primary" type="submit">Save profile</button>
+                <button class="account-button" type="button" id="resetProfileButton">Reset saved profile</button>
+              </div>
+              <div class="saved-message" id="profileSavedMessage" hidden></div>
+            </form>
+          </article>
+        </section>
 
-            <div class="profile-row">
-              <span>Preferred contact email</span>
-              <strong id="profileContactEmail">Loading...</strong>
+        <section class="dashboard-grid" id="plans">
+          <article class="account-panel">
+            <div class="section-head">
+              <div><h2>Plans, billing and lifetime access</h2><p>Your current membership status and planning support access.</p></div>
+              <span class="badge amber" id="planStatusBadge">Active</span>
             </div>
-
-            <div class="profile-row">
-              <span>Phone</span>
-              <strong id="profilePhone">Loading...</strong>
+            <div class="profile-details">
+              <div class="profile-row"><span>Current plan</span><strong id="currentPlanName">Standard</strong></div>
+              <div class="profile-row"><span>Plan type</span><strong id="currentPlanType">Standard</strong></div>
+              <div class="profile-row"><span>Lifetime access</span><strong id="lifetimeAccessText">Not enabled</strong></div>
+              <div class="profile-row"><span>Billing</span><strong>Stripe secure checkout where applicable</strong></div>
             </div>
-
-            <div class="profile-row">
-              <span>Communication preference</span>
-              <strong id="profileComms">Loading...</strong>
+            <div class="button-row">
+              <a class="account-button primary" href="/pricing/">View plans</a>
+              <a class="account-button" href="/payment-success/">Payment support</a>
             </div>
-
-            <div class="profile-row">
-              <span>Access provider</span>
-              <strong id="profileProvider">JA Secure Access / Microsoft Entra</strong>
-            </div>
-          </div>
-        </aside>
-      </div>
-    </section>
-
-    <section class="account-section">
-      <div class="account-dashboard">
-        <aside class="account-panel">
-          <span class="account-kicker">Profile settings</span>
-          <h2>Edit your profile</h2>
-          <p>
-            Your Microsoft sign-in name and email are verified by JA Secure Access.
-            You can set a display name and contact preferences for this profile.
-          </p>
-
-          <form class="profile-form" id="profileForm">
-            <label>
-              Display name
-              <input id="displayNameInput" type="text" autocomplete="name">
-              <small>This defaults to your Microsoft account name, but you can change how it appears here.</small>
-            </label>
-
-            <label>
-              Preferred contact email
-              <input id="contactEmailInput" type="email" autocomplete="email">
-              <small>This does not change your Microsoft sign-in email.</small>
-            </label>
-
-            <label>
-              Phone number
-              <input id="phoneInput" type="tel" autocomplete="tel">
-            </label>
-
-            <label>
-              Communication preference
-              <select id="communicationPreferenceInput">
-                <option>Email</option>
-                <option>Phone</option>
-                <option>Email first, phone if urgent</option>
-              </select>
-            </label>
-
-            <label>
-              Support notes
-              <textarea id="supportNotesInput" placeholder="Optional notes you want visible on this device, such as accessibility preferences or support reminders."></textarea>
-            </label>
-
-            <label class="consent-label">
-              <input id="termsAcceptedInput" type="checkbox" required>
-              <span>I accept the <a href="/policies/terms-of-service" target="_blank" rel="noopener">Terms of Service</a>. *</span>
-            </label>
-
-            <label class="consent-label">
-              <input id="privacyAcceptedInput" type="checkbox" required>
-              <span>I acknowledge the <a href="/policies/privacy-notice" target="_blank" rel="noopener">Privacy Notice</a> and understand that personal data will be handled by JA Group Services Ltd as Data Controller. *</span>
-            </label>
-
-            <label class="consent-label">
-              <input id="marketingConsentInput" type="checkbox">
-              <span>I would like to receive occasional JA Experiences &amp; Discovery service updates and understand I can withdraw consent at any time.</span>
-            </label>
-
-            <div class="account-actions">
-              <button class="account-button orange" type="submit">Save profile</button>
-              <button class="account-button" type="button" id="resetProfileButton">Reset saved profile</button>
-            </div>
-
-            <div class="saved-message" id="profileSavedMessage" hidden></div>
-          </form>
-        </aside>
-
-        <div class="account-card-grid">
-          <article class="account-card">
-            <span class="account-kicker">Requests</span>
-            <h2>Support requests</h2>
-            <p>
-              Start a new discovery enquiry or contact JA Experiences &amp; Discovery
-              about an existing planning request.
-            </p>
-            <a class="account-button orange" href="/enquiry/">Open enquiry form</a>
           </article>
 
           <article class="account-card">
-            <span class="account-kicker">Payments</span>
-            <h2>Planning plans</h2>
-            <p>
-              View paid planning options. Keep your Stripe receipt and payment email
-              for support matching.
-            </p>
-            <a class="account-button" href="/pricing/">View plans</a>
+            <span class="eyebrow">Benefits</span>
+            <h2>Active benefits</h2>
+            <p id="benefitsSummary">Secure account access, customer profile management, data rights requests and system reporting.</p>
+            <div class="badge-row">
+              <span class="badge green">Account access</span>
+              <span class="badge">Data requests</span>
+              <span class="badge">Support reports</span>
+            </div>
+          </article>
+        </section>
+
+        <section class="dashboard-grid" id="privacy">
+          <article class="account-panel">
+            <span class="eyebrow">Data &amp; privacy</span>
+            <h2>Data Protection Requests</h2>
+            <p>Use this form to make a formal request about your personal data under UK GDPR and the Data Protection Act 2018.</p>
+            <p>We will review your request and respond in accordance with applicable UK data protection law.</p>
+            <p>We may need to request further information from you to verify your identity before processing certain data protection requests.</p>
+            <form class="profile-form" id="dataProtectionForm">
+              <label>Request type *<select id="dprTypeInput" required><option value="">Please select</option><option>Access my personal data / Subject Access Request</option><option>Correct my personal data</option><option>Delete my personal data</option><option>Restrict the use of my personal data</option><option>Object to processing</option><option>Data portability</option><option>Withdraw consent</option><option>Other data protection request</option></select></label>
+              <label>Request details *<textarea id="dprMessageInput" required maxlength="4000" placeholder="Tell us what you are requesting and any relevant details."></textarea></label>
+              <small>Attachments are not connected yet. Please describe any relevant evidence in the message above.</small>
+              <label class="consent-label"><input id="dprConfirmInput" type="checkbox" required><span>I confirm the information submitted is accurate. *</span></label>
+              <button class="account-button primary" type="submit">Submit data request</button>
+              <div class="saved-message" id="dprSavedMessage" hidden></div>
+            </form>
           </article>
 
-          <article class="account-card">
-            <span class="account-kicker">Guidance</span>
-            <h2>Important information</h2>
-            <p>
-              Review service scope, third-party provider boundaries and customer responsibilities.
-            </p>
-            <a class="account-button" href="/important-information/">Read guidance</a>
+          <article class="account-panel">
+            <div class="section-head"><div><h2>Your data requests</h2><p>Only your own submitted requests are shown here.</p></div></div>
+            <div class="account-record-list" id="dprList"></div>
+          </article>
+        </section>
+
+        <section class="dashboard-grid" id="support">
+          <article class="account-panel">
+            <span class="eyebrow">Messages &amp; reports</span>
+            <h2>System Reports</h2>
+            <p>Report technical, website, account, access, membership, booking widget, performance or checkout issues from your signed-in account.</p>
+            <form class="profile-form" id="systemReportForm">
+              <label>Issue type *<select id="sysTypeInput" required><option value="">Please select</option><option>Website not loading</option><option>Page not responding</option><option>Booking widget not working</option><option>Broken link</option><option>Login or account issue</option><option>Access or membership issue</option><option>Incorrect destination, activity or tour information</option><option>Mobile display issue</option><option>Payment or checkout issue</option><option>Other technical issue</option></select></label>
+              <label>Affected page URL or area<input id="sysAffectedInput" type="text" maxlength="500" placeholder="https://experiences.jagroupservices.co.uk/..."></label>
+              <label>Device/browser details<input id="sysDeviceInput" type="text" maxlength="500" placeholder="For example: Windows 11, Chrome, iPhone Safari"></label>
+              <label>Description of the issue *<textarea id="sysDescriptionInput" required maxlength="4000" placeholder="Describe what happened and what you expected to happen."></textarea></label>
+              <small>Screenshot uploads are not connected yet. Please include the affected URL and details above.</small>
+              <button class="account-button primary" type="submit">Submit system report</button>
+              <div class="saved-message" id="sysSavedMessage" hidden></div>
+            </form>
           </article>
 
-          <article class="account-card">
-            <span class="account-kicker">Security</span>
-            <h2>Secure sign out</h2>
-            <p>
-              Sign out when using a shared device. JA Secure Access protects this page
-              before the account area loads.
-            </p>
-            <a class="account-button" href="/cdn-cgi/access/logout">Sign out</a>
+          <article class="account-panel">
+            <div class="section-head"><div><h2>Your system reports</h2><p>Website and account issue reports submitted from this account.</p></div></div>
+            <div class="account-record-list" id="sysList"></div>
           </article>
+        </section>
+
+        <div class="account-note">
+          Profile edits, data requests and system reports are stored securely for JA Experiences &amp; Discovery account support. JA Experiences &amp; Discovery provides discovery, planning and guidance support only and is not a travel booking system.
         </div>
       </div>
+    </main>
+  </div>
 
-      <div class="account-requests">
-        <article class="account-panel" id="dataProtectionPanel">
-          <span class="account-kicker">Data rights</span>
-          <h2>Data Protection Requests</h2>
-          <p>Use this form to make a formal request about your personal data under UK GDPR and the Data Protection Act 2018.</p>
-          <p>We will review your request and respond in accordance with applicable UK data protection law.</p>
-          <p>We may need to request further information from you to verify your identity before processing certain data protection requests.</p>
-          <form class="profile-form" id="dataProtectionForm">
-            <label>
-              Request type *
-              <select id="dprTypeInput" required>
-                <option value="">Please select</option>
-                <option>Access my personal data / Subject Access Request</option>
-                <option>Correct my personal data</option>
-                <option>Delete my personal data</option>
-                <option>Restrict the use of my personal data</option>
-                <option>Object to processing</option>
-                <option>Data portability</option>
-                <option>Withdraw consent</option>
-                <option>Other data protection request</option>
-              </select>
-            </label>
-            <label>
-              Request details *
-              <textarea id="dprMessageInput" required maxlength="4000" placeholder="Tell us what you are requesting and any relevant details."></textarea>
-            </label>
-            <small>Attachments are not connected yet. Please describe any relevant evidence in the message above.</small>
-            <label class="consent-label">
-              <input id="dprConfirmInput" type="checkbox" required>
-              <span>I confirm the information submitted is accurate. *</span>
-            </label>
-            <button class="account-button orange" type="submit">Submit data request</button>
-            <div class="saved-message" id="dprSavedMessage" hidden></div>
-          </form>
-          <div class="account-record-list" id="dprList"></div>
-        </article>
-
-        <article class="account-panel" id="systemReportsPanel">
-          <span class="account-kicker">Technical support</span>
-          <h2>System Reports</h2>
-          <p>Report technical, website, account, access, membership, booking widget or checkout issues from your signed-in account.</p>
-          <form class="profile-form" id="systemReportForm">
-            <label>
-              Issue type *
-              <select id="sysTypeInput" required>
-                <option value="">Please select</option>
-                <option>Website not loading</option>
-                <option>Page not responding</option>
-                <option>Booking widget not working</option>
-                <option>Broken link</option>
-                <option>Login or account issue</option>
-                <option>Access or membership issue</option>
-                <option>Incorrect destination, activity or tour information</option>
-                <option>Mobile display issue</option>
-                <option>Payment or checkout issue</option>
-                <option>Other technical issue</option>
-              </select>
-            </label>
-            <label>
-              Affected page URL or area
-              <input id="sysAffectedInput" type="text" maxlength="500" placeholder="https://experiences.jagroupservices.co.uk/...">
-            </label>
-            <label>
-              Device/browser details
-              <input id="sysDeviceInput" type="text" maxlength="500" placeholder="For example: Windows 11, Chrome, iPhone Safari">
-            </label>
-            <label>
-              Description of the issue *
-              <textarea id="sysDescriptionInput" required maxlength="4000" placeholder="Describe what happened and what you expected to happen."></textarea>
-            </label>
-            <small>Screenshot uploads are not connected yet. Please include the affected URL and details above.</small>
-            <button class="account-button orange" type="submit">Submit system report</button>
-            <div class="saved-message" id="sysSavedMessage" hidden></div>
-          </form>
-          <div class="account-record-list" id="sysList"></div>
-        </article>
-      </div>
-
-      <div class="account-note">
-        Profile edits are saved securely to the JA Experiences &amp; Discovery customer profile database.
-        JA Experiences &amp; Discovery provides discovery, planning and guidance support only and is not a travel booking system.
-      </div>
-    </section>
-  </main>
-
-  <div id="siteShellFooter"></div>
-
-  <script src="/assets/js/account-profile.js?v=20260621-20"></script>
-  <script src="/assets/js/access-header.js?v=20260621-18"></script>
-  <script src="/assets/js/site-shell.js?v=20260621-18"></script>
+  <script src="/assets/js/account-profile.js?v=20260621-21"></script>
 </body>
 </html>
