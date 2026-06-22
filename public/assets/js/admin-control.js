@@ -53,6 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
   applyAdminBranding();
   decorateIcons();
   bindNav();
+  bindMobileSidebar();
   bindAccountMenu();
   bindAdminActions();
   bindFavouriteActions();
@@ -75,9 +76,27 @@ function decorateIcons() {
   });
 }
 
+
+function bindMobileSidebar() {
+  const openButton = document.getElementById("adminSidebarOpen");
+  const closeButton = document.getElementById("adminSidebarClose");
+  const backdrop = document.getElementById("adminSidebarBackdrop");
+  const close = () => document.body.classList.remove("admin-sidebar-open");
+  const open = () => document.body.classList.add("admin-sidebar-open");
+  openButton?.addEventListener("click", open);
+  closeButton?.addEventListener("click", close);
+  backdrop?.addEventListener("click", close);
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") close();
+  });
+}
+
 function bindNav() {
   document.querySelectorAll("[data-section]").forEach((button) => {
-    button.addEventListener("click", () => loadSection(button.dataset.section));
+    button.addEventListener("click", () => {
+      loadSection(button.dataset.section);
+      document.body.classList.remove("admin-sidebar-open");
+    });
   });
 }
 
@@ -227,6 +246,7 @@ async function api(section, options = {}) {
 
 async function loadSection(section) {
   state.currentSection = section;
+  document.body.dataset.section = section;
   setTopbar(section);
 
   document.querySelectorAll("[data-section]").forEach((button) => {
@@ -1800,8 +1820,30 @@ function closeModal() {
   document.getElementById("adminModal")?.remove();
 }
 
-function stat(label, value) {
-  return `<article class="admin-stat"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></article>`;
+const statIconMap = [
+  [/customer|user/i, "users"],
+  [/plan/i, "plans"],
+  [/polic/i, "file"],
+  [/support|ticket/i, "mail"],
+  [/issue|report/i, "alert"],
+  [/data request|gdpr|protection/i, "file"],
+  [/closure/i, "shield"],
+  [/lifetime/i, "shield"],
+  [/coming soon/i, "clock"],
+  [/maintenance/i, "settings"],
+  [/admin/i, "shield"],
+  [/enquir|message/i, "mail"],
+  [/email/i, "mail"]
+];
+
+function autoStatIcon(label) {
+  const match = statIconMap.find(([pattern]) => pattern.test(label));
+  return match ? match[1] : "chart";
+}
+
+function stat(label, value, icon) {
+  const resolvedIcon = icon || autoStatIcon(label);
+  return `<article class="admin-stat"><span class="admin-stat-text"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></span><span class="admin-stat-icon" data-icon="${escapeAttr(resolvedIcon)}">${iconSvg(resolvedIcon)}</span></article>`;
 }
 
 function input(label, id, type = "text") {
