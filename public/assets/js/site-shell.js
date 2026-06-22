@@ -14,6 +14,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.head.appendChild(stylesheet);
   }
 
+  function loadSharedScript(path) {
+    if (document.querySelector(`script[src^="${path}"]`)) return;
+
+    const script = document.createElement("script");
+    script.src = path;
+    script.defer = true;
+    document.body.appendChild(script);
+  }
+
   loadSharedStyles("/assets/includes/header.css?v=20260621-1");
   loadSharedStyles("/assets/includes/footer.css?v=20260621-1");
 
@@ -109,6 +118,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       toggle?.focus();
     }
   });
+
+  if (window.JAFreePlanVisibility && typeof window.JAFreePlanVisibility.load === "function") {
+    window.JAFreePlanVisibility.load();
+  } else {
+    loadSharedScript("/assets/js/free-plan-visibility.js?v=20260622-1");
+  }
 });
 
 

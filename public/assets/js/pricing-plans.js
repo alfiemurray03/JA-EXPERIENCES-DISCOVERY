@@ -92,6 +92,15 @@
   }
 
   function applyFreePlanVisibility(showFreePlan) {
+    if (window.JAFreePlanVisibility && typeof window.JAFreePlanVisibility.apply === "function") {
+      window.JAFreePlanVisibility.apply(showFreePlan);
+    }
+
+    document.querySelectorAll("[data-free-plan-public]").forEach((element) => {
+      element.hidden = !showFreePlan;
+      element.setAttribute("aria-hidden", showFreePlan ? "false" : "true");
+    });
+
     const freeCard = Array.from(document.querySelectorAll(".pricing-card")).find((card) => {
       const title = card.querySelector("h3");
       return title && /free/i.test(title.textContent || "");
@@ -105,8 +114,9 @@
       if (/free/i.test(item.textContent || "")) item.hidden = !showFreePlan;
     });
 
-    document.querySelectorAll('a[href="/enquiry/"]').forEach((link) => {
-      if (/free enquiry/i.test(link.textContent || "")) link.hidden = !showFreePlan;
+    document.querySelectorAll('a[href="/enquiry/"][data-free-plan-public]').forEach((link) => {
+      link.hidden = !showFreePlan;
+      link.setAttribute("aria-hidden", showFreePlan ? "false" : "true");
     });
   }
 

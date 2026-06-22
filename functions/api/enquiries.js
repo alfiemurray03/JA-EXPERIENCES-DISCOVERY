@@ -62,6 +62,10 @@ async function submitEnquiry(request, env) {
     return json({ ok: false, message: "Sensitive-information consent is required when support needs are included." }, 400);
   }
 
+  if (await freePlanIsHidden(env, enquiry)) {
+    return json({ ok: false, message: "The Free Discovery Enquiry is currently unavailable." }, 403);
+  }
+
   if (enquiry.formType === "Free Discovery Enquiry" && !enquiry.transportConfirmed) {
     return json({ ok: false, message: "Please confirm that you understand the travel and transport responsibility." }, 400);
   }
@@ -205,6 +209,36 @@ async function insertConsent(DB, consent) {
     consent.ipHash || "",
     consent.userAgent || ""
   ).run();
+}
+
+async function freePlanIsHidden(env, enquiry) {
+  if (!env || !env.DB || !isFreePlanEnquiry(enquiry)) return false;
+  const settings = await settingMap(env.DB, ["show_free_plan"], { show_free_plan: "true" });
+  return settings.show_free_plan === "false";
+}
+
+function isFreePlanEnquiry(enquiry) {
+  const text = `${enquiry.formType || ""} ${enquiry.plan || ""} ${enquiry.enquiryType || ""}`.toLowerCase();
+  return text.includes("free discovery enquiry") || text.includes("free enquiry");
+}
+
+async function settingMap(DB, keys, defaults = {}) {
+  try {
+    await DB.prepare(`
+      CREATE TABLE IF NOT EXISTS site_settings (
+        key TEXT PRIMARY KEY,
+        value TEXT,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+      )
+    `).run();
+    const placeholders = keys.map(() => "?").join(", ");
+    const result = await DB.prepare(`SELECT key, value FROM site_settings WHERE key IN (${placeholders})`).bind(...keys).all();
+    const settings = { ...defaults };
+    for (const row of result.results || []) settings[row.key] = row.value;
+    return settings;
+  } catch {
+    return { ...defaults };
+  }
 }
 
 async function sendEnquiryEmail(env, reference, enquiry) {

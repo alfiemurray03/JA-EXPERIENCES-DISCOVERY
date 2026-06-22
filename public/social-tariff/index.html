@@ -33,7 +33,7 @@
           <table>
             <thead><tr><th>Plan</th><th>Standard price</th><th>Social tariff</th><th>Delivery</th></tr></thead>
             <tbody>
-              <tr><td>Free Discovery Enquiry</td><td>£0</td><td>£0</td><td>1 to 3 working days</td></tr>
+              <tr data-free-plan-public><td>Free Discovery Enquiry</td><td>£0</td><td>£0</td><td>1 to 3 working days</td></tr>
               <tr><td>Destination Discovery Plan</td><td>£49</td><td>£29</td><td>3 to 5 working days</td></tr>
               <tr><td>Itinerary and Experience Planning Plan</td><td>£89</td><td>£55</td><td>5 to 7 working days</td></tr>
               <tr><td>Complete Discovery and Planning Guidance Plan</td><td>£149</td><td>£95</td><td>7 to 10 working days</td></tr>
@@ -55,12 +55,12 @@
         </article>
         <article class="info-card">
           <h2>How to request it</h2>
-          <p>Use the free enquiry form and tick the social tariff option. We will explain the next step privately before any paid guidance plan starts.</p>
+          <p data-free-plan-public>Use the free enquiry form and tick the social tariff option. We will explain the next step privately before any paid guidance plan starts.</p>
         </article>
       </div>
     </section>
 
-    <section class="cta-band">
+    <section class="cta-band" data-free-plan-public>
       <div class="container">
         <div><h2>Request the social tariff privately.</h2><p>Start with the free enquiry and tell us you would like social tariff information.</p></div>
         <a class="button light" href="/enquiry/">Start a free enquiry</a>
@@ -69,5 +69,6 @@
   </main>
   <div id="siteShellFooter"></div>
   <script src="/assets/js/site-shell.js?v=20260621-1"></script>
+  <script src="/assets/js/free-plan-visibility.js?v=20260622-1"></script>
 </body>
 </html>
