@@ -729,7 +729,7 @@
         <a class="nav-link" href="#profile" data-account-nav><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg>My account</a>
         <a class="nav-link" href="#plans" data-account-nav><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3 10h18"></path></svg>Plans &amp; billing</a>
         <a class="nav-link" href="#privacy" data-account-nav><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-2.9 8.4-7 10-4.1-1.6-7-5.5-7-10V6l7-3z"></path></svg>Data &amp; privacy</a>
-        <a class="nav-link" href="#support" data-account-nav><svg viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"></path></svg>Messages &amp; reports</[...]
+        <a class="nav-link" href="#support" data-account-nav><svg viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"></path></svg>Messages &amp; reports</a>
         <div class="nav-heading">Actions</div>
         <a class="nav-link" href="/enquiry/"><svg viewBox="0 0 24 24"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>New enquiry</a>
         <a class="nav-link" href="/pricing/"><svg viewBox="0 0 24 24"><path d="M7 7h10"></path><path d="M7 12h10"></path><path d="M7 17h6"></path></svg>View benefits</a>
@@ -743,7 +743,7 @@
     <main class="dashboard-main" id="main">
       <div class="mobile-topbar">
         <strong>JA Experiences</strong>
-        <button class="mobile-menu-button" type="button" id="mobileMenuButton" aria-label="Open account navigation"><svg viewBox="0 0 24 24"><path d="M4 7h16"></path><path d="M4 12h16"></path><pa[...]
+        <button class="mobile-menu-button" type="button" id="mobileMenuButton" aria-label="Open account navigation"><svg viewBox="0 0 24 24"><path d="M4 7h16"></path><path d="M4 12h16"></path><path d="M4 17h16"></path></svg></button>
       </div>
 
       <div class="content-wrap">
@@ -805,7 +805,7 @@
               <a class="quick-action-card" href="/pricing/"><strong>View Public/Member Benefits</strong><span>Open plans and pricing</span></a>
             </div>
 
-            <aside class="profile-card signed-out-card signed-out-only" aria-label="Signed in profile">
+            <aside class="profile-card signed-out-card" aria-label="Signed in profile">
               <div class="profile-avatar" id="profileInitials">JA</div>
               <div class="profile-top">
                 <h2 id="profileName" class="loading-pulse">Loading profile...</h2>
@@ -837,37 +837,3 @@
               <div class="profile-row"><span>Access provider</span><strong id="profileProvider">JA Secure Access / Microsoft Entra</strong></div>
             </div>
 
-            <article class="account-panel">
-              <div class="section-head">
-                <div><h2>Edit account details</h2><p>Changes are saved to your secure customer profile.</p></div>
-                <span class="badge amber" id="planStatusBadge">Active</span>
-              </div>
-              <div class="profile-details">
-                <div class="profile-row"><span>Current plan</span><strong id="currentPlanName">Standard</strong></div>
-                <div class="profile-row"><span>Plan type</span><strong id="currentPlanType">Standard</strong></div>
-                <div class="profile-row"><span>Lifetime access</span><strong id="lifetimeAccessText">Not enabled</strong></div>
-                <div class="profile-row"><span>Billing</span><strong>Stripe secure checkout where applicable</strong></div>
-              </div>
-              <div class="button-row">
-                <a class="account-button primary" href="/pricing/">View plans</a>
-                <a class="account-button" href="/payment-success/">Payment support</a>
-              </div>
-            </article>
-
-            <article class="account-card">
-              <span class="eyebrow">Benefits</span>
-              <h2>Active benefits</h2>
-              <p id="benefitsSummary">Secure account access, customer profile management, data rights requests and system reporting.</p>
-              <div class="badge-row">
-                <span class="badge green">Account access</span>
-                <span class="badge">Data requests</span>
-                <span class="badge">Support reports</span>
-              </div>
-            </article>
-          </article>
-        </section>
-
-        <section class="dashboard-grid eligible-only" id="plans">
-          <article class="account-panel">
-            <div class="section-head">
-I will call create_or_update_file tool to update the file. The tool guidance said: If creating new file omit sha; if unsure attempt without sha first. We are updating existing file so should include sha to update. We have BlobSha from earlier: 38ad57874aee3aa75f52d7433081fac4b4de3c3a. Use functions.create_or_update_file. Commit message: 
