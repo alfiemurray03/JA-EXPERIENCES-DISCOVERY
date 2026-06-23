@@ -29,7 +29,7 @@
       --amber: #fbbf24;
       --amber-soft: rgba(251, 191, 36, 0.15);
       --red: #fb7185;
-      --red-soft: rgba(251, 113, 133, 0.16);
+      --red-soft: rgba(251, 113,133, 0.16);
       --radius: 14px;
       --shadow: 0 24px 70px rgba(0, 0, 0, 0.24);
     }
@@ -725,11 +725,11 @@
 
       <nav class="nav-wrap" aria-label="Customer dashboard navigation">
         <div class="nav-heading">Dashboard</div>
-        <a class="nav-link active" href="#overview" data-account-nav><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect></svg>Overview</a>
+        <a class="nav-link active" href="#overview" data-account-nav><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"><[...]
         <a class="nav-link" href="#profile" data-account-nav><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg>My account</a>
         <a class="nav-link" href="#plans" data-account-nav><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3 10h18"></path></svg>Plans &amp; billing</a>
         <a class="nav-link" href="#privacy" data-account-nav><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-2.9 8.4-7 10-4.1-1.6-7-5.5-7-10V6l7-3z"></path></svg>Data &amp; privacy</a>
-        <a class="nav-link" href="#support" data-account-nav><svg viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"></path></svg>Messages &amp; reports</a>
+        <a class="nav-link" href="#support" data-account-nav><svg viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"></path></svg>Messages &amp; reports</[...]
         <div class="nav-heading">Actions</div>
         <a class="nav-link" href="/enquiry/"><svg viewBox="0 0 24 24"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>New enquiry</a>
         <a class="nav-link" href="/pricing/"><svg viewBox="0 0 24 24"><path d="M7 7h10"></path><path d="M7 12h10"></path><path d="M7 17h6"></path></svg>View benefits</a>
@@ -743,7 +743,7 @@
     <main class="dashboard-main" id="main">
       <div class="mobile-topbar">
         <strong>JA Experiences</strong>
-        <button class="mobile-menu-button" type="button" id="mobileMenuButton" aria-label="Open account navigation"><svg viewBox="0 0 24 24"><path d="M4 7h16"></path><path d="M4 12h16"></path><path d="M4 17h16"></path></svg></button>
+        <button class="mobile-menu-button" type="button" id="mobileMenuButton" aria-label="Open account navigation"><svg viewBox="0 0 24 24"><path d="M4 7h16"></path><path d="M4 12h16"></path><pa[...]
       </div>
 
       <div class="content-wrap">
@@ -804,22 +804,22 @@
               <a class="quick-action-card" href="#support"><strong>Contact Support</strong><span>Report website or account issues</span></a>
               <a class="quick-action-card" href="/pricing/"><strong>View Public/Member Benefits</strong><span>Open plans and pricing</span></a>
             </div>
-          </article>
 
-          <aside class="profile-card signed-out-card" aria-label="Signed in profile">
-            <div class="profile-avatar" id="profileInitials">JA</div>
-            <div class="profile-top">
-              <h2 id="profileName" class="loading-pulse">Loading profile...</h2>
-              <p id="profileEmail">Checking secure access session...</p>
-              <div class="badge-row">
-                <span class="badge green signed-in-only">Signed in securely</span>
-                <span class="badge amber" id="profilePlanBadge">Standard</span>
+            <aside class="profile-card signed-out-card signed-out-only" aria-label="Signed in profile">
+              <div class="profile-avatar" id="profileInitials">JA</div>
+              <div class="profile-top">
+                <h2 id="profileName" class="loading-pulse">Loading profile...</h2>
+                <p id="profileEmail">Checking secure access session...</p>
+                <div class="badge-row">
+                  <span class="badge green signed-in-only">Signed in securely</span>
+                  <span class="badge amber" id="profilePlanBadge">Standard</span>
+                </div>
+                <div class="button-row" id="accessActionRow" hidden>
+                  <a class="account-button primary" href="/account/profile?start=signin">Sign in</a>
+                </div>
               </div>
-              <div class="button-row" id="accessActionRow" hidden>
-                <a class="account-button primary" href="/account/profile?start=signin">Sign in</a>
-              </div>
-            </div>
-          </aside>
+            </aside>
+          </article>
         </section>
 
         <section class="dashboard-grid eligible-only" id="profile">
@@ -836,112 +836,38 @@
               <div class="profile-row"><span>Communication preference</span><strong id="profileComms">Loading...</strong></div>
               <div class="profile-row"><span>Access provider</span><strong id="profileProvider">JA Secure Access / Microsoft Entra</strong></div>
             </div>
-          </article>
 
-          <article class="account-panel">
-            <div class="section-head">
-              <div><h2>Edit account details</h2><p>Changes are saved to your secure customer profile.</p></div>
-            </div>
-            <form class="profile-form" id="profileForm">
-              <label>Display name<input id="displayNameInput" type="text" autocomplete="name"><small>This defaults to your Microsoft account name, but you can change how it appears here.</small></label>
-              <label>Preferred contact email<input id="contactEmailInput" type="email" autocomplete="email"><small>This does not change your Microsoft sign-in email.</small></label>
-              <label>Phone number<input id="phoneInput" type="tel" autocomplete="tel"></label>
-              <label>Communication preference<select id="communicationPreferenceInput"><option>Email</option><option>Phone</option><option>Email first, phone if urgent</option></select></label>
-              <label>Support notes<textarea id="supportNotesInput" placeholder="Optional notes such as accessibility preferences or support reminders."></textarea></label>
-              <label class="consent-label"><input id="termsAcceptedInput" type="checkbox" required><span>I accept the <a href="/policies/terms-of-service" target="_blank" rel="noopener">Terms of Service</a>. *</span></label>
-              <label class="consent-label"><input id="privacyAcceptedInput" type="checkbox" required><span>I acknowledge the <a href="/policies/privacy-notice" target="_blank" rel="noopener">Privacy Notice</a> and understand that personal data will be handled by JA Group Services Ltd as Data Controller. *</span></label>
-              <label class="consent-label"><input id="marketingConsentInput" type="checkbox"><span>I would like to receive occasional JA Experiences &amp; Discovery service updates and understand I can withdraw consent at any time.</span></label>
-              <div class="button-row">
-                <button class="account-button primary" type="submit">Save profile</button>
-                <button class="account-button" type="button" id="resetProfileButton">Reset saved profile</button>
+            <article class="account-panel">
+              <div class="section-head">
+                <div><h2>Edit account details</h2><p>Changes are saved to your secure customer profile.</p></div>
+                <span class="badge amber" id="planStatusBadge">Active</span>
               </div>
-              <div class="saved-message" id="profileSavedMessage" hidden></div>
-            </form>
+              <div class="profile-details">
+                <div class="profile-row"><span>Current plan</span><strong id="currentPlanName">Standard</strong></div>
+                <div class="profile-row"><span>Plan type</span><strong id="currentPlanType">Standard</strong></div>
+                <div class="profile-row"><span>Lifetime access</span><strong id="lifetimeAccessText">Not enabled</strong></div>
+                <div class="profile-row"><span>Billing</span><strong>Stripe secure checkout where applicable</strong></div>
+              </div>
+              <div class="button-row">
+                <a class="account-button primary" href="/pricing/">View plans</a>
+                <a class="account-button" href="/payment-success/">Payment support</a>
+              </div>
+            </article>
+
+            <article class="account-card">
+              <span class="eyebrow">Benefits</span>
+              <h2>Active benefits</h2>
+              <p id="benefitsSummary">Secure account access, customer profile management, data rights requests and system reporting.</p>
+              <div class="badge-row">
+                <span class="badge green">Account access</span>
+                <span class="badge">Data requests</span>
+                <span class="badge">Support reports</span>
+              </div>
+            </article>
           </article>
         </section>
 
         <section class="dashboard-grid eligible-only" id="plans">
           <article class="account-panel">
             <div class="section-head">
-              <div><h2>Plans, billing and lifetime access</h2><p>Your current membership status and planning support access.</p></div>
-              <span class="badge amber" id="planStatusBadge">Active</span>
-            </div>
-            <div class="profile-details">
-              <div class="profile-row"><span>Current plan</span><strong id="currentPlanName">Standard</strong></div>
-              <div class="profile-row"><span>Plan type</span><strong id="currentPlanType">Standard</strong></div>
-              <div class="profile-row"><span>Lifetime access</span><strong id="lifetimeAccessText">Not enabled</strong></div>
-              <div class="profile-row"><span>Billing</span><strong>Stripe secure checkout where applicable</strong></div>
-            </div>
-            <div class="button-row">
-              <a class="account-button primary" href="/pricing/">View plans</a>
-              <a class="account-button" href="/payment-success/">Payment support</a>
-            </div>
-          </article>
-
-          <article class="account-card">
-            <span class="eyebrow">Benefits</span>
-            <h2>Active benefits</h2>
-            <p id="benefitsSummary">Secure account access, customer profile management, data rights requests and system reporting.</p>
-            <div class="badge-row">
-              <span class="badge green">Account access</span>
-              <span class="badge">Data requests</span>
-              <span class="badge">Support reports</span>
-            </div>
-          </article>
-        </section>
-
-        <section class="dashboard-grid eligible-only" id="privacy">
-          <article class="account-panel">
-            <span class="eyebrow">Data &amp; privacy</span>
-            <h2>Data Protection Requests</h2>
-            <p>Use this form to make a formal request about your personal data under UK GDPR and the Data Protection Act 2018.</p>
-            <p>We will review your request and respond in accordance with applicable UK data protection law.</p>
-            <p>We may need to request further information from you to verify your identity before processing certain data protection requests.</p>
-            <form class="profile-form" id="dataProtectionForm">
-              <label>Request type *<select id="dprTypeInput" required><option value="">Please select</option><option>Access my personal data / Subject Access Request</option><option>Correct my personal data</option><option>Delete my personal data</option><option>Restrict the use of my personal data</option><option>Object to processing</option><option>Data portability</option><option>Withdraw consent</option><option>Other data protection request</option></select></label>
-              <label>Request details *<textarea id="dprMessageInput" required maxlength="4000" placeholder="Tell us what you are requesting and any relevant details."></textarea></label>
-              <small>Attachments are not connected yet. Please describe any relevant evidence in the message above.</small>
-              <label class="consent-label"><input id="dprConfirmInput" type="checkbox" required><span>I confirm the information submitted is accurate. *</span></label>
-              <button class="account-button primary" type="submit">Submit data request</button>
-              <div class="saved-message" id="dprSavedMessage" hidden></div>
-            </form>
-          </article>
-
-          <article class="account-panel">
-            <div class="section-head"><div><h2>Your data requests</h2><p>Only your own submitted requests are shown here.</p></div></div>
-            <div class="account-record-list" id="dprList"></div>
-          </article>
-        </section>
-
-        <section class="dashboard-grid eligible-only" id="support">
-          <article class="account-panel">
-            <span class="eyebrow">Messages &amp; reports</span>
-            <h2>System Reports</h2>
-            <p>Report technical, website, account, access, membership, booking widget, performance or checkout issues from your signed-in account.</p>
-            <form class="profile-form" id="systemReportForm">
-              <label>Issue type *<select id="sysTypeInput" required><option value="">Please select</option><option>Website not loading</option><option>Page not responding</option><option>Booking widget not working</option><option>Broken link</option><option>Login or account issue</option><option>Access or membership issue</option><option>Incorrect destination, activity or tour information</option><option>Mobile display issue</option><option>Payment or checkout issue</option><option>Other technical issue</option></select></label>
-              <label>Affected page URL or area<input id="sysAffectedInput" type="text" maxlength="500" placeholder="https://experiences.jagroupservices.co.uk/..."></label>
-              <label>Device/browser details<input id="sysDeviceInput" type="text" maxlength="500" placeholder="For example: Windows 11, Chrome, iPhone Safari"></label>
-              <label>Description of the issue *<textarea id="sysDescriptionInput" required maxlength="4000" placeholder="Describe what happened and what you expected to happen."></textarea></label>
-              <small>Screenshot uploads are not connected yet. Please include the affected URL and details above.</small>
-              <button class="account-button primary" type="submit">Submit system report</button>
-              <div class="saved-message" id="sysSavedMessage" hidden></div>
-            </form>
-          </article>
-
-          <article class="account-panel">
-            <div class="section-head"><div><h2>Your system reports</h2><p>Website and account issue reports submitted from this account.</p></div></div>
-            <div class="account-record-list" id="sysList"></div>
-          </article>
-        </section>
-
-        <div class="account-note">
-          Profile edits, data requests and system reports are stored securely for JA Experiences &amp; Discovery account support. JA Experiences &amp; Discovery provides discovery, planning and guidance support only and is not a travel booking system.
-        </div>
-      </div>
-    </main>
-  </div>
-
-  <script src="/assets/js/account-profile.js?v=20260622-account-state"></script>
-</body>
-</html>
+I will call create_or_update_file tool to update the file. The tool guidance said: If creating new file omit sha; if unsure attempt without sha first. We are updating existing file so should include sha to update. We have BlobSha from earlier: 38ad57874aee3aa75f52d7433081fac4b4de3c3a. Use functions.create_or_update_file. Commit message: 
