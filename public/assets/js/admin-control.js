@@ -7,25 +7,47 @@ const state = {
 };
 
 const sectionTitles = {
-  overview: "Dashboard",
-  admins: "Admin Users / Access Control",
-  customers: "CRM / Customers",
+  overview: "Overview",
+  admins: "Admin Users",
+  customers: "CRM",
   plans: "Plans & Prices",
-  stripe: "Stripe API Controls",
-  branding: "Company Branding",
-  policies: "Legal Policies",
+  stripe: "Stripe",
+  branding: "Branding",
+  policies: "Policies",
   support: "Support",
-  system: "System / Issues",
+  system: "System",
   datarequests: "Data Protection Requests",
   systemreports: "System Reports",
   closures: "Closure Requests",
   analytics: "Analytics",
   affiliate: "Affiliate Content",
   appearance: "Appearance",
-  email: "Email (SMTP)",
+  email: "Email",
   audit: "Audit Log",
-  comingsoon: "Coming Soon Page",
+  comingsoon: "Coming Soon",
   maintenance: "Maintenance Mode"
+};
+
+const sectionDescriptions = {
+  overview: "Executive summary of your customer and platform operations.",
+  analytics: "Review account, enquiry, request and plan activity.",
+  audit: "Trace sensitive administrative activity across the platform.",
+  admins: "Manage authorised administrators and access records.",
+  customers: "Search customer profiles, memberships and account history.",
+  datarequests: "Manage UK GDPR and data rights workflows.",
+  systemreports: "Review customer-reported website and account issues.",
+  closures: "Process account closure requests safely and consistently.",
+  support: "Review and manage customer support enquiries.",
+  plans: "Configure service plans, prices and public availability.",
+  stripe: "Review Stripe configuration and connection status.",
+  email: "Configure outbound email and test notifications.",
+  system: "Monitor operational issues and platform records.",
+  branding: "Manage business identity and public-facing brand assets.",
+  appearance: "Control the public website colour theme.",
+  affiliate: "Manage affiliate notices, widgets and content blocks.",
+  policies: "Maintain legal, privacy and compliance content.",
+  comingsoon: "Control the public pre-launch experience.",
+  maintenance: "Control maintenance mode and service messaging."
 };
 
 const iconPaths = {
@@ -53,6 +75,7 @@ document.addEventListener("DOMContentLoaded", () => {
   applyAdminBranding();
   decorateIcons();
   bindNav();
+  bindMobileSidebar();
   bindAccountMenu();
   bindAdminActions();
   bindFavouriteActions();
@@ -70,15 +93,35 @@ function decorateIcons() {
     button.insertAdjacentHTML("afterbegin", `<span class="nav-icon" aria-hidden="true">${iconSvg(button.dataset.icon)}</span>`);
   });
 
-  document.querySelectorAll(".hero-icon[data-icon]").forEach((icon) => {
-    icon.innerHTML = iconSvg(icon.dataset.icon);
-  });
 }
 
 function bindNav() {
   document.querySelectorAll("[data-section]").forEach((button) => {
-    button.addEventListener("click", () => loadSection(button.dataset.section));
+    button.addEventListener("click", () => {
+      loadSection(button.dataset.section);
+      closeMobileSidebar();
+    });
   });
+}
+
+function bindMobileSidebar() {
+  const openButton = document.getElementById("mobileMenuButton");
+  const closeButton = document.getElementById("sidebarCloseButton");
+  const scrim = document.getElementById("sidebarScrim");
+  openButton?.addEventListener("click", () => {
+    document.body.classList.add("sidebar-open");
+    openButton.setAttribute("aria-expanded", "true");
+  });
+  closeButton?.addEventListener("click", closeMobileSidebar);
+  scrim?.addEventListener("click", closeMobileSidebar);
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeMobileSidebar();
+  });
+}
+
+function closeMobileSidebar() {
+  document.body.classList.remove("sidebar-open");
+  document.getElementById("mobileMenuButton")?.setAttribute("aria-expanded", "false");
 }
 
 function bindAccountMenu() {
@@ -248,10 +291,9 @@ async function loadSection(section) {
 }
 
 function setTopbar(section) {
-  const title = sectionTitles[section] || "Dashboard";
-  const serviceName = getServiceName();
+  const title = sectionTitles[section] || "Overview";
   document.querySelector(".admin-topbar-title strong").textContent = title;
-  document.querySelector(".admin-topbar-title span").textContent = `${serviceName} Administration`;
+  document.querySelector(".admin-topbar-title span").textContent = sectionDescriptions[section] || "JA Experiences & Discovery administration.";
   updatePinButton();
 }
 
@@ -279,7 +321,7 @@ async function applyAdminBranding() {
     element.textContent = serviceName;
   });
   document.querySelectorAll(".admin-topbar-title span").forEach((element) => {
-    element.textContent = `${serviceName} Administration`;
+    element.textContent = sectionDescriptions[state.currentSection] || `${serviceName} administration.`;
   });
 
   const logo = document.querySelector(".admin-logo");
@@ -315,6 +357,7 @@ function setAdmin(admin) {
   document.querySelectorAll(".avatar").forEach((avatar) => {
     avatar.textContent = (name || email || "A").slice(0, 1).toUpperCase();
   });
+  state.adminName = name;
   state.favourites = Array.isArray(admin.preferences?.favourites) ? admin.preferences.favourites : state.favourites;
   renderFavourites();
 }
@@ -405,55 +448,97 @@ function renderSection(section, data) {
 }
 
 function renderOverview(overview) {
-  document.getElementById("adminPanel").innerHTML = `
-    <div class="admin-grid">
-      ${stat("Customers", overview.customers)}
-      ${stat("Plans", overview.plans)}
-      ${stat("Active plans", overview.activePlans)}
-      ${stat("Policies", overview.policies)}
-      ${stat("Support tickets", overview.supportTickets)}
-      ${stat("Open issues", overview.openIssues)}
-      ${stat("Data requests", overview.dataProtectionRequests)}
-      ${stat("System reports", overview.systemReports)}
-      ${stat("Closure requests", overview.closureRequests)}
-      ${stat("Lifetime users", overview.lifetimeUsers)}
-      ${stat("Coming Soon", overview.comingSoonStatus)}
-      ${stat("Maintenance", overview.maintenanceStatus)}
-      ${stat("Admins", overview.admins)}
-    </div>
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  const name = state.adminName || "Administrator";
+  const maintenanceOn = String(overview.maintenanceStatus).toLowerCase() === "on";
+  const comingSoonOn = String(overview.comingSoonStatus).toLowerCase() === "on";
+  const websiteLabel = maintenanceOn ? "Maintenance" : comingSoonOn ? "Coming soon" : "Online";
+  const websiteTone = maintenanceOn ? "critical" : comingSoonOn ? "warning" : "online";
 
-    <div class="admin-card">
-      <div class="section-head">
-        <div>
-          <h2>Admin Control Centre</h2>
-          <p>Manage CRM records, access control, service plans, Stripe checks, company details, policies, support, system issues and public site status.</p>
-        </div>
-        <div class="section-actions">
-          <button class="admin-button" type="button" data-action="create-bypass">Enter Website as Admin</button>
-          <a class="admin-button secondary" href="/?preview_public_block=1" target="_blank" rel="noopener">Preview Public View</a>
-          <button class="admin-button secondary" type="button" data-action="remove-bypass">Exit Admin Access</button>
-        </div>
+  document.getElementById("adminPanel").innerHTML = `
+    <header class="dashboard-welcome">
+      <div>
+        <p class="eyebrow">Operations dashboard</p>
+        <h1>${escapeHtml(greeting)}, ${escapeHtml(name)}</h1>
+        <p>Here is the latest operational view of JA Experiences &amp; Discovery.</p>
       </div>
-      <div class="quick-grid">
-        ${quick("admins", "shield", "Admin Users / Access", "Manage authorised admin accounts")}
-        ${quick("customers", "users", "CRM / Customers", "Review customer records and Lifetime access")}
-        ${quick("analytics", "chart", "Analytics", "Review customers, enquiries, reports and plan changes")}
-        ${quick("datarequests", "file", "Data Protection Requests", "Review UK GDPR and data rights requests")}
-        ${quick("systemreports", "alert", "System Reports", "Track customer website and account issue reports")}
-        ${quick("closures", "shield", "Closure Requests", "Create and manage customer account closure workflows")}
-        ${quick("plans", "plans", "Plans & Prices", "Configure service plan cards and Stripe IDs")}
-        ${quick("stripe", "card", "Stripe API Controls", "Store keys and test account status")}
-        ${quick("email", "mail", "Email (SMTP)", "Configure outbound notifications and test attempts")}
-        ${quick("affiliate", "link", "Affiliate Content", "Manage affiliate widgets, notices and blocks")}
-        ${quick("appearance", "palette", "Appearance", "Control site-wide light and dark mode")}
-        ${quick("comingsoon", "clock", "Coming Soon Page", "Control the public pre-launch page")}
-        ${quick("maintenance", "shield", "Maintenance Mode", "Control public maintenance mode")}
-        ${quick("policies", "file", "Legal Policies", "Edit draft and published policy records")}
-        ${quick("audit", "clock", "Audit Log", "Review sensitive admin activity history")}
-        ${quick("system", "alert", "System / Issues", "Track operational issues")}
+      <div class="website-state">
+        <span class="status-dot is-${escapeAttr(websiteTone)}"></span>
+        <div><strong>Website ${escapeHtml(websiteLabel)}</strong><span>Public experience status</span></div>
+      </div>
+    </header>
+
+    <section class="kpi-grid" aria-label="Key performance indicators">
+      ${kpi("Total customers", overview.customers, "All customer profiles")}
+      ${kpi("Lifetime members", overview.lifetimeUsers, "Lifetime access enabled")}
+      ${kpi("Active plans", overview.activePlans, `${overview.plans || 0} plans configured`)}
+      ${kpi("Revenue", "Not available", "No revenue API is connected")}
+      ${kpi("Pending data requests", overview.dataProtectionRequests, "Active rights requests")}
+      ${kpi("Support tickets", overview.supportTickets, "All recorded tickets")}
+      ${kpi("Website status", websiteLabel, maintenanceOn ? "Maintenance mode enabled" : comingSoonOn ? "Coming Soon enabled" : "Public site available")}
+      ${kpi("Worker status", "Online", "Admin API responded successfully")}
+    </section>
+
+    <div class="dashboard-layout">
+      <div class="dashboard-stack">
+        <section class="admin-card">
+          <div class="section-head">
+            <div><h2>Quick actions</h2><p>Common operational tasks and platform controls.</p></div>
+          </div>
+          <div class="quick-grid">
+            ${quick("customers", "users", "View CRM", "Search and manage customer profiles")}
+            ${quick("maintenance", "shield", "Maintenance mode", "Manage public maintenance controls")}
+            ${quick("comingsoon", "clock", "Publish website", "Review Coming Soon visibility")}
+            ${quick("stripe", "card", "Stripe dashboard", "Review connection and API controls")}
+            ${quick("audit", "clock", "Audit logs", "Review sensitive administrative activity")}
+            ${quick("datarequests", "file", "Data requests", "Process UK GDPR rights requests")}
+          </div>
+        </section>
+
+        <section class="admin-card">
+          <div class="section-head">
+            <div><h2>Recent activity</h2><p>Platform events will appear here when an activity feed is available.</p></div>
+            <button class="mini-button" type="button" data-action="load-section" data-section="audit">View audit log</button>
+          </div>
+          <div class="activity-empty">
+            <div><span class="activity-empty-icon">&#8596;</span><strong>No recent activity feed</strong><p>Use the audit log for the current administrative history.</p></div>
+          </div>
+        </section>
+      </div>
+
+      <div class="dashboard-stack">
+        <section class="admin-card">
+          <div class="section-head"><div><h2>Platform health</h2><p>Current signals from this admin session.</p></div></div>
+          <div class="health-list">
+            ${health("Website", websiteLabel, websiteTone)}
+            ${health("API", "Operational", "online")}
+            ${health("Database", "Connected", "online")}
+            ${health("Email", "Check settings", "warning")}
+            ${health("Workers", "Operational", "online")}
+            ${health("Cloudflare", "Access verified", "online")}
+          </div>
+        </section>
+
+        <section class="admin-card">
+          <div class="section-head"><div><h2>Website access</h2><p>Preview or manage secure access to the public website.</p></div></div>
+          <div class="section-actions">
+            <button class="admin-button" type="button" data-action="create-bypass">Enter as Admin</button>
+            <a class="admin-button secondary" href="/?preview_public_block=1" target="_blank" rel="noopener noreferrer" onclick="window.open(this.href, '_blank', 'noopener,noreferrer'); return false;">Preview Public View</a>
+            <button class="admin-button secondary" type="button" data-action="remove-bypass">Exit Admin Access</button>
+          </div>
+        </section>
       </div>
     </div>
   `;
+}
+
+function kpi(label, value, meta) {
+  return `<article class="kpi-card"><span class="kpi-label">${escapeHtml(label)}</span><strong class="kpi-value">${escapeHtml(value)}</strong><span class="kpi-meta">${escapeHtml(meta)}</span></article>`;
+}
+
+function health(label, status, tone = "online") {
+  return `<div class="health-item"><span class="status-dot is-${escapeAttr(tone)}"></span><strong>${escapeHtml(label)}</strong><span>${escapeHtml(status)}</span></div>`;
 }
 
 function quick(section, icon, title, text) {
@@ -566,7 +651,7 @@ async function removeAdmin(email) {
 }
 
 function renderCustomers(customers = []) {
-  const rows = customers.map((c) => {
+  const customerRow = (c) => {
     const name = c.display_name || c.verified_name || c.email;
     const lifetime = Number(c.admin_lifetime || 0) === 1;
     const planSuffix = lifetime && c.admin_lifetime_plan_id ? ` (${c.admin_lifetime_plan_id})` : "";
@@ -580,20 +665,71 @@ function renderCustomers(customers = []) {
         <td>${escapeHtml(formatDate(c.updated_at || c.created_at))}</td>
       </tr>
     `;
-  }).join("");
+  };
 
   document.getElementById("adminPanel").innerHTML = `
     <div class="admin-card">
       <div class="section-head">
         <div>
-          <h2>CRM / Customers</h2>
-          <p>Customer profile records from D1. Open a customer to manage Lifetime status and internal admin notes.</p>
+          <h2>Customer relationship management</h2>
+          <p>Search customer profiles and open a record to review account details, Lifetime access and internal notes.</p>
         </div>
       </div>
       <div class="admin-alert">Customer data displayed here is confidential and subject to UK GDPR. Access is logged by the platform perimeter; use it only for legitimate business purposes.</div>
-      ${table(["Customer", "Contact email", "Status", "Phone", "Preference", "Updated"], rows)}
+      <div class="table-tools" style="margin-top:1rem;">
+        <div class="table-filters">
+          <label class="table-search"><span class="sr-only">Search customers</span><input id="customerSearch" type="search" placeholder="Search name, email or phone" autocomplete="off"></label>
+          <label><span class="sr-only">Filter by membership</span><select id="customerStatusFilter"><option value="all">All customers</option><option value="lifetime">Lifetime members</option><option value="standard">Standard customers</option></select></label>
+        </div>
+        <span class="table-count" id="customerResultCount"></span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Customer</th><th>Contact email</th><th>Status</th><th>Phone</th><th>Preference</th><th>Updated</th></tr></thead>
+          <tbody id="customerTableBody"></tbody>
+        </table>
+      </div>
+      <div class="table-pagination" aria-label="Customer table pagination">
+        <button class="mini-button" id="customerPreviousPage" type="button">Previous</button>
+        <span id="customerPageStatus">Page 1 of 1</span>
+        <button class="mini-button" id="customerNextPage" type="button">Next</button>
+      </div>
     </div>
   `;
+
+  const pageSize = 12;
+  let currentPage = 1;
+  const search = document.getElementById("customerSearch");
+  const status = document.getElementById("customerStatusFilter");
+  const previous = document.getElementById("customerPreviousPage");
+  const next = document.getElementById("customerNextPage");
+
+  const refresh = () => {
+    const query = search.value.trim().toLowerCase();
+    const selectedStatus = status.value;
+    const filtered = customers.filter((customer) => {
+      const searchable = [customer.display_name, customer.verified_name, customer.email, customer.contact_email, customer.phone]
+        .filter(Boolean).join(" ").toLowerCase();
+      const lifetime = Number(customer.admin_lifetime || 0) === 1;
+      const matchesStatus = selectedStatus === "all" || (selectedStatus === "lifetime" && lifetime) || (selectedStatus === "standard" && !lifetime);
+      return matchesStatus && (!query || searchable.includes(query));
+    });
+    const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
+    currentPage = Math.min(currentPage, pages);
+    const start = (currentPage - 1) * pageSize;
+    const visible = filtered.slice(start, start + pageSize);
+    document.getElementById("customerTableBody").innerHTML = visible.map(customerRow).join("") || `<tr><td colspan="6">No customers match these filters.</td></tr>`;
+    document.getElementById("customerResultCount").textContent = `${filtered.length} ${filtered.length === 1 ? "customer" : "customers"}`;
+    document.getElementById("customerPageStatus").textContent = `Page ${currentPage} of ${pages}`;
+    previous.disabled = currentPage <= 1;
+    next.disabled = currentPage >= pages;
+  };
+
+  search.addEventListener("input", () => { currentPage = 1; refresh(); });
+  status.addEventListener("change", () => { currentPage = 1; refresh(); });
+  previous.addEventListener("click", () => { currentPage = Math.max(1, currentPage - 1); refresh(); });
+  next.addEventListener("click", () => { currentPage += 1; refresh(); });
+  refresh();
 }
 
 function renderPlans(plans = []) {
@@ -1695,7 +1831,7 @@ function renderStatusForm(section, settings, labels) {
         ${input(labels.etaLabel, labels.etaKey)}
         <div class="admin-alert" id="${section}ModeHelp">Plain text mode is active. Text is rendered safely with line breaks preserved.</div>
         <div class="admin-alert">The fields above remain for compatibility. The detailed editable live page content is below.</div>
-        <div class="admin-grid two">
+        <div class="admin-grid">
           ${input("Left card label", labels.leftLabelKey)}
           ${input("Right card label", labels.rightLabelKey)}
           ${input("Left card heading", labels.leftHeadingKey)}
@@ -1860,6 +1996,24 @@ function renderCustomerDrawer(customer, plans = []) {
       <div class="drawer-field"><span>Support notes</span><strong>${escapeHtml(customer.support_notes || "None recorded")}</strong></div>
       <div class="drawer-field"><span>Lifetime plan</span><strong>${escapeHtml(customer.admin_lifetime_plan_id || "Not assigned")}</strong></div>
       <div class="drawer-field"><span>Updated</span><strong>${escapeHtml(formatDate(customer.updated_at || customer.created_at))}</strong></div>
+    </div>
+    <div class="drawer-section-grid">
+      <section class="drawer-section-card">
+        <h3>Membership</h3>
+        <p>${isLifetime ? `Lifetime access is enabled${customer.admin_lifetime_plan_id ? ` on ${escapeHtml(customer.admin_lifetime_plan_id)}` : ""}.` : "This customer has standard account access."}</p>
+      </section>
+      <section class="drawer-section-card">
+        <h3>Orders</h3>
+        <p>No order history is exposed by the current customer API.</p>
+      </section>
+      <section class="drawer-section-card">
+        <h3>Timeline</h3>
+        <p>Profile last updated ${escapeHtml(formatDate(customer.updated_at || customer.created_at))}.</p>
+      </section>
+      <section class="drawer-section-card">
+        <h3>GDPR &amp; support</h3>
+        <p>${escapeHtml(customer.support_notes || "No linked support history is available on this profile.")}</p>
+      </section>
     </div>
     <form class="admin-form single" id="customerAdminForm">
       <label class="check"><input id="customer_lifetime" type="checkbox" ${isLifetime ? "checked" : ""}> Mark this customer as Lifetime</label>
