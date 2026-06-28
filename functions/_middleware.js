@@ -298,6 +298,10 @@ export async function onRequest(context) {
 
   const bypass =
     path.startsWith("/admin") ||
+    path === "/status" ||
+    path.startsWith("/status/") ||
+    path === "/api/status" ||
+    path.startsWith("/api/status/") ||
     path.startsWith("/cdn-cgi") ||
     path.startsWith("/assets") ||
     path === "/favicon.ico" ||

@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Service Status Centre | JA Experiences &amp; Discovery</title>
+  <meta name="description" content="Live operational status, incidents and scheduled maintenance for JA Experiences & Discovery and JA Group Services.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/ja-travel-rebuild.css?v=20260621-1">
+  <link rel="stylesheet" href="/assets/css/status-centre.css?v=20260628-1">
+</head>
+<body data-page="status" class="status-page">
+  <div id="siteShellHeader"></div>
+
+  <main id="main">
+    <section class="status-hero" aria-labelledby="status-page-title">
+      <div class="container status-hero-grid">
+        <div>
+          <span class="status-eyebrow">Live service information</span>
+          <h1 id="status-page-title">Service Status Centre</h1>
+          <p>Live operational information for JA Experiences &amp; Discovery and services operated by JA Group Services Ltd.</p>
+        </div>
+        <div class="status-hero-meta" aria-label="Status data information">
+          <span class="status-live-dot" aria-hidden="true"></span>
+          <div>
+            <strong>Powered by live Statuspage data</strong>
+            <span id="lastUpdatedHero">Connecting to the service status feed…</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="status-dashboard" aria-live="polite" aria-busy="true" id="statusDashboard">
+      <div class="container">
+        <div class="status-loading" id="statusLoading" role="status">
+          <span class="status-loader" aria-hidden="true"></span>
+          <div><strong>Loading live service status</strong><span>This should only take a moment.</span></div>
+        </div>
+
+        <div id="statusError" class="status-error" hidden role="alert">
+          <span class="status-icon" aria-hidden="true">!</span>
+          <div>
+            <h2>Live status is temporarily unavailable</h2>
+            <p id="statusErrorMessage">Please try again shortly or use the official status portal.</p>
+          </div>
+          <button class="status-button secondary" id="retryStatus" type="button">Try again</button>
+        </div>
+
+        <div id="statusContent" hidden>
+          <section class="overall-status-card" id="overallStatus" aria-labelledby="overallStatusTitle">
+            <div class="overall-status-main">
+              <span class="overall-status-symbol" aria-hidden="true"></span>
+              <div>
+                <span class="status-section-label">Overall system status</span>
+                <h2 id="overallStatusTitle">Checking systems…</h2>
+                <p id="overallStatusDescription"></p>
+              </div>
+            </div>
+            <div class="overall-status-updated">
+              <span>Last updated</span>
+              <strong id="lastUpdated">—</strong>
+            </div>
+          </section>
+
+          <section class="status-summary" aria-labelledby="summaryTitle">
+            <div class="status-heading-row">
+              <div>
+                <span class="status-section-label">At a glance</span>
+                <h2 id="summaryTitle">System summary</h2>
+              </div>
+              <p>Current status across every component published by JA Group Services.</p>
+            </div>
+            <div class="summary-grid" id="summaryGrid"></div>
+          </section>
+
+          <section class="status-section" aria-labelledby="componentsTitle">
+            <div class="status-heading-row">
+              <div>
+                <span class="status-section-label">Live components</span>
+                <h2 id="componentsTitle">Component status</h2>
+              </div>
+              <p id="componentSummary">Current health for all published service components.</p>
+            </div>
+            <div class="component-grid" id="componentGrid"></div>
+          </section>
+
+          <section class="status-section" aria-labelledby="incidentsTitle">
+            <div class="status-heading-row">
+              <div>
+                <span class="status-section-label">Current notices</span>
+                <h2 id="incidentsTitle">Active incidents</h2>
+              </div>
+              <p>Investigation, identification, monitoring and resolution updates appear here.</p>
+            </div>
+            <div class="event-list" id="activeIncidents"></div>
+          </section>
+
+          <section class="status-section" aria-labelledby="maintenanceTitle">
+            <div class="status-heading-row">
+              <div>
+                <span class="status-section-label">Planned work</span>
+                <h2 id="maintenanceTitle">Scheduled maintenance</h2>
+              </div>
+              <p>Current and upcoming planned maintenance from the official service feed.</p>
+            </div>
+            <div class="event-list" id="maintenanceEvents"></div>
+          </section>
+
+          <section class="status-section status-history" aria-labelledby="historyTitle">
+            <div class="status-heading-row">
+              <div>
+                <span class="status-section-label">Previous events</span>
+                <h2 id="historyTitle">Incident history</h2>
+              </div>
+              <p>Recently resolved incidents and completed maintenance events.</p>
+            </div>
+            <div class="event-list compact" id="incidentHistory"></div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section class="official-status-cta" aria-labelledby="officialStatusTitle">
+      <div class="container">
+        <div>
+          <span class="status-section-label">Official incident portal</span>
+          <h2 id="officialStatusTitle">Need more detailed information?</h2>
+          <p>View the official JA Group Services Statuspage for the complete incident management record.</p>
+        </div>
+        <a class="status-button" href="https://jagroupservices.statuspage.io" target="_blank" rel="noopener noreferrer">
+          View official Statuspage <span aria-hidden="true">↗</span>
+          <span class="visually-hidden"> (opens in a new tab)</span>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <div id="siteShellFooter"></div>
+  <script src="/assets/js/site-shell.js?v=20260621-1"></script>
+  <script src="/assets/js/status-centre.js?v=20260628-1"></script>
+</body>
+</html>
