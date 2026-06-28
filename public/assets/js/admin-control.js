@@ -1753,25 +1753,11 @@ function renderComingSoon(settings = {}) {
     description: "Switch the public website into a pre-launch page while keeping the admin portal available.",
     enabledKey: "comingsoon_enabled",
     modeKey: "comingsoon_content_mode",
-    titleKey: "comingsoon_title",
-    messageKey: "comingsoon_message",
-    etaKey: "comingsoon_eta",
-    leftLabelKey: "comingsoon_left_label",
-    leftHeadingKey: "comingsoon_left_heading",
-    leftBodyKey: "comingsoon_left_body",
-    leftStatusKey: "comingsoon_left_status",
-    rightLabelKey: "comingsoon_right_label",
-    rightHeadingKey: "comingsoon_right_heading",
-    rightBodyKey: "comingsoon_right_body",
-    rightStatusKey: "comingsoon_right_status",
-    footerTextKey: "comingsoon_footer_text",
-    domainTextKey: "comingsoon_domain_text",
-    supportTextKey: "comingsoon_support_text",
-    enabledLabel: "Coming soon page enabled",
-    titleLabel: "Public coming soon title",
-    messageLabel: "Public coming soon message",
-    etaLabel: "Estimated launch time",
-    notice: ""
+    contentKey: "comingsoon_content",
+    enabledLabel: "Enable Coming Soon page",
+    contentLabel: "Coming Soon page content",
+    previewLabel: "Preview Coming Soon Page",
+    saveLabel: "Save Coming Soon Page"
   });
 }
 
@@ -1781,41 +1767,23 @@ function renderMaintenance(settings = {}) {
     description: "Bring the public website down for maintenance while keeping the admin portal available.",
     enabledKey: "maintenance_enabled",
     modeKey: "maintenance_content_mode",
-    titleKey: "maintenance_title",
-    messageKey: "maintenance_message",
-    etaKey: "maintenance_eta",
-    leftLabelKey: "maintenance_left_label",
-    leftHeadingKey: "maintenance_left_heading",
-    leftBodyKey: "maintenance_left_body",
-    leftStatusKey: "maintenance_left_status",
-    rightLabelKey: "maintenance_right_label",
-    rightHeadingKey: "maintenance_right_heading",
-    rightBodyKey: "maintenance_right_body",
-    rightStatusKey: "maintenance_right_status",
-    footerTextKey: "maintenance_footer_text",
-    domainTextKey: "maintenance_domain_text",
-    supportTextKey: "maintenance_support_text",
-    enabledLabel: "Maintenance mode enabled",
-    titleLabel: "Public maintenance title",
-    messageLabel: "Public maintenance message",
-    etaLabel: "Estimated return time",
-    notice: "The live maintenance page will always display the hardcoded label: MAINTENANCE NOTICE:"
+    contentKey: "maintenance_content",
+    enabledLabel: "Enable Maintenance page",
+    contentLabel: "Maintenance page content",
+    previewLabel: "Preview Maintenance Page",
+    saveLabel: "Save Maintenance Page"
   });
 }
 
 function renderStatusForm(section, settings, labels) {
+  const enabled = settings[labels.enabledKey] === "true";
   document.getElementById("adminPanel").innerHTML = `
-    <div class="admin-card">
+    <div class="admin-card status-page-editor">
       <div class="section-head">
         <div><h2>${escapeHtml(labels.title)}</h2><p>${escapeHtml(labels.description)}</p></div>
-        <div class="section-actions">
-          ${badge(settings[labels.enabledKey] === "true" ? "On" : "Off", settings[labels.enabledKey] === "true" ? "green" : "")}
-          <button class="admin-button" type="button" data-action="create-bypass">Enter Website as Admin</button>
-          <a class="admin-button secondary" href="/?preview_public_block=1" target="_blank" rel="noopener">Preview Public View</a>
-          <button class="admin-button secondary" type="button" data-action="remove-bypass">Exit Admin Access</button>
-        </div>
+        ${badge(enabled ? "Enabled" : "Disabled", enabled ? "green" : "amber")}
       </div>
-      <form class="admin-form" id="${section}Form">
+      <form class="admin-form single status-editor-form" id="${section}Form">
         <label class="check">
           <span class="switch"><input id="${labels.enabledKey}" type="checkbox"><span></span></span>
           ${escapeHtml(labels.enabledLabel)}
@@ -1823,117 +1791,67 @@ function renderStatusForm(section, settings, labels) {
         <label class="admin-label">Content mode
           <select id="${labels.modeKey}">
             <option value="plain">Plain text</option>
-            <option value="html">HTML (sanitised)</option>
+            <option value="html">HTML</option>
           </select>
         </label>
-        ${input(labels.titleLabel, labels.titleKey)}
-        ${textarea(labels.messageLabel, labels.messageKey)}
-        ${input(labels.etaLabel, labels.etaKey)}
-        <div class="admin-alert" id="${section}ModeHelp">Plain text mode is active. Text is rendered safely with line breaks preserved.</div>
-        <div class="admin-alert">The fields above remain for compatibility. The detailed editable live page content is below.</div>
-        <div class="admin-grid">
-          ${input("Left card label", labels.leftLabelKey)}
-          ${input("Right card label", labels.rightLabelKey)}
-          ${input("Left card heading", labels.leftHeadingKey)}
-          ${input("Right card heading", labels.rightHeadingKey)}
-          ${statusTextarea("Left card body", labels.leftBodyKey)}
-          ${statusTextarea("Right card body", labels.rightBodyKey)}
-          ${statusTextarea("Left status message", labels.leftStatusKey)}
-          ${statusTextarea("Right status message", labels.rightStatusKey)}
-          ${input("Domain text", labels.domainTextKey)}
-          ${input("Footer text", labels.footerTextKey)}
-          ${statusTextarea("Support information", labels.supportTextKey)}
+        <label class="admin-label status-content-field">
+          <span id="${section}ContentLabel">${escapeHtml(labels.contentLabel)}</span>
+          <textarea id="${labels.contentKey}" aria-describedby="${section}ModeHelp"></textarea>
+        </label>
+        <div class="admin-alert" id="${section}ModeHelp">Plain text mode escapes HTML and preserves line breaks.</div>
+        <div class="section-actions">
+          <a class="admin-button secondary" href="/?preview_public_block=1" target="_blank" rel="noopener noreferrer" onclick="window.open(this.href, '_blank', 'noopener,noreferrer'); return false;">${escapeHtml(labels.previewLabel)}</a>
+          <button class="admin-button" type="submit">${escapeHtml(labels.saveLabel)}</button>
         </div>
-        ${labels.notice ? `<div class="admin-alert">${escapeHtml(labels.notice)}</div>` : ""}
-        <button class="admin-button" type="submit">Save ${escapeHtml(labels.title.toLowerCase())} settings</button>
+        <div id="${section}Saved" class="admin-success" hidden></div>
       </form>
-      <div id="${section}Saved" class="admin-success" hidden></div>
-      <div class="admin-alert" style="margin-top:1rem;">Maintenance Mode takes priority over Coming Soon Mode. The admin portal and Cloudflare Access routes remain available.</div>
     </div>
   `;
 
-  document.getElementById(labels.enabledKey).checked = settings[labels.enabledKey] === "true";
+  document.getElementById(labels.enabledKey).checked = enabled;
   setValue(labels.modeKey, settings[labels.modeKey] || "plain");
-  setValue(labels.titleKey, settings[labels.titleKey] || "");
-  setValue(labels.messageKey, settings[labels.messageKey] || "");
-  setValue(labels.etaKey, settings[labels.etaKey] || "");
-  [
-    labels.leftLabelKey,
-    labels.leftHeadingKey,
-    labels.leftBodyKey,
-    labels.leftStatusKey,
-    labels.rightLabelKey,
-    labels.rightHeadingKey,
-    labels.rightBodyKey,
-    labels.rightStatusKey,
-    labels.footerTextKey,
-    labels.domainTextKey,
-    labels.supportTextKey
-  ].forEach((key) => setValue(key, settings[key] || ""));
+  setValue(labels.contentKey, settings[labels.contentKey] || "");
 
   applyStatusEditorMode(section, labels);
   document.getElementById(labels.modeKey).addEventListener("change", () => applyStatusEditorMode(section, labels));
 
   document.getElementById(`${section}Form`).addEventListener("submit", async (event) => {
     event.preventDefault();
-    const body = {
-      [labels.enabledKey]: document.getElementById(labels.enabledKey).checked,
-      [labels.modeKey]: getValue(labels.modeKey),
-      [labels.titleKey]: getValue(labels.titleKey),
-      [labels.messageKey]: getValue(labels.messageKey),
-      [labels.etaKey]: getValue(labels.etaKey),
-      [labels.leftLabelKey]: getValue(labels.leftLabelKey),
-      [labels.leftHeadingKey]: getValue(labels.leftHeadingKey),
-      [labels.leftBodyKey]: getValue(labels.leftBodyKey),
-      [labels.leftStatusKey]: getValue(labels.leftStatusKey),
-      [labels.rightLabelKey]: getValue(labels.rightLabelKey),
-      [labels.rightHeadingKey]: getValue(labels.rightHeadingKey),
-      [labels.rightBodyKey]: getValue(labels.rightBodyKey),
-      [labels.rightStatusKey]: getValue(labels.rightStatusKey),
-      [labels.footerTextKey]: getValue(labels.footerTextKey),
-      [labels.domainTextKey]: getValue(labels.domainTextKey),
-      [labels.supportTextKey]: getValue(labels.supportTextKey)
-    };
-    const data = await api(section, { method: "POST", body: JSON.stringify(body) });
-    renderSection(section, data);
+    try {
+      const body = {
+        [labels.enabledKey]: document.getElementById(labels.enabledKey).checked,
+        [labels.modeKey]: getValue(labels.modeKey),
+        [labels.contentKey]: document.getElementById(labels.contentKey).value
+      };
+      const data = await api(section, { method: "POST", body: JSON.stringify(body) });
+      state.data[section] = { ...(state.data[section] || {}), ...data };
+      renderSection(section, data);
+      setSaved(`${section}Saved`, `${labels.title} saved.`);
+    } catch (error) {
+      setSaved(`${section}Saved`, error.message, true);
+    }
   });
 }
 
 function applyStatusEditorMode(section, labels) {
   const mode = getValue(labels.modeKey) === "html" ? "html" : "plain";
   const isHtml = mode === "html";
+  const field = document.getElementById(labels.contentKey);
+  const label = document.getElementById(`${section}ContentLabel`);
   const help = document.getElementById(`${section}ModeHelp`);
+
+  if (field) {
+    field.placeholder = isHtml
+      ? "<!doctype html>\n<html lang=\"en-GB\">\n...\n</html>"
+      : "Enter the public page message...";
+    field.dataset.editorMode = mode;
+  }
+  if (label) label.textContent = isHtml ? `${labels.contentLabel} (complete HTML document)` : labels.contentLabel;
   if (help) {
     help.textContent = isHtml
-      ? "HTML mode is active. Use the HTML editor textareas below; saved HTML is sanitised before rendering."
-      : "Plain text mode is active. Text is rendered safely with line breaks preserved.";
+      ? "HTML mode returns this content exactly as saved. Include the complete document, styling and scripts you require."
+      : "Plain text mode escapes HTML and preserves line breaks in a simple responsive page.";
   }
-
-  [
-    labels.leftBodyKey,
-    labels.rightBodyKey,
-    labels.leftStatusKey,
-    labels.rightStatusKey,
-    labels.supportTextKey
-  ].forEach((key) => {
-    const field = document.getElementById(key);
-    const label = document.querySelector(`[data-status-editor-label="${key}"]`);
-    const note = document.querySelector(`[data-status-editor-note="${key}"]`);
-    if (field) {
-      field.placeholder = isHtml ? "<p>Enter safe HTML for this content block...</p>" : "Enter plain text for this content block...";
-      field.dataset.editorMode = mode;
-    }
-    if (label) {
-      const baseLabel = label.dataset.baseLabel || label.textContent.replace(/\s+HTML$/, "");
-      label.dataset.baseLabel = baseLabel;
-      label.textContent = isHtml ? `${baseLabel} HTML` : baseLabel;
-    }
-    if (note) {
-      note.textContent = isHtml
-        ? "HTML editor. Scripts, event handlers, dangerous URLs and unsafe embeds are removed before publishing."
-        : "Plain text editor. Content is escaped before publishing.";
-    }
-  });
 }
 
 async function openCustomerDrawer(email) {
@@ -2114,16 +2032,6 @@ function input(label, id, type = "text") {
 
 function textarea(label, id) {
   return `<label class="admin-label">${escapeHtml(label)}<textarea id="${escapeHtml(id)}"></textarea></label>`;
-}
-
-function statusTextarea(label, id) {
-  return `
-    <label class="admin-label">
-      <span data-status-editor-label="${escapeAttr(id)}" data-base-label="${escapeAttr(label)}">${escapeHtml(label)}</span>
-      <textarea id="${escapeAttr(id)}" data-status-editor="true"></textarea>
-      <small data-status-editor-note="${escapeAttr(id)}">Plain text editor. Content is escaped before publishing.</small>
-    </label>
-  `;
 }
 
 function table(headers, rows) {
