@@ -2159,12 +2159,13 @@ async function getAdminActivity(DB, email) {
   `, [email, email]);
 }
 
-async function adminPayload(DB, identity) {
+async function adminPayload(DB, identity, env = {}) {
   const admin = await DB.prepare(`SELECT email, name, role, status, permissions, favourites, source, created_by, created_at, updated_at FROM admin_users WHERE lower(email) = lower(?)`).bind(identity.email).first();
   const storedRole = admin?.role || "Auditor";
-  const role = canonicalRoleName(storedRole);
+  const ownerEmail = configuredAdmins(env).includes(identity.email);
+  const role = ownerEmail ? "Platform Owner" : canonicalRoleName(storedRole);
   const effectiveAdmin = admin || { email: identity.email, role, permissions: "[\"*\"]", favourites: "[]" };
-  const permissions = await getEffectivePermissions(DB, effectiveAdmin);
+  const permissions = ownerEmail ? ["*"] : await getEffectivePermissions(DB, effectiveAdmin);
   const preferences = await getAdminPreferences(DB, identity);
   const defaultLanding = defaultLandingPageForRole(role, permissions);
   return {
@@ -2344,7 +2345,7 @@ export async function onRequest(context) {
   if (!(await isAllowedAdmin(env.DB, identity, env))) {
     return json({ error: "Forbidden.", signedInAs: identity.email }, 403);
   }
-  const adminContext = await adminPayload(env.DB, identity);
+  const adminContext = await adminPayload(env.DB, identity, env);
 
   const url = new URL(request.url);
   const section = url.searchParams.get("section") || "overview";
