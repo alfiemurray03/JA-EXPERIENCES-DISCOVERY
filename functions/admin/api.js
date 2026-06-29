@@ -759,33 +759,27 @@ async function savePlanVisibility(DB, body) {
 
   const expected = new Map(incoming.map((plan) => [clean(plan.id, 120), Number(plan.is_active || 0)]));
 
-  try {
-    await DB.exec("BEGIN TRANSACTION");
-    const databaseAfterSave = [];
-    for (const plan of incoming) {
-      const id = clean(plan.id, 120);
+  const databaseAfterSave = [];
+  for (const plan of incoming) {
+    const id = clean(plan.id, 120);
+    try {
       await DB.prepare(`UPDATE service_plans SET is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
         .bind(expected.get(id), id)
         .run();
-      const persisted = await DB.prepare(`SELECT id, is_active FROM service_plans WHERE id = ?`)
-        .bind(id)
-        .first();
-      if (!persisted) {
-        throw new Error(`Plan ${id} was not found after saving.`);
-      }
-      databaseAfterSave.push({
-        id: persisted.id,
-        is_active: Number(persisted.is_active || 0)
-      });
+    } catch (error) {
+      throw new Error(`Failed to update plan ${id}: ${error.message || error}`);
     }
-    await DB.exec("COMMIT");
-  } catch (error) {
-    try {
-      await DB.exec("ROLLBACK");
-    } catch {
-      // Ignore rollback failures.
+
+    const persisted = await DB.prepare(`SELECT id, is_active FROM service_plans WHERE id = ?`)
+      .bind(id)
+      .first();
+    if (!persisted) {
+      throw new Error(`Plan ${id} was not found after saving.`);
     }
-    throw error;
+    databaseAfterSave.push({
+      id: persisted.id,
+      is_active: Number(persisted.is_active || 0)
+    });
   }
 
   const savedPlans = await all(DB, `SELECT * FROM service_plans ORDER BY sort_order ASC, plan_name ASC`);
