@@ -761,11 +761,22 @@ async function savePlanVisibility(DB, body) {
 
   try {
     await DB.exec("BEGIN TRANSACTION");
+    const databaseAfterSave = [];
     for (const plan of incoming) {
       const id = clean(plan.id, 120);
       await DB.prepare(`UPDATE service_plans SET is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
         .bind(expected.get(id), id)
         .run();
+      const persisted = await DB.prepare(`SELECT id, is_active FROM service_plans WHERE id = ?`)
+        .bind(id)
+        .first();
+      if (!persisted) {
+        throw new Error(`Plan ${id} was not found after saving.`);
+      }
+      databaseAfterSave.push({
+        id: persisted.id,
+        is_active: Number(persisted.is_active || 0)
+      });
     }
     await DB.exec("COMMIT");
   } catch (error) {
@@ -777,19 +788,19 @@ async function savePlanVisibility(DB, body) {
     throw error;
   }
 
-  const stored = await all(DB, `SELECT * FROM service_plans ORDER BY sort_order ASC, plan_name ASC`);
-  const storedMap = new Map(stored.map((plan) => [plan.id, Number(plan.is_active || 0)]));
+  const savedPlans = await all(DB, `SELECT * FROM service_plans ORDER BY sort_order ASC, plan_name ASC`);
+  const savedMap = new Map(savedPlans.map((plan) => [plan.id, Number(plan.is_active || 0)]));
 
   for (const [id, value] of expected.entries()) {
-    if (!storedMap.has(id)) {
+    if (!savedMap.has(id)) {
       throw new Error(`Plan ${id} was not found after saving.`);
     }
-    if (Number(storedMap.get(id)) !== value) {
-      throw new Error(`Plan ${id} was not persisted. Expected ${value}, found ${storedMap.get(id)}.`);
+    if (Number(savedMap.get(id)) !== value) {
+      throw new Error(`Plan ${id} was not persisted. Expected ${value}, found ${savedMap.get(id)}.`);
     }
   }
 
-  const savedPlans = stored.map((plan) => ({
+  const plans = savedPlans.map((plan) => ({
     ...plan,
     is_active: Number(plan.is_active || 0),
     is_featured: Number(plan.is_featured || 0)
@@ -798,7 +809,8 @@ async function savePlanVisibility(DB, body) {
   return {
     success: true,
     rows_updated: incoming.length,
-    plans: savedPlans
+    database_after_save: databaseAfterSave,
+    plans
   };
 }
 
@@ -1771,9 +1783,9 @@ export async function onRequest(context) {
       }
       if (section === "plans") {
         if (body.action === "save_visibility") {
-          const plans = await savePlanVisibility(env.DB, body);
+          const result = await savePlanVisibility(env.DB, body);
           await writeAudit(env.DB, identity, "plan_visibility_save", "service_plans", "bulk", "Saved plan visibility changes.", {});
-          return json({ plans, saved: true });
+          return json(result);
         }
         const plans = await savePlan(env.DB, body);
         await writeAudit(env.DB, identity, "plan_save", "service_plans", clean(body.id, 120), `Saved plan ${clean(body.plan_name, 180)}.`, {});

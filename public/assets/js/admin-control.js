@@ -1051,6 +1051,7 @@ function renderPlans(plans = []) {
       </div>
     </div>
     <div class="admin-alert ${state.planDirty ? "" : "hidden"}" data-plan-unsaved>${state.planDirty ? "You have unsaved changes." : ""}</div>
+    <div class="admin-note" data-plan-save-proof hidden></div>
     <div class="plan-grid">${cards || emptyCard("No plans yet.")}</div>
   `;
   syncPlanControls();
@@ -1203,6 +1204,7 @@ async function savePlanChanges() {
     state.planDirty = false;
     state.data.plans = data;
     renderPlans(data.plans);
+    showPlanSaveProof(data.database_after_save || []);
     setSaved("plansSaved", "Changes saved successfully.");
   } catch (error) {
     setSaved("plansSaved", error.message || "Unable to save plan changes.", true);
@@ -1210,6 +1212,18 @@ async function savePlanChanges() {
     state.planSaving = false;
     syncPlanControls();
   }
+}
+
+function showPlanSaveProof(rows) {
+  const proof = document.querySelector("[data-plan-save-proof]");
+  if (!proof) return;
+  if (!Array.isArray(rows) || !rows.length) {
+    proof.hidden = true;
+    proof.textContent = "";
+    return;
+  }
+  proof.hidden = false;
+  proof.innerHTML = rows.map((row) => `<div>${escapeHtml(row.id)}: ${escapeHtml(String(row.is_active))}</div>`).join("");
 }
 
 async function cancelPlanChanges() {
