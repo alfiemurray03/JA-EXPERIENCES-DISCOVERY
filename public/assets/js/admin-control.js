@@ -4,15 +4,24 @@ const state = {
   selectedPolicy: null,
   favourites: [],
   branding: {},
+  adminRole: "Administrator",
   allowedSections: ["overview"],
+  adminRecentSections: [],
+  dashboardPreferences: {},
+  notificationPreferences: {},
+  preferredLandingPage: "overview",
+  themePreference: "system",
   planDraft: null,
   planDirty: false,
-  planSaving: false
+  planSaving: false,
+  initialWorkspaceApplied: false
 };
 
 const sectionTitles = {
   overview: "Overview",
+  operations: "Operations",
   admins: "Admin Users",
+  roles: "Roles",
   customers: "CRM",
   plans: "Plans & Prices",
   stripe: "Stripe",
@@ -30,15 +39,19 @@ const sectionTitles = {
   email: "Email",
   audit: "Audit Log",
   comingsoon: "Coming Soon",
-  maintenance: "Maintenance Mode"
+  maintenance: "Maintenance Mode",
+  sessions: "Sessions"
 };
 
 const sectionDescriptions = {
   overview: "Executive summary of your customer and platform operations.",
+  operations: "Dedicated operational dashboard for senior oversight.",
   analytics: "Review account, enquiry, request and plan activity.",
   status: "Monitor live service health, incidents and maintenance from Atlassian Statuspage.",
   audit: "Trace sensitive administrative activity across the platform.",
+  sessions: "View and revoke active admin sessions.",
   admins: "Manage authorised administrators and access records.",
+  roles: "Create, clone and edit roles plus their permissions.",
   customers: "Search customer profiles, memberships and account history.",
   datarequests: "Manage UK GDPR and data rights workflows.",
   systemreports: "Review customer-reported website and account issues.",
@@ -86,6 +99,7 @@ document.addEventListener("DOMContentLoaded", () => {
   bindAccountMenu();
   bindAdminActions();
   bindFavouriteActions();
+  bindWorkspaceActions();
   loadSection("overview");
 });
 
@@ -181,8 +195,59 @@ function bindAdminActions() {
       removeAdmin(action.dataset.email);
     }
 
+    if (type === "suspend-admin") {
+      await api("admins", { method: "POST", body: JSON.stringify({ action: "suspend", email: action.dataset.email }) });
+      await loadSection("admins");
+    }
+
+    if (type === "reactivate-admin") {
+      await api("admins", { method: "POST", body: JSON.stringify({ action: "reactivate", email: action.dataset.email }) });
+      await loadSection("admins");
+    }
+
     if (type === "open-admin-profile") {
       openAdminProfileModal(action.dataset.email);
+    }
+
+    if (type === "create-role") {
+      openRoleEditor(null);
+    }
+
+    if (type === "edit-role") {
+      const role = getCurrentRoles().find((item) => String(item.name) === String(action.dataset.name));
+      openRoleEditor(role || null);
+    }
+
+    if (type === "clone-role") {
+      const role = getCurrentRoles().find((item) => String(item.name) === String(action.dataset.name));
+      if (!role) return;
+      const name = window.prompt(`Clone "${role.name}" as:`, `${role.name} Copy`);
+      if (!name) return;
+      await api("roles", { method: "POST", body: JSON.stringify({ action: "clone", source: role.name, name }) });
+      await loadSection("roles");
+    }
+
+    if (type === "rename-role") {
+      const role = getCurrentRoles().find((item) => String(item.name) === String(action.dataset.name));
+      if (!role) return;
+      const name = window.prompt(`Rename role "${role.name}" to:`, role.name);
+      if (!name || name === role.name) return;
+      await api("roles", { method: "POST", body: JSON.stringify({ action: "rename", from: role.name, to: name }) });
+      await loadSection("roles");
+    }
+
+    if (type === "delete-role") {
+      const role = getCurrentRoles().find((item) => String(item.name) === String(action.dataset.name));
+      if (!role) return;
+      if (!window.confirm(`Delete role "${role.name}"? This cannot be undone.`)) return;
+      await api("roles", { method: "POST", body: JSON.stringify({ action: "delete", name: role.name }) });
+      await loadSection("roles");
+    }
+
+    if (type === "revoke-session") {
+      if (!window.confirm("Revoke this administrator session?")) return;
+      await api("sessions", { method: "POST", body: JSON.stringify({ action: "revoke", token_hash: action.dataset.token }) });
+      await loadSection("sessions");
     }
 
     if (type === "open-customer") {
@@ -249,6 +314,10 @@ function bindAdminActions() {
 
     if (type === "refresh-stripe") {
       refreshStripe();
+    }
+
+    if (type === "load-section-retry") {
+      loadSection(state.currentSection);
     }
 
     if (type === "select-policy") {
@@ -333,9 +402,85 @@ async function loadSection(section) {
       state.planDirty = false;
     }
     if (data.admin) setAdmin(data.admin);
+    touchRecentSection(section);
     renderSection(section, data);
   } catch (error) {
-    panel.innerHTML = `<div class="admin-alert">${escapeHtml(error.message)}</div>`;
+    panel.innerHTML = `
+      <div class="admin-card">
+        <div class="section-head"><div><h2>${escapeHtml(sectionTitles[section] || section)}</h2><p>We couldn't load this section.</p></div></div>
+        ${renderInlineStatus("error", error.message || "Something went wrong while loading this section.", "load-section-retry")}
+      </div>
+    `;
+    panel.querySelector('[data-action="load-section-retry"]')?.addEventListener("click", () => loadSection(section));
+  }
+}
+
+function bindWorkspaceActions() {
+  document.getElementById("sidebarToggleButton")?.addEventListener("click", async () => {
+    document.body.classList.toggle("sidebar-collapsed");
+    await persistWorkspacePreferences();
+  });
+
+  document.querySelector(".notification-button")?.addEventListener("click", () => {
+    const notifications = [
+      { label: "System alerts", value: state.data.overview?.overview?.openIssues || 0 },
+      { label: "New enquiries", value: state.data.analytics?.analytics?.totalEnquiries || 0 },
+      { label: "Support tickets", value: state.data.overview?.overview?.supportTickets || 0 },
+      { label: "Plan changes", value: state.data.analytics?.analytics?.planChanges || 0 },
+      { label: "Audit events", value: Array.isArray(state.data.audit?.audit) ? state.data.audit.audit.length : 0 }
+    ];
+    openModal(`
+      <div class="modal-head">
+        <div><h2>Notification Centre</h2><p>Operational notifications and activity highlights.</p></div>
+        <button class="drawer-close" type="button" data-action="close-modal">×</button>
+      </div>
+      <div class="admin-grid">
+        ${notifications.map((item) => `<article class="admin-stat"><span>${escapeHtml(item.label)}</span><strong>${escapeHtml(String(item.value))}</strong><span>Visible according to your permissions</span></article>`).join("")}
+      </div>
+    `);
+  });
+}
+
+async function persistWorkspacePreferences() {
+  try {
+    await api("prefs", {
+      method: "POST",
+      body: JSON.stringify({
+        favourites: state.favourites || [],
+        recently_used: state.adminRecentSections || [],
+        preferred_landing_page: state.preferredLandingPage || "overview",
+        sidebar_collapsed: document.body.classList.contains("sidebar-collapsed"),
+        theme_preference: state.themePreference || "system",
+        dashboard_preferences: state.dashboardPreferences || {},
+        notification_preferences: state.notificationPreferences || {}
+      })
+    });
+  } catch {
+    // Preferences are best-effort only.
+  }
+}
+
+async function touchRecentSection(section) {
+  if (!sectionTitles[section] || section === "overview") return;
+  const current = Array.isArray(state.favourites) ? state.favourites : [];
+  const recent = Array.isArray(state.adminRecentSections) ? state.adminRecentSections.filter((item) => item !== section) : [];
+  recent.unshift(section);
+  state.adminRecentSections = recent.slice(0, 10);
+  try {
+    await api("prefs", {
+      method: "POST",
+      body: JSON.stringify({
+        favourites: current,
+        recently_used: state.adminRecentSections,
+        preferred_landing_page: state.preferredLandingPage || "overview",
+        sidebar_collapsed: document.body.classList.contains("sidebar-collapsed"),
+        theme_preference: state.themePreference || "system",
+        dashboard_preferences: state.dashboardPreferences || {},
+        notification_preferences: state.notificationPreferences || {}
+      })
+    });
+  } catch {
+    // Preference tracking should never block admin work.
   }
 }
 
@@ -402,15 +547,47 @@ function setAdmin(admin) {
   setText("adminStatus", "Admin access verified");
   setText("sidebarAdminName", name);
   setText("sidebarAdminEmail", email);
-  setText("sidebarAdminAccess", "Admin Access Verified");
+  setText("sidebarAdminAccess", admin.role || "Admin Access Verified");
   document.querySelectorAll(".avatar").forEach((avatar) => {
     avatar.textContent = (name || email || "A").slice(0, 1).toUpperCase();
   });
   state.adminName = name;
+  state.adminRole = admin.role || state.adminRole || "Administrator";
   state.allowedSections = Array.isArray(admin.allowed_sections) && admin.allowed_sections.length ? admin.allowed_sections : ["overview"];
   state.favourites = Array.isArray(admin.preferences?.favourites) ? admin.preferences.favourites : state.favourites;
+  state.adminRecentSections = Array.isArray(admin.preferences?.recently_used) ? admin.preferences.recently_used : state.adminRecentSections;
+  state.dashboardPreferences = admin.preferences?.dashboard_preferences || state.dashboardPreferences || {};
+  state.notificationPreferences = admin.preferences?.notification_preferences || state.notificationPreferences || {};
+  state.preferredLandingPage = admin.preferences?.preferred_landing_page || state.preferredLandingPage || "overview";
+  state.themePreference = admin.preferences?.theme_preference || state.themePreference || "system";
+  document.body.classList.toggle("sidebar-collapsed", Boolean(admin.preferences?.sidebar_collapsed));
   syncNavigationAccess();
   renderFavourites();
+  if (!state.initialWorkspaceApplied) {
+    state.initialWorkspaceApplied = true;
+    const landing = state.preferredLandingPage || admin.workspace?.default_landing_page || "overview";
+    if (landing && landing !== state.currentSection && sectionTitles[landing]) {
+      setTimeout(() => loadSection(landing), 0);
+    }
+  }
+}
+
+function dashboardQuickCards() {
+  const widgets = [
+    ["customers", "users", "View CRM", "Search and manage customer profiles"],
+    ["status", "pulse", "Status Centre", "Review live service health and incidents"],
+    ["maintenance", "shield", "Maintenance mode", "Manage public maintenance controls"],
+    ["comingsoon", "clock", "Publish website", "Review Coming Soon visibility"],
+    ["stripe", "card", "Stripe dashboard", "Review connection and API controls"],
+    ["audit", "clock", "Audit logs", "Review sensitive administrative activity"],
+    ["datarequests", "file", "Data requests", "Process UK GDPR rights requests"],
+    ["plans", "plans", "Plans & Prices", "Review plan visibility and pricing"],
+    ["admins", "shield", "Admin Users", "Manage administrator access"],
+    ["roles", "users", "Roles", "Manage roles and permissions"],
+    ["analytics", "chart", "Analytics", "Review operational performance"]
+  ];
+  const allowed = new Set(state.allowedSections || ["overview"]);
+  return widgets.filter(([section]) => allowed.has(section)).map(([section, icon, title, text]) => quick(section, icon, title, text));
 }
 
 function syncNavigationAccess() {
@@ -494,9 +671,11 @@ async function saveFavourites(favourites) {
 
 function renderSection(section, data) {
   if (section === "overview") renderOverview(data.overview);
+  if (section === "operations") renderOperations(data.operations);
   if (section === "analytics") renderAnalytics(data.analytics, data.status);
   if (section === "status") renderStatusCentre(data.status);
   if (section === "admins") renderAdmins(data.admins);
+  if (section === "roles") renderRoles(data.roles, data.permission_catalog);
   if (section === "customers") renderCustomers(data.customers);
   if (section === "plans") renderPlans(data.plans);
   if (section === "stripe") renderStripe(data.stripe);
@@ -513,22 +692,40 @@ function renderSection(section, data) {
   if (section === "appearance") renderAppearance(data.appearance);
   if (section === "email") renderEmail(data.email, data.test);
   if (section === "audit") renderAudit(data.audit);
+  if (section === "sessions") renderSessions(data.sessions);
 }
 
 function renderOverview(overview) {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
   const name = state.adminName || "Administrator";
+  const roleName = state.adminRole || "Administrator";
+  const widgets = Array.isArray(state.data.overview?.admin?.workspace?.widgets) ? state.data.overview.admin.workspace.widgets : [];
+  const recentAudit = Array.isArray(overview.recentAudit) ? overview.recentAudit : [];
+  const latestCustomers = Array.isArray(overview.latestCustomers) ? overview.latestCustomers : [];
+  const latestSupport = Array.isArray(overview.latestSupport) ? overview.latestSupport : [];
+  const latestReports = Array.isArray(overview.latestReports) ? overview.latestReports : [];
+  const sessions = Array.isArray(overview.sessions) ? overview.sessions : [];
+  const activeAdmins = Array.isArray(overview.activeAdmins) ? overview.activeAdmins : [];
   const maintenanceOn = String(overview.maintenanceStatus).toLowerCase() === "on";
   const comingSoonOn = String(overview.comingSoonStatus).toLowerCase() === "on";
   const websiteLabel = maintenanceOn ? "Maintenance" : comingSoonOn ? "Coming soon" : "Online";
   const websiteTone = maintenanceOn ? "critical" : comingSoonOn ? "warning" : "online";
+  const widgetCards = widgets.map((widget) => `
+    <article class="admin-card widget-card">
+      <div class="section-head"><div><h3>${escapeHtml(widget.label)}</h3><p>${escapeHtml(widget.section)}</p></div></div>
+      <div class="widget-body">
+        <strong>${escapeHtml(widget.section === "stripe" ? "Open section" : widget.section === "sessions" ? "Session management" : widget.section === "audit" ? "Audit review" : "Workspace card")}</strong>
+      </div>
+    </article>
+  `).join("");
 
   document.getElementById("adminPanel").innerHTML = `
     <header class="dashboard-welcome">
       <div>
         <p class="eyebrow">Operations dashboard</p>
         <h1>${escapeHtml(greeting)}, ${escapeHtml(name)}</h1>
+        <p class="eyebrow">${escapeHtml(roleName)}</p>
         <p>Here is the latest operational view of JA Experiences &amp; Discovery.</p>
       </div>
       <div class="website-state">
@@ -548,6 +745,15 @@ function renderOverview(overview) {
       ${kpi("Worker status", "Online", "Admin API responded successfully")}
     </section>
 
+    <section class="admin-card">
+      <div class="section-head">
+        <div><h2>Workspace</h2><p>Your personalised dashboard layout is driven by your role and preferences.</p></div>
+      </div>
+      <div class="workspace-grid">
+        ${widgetCards}
+      </div>
+    </section>
+
     <div class="dashboard-layout">
       <div class="dashboard-stack">
         <section class="admin-card">
@@ -555,13 +761,7 @@ function renderOverview(overview) {
             <div><h2>Quick actions</h2><p>Common operational tasks and platform controls.</p></div>
           </div>
           <div class="quick-grid">
-            ${quick("customers", "users", "View CRM", "Search and manage customer profiles")}
-            ${quick("status", "pulse", "Status Centre", "Review live service health and incidents")}
-            ${quick("maintenance", "shield", "Maintenance mode", "Manage public maintenance controls")}
-            ${quick("comingsoon", "clock", "Publish website", "Review Coming Soon visibility")}
-            ${quick("stripe", "card", "Stripe dashboard", "Review connection and API controls")}
-            ${quick("audit", "clock", "Audit logs", "Review sensitive administrative activity")}
-            ${quick("datarequests", "file", "Data requests", "Process UK GDPR rights requests")}
+            ${dashboardQuickCards().join("")}
           </div>
         </section>
 
@@ -599,7 +799,56 @@ function renderOverview(overview) {
         </section>
       </div>
     </div>
+
+    <div class="dashboard-layout" style="margin-top:1rem;">
+      <div class="dashboard-stack">
+        <section class="admin-card">
+          <div class="section-head"><div><h2>Recent Audit Events</h2><p>Latest privileged activity.</p></div></div>
+          ${table(["Action", "Actor", "Entity", "Record", "Date"], recentAudit.map((item) => `
+            <tr><td><strong>${escapeHtml(item.action)}</strong><span>${escapeHtml(item.summary || "")}</span></td><td>${escapeHtml(item.actor_email || "system")}</td><td>${escapeHtml(item.entity_type || "")}</td><td>${escapeHtml(item.entity_id || "")}</td><td>${escapeHtml(formatDate(item.created_at))}</td></tr>
+          `).join(""))}
+        </section>
+        <section class="admin-card">
+          <div class="section-head"><div><h2>Active Administrators</h2><p>Administrators currently marked as active.</p></div></div>
+          ${table(["Name", "Role", "Email", "Updated"], activeAdmins.map((item) => `
+            <tr><td><strong>${escapeHtml(item.name || item.email)}</strong></td><td>${escapeHtml(item.role || "")}</td><td>${escapeHtml(item.email || "")}</td><td>${escapeHtml(formatDate(item.updated_at))}</td></tr>
+          `).join(""))}
+        </section>
+      </div>
+      <div class="dashboard-stack">
+        <section class="admin-card">
+          <div class="section-head"><div><h2>Latest Customer Activity</h2><p>Recently updated customer records.</p></div></div>
+          ${table(["Customer", "Contact", "Updated"], latestCustomers.map((item) => `
+            <tr><td><strong>${escapeHtml(item.display_name || item.verified_name || item.email)}</strong></td><td>${escapeHtml(item.contact_email || item.email || "")}</td><td>${escapeHtml(formatDate(item.updated_at))}</td></tr>
+          `).join(""))}
+        </section>
+        <section class="admin-card">
+          <div class="section-head"><div><h2>Latest Support Activity</h2><p>Recent support ticket updates.</p></div></div>
+          ${table(["Subject", "Priority", "Status", "Updated"], latestSupport.map((item) => `
+            <tr><td><strong>${escapeHtml(item.subject || item.id || "")}</strong></td><td>${escapeHtml(item.priority || "")}</td><td>${escapeHtml(item.status || "")}</td><td>${escapeHtml(formatDate(item.updated_at))}</td></tr>
+          `).join(""))}
+        </section>
+        <section class="admin-card">
+          <div class="section-head"><div><h2>Latest System Reports</h2><p>Recent platform report activity.</p></div></div>
+          ${table(["Title", "Status", "Updated"], latestReports.map((item) => `
+            <tr><td><strong>${escapeHtml(item.title || item.id || "")}</strong></td><td>${escapeHtml(item.status || "")}</td><td>${escapeHtml(formatDate(item.updated_at))}</td></tr>
+          `).join(""))}
+        </section>
+      </div>
+      <div class="dashboard-stack">
+        <section class="admin-card">
+          <div class="section-head"><div><h2>Active Sessions</h2><p>Current bypass and access sessions.</p></div></div>
+          ${table(["Administrator", "Created", "Last used", "Status"], sessions.map((session) => `
+            <tr><td><strong>${escapeHtml(session.admin_email || "")}</strong></td><td>${escapeHtml(formatDate(session.created_at))}</td><td>${escapeHtml(formatDate(session.last_used_at || session.created_at))}</td><td>${session.revoked_at ? "Revoked" : "Active"}</td></tr>
+          `).join(""))}
+        </section>
+      </div>
+    </div>
   `;
+}
+
+function renderOperations(operations) {
+  renderOverview(operations);
 }
 
 function kpi(label, value, meta) {
@@ -784,19 +1033,30 @@ async function fetchLiveStatus(skipCache = false) {
 }
 
 function renderAdmins(admins = []) {
+  const roles = Array.isArray(state.data.admins?.roles) ? state.data.admins.roles : [];
+  const canAssignPlatformOwner = Boolean(state.data.admins?.admin?.is_platform_owner);
+  const roleOptions = roles
+    .filter((role) => canAssignPlatformOwner || role.name !== "Platform Owner")
+    .map((role) => `<option value="${escapeAttr(role.name)}">${escapeHtml(role.name)}</option>`)
+    .join("") || `<option value="Administrator">Administrator</option>`;
   const rows = admins.map((admin) => {
     const isDefault = admin.source === "default";
+    const permissions = parseAdminPermissions(admin.permissions);
+    const canRemove = !isDefault && admin.role !== "Platform Owner";
     return `
       <tr>
         <td><strong>${escapeHtml(admin.name || "Admin user")}</strong><span>${escapeHtml(admin.email)}</span></td>
         <td>${badge(admin.role || "Admin")}</td>
+        <td>${badge(permissions.includes("*") ? "All permissions" : `${permissions.length} permissions`)}</td>
         <td>${badge(admin.status || "Active", String(admin.status || "Active").toLowerCase() === "active" ? "green" : "amber")}</td>
         <td>${badge(isDefault ? "Protected default" : "Portal", isDefault ? "green" : "")}</td>
         <td>${escapeHtml(formatDate(admin.updated_at || admin.created_at))}</td>
         <td>
           <div class="section-actions">
             <button class="mini-button" type="button" data-action="open-admin-profile" data-email="${escapeAttr(admin.email)}">Edit profile</button>
-            ${isDefault ? "" : `<button class="mini-button" type="button" data-action="remove-admin" data-email="${escapeAttr(admin.email)}">Remove</button>`}
+            ${canRemove ? `<button class="mini-button" type="button" data-action="suspend-admin" data-email="${escapeAttr(admin.email)}">Suspend</button>` : ""}
+            ${(admin.status || "Active") === "Suspended" && !isDefault ? `<button class="mini-button" type="button" data-action="reactivate-admin" data-email="${escapeAttr(admin.email)}">Reactivate</button>` : ""}
+            ${canRemove ? `<button class="mini-button danger" type="button" data-action="remove-admin" data-email="${escapeAttr(admin.email)}">Delete</button>` : ""}
           </div>
         </td>
       </tr>
@@ -815,11 +1075,17 @@ function renderAdmins(admins = []) {
       <form class="admin-form" id="adminUserForm">
         ${input("Admin email", "new_admin_email", "email")}
         ${input("Display name", "new_admin_name")}
+        <label class="admin-label">Role
+          <select id="new_admin_role">${roleOptions}</select>
+        </label>
         <button class="admin-button" type="submit">Add admin</button>
       </form>
 
       <div id="adminUserSaved" class="admin-success" hidden></div>
-      ${table(["Administrator", "Role", "Status", "Source", "Updated", "Actions"], rows)}
+      <div class="admin-form" style="margin-bottom:1rem;">
+        <label class="admin-label">Search administrators<input id="adminSearch" type="search" placeholder="Search name, email, role or status"></label>
+      </div>
+      <div id="adminTableWrap">${table(["Administrator", "Role", "Permissions", "Status", "Source", "Updated", "Actions"], rows)}</div>
     </div>
   `;
 
@@ -827,13 +1093,223 @@ function renderAdmins(admins = []) {
     event.preventDefault();
     await api("admins", {
       method: "POST",
-      body: JSON.stringify({ email: getValue("new_admin_email"), name: getValue("new_admin_name") })
+      body: JSON.stringify({ email: getValue("new_admin_email"), name: getValue("new_admin_name"), role: getValue("new_admin_role") })
     });
     await loadSection("admins");
     const notice = document.getElementById("adminUserSaved");
     if (notice) {
       notice.hidden = false;
       notice.textContent = "Admin added. They can access once their Microsoft Entra / Cloudflare Access account is authorised.";
+    }
+  });
+  setValue("new_admin_role", "Administrator");
+
+  const refresh = () => {
+    const search = getValue("adminSearch").toLowerCase();
+    const filtered = admins.filter((admin) => {
+      const text = `${admin.name || ""} ${admin.email || ""} ${admin.role || ""} ${admin.status || ""}`.toLowerCase();
+      return !search || text.includes(search);
+    });
+    const filteredRows = filtered.map((admin) => {
+      const isDefault = admin.source === "default";
+      const permissions = parseAdminPermissions(admin.permissions);
+      const canRemove = !isDefault && admin.role !== "Platform Owner";
+      return `
+        <tr>
+          <td><strong>${escapeHtml(admin.name || "Admin user")}</strong><span>${escapeHtml(admin.email)}</span></td>
+          <td>${badge(admin.role || "Admin")}</td>
+          <td>${badge(permissions.includes("*") ? "All permissions" : `${permissions.length} permissions`)}</td>
+          <td>${badge(admin.status || "Active", String(admin.status || "Active").toLowerCase() === "active" ? "green" : "amber")}</td>
+          <td>${badge(isDefault ? "Protected default" : "Portal", isDefault ? "green" : "")}</td>
+          <td>${escapeHtml(formatDate(admin.updated_at || admin.created_at))}</td>
+          <td>
+            <div class="section-actions">
+              <button class="mini-button" type="button" data-action="open-admin-profile" data-email="${escapeAttr(admin.email)}">Edit administrator</button>
+              ${canRemove ? `<button class="mini-button" type="button" data-action="suspend-admin" data-email="${escapeAttr(admin.email)}">Suspend</button>` : ""}
+              ${(admin.status || "Active") === "Suspended" && !isDefault ? `<button class="mini-button" type="button" data-action="reactivate-admin" data-email="${escapeAttr(admin.email)}">Reactivate</button>` : ""}
+              ${canRemove ? `<button class="mini-button danger" type="button" data-action="remove-admin" data-email="${escapeAttr(admin.email)}">Delete</button>` : ""}
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join("");
+    document.getElementById("adminTableWrap").innerHTML = table(["Administrator", "Role", "Permissions", "Status", "Source", "Updated", "Actions"], filteredRows);
+  };
+  document.getElementById("adminSearch")?.addEventListener("input", refresh);
+}
+
+function renderRoles(roles = [], permissionCatalog = {}) {
+  const rows = roles.map((role) => {
+    const permissions = Array.isArray(role.permissions) ? role.permissions : [];
+    const summary = permissions.includes("*") ? "All permissions" : `${permissions.length} permissions`;
+    return `
+      <tr>
+        <td><strong>${escapeHtml(role.name)}</strong><span>${escapeHtml(role.description || "Role definition")}</span></td>
+        <td>${badge(role.is_system ? "System" : "Custom", role.is_system ? "green" : "amber")}</td>
+        <td>${badge(summary)}</td>
+        <td>${escapeHtml(String(role.assigned_count || 0))}</td>
+        <td>${escapeHtml(formatDate(role.updated_at))}</td>
+        <td>
+          <div class="section-actions">
+            <button class="mini-button" type="button" data-action="edit-role" data-name="${escapeAttr(role.name)}">Edit</button>
+            ${role.is_system ? "" : `<button class="mini-button" type="button" data-action="clone-role" data-name="${escapeAttr(role.name)}">Clone</button>`}
+            ${role.is_system ? "" : `<button class="mini-button" type="button" data-action="rename-role" data-name="${escapeAttr(role.name)}">Rename</button>`}
+            ${role.is_system ? "" : `<button class="mini-button danger" type="button" data-action="delete-role" data-name="${escapeAttr(role.name)}">Delete</button>`}
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join("");
+
+  const categories = Object.entries(permissionCatalog || {});
+  document.getElementById("adminPanel").innerHTML = `
+    <div class="admin-card">
+      <div class="section-head">
+        <div>
+          <h2>Roles &amp; Permissions</h2>
+          <p>Create, clone and edit access roles using grouped permission categories.</p>
+        </div>
+        <div class="section-actions">
+          <button class="admin-button" type="button" data-action="create-role">Create role</button>
+        </div>
+      </div>
+      <div class="admin-grid" style="margin-bottom:1rem;">
+        ${roles.map((role) => `
+          <article class="admin-stat">
+            <span>${escapeHtml(role.name)}</span>
+            <strong>${escapeHtml(String(role.assigned_count || 0))} members</strong>
+            <span>${escapeHtml(role.is_system ? "System role" : `${(Array.isArray(role.permissions) ? role.permissions.length : 0)} permissions`)}</span>
+          </article>
+        `).join("")}
+      </div>
+      <div class="admin-form" style="margin-bottom:1rem;">
+        <label class="admin-label">Search roles<input id="roleSearch" type="search" placeholder="Search by role name or description"></label>
+        <label class="admin-label">Filter type<select id="roleTypeFilter"><option value="">All</option><option value="system">System</option><option value="custom">Custom</option></select></label>
+      </div>
+      <div id="roleTableWrap">${table(["Role", "Type", "Permissions", "Assigned users", "Updated", "Actions"], rows)}</div>
+    </div>
+    <div class="admin-card" style="margin-top:1rem;">
+      <div class="section-head"><div><h2>Permission catalog</h2><p>These permissions power the navigation, route security and dashboard visibility.</p></div></div>
+      <div class="permission-catalog">
+        ${categories.map(([group, permissions]) => `
+          <article class="list-card">
+            <strong>${escapeHtml(group)}</strong>
+            <div class="permission-tags">
+              ${permissions.map((permission) => `<span class="badge">${escapeHtml(permission)}</span>`).join("")}
+            </div>
+          </article>
+        `).join("")}
+      </div>
+    </div>
+  `;
+
+  const refresh = () => {
+    const search = getValue("roleSearch").toLowerCase();
+    const type = getValue("roleTypeFilter");
+    const filtered = roles.filter((role) => {
+      const text = `${role.name} ${role.description || ""}`.toLowerCase();
+      const matchesType = !type || (type === "system" ? Number(role.is_system || 0) === 1 : Number(role.is_system || 0) === 0);
+      return (!search || text.includes(search)) && matchesType;
+    });
+    const filteredRows = filtered.map((role) => {
+      const permissions = Array.isArray(role.permissions) ? role.permissions : [];
+      const summary = permissions.includes("*") ? "All permissions" : `${permissions.length} permissions`;
+      return `
+        <tr>
+          <td><strong>${escapeHtml(role.name)}</strong><span>${escapeHtml(role.description || "Role definition")}</span></td>
+          <td>${badge(role.is_system ? "System" : "Custom", role.is_system ? "green" : "amber")}</td>
+          <td>${badge(summary)}</td>
+          <td>${escapeHtml(String(role.assigned_count || 0))}</td>
+          <td>${escapeHtml(formatDate(role.updated_at))}</td>
+          <td>
+            <div class="section-actions">
+              <button class="mini-button" type="button" data-action="edit-role" data-name="${escapeAttr(role.name)}">Edit</button>
+              ${role.is_system ? "" : `<button class="mini-button" type="button" data-action="clone-role" data-name="${escapeAttr(role.name)}">Clone</button>`}
+              ${role.is_system ? "" : `<button class="mini-button" type="button" data-action="rename-role" data-name="${escapeAttr(role.name)}">Rename</button>`}
+              ${role.is_system ? "" : `<button class="mini-button danger" type="button" data-action="delete-role" data-name="${escapeAttr(role.name)}">Delete</button>`}
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join("");
+    document.getElementById("roleTableWrap").innerHTML = table(["Role", "Type", "Permissions", "Assigned users", "Updated", "Actions"], filteredRows);
+  };
+  document.getElementById("roleSearch")?.addEventListener("input", refresh);
+  document.getElementById("roleTypeFilter")?.addEventListener("change", refresh);
+}
+
+function getCurrentRoles() {
+  return Array.isArray(state.data.roles?.roles) ? state.data.roles.roles : Array.isArray(state.data.admins?.roles) ? state.data.admins.roles : [];
+}
+
+function getPermissionCatalog() {
+  return state.data.roles?.permission_catalog || state.data.admins?.permission_catalog || {};
+}
+
+function buildPermissionGroups(selected = []) {
+  const catalog = getPermissionCatalog();
+  return Object.entries(catalog).map(([group, permissions]) => `
+    <fieldset class="permission-group">
+      <legend>${escapeHtml(group)}</legend>
+      <div class="permission-grid">
+        ${permissions.map((permission) => `
+          <label class="permission-item">
+            <input type="checkbox" value="${escapeAttr(permission)}" ${selected.includes(permission) ? "checked" : ""}>
+            <span>${escapeHtml(permission)}</span>
+          </label>
+        `).join("")}
+      </div>
+    </fieldset>
+  `).join("");
+}
+
+function openRoleEditor(role = null) {
+  const isEdit = Boolean(role);
+  const permissions = Array.isArray(role?.permissions) ? role.permissions : [];
+  openModal(`
+    <div class="modal-head">
+      <div><h2>${isEdit ? `Edit role: ${escapeHtml(role.name)}` : "Create role"}</h2><p>${isEdit ? "Update the role definition and assign permissions." : "Create a custom role from grouped permissions."}</p></div>
+      <button class="drawer-close" type="button" data-action="close-modal">×</button>
+    </div>
+    <form class="admin-form" id="roleForm">
+      ${input("Role name", "role_name")}
+      <label class="admin-label">Description<textarea id="role_description"></textarea></label>
+      <div class="permission-catalog">${buildPermissionGroups(permissions)}</div>
+      <div class="section-actions">
+        <button class="admin-button" type="submit">${isEdit ? "Save role" : "Create role"}</button>
+      </div>
+      <div id="roleSaved" class="admin-success" hidden></div>
+    </form>
+  `);
+
+  setValue("role_name", role?.name || "");
+  setValue("role_description", role?.description || "");
+  if (isEdit) {
+    const roleNameInput = document.getElementById("role_name");
+    if (roleNameInput) roleNameInput.readOnly = true;
+  }
+
+  document.getElementById("roleForm")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const selected = [...document.querySelectorAll('#roleForm input[type="checkbox"]:checked')].map((input) => input.value);
+    try {
+      const action = isEdit ? "update" : "create";
+      const data = await api("roles", {
+        method: "POST",
+        body: JSON.stringify({
+          action,
+          name: getValue("role_name"),
+          description: getValue("role_description"),
+          permissions: selected
+        })
+      });
+      const nextRoles = Array.isArray(data.roles) ? data.roles : [];
+      state.data.roles = { roles: nextRoles, permission_catalog: data.permission_catalog || getPermissionCatalog() };
+      state.data.admins = { ...(state.data.admins || {}), roles: nextRoles, permission_catalog: data.permission_catalog || getPermissionCatalog() };
+      await loadSection("roles");
+      closeModal();
+    } catch (error) {
+      setSaved("roleSaved", error.message, true);
     }
   });
 }
@@ -869,6 +1345,13 @@ async function openAdminProfileModal(email, options = {}) {
 
   const isDefault = admin.source === "default";
   const isOwnProfile = Boolean(options.isOwnProfile);
+  const roleOptions = getCurrentRoles()
+    .filter((role) => state.data.admins?.admin?.is_platform_owner || role.name !== "Platform Owner")
+    .map((role) => `<option value="${escapeAttr(role.name)}">${escapeHtml(role.name)}</option>`)
+    .join("") || `<option value="Administrator">Administrator</option>`;
+  const permissionSummary = parseAdminPermissions(admin.permissions);
+  const loginHistory = Array.isArray(admin.login_history) ? admin.login_history : [];
+  const isSuspended = String(admin.status || "").toLowerCase() === "suspended";
   openModal(`
     <div class="modal-head">
       <div><h2>${isOwnProfile ? "Account settings" : "Admin profile"}</h2><p>${isOwnProfile ? "Manage your supported display details. Your sign-in identity remains controlled by Cloudflare Access." : "Review and update this administrator's supported profile details."}</p></div>
@@ -876,14 +1359,10 @@ async function openAdminProfileModal(email, options = {}) {
     </div>
     <form class="admin-form single admin-profile-form" id="adminProfileForm">
       ${input("Display name", "admin_profile_name")}
-      <label class="admin-label">Admin email<input id="admin_profile_email" type="email" value="${escapeAttr(admin.email)}" readonly></label>
+      <label class="admin-label">Admin email<input id="admin_profile_email" type="email" value="${escapeAttr(admin.email)}"></label>
       <label class="admin-label">Access source<input type="text" value="${escapeAttr(isDefault ? "Protected environment admin" : "Admin portal")}" readonly></label>
       <label class="admin-label">Role
-        <select id="admin_profile_role" ${isDefault ? "disabled" : ""}>
-          <option value="Admin">Admin</option>
-          <option value="Manager">Manager</option>
-          <option value="Support">Support</option>
-        </select>
+        <select id="admin_profile_role" ${isDefault ? "disabled" : ""}>${roleOptions}</select>
       </label>
       <label class="admin-label">Status
         <select id="admin_profile_status" ${isDefault ? "disabled" : ""}>
@@ -891,17 +1370,31 @@ async function openAdminProfileModal(email, options = {}) {
           <option value="Inactive">Inactive</option>
         </select>
       </label>
+      <div class="admin-card" style="margin:0;">
+        <div class="section-head"><div><h3>Permissions summary</h3><p>${escapeHtml(permissionSummary.includes("*") ? "All permissions" : `${permissionSummary.length} permissions assigned`)}</p></div></div>
+        <div class="permission-tags">${permissionSummary.slice(0, 24).map((permission) => `<span class="badge">${escapeHtml(permission)}</span>`).join("")}</div>
+      </div>
+      <div class="section-actions">
+        ${isDefault ? "" : `<button class="mini-button" type="button" data-action="profile-status-toggle">${isSuspended ? "Reactivate administrator" : "Suspend administrator"}</button>`}
+        ${isOwnProfile ? `<a class="mini-button secondary" href="/cdn-cgi/access/logout">Sign out</a>` : ""}
+      </div>
+      <div class="admin-card" style="margin:0;">
+        <div class="section-head"><div><h3>Login history</h3><p>Recent access and role-related events.</p></div></div>
+        ${table(["Event", "Entity", "Date"], loginHistory.map((item) => `
+          <tr><td><strong>${escapeHtml(item.action || "")}</strong><span>${escapeHtml(item.summary || "")}</span></td><td>${escapeHtml(item.entity_type || "")}</td><td>${escapeHtml(formatDate(item.created_at))}</td></tr>
+        `).join(""))}
+      </div>
       <div class="admin-alert">${isDefault ? "This is a protected environment administrator. Email, role and status are read-only; only the display name can be updated." : "Email changes and separate internal admin notes are not supported by the current admin API, so they are not editable here."}</div>
       <div class="section-actions">
         <button class="admin-button" type="submit">Save profile</button>
-        ${isOwnProfile ? `<a class="admin-button secondary" href="/cdn-cgi/access/logout">Sign out</a>` : ""}
       </div>
       <div id="adminProfileSaved" class="admin-success" hidden></div>
     </form>
   `);
 
   setValue("admin_profile_name", admin.name || admin.email);
-  setValue("admin_profile_role", admin.role || "Admin");
+  setValue("admin_profile_email", admin.email || "");
+  setValue("admin_profile_role", admin.role || "Administrator");
   setValue("admin_profile_status", admin.status || "Active");
 
   document.getElementById("adminProfileForm").addEventListener("submit", async (event) => {
@@ -910,7 +1403,9 @@ async function openAdminProfileModal(email, options = {}) {
       const data = await api("admins", {
         method: "POST",
         body: JSON.stringify({
-          email: admin.email,
+          action: "update",
+          original_email: admin.email,
+          email: getValue("admin_profile_email"),
           name: getValue("admin_profile_name"),
           role: isDefault ? (admin.role || "Admin") : getValue("admin_profile_role"),
           status: isDefault ? (admin.status || "Active") : getValue("admin_profile_status"),
@@ -918,7 +1413,7 @@ async function openAdminProfileModal(email, options = {}) {
         })
       });
       state.data.admins = { ...(state.data.admins || {}), admins: data.admins || [] };
-      const updated = (data.admins || []).find((item) => String(item.email).toLowerCase() === String(admin.email).toLowerCase());
+      const updated = (data.admins || []).find((item) => String(item.email).toLowerCase() === String(getValue("admin_profile_email")).toLowerCase()) || (data.admins || []).find((item) => String(item.email).toLowerCase() === String(admin.email).toLowerCase());
       const identity = state.data[state.currentSection]?.admin;
       if (updated && identity && String(identity.email).toLowerCase() === String(updated.email).toLowerCase()) {
         setAdmin({ ...identity, name: updated.name });
@@ -928,6 +1423,17 @@ async function openAdminProfileModal(email, options = {}) {
     } catch (error) {
       setSaved("adminProfileSaved", error.message, true);
     }
+  });
+  document.querySelector('[data-action="profile-status-toggle"]')?.addEventListener("click", async () => {
+    await api("admins", {
+      method: "POST",
+      body: JSON.stringify({
+        action: isSuspended ? "reactivate" : "suspend",
+        email: admin.email
+      })
+    });
+    await loadSection("admins");
+    closeModal();
   });
 }
 
@@ -1890,6 +2396,7 @@ function renderEmail(email = {}, test = null) {
 }
 
 function renderAudit(items = []) {
+  const baseItems = Array.isArray(items) ? items : [];
   const rows = items.map((item) => `
     <tr>
       <td><strong>${escapeHtml(item.action)}</strong><span>${escapeHtml(item.summary || "")}</span></td>
@@ -1903,9 +2410,79 @@ function renderAudit(items = []) {
     <div class="admin-card">
       <div class="section-head">
         <div><h2>Audit Log</h2><p>Review sensitive admin activity including Lifetime access, plan, privacy, closure, SMTP and affiliate changes.</p></div>
-        <button class="admin-button secondary" type="button" data-action="export-records" data-section="audit" data-format="csv">Export CSV</button>
+        <div class="section-actions">
+          <button class="admin-button secondary" type="button" data-action="export-records" data-section="audit" data-format="csv">Export CSV</button>
+        </div>
       </div>
-      ${table(["Action", "Actor", "Entity", "Record", "Date"], rows)}
+      <div class="admin-form" style="margin-bottom:1rem;">
+        <label class="admin-label">Administrator<input id="audit_filter_administrator" type="search" placeholder="Filter by email"></label>
+        <label class="admin-label">Role<input id="audit_filter_role" type="search" placeholder="Filter by role"></label>
+        <label class="admin-label">Action<input id="audit_filter_action" type="search" placeholder="Filter by action"></label>
+        <label class="admin-label">Module<input id="audit_filter_module" type="search" placeholder="Filter by module"></label>
+        <label class="admin-label">From<input id="audit_filter_from" type="date"></label>
+        <label class="admin-label">To<input id="audit_filter_to" type="date"></label>
+        <label class="admin-label">Outcome<input id="audit_filter_outcome" type="search" placeholder="success / failure"></label>
+      </div>
+      <div id="auditResults">${table(["Action", "Actor", "Entity", "Record", "Date"], rows)}</div>
+    </div>
+  `;
+
+  const refresh = async () => {
+    const filters = {
+      administrator: getValue("audit_filter_administrator").toLowerCase(),
+      role: getValue("audit_filter_role").toLowerCase(),
+      action: getValue("audit_filter_action").toLowerCase(),
+      module: getValue("audit_filter_module").toLowerCase(),
+      date_from: getValue("audit_filter_from"),
+      date_to: getValue("audit_filter_to"),
+      outcome: getValue("audit_filter_outcome").toLowerCase()
+    };
+    const filtered = baseItems.filter((item) => {
+      const created = item.created_at ? String(item.created_at).slice(0, 10) : "";
+      const outcome = String(item?.metadata ? (typeof item.metadata === "string" ? item.metadata : JSON.stringify(item.metadata)) : "success").toLowerCase();
+      return (!filters.administrator || String(item.actor_email || "").toLowerCase().includes(filters.administrator))
+        && (!filters.role || String(item.role || "").toLowerCase().includes(filters.role))
+        && (!filters.action || String(item.action || "").toLowerCase().includes(filters.action))
+        && (!filters.module || String(item.entity_type || "").toLowerCase().includes(filters.module))
+        && (!filters.date_from || created >= filters.date_from)
+        && (!filters.date_to || created <= filters.date_to)
+        && (!filters.outcome || outcome.includes(filters.outcome));
+    });
+    document.getElementById("auditResults").innerHTML = table(["Action", "Actor", "Entity", "Record", "Date"], filtered.map((item) => `
+      <tr>
+        <td><strong>${escapeHtml(item.action)}</strong><span>${escapeHtml(item.summary || "")}</span></td>
+        <td>${escapeHtml(item.actor_email || "system")}</td>
+        <td>${escapeHtml(item.entity_type || "")}</td>
+        <td>${escapeHtml(item.entity_id || "")}</td>
+        <td>${escapeHtml(formatDate(item.created_at))}</td>
+      </tr>
+    `).join(""));
+  };
+  ["administrator", "role", "action", "module", "from", "to", "outcome"].forEach((name) => {
+    document.getElementById(`audit_filter_${name}`)?.addEventListener("input", refresh);
+    document.getElementById(`audit_filter_${name}`)?.addEventListener("change", refresh);
+  });
+}
+
+function renderSessions(sessions = []) {
+  const rows = sessions.map((session) => `
+    <tr>
+      <td><strong>${escapeHtml(session.admin_email || "")}</strong><span>${escapeHtml(session.token_hash || "")}</span></td>
+      <td>${escapeHtml(formatDate(session.created_at))}</td>
+      <td>${escapeHtml(formatDate(session.last_used_at || session.created_at))}</td>
+      <td>${escapeHtml(formatDate(session.expires_at))}</td>
+      <td>${badge(session.revoked_at ? "Revoked" : "Active", session.revoked_at ? "amber" : "green")}</td>
+      <td>
+        ${session.revoked_at ? "" : `<button class="mini-button danger" type="button" data-action="revoke-session" data-token="${escapeAttr(session.token_hash)}">Revoke</button>`}
+      </td>
+    </tr>
+  `).join("");
+  document.getElementById("adminPanel").innerHTML = `
+    <div class="admin-card">
+      <div class="section-head">
+        <div><h2>Administrator Sessions</h2><p>View active bypass sessions and revoke them remotely.</p></div>
+      </div>
+      ${table(["Administrator", "Created", "Last used", "Expires", "Status", "Actions"], rows)}
     </div>
   `;
 }
@@ -2505,7 +3082,7 @@ function table(headers, rows) {
     <div class="table-wrap">
       <table>
         <thead><tr>${headers.map((h) => `<th>${escapeHtml(h)}</th>`).join("")}</tr></thead>
-        <tbody>${rows || `<tr><td colspan="${headers.length}">No records yet.</td></tr>`}</tbody>
+        <tbody>${rows || `<tr><td colspan="${headers.length}"><div class="empty-state"><span class="activity-empty-icon" aria-hidden="true">∅</span><strong>No records yet.</strong><p>This section will populate once there is data to display.</p></div></td></tr>`}</tbody>
       </table>
     </div>
   `;
@@ -2516,7 +3093,12 @@ function badge(label, colour = "") {
 }
 
 function emptyCard(text) {
-  return `<div class="list-card">${escapeHtml(text)}</div>`;
+  return `<div class="list-card empty-state"><span class="activity-empty-icon" aria-hidden="true">∅</span><strong>${escapeHtml(text)}</strong><p>There is nothing to show here just yet.</p></div>`;
+}
+
+function renderInlineStatus(kind, message, retryAction = "") {
+  const tone = kind === "success" ? "admin-success" : "admin-alert";
+  return `<div class="${tone}" role="status">${escapeHtml(message)}${retryAction ? ` <button class="mini-button" type="button" data-action="${escapeAttr(retryAction)}">Retry</button>` : ""}</div>`;
 }
 
 function setSaved(id, message, isError = false) {

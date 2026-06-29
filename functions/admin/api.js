@@ -5,9 +5,12 @@ const SYSTEM_REPORT_STATUSES = ["Open", "In Progress", "Resolved", "Rejected"];
 const THEME_MODES = ["light", "dark", "system"];
 const PERMISSION_SECTIONS = {
   overview: ["view_dashboard"],
+  operations: ["view_dashboard", "manage_status", "manage_analytics", "manage_api", "manage_settings"],
   analytics: ["manage_analytics"],
   audit: ["manage_audit"],
   admins: ["manage_admins", "manage_roles", "manage_permissions"],
+  roles: ["manage_roles", "manage_permissions"],
+  sessions: ["manage_admins", "manage_audit", "manage_api"],
   customers: ["manage_users", "manage_crm"],
   datarequests: ["manage_data_requests"],
   systemreports: ["manage_system_reports", "manage_audit"],
@@ -36,6 +39,19 @@ const DEFAULT_ROLE_PERMISSIONS = {
   "Marketing & Content": ["view_dashboard","manage_content","manage_policies","manage_branding"],
   "Compliance & Data Protection": ["view_dashboard","manage_data_requests","manage_audit","manage_policies","manage_reports"],
   "Auditor": ["view_only"]
+};
+const PERMISSION_CATALOG = {
+  Platform: ["view_dashboard", "manage_admins", "manage_roles", "manage_permissions", "manage_api", "manage_settings"],
+  "Customer Operations": ["manage_users", "manage_crm", "manage_travel", "manage_bookings"],
+  Finance: ["manage_stripe", "manage_payments", "manage_refunds", "manage_subscriptions", "manage_reports"],
+  Content: ["manage_content", "manage_branding", "manage_policies", "manage_email"],
+  Compliance: ["manage_audit", "manage_data_requests", "manage_closure_requests", "manage_reports", "manage_policies"],
+  Communications: ["manage_email", "manage_support"],
+  Website: ["manage_content", "manage_status", "manage_plans", "manage_pricing", "manage_branding"],
+  Analytics: ["manage_analytics", "manage_reports"],
+  System: ["manage_settings", "manage_api", "manage_status"],
+  Support: ["manage_support", "manage_data_requests", "manage_closure_requests", "manage_system_reports"],
+  Travel: ["manage_travel", "manage_bookings"]
 };
 
 function json(data, status = 200) {
@@ -235,10 +251,28 @@ async function ensureTables(DB, env) {
     )
   `).run();
 
+  await DB.prepare(`
+    CREATE TABLE IF NOT EXISTS admin_preferences (
+      email TEXT PRIMARY KEY,
+      favourites TEXT DEFAULT '[]',
+      dashboard_preferences TEXT DEFAULT '{}',
+      notification_preferences TEXT DEFAULT '{}',
+      recently_used TEXT DEFAULT '[]',
+      preferred_landing_page TEXT DEFAULT 'overview',
+      sidebar_collapsed INTEGER DEFAULT 0,
+      theme_preference TEXT DEFAULT 'system',
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
+
   await safeAlter(DB, `ALTER TABLE admin_users ADD COLUMN role TEXT DEFAULT 'Admin'`);
   await safeAlter(DB, `ALTER TABLE admin_users ADD COLUMN status TEXT DEFAULT 'Active'`);
   await safeAlter(DB, `ALTER TABLE admin_users ADD COLUMN permissions TEXT`);
   await safeAlter(DB, `ALTER TABLE admin_users ADD COLUMN favourites TEXT`);
+  await safeAlter(DB, `ALTER TABLE admin_preferences ADD COLUMN recently_used TEXT DEFAULT '[]'`);
+  await safeAlter(DB, `ALTER TABLE admin_preferences ADD COLUMN preferred_landing_page TEXT DEFAULT 'overview'`);
+  await safeAlter(DB, `ALTER TABLE admin_preferences ADD COLUMN sidebar_collapsed INTEGER DEFAULT 0`);
+  await safeAlter(DB, `ALTER TABLE admin_preferences ADD COLUMN theme_preference TEXT DEFAULT 'system'`);
 
   for (const email of configuredAdmins(env)) {
     await DB.prepare(`
@@ -500,7 +534,7 @@ async function isAllowedAdmin(DB, identity, env) {
 }
 
 async function getEffectivePermissions(DB, adminRow) {
-  if (!adminRow) return ["view_only"];
+  if (!adminRow) return ["*"];
   const role = adminRow.role || "Auditor";
   if (role === "Platform Owner") return ["*"];
 
@@ -529,6 +563,29 @@ function canAccessSection(permissions, section) {
   const needed = PERMISSION_SECTIONS[section];
   if (!needed) return true;
   return needed.some((permission) => permissions.includes(permission));
+}
+
+function requiresAnyPermission(permissions, required = []) {
+  if (permissions.includes("*")) return true;
+  return required.some((permission) => permissions.includes(permission));
+}
+
+function hasAnyPermission(permissions, required = []) {
+  if (permissions.includes("*")) return true;
+  return required.some((permission) => permissions.includes(permission));
+}
+
+function ownerOrPermission(adminContext, required = []) {
+  return ownerBypass(adminContext.permissions, adminContext) || required.some((permission) => adminContext.permissions.includes(permission));
+}
+
+function isPlatformOwner(adminRow) {
+  return adminRow?.role === "Platform Owner";
+}
+
+function ownerBypass(permissions, adminRow = null) {
+  if (permissions.includes("*")) return true;
+  return isPlatformOwner(adminRow);
 }
 
 async function all(DB, sql, bindings = []) {
@@ -686,6 +743,14 @@ async function getOverview(DB) {
 
   const comingsoon = await getComingSoon(DB);
   const maintenance = await getMaintenance(DB);
+  const [recentAudit, latestCustomers, latestSupport, latestReports, sessions, activeAdmins] = await Promise.all([
+    all(DB, `SELECT action, actor_email, entity_type, entity_id, summary, metadata, created_at FROM admin_audit_log ORDER BY created_at DESC LIMIT 8`),
+    all(DB, `SELECT email, verified_name, display_name, contact_email, updated_at FROM profiles ORDER BY updated_at DESC, created_at DESC LIMIT 6`),
+    all(DB, `SELECT id, subject, status, priority, updated_at FROM support_tickets ORDER BY updated_at DESC, created_at DESC LIMIT 6`),
+    all(DB, `SELECT id, title, status, updated_at FROM system_reports ORDER BY updated_at DESC, created_at DESC LIMIT 6`),
+    all(DB, `SELECT token_hash, admin_email, created_at, expires_at, revoked_at, last_used_at FROM admin_bypass_sessions ORDER BY COALESCE(last_used_at, created_at) DESC LIMIT 6`),
+    all(DB, `SELECT email, name, role, status, updated_at FROM admin_users WHERE COALESCE(status, 'Active') = 'Active' ORDER BY updated_at DESC LIMIT 12`)
+  ]);
 
   return {
     customers: customers?.count || 0,
@@ -700,7 +765,13 @@ async function getOverview(DB) {
     lifetimeUsers: lifetime?.count || 0,
     admins: admins?.count || 0,
     comingSoonStatus: comingsoon.comingsoon_enabled === "true" ? "On" : "Off",
-    maintenanceStatus: maintenance.maintenance_enabled === "true" ? "On" : "Off"
+    maintenanceStatus: maintenance.maintenance_enabled === "true" ? "On" : "Off",
+    recentAudit,
+    latestCustomers,
+    latestSupport,
+    latestReports,
+    sessions,
+    activeAdmins
   };
 }
 
@@ -757,10 +828,245 @@ async function getAdmins(DB, env) {
   const seen = new Set(rows.map((row) => row.email));
   for (const email of defaults) {
     if (!seen.has(email)) {
-      rows.push({ email, name: email, role: "Admin", status: "Active", permissions: "[]", favourites: "[]", source: "default", created_by: "system", created_at: null, updated_at: null });
+      rows.push({ email, name: email, role: "Platform Owner", status: "Active", permissions: "[\"*\"]", favourites: "[]", source: "default", created_by: "system", created_at: null, updated_at: null });
     }
   }
-  return rows.sort((a, b) => a.email.localeCompare(b.email));
+  const withHistory = [];
+  for (const row of rows.sort((a, b) => a.email.localeCompare(b.email))) {
+    withHistory.push({
+      ...row,
+      login_history: await getAdminActivity(DB, row.email)
+    });
+  }
+  return withHistory;
+}
+
+async function getRoles(DB) {
+  const roles = await all(DB, `
+    SELECT
+      r.name,
+      r.description,
+      r.is_system,
+      r.updated_at,
+      COALESCE(users.assigned_count, 0) AS assigned_count
+    FROM admin_roles r
+    LEFT JOIN (
+      SELECT role, COUNT(*) AS assigned_count
+      FROM admin_users
+      GROUP BY role
+    ) users ON users.role = r.name
+    ORDER BY r.is_system DESC, r.name ASC
+  `);
+
+  const permissionsByRole = await all(DB, `
+    SELECT role_name, permission_code
+    FROM role_permissions
+    ORDER BY role_name ASC, permission_code ASC
+  `);
+
+  const grouped = new Map();
+  for (const row of permissionsByRole) {
+    if (!grouped.has(row.role_name)) grouped.set(row.role_name, []);
+    grouped.get(row.role_name).push(row.permission_code);
+  }
+
+  return roles.map((role) => ({
+    ...role,
+    is_system: Number(role.is_system || 0),
+    assigned_count: Number(role.assigned_count || 0),
+    permissions: grouped.get(role.name) || []
+  }));
+}
+
+async function ensureRoleWritable(DB, roleName) {
+  const role = await DB.prepare(`SELECT name, is_system FROM admin_roles WHERE name = ?`).bind(roleName).first();
+  if (!role) throw new Error("Role not found.");
+  if (Number(role.is_system || 0) === 1 && role.name === "Platform Owner") throw new Error("The Platform Owner role cannot be modified.");
+  return role;
+}
+
+function normalisePermissionList(permissions) {
+  if (!Array.isArray(permissions)) return [];
+  return [...new Set(permissions.map((permission) => clean(permission, 80)).filter(Boolean))];
+}
+
+async function createRole(DB, body, identity) {
+  const name = clean(body.name, 80);
+  if (!name) throw new Error("Role name is required.");
+  const description = clean(body.description, 240) || `${name} role`;
+  const existing = await DB.prepare(`SELECT name FROM admin_roles WHERE name = ?`).bind(name).first();
+  if (existing) throw new Error("A role with that name already exists.");
+  const permissions = normalisePermissionList(body.permissions);
+
+  await DB.prepare(`
+    INSERT INTO admin_roles (name, description, is_system, updated_at)
+    VALUES (?, ?, 0, CURRENT_TIMESTAMP)
+  `).bind(name, description).run();
+
+  for (const permission of permissions) {
+    await DB.prepare(`
+      INSERT INTO admin_permissions (code, description, updated_at)
+      VALUES (?, ?, CURRENT_TIMESTAMP)
+      ON CONFLICT(code) DO UPDATE SET
+        description = excluded.description,
+        updated_at = CURRENT_TIMESTAMP
+    `).bind(permission, permission).run();
+    await DB.prepare(`
+      INSERT INTO role_permissions (role_name, permission_code)
+      VALUES (?, ?)
+      ON CONFLICT(role_name, permission_code) DO NOTHING
+    `).bind(name, permission).run();
+  }
+
+  await writeAudit(DB, identity, "role_create", "admin_roles", name, `Created role ${name}.`, { permissions });
+  return getRoles(DB);
+}
+
+async function updateRole(DB, body, identity) {
+  const name = clean(body.name, 80);
+  if (!name) throw new Error("Role name is required.");
+  const role = await ensureRoleWritable(DB, name);
+  const description = clean(body.description, 240) || role.description || `${name} role`;
+  const permissions = normalisePermissionList(body.permissions);
+
+  await DB.prepare(`
+    UPDATE admin_roles
+    SET description = ?, updated_at = CURRENT_TIMESTAMP
+    WHERE name = ?
+  `).bind(description, name).run();
+
+  await DB.prepare(`DELETE FROM role_permissions WHERE role_name = ?`).bind(name).run();
+  for (const permission of permissions) {
+    await DB.prepare(`
+      INSERT INTO admin_permissions (code, description, updated_at)
+      VALUES (?, ?, CURRENT_TIMESTAMP)
+      ON CONFLICT(code) DO UPDATE SET
+        description = excluded.description,
+        updated_at = CURRENT_TIMESTAMP
+    `).bind(permission, permission).run();
+    await DB.prepare(`
+      INSERT INTO role_permissions (role_name, permission_code)
+      VALUES (?, ?)
+      ON CONFLICT(role_name, permission_code) DO NOTHING
+    `).bind(name, permission).run();
+  }
+
+  await writeAudit(DB, identity, "role_update", "admin_roles", name, `Updated role ${name}.`, { permissions });
+  return getRoles(DB);
+}
+
+async function renameRole(DB, body, identity) {
+  const from = clean(body.from, 80);
+  const to = clean(body.to, 80);
+  if (!from || !to) throw new Error("Both the current and new role names are required.");
+  if (from === "Platform Owner") throw new Error("The Platform Owner role cannot be renamed.");
+  if (from === to) return getRoles(DB);
+  const existing = await DB.prepare(`SELECT name, is_system FROM admin_roles WHERE name = ?`).bind(from).first();
+  if (!existing) throw new Error("Role not found.");
+  const conflict = await DB.prepare(`SELECT name FROM admin_roles WHERE name = ?`).bind(to).first();
+  if (conflict) throw new Error("A role with that name already exists.");
+
+  await DB.prepare(`UPDATE admin_roles SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE name = ?`).bind(to, from).run();
+  await DB.prepare(`UPDATE role_permissions SET role_name = ? WHERE role_name = ?`).bind(to, from).run();
+  await DB.prepare(`UPDATE admin_users SET role = ? WHERE role = ?`).bind(to, from).run();
+  await writeAudit(DB, identity, "role_rename", "admin_roles", from, `Renamed role ${from} to ${to}.`, { from, to });
+  return getRoles(DB);
+}
+
+async function cloneRole(DB, body, identity) {
+  const source = clean(body.source, 80);
+  const name = clean(body.name, 80);
+  if (!source || !name) throw new Error("Source and new role names are required.");
+  const existing = await DB.prepare(`SELECT name FROM admin_roles WHERE name = ?`).bind(name).first();
+  if (existing) throw new Error("A role with that name already exists.");
+  const role = await DB.prepare(`SELECT name, description FROM admin_roles WHERE name = ?`).bind(source).first();
+  if (!role) throw new Error("Role not found.");
+  const permissions = await all(DB, `SELECT permission_code FROM role_permissions WHERE role_name = ? ORDER BY permission_code ASC`, [source]);
+
+  await DB.prepare(`
+    INSERT INTO admin_roles (name, description, is_system, updated_at)
+    VALUES (?, ?, 0, CURRENT_TIMESTAMP)
+  `).bind(name, `${role.description || source} copy`).run();
+  for (const row of permissions) {
+    await DB.prepare(`
+      INSERT INTO role_permissions (role_name, permission_code)
+      VALUES (?, ?)
+      ON CONFLICT(role_name, permission_code) DO NOTHING
+    `).bind(name, row.permission_code).run();
+  }
+  await writeAudit(DB, identity, "role_clone", "admin_roles", name, `Cloned role ${source} to ${name}.`, { source, name });
+  return getRoles(DB);
+}
+
+async function deleteRole(DB, body, identity) {
+  const name = clean(body.name, 80);
+  if (!name) throw new Error("Role name is required.");
+  const role = await ensureRoleWritable(DB, name);
+  if (Number(role.is_system || 0) === 1) throw new Error("System roles cannot be deleted.");
+  const assigned = await DB.prepare(`SELECT COUNT(*) AS count FROM admin_users WHERE role = ?`).bind(name).first();
+  if (Number(assigned?.count || 0) > 0) throw new Error("This role is still assigned to administrators.");
+  await DB.prepare(`DELETE FROM role_permissions WHERE role_name = ?`).bind(name).run();
+  await DB.prepare(`DELETE FROM admin_roles WHERE name = ?`).bind(name).run();
+  await writeAudit(DB, identity, "role_delete", "admin_roles", name, `Deleted role ${name}.`, {});
+  return getRoles(DB);
+}
+
+async function getRoleSummary(DB) {
+  const roles = await getRoles(DB);
+  return roles.map((role) => ({
+    name: role.name,
+    description: role.description,
+    is_system: role.is_system,
+    assigned_count: role.assigned_count,
+    permissions: role.permissions
+  }));
+}
+
+function dashboardPresetForRole(role, permissions) {
+  if (role === "Platform Owner" || permissions.includes("*")) {
+    return ["overview", "status", "analytics", "customers", "admins", "roles", "sessions", "plans", "stripe", "support", "systemreports", "datarequests", "closures", "policies", "branding", "comingsoon", "maintenance", "audit", "email"];
+  }
+  if (role === "Senior Administrator") {
+    return ["overview", "customers", "users", "plans", "branding", "comingsoon", "maintenance", "status", "analytics", "support", "systemreports", "audit"];
+  }
+  if (role === "Finance") return ["overview", "stripe", "plans", "audit", "reports"];
+  if (role === "Customer Support") return ["overview", "customers", "support", "datarequests", "closures", "systemreports", "audit"];
+  if (role === "Marketing & Content") return ["overview", "branding", "comingsoon", "maintenance", "policies", "affiliate", "email"];
+  if (role === "Compliance & Data Protection") return ["overview", "audit", "datarequests", "closures", "policies", "reports"];
+  if (role === "Auditor") return ["overview", "audit"];
+  return ["overview", "customers", "plans", "status", "analytics", "support"];
+}
+
+function widgetCatalog() {
+  return [
+    { id: "live_status", label: "Live Website Status", section: "status", permission: "view_dashboard", tone: "online" },
+    { id: "statuspage", label: "Statuspage Health", section: "status", permission: "manage_status", tone: "online" },
+    { id: "worker_health", label: "Worker Health", section: "overview", permission: "view_dashboard", tone: "online" },
+    { id: "database_health", label: "Database Health", section: "overview", permission: "view_dashboard", tone: "online" },
+    { id: "stripe_health", label: "Stripe Health", section: "stripe", permission: "manage_stripe", tone: "warning" },
+    { id: "api_health", label: "API Health", section: "overview", permission: "view_dashboard", tone: "online" },
+    { id: "recent_audit", label: "Recent Audit Events", section: "audit", permission: "manage_audit", tone: "online" },
+    { id: "active_admins", label: "Active Administrators", section: "admins", permission: "manage_admins", tone: "online" },
+    { id: "active_sessions", label: "Active Sessions", section: "sessions", permission: "manage_api", tone: "online" },
+    { id: "latest_customers", label: "Latest Customer Activity", section: "customers", permission: "manage_crm", tone: "online" },
+    { id: "latest_support", label: "Latest Support Activity", section: "support", permission: "manage_support", tone: "online" },
+    { id: "latest_reports", label: "Latest System Reports", section: "systemreports", permission: "manage_system_reports", tone: "warning" },
+    { id: "latest_plans", label: "Latest Plan Changes", section: "plans", permission: "manage_plans", tone: "online" },
+    { id: "latest_data_requests", label: "Latest Data Requests", section: "datarequests", permission: "manage_data_requests", tone: "online" },
+    { id: "latest_closures", label: "Latest Closure Requests", section: "closures", permission: "manage_closure_requests", tone: "online" }
+  ];
+}
+
+function widgetSetForRole(role, permissions) {
+  const allowed = new Set();
+  const available = widgetCatalog();
+  const preset = dashboardPresetForRole(role, permissions);
+  for (const widget of available) {
+    if (permissions.includes("*") || permissions.includes(widget.permission) || widget.permission === "view_dashboard") {
+      if (preset.includes(widget.section) || role === "Platform Owner" || permissions.includes("*")) allowed.add(widget.id);
+    }
+  }
+  return available.filter((widget) => allowed.has(widget.id));
 }
 
 async function addAdmin(DB, body, identity) {
@@ -768,6 +1074,10 @@ async function addAdmin(DB, body, identity) {
   if (!isEmail(email)) throw new Error("Enter a valid admin email address.");
   const existing = await DB.prepare(`SELECT role FROM admin_users WHERE lower(email) = lower(?)`).bind(email).first();
   const nextRole = existing?.role === "Platform Owner" ? "Platform Owner" : clean(body.role, 80) || "Administrator";
+  if (nextRole !== "Platform Owner") {
+    const role = await DB.prepare(`SELECT name FROM admin_roles WHERE name = ?`).bind(nextRole).first();
+    if (!role) throw new Error("Selected role does not exist.");
+  }
   const nextPermissions = nextRole === "Platform Owner" ? ["*"] : (Array.isArray(body.permissions) ? body.permissions : []);
 
   await DB.prepare(`
@@ -789,6 +1099,52 @@ async function addAdmin(DB, body, identity) {
   ).run();
 }
 
+async function updateAdmin(DB, body, identity, env) {
+  const originalEmail = cleanEmail(body.original_email || body.email);
+  const nextEmail = cleanEmail(body.email);
+  if (!isEmail(originalEmail)) throw new Error("Admin email is required.");
+  if (!isEmail(nextEmail)) throw new Error("New admin email is required.");
+  const current = await DB.prepare(`SELECT email, role, status, permissions, source FROM admin_users WHERE lower(email) = lower(?)`).bind(originalEmail).first();
+  if (!current) throw new Error("Administrator not found.");
+  if (current.role === "Platform Owner") {
+    await DB.prepare(`UPDATE admin_users SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE lower(email) = lower(?)`).bind(clean(body.name || nextEmail, 180), originalEmail).run();
+    return getAdmins(DB, env);
+  }
+
+  const nextRole = clean(body.role, 80) || current.role || "Administrator";
+  if (nextRole === "Platform Owner") throw new Error("Only the existing Platform Owner can hold that role.");
+  const roleExists = await DB.prepare(`SELECT name FROM admin_roles WHERE name = ?`).bind(nextRole).first();
+  if (!roleExists) throw new Error("Selected role does not exist.");
+  const nextStatus = ["Active", "Inactive", "Suspended"].includes(clean(body.status, 80)) ? clean(body.status, 80) : (current.status || "Active");
+  const nextPermissions = Array.isArray(body.permissions) ? normalisePermissionList(body.permissions) : safeJson(current.permissions, []);
+  if (nextEmail !== originalEmail) {
+    const emailExists = await DB.prepare(`SELECT email FROM admin_users WHERE lower(email) = lower(?)`).bind(nextEmail).first();
+    if (emailExists) throw new Error("Another administrator already uses that email.");
+  }
+
+  await DB.prepare(`
+    UPDATE admin_users SET
+      email = ?,
+      name = ?,
+      role = ?,
+      status = ?,
+      permissions = ?,
+      updated_at = CURRENT_TIMESTAMP
+    WHERE lower(email) = lower(?)
+  `).bind(
+    nextEmail,
+    clean(body.name || nextEmail, 180),
+    nextRole,
+    nextStatus,
+    JSON.stringify(nextPermissions),
+    originalEmail
+  ).run();
+
+  await DB.prepare(`UPDATE admin_audit_log SET actor_email = ? WHERE lower(actor_email) = lower(?)`).bind(nextEmail, originalEmail).run();
+  await DB.prepare(`UPDATE admin_preferences SET email = ? WHERE lower(email) = lower(?)`).bind(nextEmail, originalEmail).run();
+  return getAdmins(DB, env);
+}
+
 async function removeAdmin(DB, body, identity, env) {
   const email = cleanEmail(body.email);
   if (!isEmail(email)) throw new Error("Admin email is required.");
@@ -804,23 +1160,80 @@ async function removeAdmin(DB, body, identity, env) {
 }
 
 async function saveAdminPreferences(DB, body, identity) {
-  const allowedSections = new Set(["overview", "analytics", "audit", "admins", "customers", "datarequests", "systemreports", "closures", "support", "system", "plans", "stripe", "email", "branding", "appearance", "affiliate", "comingsoon", "maintenance", "policies"]);
+  const allowedSections = new Set(["overview", "operations", "analytics", "audit", "admins", "roles", "sessions", "customers", "datarequests", "systemreports", "closures", "support", "system", "plans", "stripe", "email", "branding", "appearance", "affiliate", "comingsoon", "maintenance", "policies"]);
   const favourites = Array.isArray(body.favourites)
     ? body.favourites.map((item) => clean(item, 80)).filter((item) => allowedSections.has(item)).slice(0, 12)
     : [];
+  const dashboardPreferences = safeJson(body.dashboard_preferences, {});
+  const notificationPreferences = safeJson(body.notification_preferences, {});
+  const recentlyUsed = Array.isArray(body.recently_used)
+    ? body.recently_used.map((item) => clean(item, 80)).filter((item) => allowedSections.has(item)).slice(0, 12)
+    : [];
+  const preferredLandingPage = clean(body.preferred_landing_page, 80);
+  const sidebarCollapsed = Boolean(body.sidebar_collapsed);
+  const themePreference = ["light", "dark", "system"].includes(clean(body.theme_preference, 20)) ? clean(body.theme_preference, 20) : "system";
 
   await DB.prepare(`
-    UPDATE admin_users
-    SET favourites = ?, updated_at = CURRENT_TIMESTAMP
-    WHERE lower(email) = lower(?)
-  `).bind(JSON.stringify(favourites), identity.email).run();
+    INSERT INTO admin_preferences (email, favourites, updated_at)
+    VALUES (?, ?, CURRENT_TIMESTAMP)
+    ON CONFLICT(email) DO UPDATE SET
+      favourites = excluded.favourites,
+      updated_at = CURRENT_TIMESTAMP
+  `).bind(identity.email, JSON.stringify(favourites)).run();
 
-  return { favourites };
+  await DB.prepare(`
+    UPDATE admin_preferences SET
+      dashboard_preferences = ?,
+      notification_preferences = ?,
+      recently_used = ?,
+      preferred_landing_page = ?,
+      sidebar_collapsed = ?,
+      theme_preference = ?,
+      updated_at = CURRENT_TIMESTAMP
+    WHERE lower(email) = lower(?)
+  `).bind(
+    JSON.stringify(dashboardPreferences || {}),
+    JSON.stringify(notificationPreferences || {}),
+    JSON.stringify(recentlyUsed),
+    preferredLandingPage || "overview",
+    sidebarCollapsed ? 1 : 0,
+    themePreference,
+    identity.email
+  ).run();
+
+  return {
+    favourites,
+    dashboard_preferences: dashboardPreferences || {},
+    notification_preferences: notificationPreferences || {},
+    recently_used: recentlyUsed,
+    preferred_landing_page: preferredLandingPage || "overview",
+    sidebar_collapsed: sidebarCollapsed ? 1 : 0,
+    theme_preference: themePreference
+  };
 }
 
 async function getAdminPreferences(DB, identity) {
-  const row = await DB.prepare(`SELECT favourites FROM admin_users WHERE lower(email) = lower(?)`).bind(identity.email).first();
-  return { favourites: safeJson(row?.favourites, []).filter(Boolean) };
+  const row = await DB.prepare(`SELECT favourites, dashboard_preferences, notification_preferences, recently_used, preferred_landing_page, sidebar_collapsed, theme_preference FROM admin_preferences WHERE lower(email) = lower(?)`).bind(identity.email).first();
+  return {
+    favourites: safeJson(row?.favourites, []).filter(Boolean),
+    dashboard_preferences: safeJson(row?.dashboard_preferences, {}),
+    notification_preferences: safeJson(row?.notification_preferences, {}),
+    recently_used: safeJson(row?.recently_used, []).filter(Boolean),
+    preferred_landing_page: row?.preferred_landing_page || "overview",
+    sidebar_collapsed: Number(row?.sidebar_collapsed || 0) === 1,
+    theme_preference: row?.theme_preference || "system"
+  };
+}
+
+function defaultLandingPageForRole(role, permissions) {
+  if (role === "Platform Owner" || permissions.includes("*")) return "overview";
+  if (role === "Senior Administrator") return "overview";
+  if (role === "Finance") return "stripe";
+  if (role === "Customer Support") return "support";
+  if (role === "Marketing & Content") return "branding";
+  if (role === "Compliance & Data Protection") return "audit";
+  if (role === "Auditor") return "audit";
+  return "overview";
 }
 
 async function savePlan(DB, body) {
@@ -1670,21 +2083,97 @@ async function testNotification(DB, body, env, identity) {
   return result;
 }
 
-async function getAuditLog(DB) {
-  return all(DB, `SELECT * FROM admin_audit_log ORDER BY created_at DESC LIMIT 500`);
+async function getAuditLog(DB, filters = {}) {
+  const where = [];
+  const bindings = [];
+  if (filters.administrator) {
+    where.push(`lower(actor_email) = lower(?)`);
+    bindings.push(cleanEmail(filters.administrator));
+  }
+  if (filters.role) {
+    where.push(`role = ?`);
+    bindings.push(clean(filters.role, 80));
+  }
+  if (filters.action) {
+    where.push(`action = ?`);
+    bindings.push(clean(filters.action, 120));
+  }
+  if (filters.module) {
+    where.push(`entity_type = ?`);
+    bindings.push(clean(filters.module, 120));
+  }
+  if (filters.date_from) {
+    where.push(`date(created_at) >= date(?)`);
+    bindings.push(clean(filters.date_from, 40));
+  }
+  if (filters.date_to) {
+    where.push(`date(created_at) <= date(?)`);
+    bindings.push(clean(filters.date_to, 40));
+  }
+  if (filters.outcome) {
+    where.push(`lower(COALESCE(json_extract(metadata, '$.outcome'), 'success')) = lower(?)`);
+    bindings.push(clean(filters.outcome, 40));
+  }
+  const sql = `SELECT * FROM admin_audit_log${where.length ? ` WHERE ${where.join(" AND ")}` : ""} ORDER BY created_at DESC LIMIT 500`;
+  return all(DB, sql, bindings);
+}
+
+async function getSessions(DB) {
+  return all(DB, `
+    SELECT token_hash, admin_email, created_at, expires_at, revoked_at, last_used_at
+    FROM admin_bypass_sessions
+    ORDER BY COALESCE(last_used_at, created_at) DESC
+    LIMIT 200
+  `);
+}
+
+async function getLoginHistory(DB, email) {
+  return all(DB, `
+    SELECT action, entity_type, entity_id, summary, metadata, created_at, actor_email
+    FROM admin_audit_log
+    WHERE lower(actor_email) = lower(?)
+      AND action IN ('admin_bypass_created', 'admin_bypass_used', 'admin_bypass_removed', 'admin_bypass_expired', 'admin_add', 'admin_remove', 'role_update', 'role_create', 'role_delete', 'role_clone', 'role_rename')
+    ORDER BY created_at DESC
+    LIMIT 50
+  `, [email]);
+}
+
+async function getAdminActivity(DB, email) {
+  return all(DB, `
+    SELECT action, entity_type, entity_id, summary, metadata, created_at, actor_email
+    FROM admin_audit_log
+    WHERE lower(actor_email) = lower(?)
+       OR lower(entity_id) = lower(?)
+    ORDER BY created_at DESC
+    LIMIT 50
+  `, [email, email]);
 }
 
 async function adminPayload(DB, identity) {
   const admin = await DB.prepare(`SELECT email, name, role, status, permissions, favourites, source, created_by, created_at, updated_at FROM admin_users WHERE lower(email) = lower(?)`).bind(identity.email).first();
   const role = admin?.role || "Auditor";
-  const permissions = await getEffectivePermissions(DB, admin);
+  const effectiveAdmin = admin || { email: identity.email, role, permissions: "[\"*\"]", favourites: "[]" };
+  const permissions = await getEffectivePermissions(DB, effectiveAdmin);
+  const preferences = await getAdminPreferences(DB, identity);
+  const defaultLanding = defaultLandingPageForRole(role, permissions);
   return {
     ...identity,
     role,
     permissions,
     allowed_sections: allowedSectionsForPermissions(permissions),
     is_platform_owner: role === "Platform Owner",
-    preferences: await getAdminPreferences(DB, identity)
+    preferences: {
+      ...preferences,
+      preferred_landing_page: preferences.preferred_landing_page || defaultLanding,
+      widget_layout: preferences.dashboard_preferences?.widget_layout || widgetSetForRole(role, permissions).map((widget) => widget.id)
+    },
+    roles: await getRoles(DB),
+    permission_catalog: PERMISSION_CATALOG,
+    login_history: await getLoginHistory(DB, identity.email),
+    workspace: {
+      default_landing_page: defaultLanding,
+      widgets: widgetSetForRole(role, permissions)
+    }
   };
 }
 
@@ -1847,15 +2336,25 @@ export async function onRequest(context) {
 
   const url = new URL(request.url);
   const section = url.searchParams.get("section") || "overview";
+  const ownerAccess = ownerBypass(adminContext.permissions, adminContext);
 
   try {
     if (request.method === "GET") {
-      if (!canAccessSection(adminContext.permissions, section)) return json({ error: "Forbidden.", section }, 403);
+      if (!ownerAccess && !canAccessSection(adminContext.permissions, section)) return json({ error: "Forbidden.", section }, 403);
       if (section === "overview") return json({ admin: adminContext, overview: await getOverview(env.DB) });
+      if (section === "operations") return json({ admin: adminContext, operations: await getOverview(env.DB) });
       if (section === "analytics") return json({ admin: adminContext, analytics: await getAnalytics(env.DB) });
-      if (section === "audit") return json({ admin: adminContext, audit: await getAuditLog(env.DB) });
+      if (section === "audit") {
+        return json({
+          admin: adminContext,
+          audit: await getAuditLog(env.DB, Object.fromEntries(url.searchParams.entries())),
+          audit_filters: Object.fromEntries(url.searchParams.entries())
+        });
+      }
       if (section === "prefs") return json({ admin: adminContext, preferences: adminContext.preferences });
-      if (section === "admins") return json({ admin: adminContext, admins: await getAdmins(env.DB, env) });
+      if (section === "admins") return json({ admin: adminContext, admins: await getAdmins(env.DB, env), roles: await getRoles(env.DB), permission_catalog: PERMISSION_CATALOG });
+      if (section === "roles") return json({ admin: adminContext, roles: await getRoles(env.DB), permission_catalog: PERMISSION_CATALOG });
+      if (section === "sessions") return json({ admin: adminContext, sessions: await getSessions(env.DB) });
       if (section === "customers") {
         return json({
           admin: adminContext,
@@ -1894,6 +2393,9 @@ export async function onRequest(context) {
       const body = await request.json().catch(() => ({}));
       if (section === "prefs") return json({ preferences: await saveAdminPreferences(env.DB, body, identity), saved: true });
       if (section === "bypass") {
+        if (!ownerAccess && !(adminContext.permissions.includes("manage_api") || adminContext.permissions.includes("manage_settings"))) {
+          return json({ error: "Forbidden.", section }, 403);
+        }
         if (body.action === "remove") {
           const removed = await revokeBypass(env.DB, request, identity);
           return jsonWithHeaders({ bypass: { active: false }, saved: true }, { "Set-Cookie": removed.cookie });
@@ -1902,21 +2404,59 @@ export async function onRequest(context) {
         return jsonWithHeaders({ bypass: { active: true, expires: bypass.expires, redirect: "/" }, saved: true }, { "Set-Cookie": bypass.cookie });
       }
       if (body.action === "export_customer_data") {
+        if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_users", "manage_crm"])) {
+          return json({ error: "Forbidden.", section }, 403);
+        }
         const exported = await exportCustomerData(env.DB, body.customer_email || body.user_id, clean(body.format, 20) || "json");
         await writeAudit(env.DB, identity, "customer_data_export", "profiles", cleanEmail(body.customer_email || body.user_id), "Exported customer CRM data.", { format: exported.format });
         return json({ export: exported, saved: true });
       }
       if (section === "admins") {
-        if (!(adminContext.permissions.includes("*") || adminContext.permissions.includes("manage_admins") || adminContext.permissions.includes("manage_roles") || adminContext.permissions.includes("manage_permissions"))) {
+        if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_admins", "manage_roles", "manage_permissions"])) {
           return json({ error: "Forbidden.", section }, 403);
         }
-        if (body.action === "remove") await removeAdmin(env.DB, body, identity, env);
-        else await addAdmin(env.DB, body, identity);
-        await writeAudit(env.DB, identity, body.action === "remove" ? "admin_remove" : "admin_add", "admin_users", cleanEmail(body.email), `Updated admin access for ${cleanEmail(body.email)}.`, {});
+        if (body.action === "remove") {
+          await removeAdmin(env.DB, body, identity, env);
+          await writeAudit(env.DB, identity, "admin_remove", "admin_users", cleanEmail(body.email), `Removed admin access for ${cleanEmail(body.email)}.`, {});
+        } else if (body.action === "suspend") {
+          await updateAdmin(env.DB, { ...body, status: "Suspended" }, identity, env);
+          await writeAudit(env.DB, identity, "admin_suspend", "admin_users", cleanEmail(body.email), `Suspended admin ${cleanEmail(body.email)}.`, {});
+        } else if (body.action === "reactivate") {
+          await updateAdmin(env.DB, { ...body, status: "Active" }, identity, env);
+          await writeAudit(env.DB, identity, "admin_reactivate", "admin_users", cleanEmail(body.email), `Reactivated admin ${cleanEmail(body.email)}.`, {});
+        } else if (body.action === "update") {
+          await updateAdmin(env.DB, body, identity, env);
+          await writeAudit(env.DB, identity, "admin_update", "admin_users", cleanEmail(body.email), `Updated admin ${cleanEmail(body.email)}.`, {});
+        } else {
+          await addAdmin(env.DB, body, identity);
+          await writeAudit(env.DB, identity, "admin_add", "admin_users", cleanEmail(body.email), `Added admin ${cleanEmail(body.email)}.`, {});
+        }
         return json({ admins: await getAdmins(env.DB, env), saved: true });
       }
+      if (section === "roles") {
+        if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_roles", "manage_permissions"])) {
+          return json({ error: "Forbidden.", section }, 403);
+        }
+        if (body.action === "create") return json({ roles: await createRole(env.DB, body, identity), saved: true });
+        if (body.action === "update") return json({ roles: await updateRole(env.DB, body, identity), saved: true });
+        if (body.action === "rename") return json({ roles: await renameRole(env.DB, body, identity), saved: true });
+        if (body.action === "clone") return json({ roles: await cloneRole(env.DB, body, identity), saved: true });
+        if (body.action === "delete") return json({ roles: await deleteRole(env.DB, body, identity), saved: true });
+        throw new Error("Unknown role action.");
+      }
+      if (section === "sessions") {
+        if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_admins", "manage_audit", "manage_api"])) {
+          return json({ error: "Forbidden.", section }, 403);
+        }
+        if (body.action === "revoke") {
+          await DB.prepare(`UPDATE admin_bypass_sessions SET revoked_at = CURRENT_TIMESTAMP WHERE token_hash = ?`).bind(clean(body.token_hash, 120)).run();
+          await writeAudit(env.DB, identity, "session_revoke", "admin_bypass_sessions", clean(body.token_hash, 120), "Revoked an admin session.", {});
+          return json({ sessions: await getSessions(env.DB), saved: true });
+        }
+        throw new Error("Unknown session action.");
+      }
       if (section === "plans") {
-        if (!(adminContext.permissions.includes("*") || adminContext.permissions.includes("manage_plans") || adminContext.permissions.includes("manage_pricing"))) {
+        if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_plans", "manage_pricing"])) {
           return json({ error: "Forbidden.", section }, 403);
         }
         if (body.action === "save_visibility") {
@@ -1929,35 +2469,56 @@ export async function onRequest(context) {
         return json({ plans, saved: true });
       }
       if (section === "policies") {
+        if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_policies", "manage_content"])) return json({ error: "Forbidden.", section }, 403);
         const policies = await savePolicy(env.DB, body);
         await writeAudit(env.DB, identity, "policy_save", "policy_pages", cleanSlug(body.slug), `Saved policy ${clean(body.title, 180)}.`, { status: clean(body.status, 80) });
         return json({ policies, saved: true });
       }
       if (section === "branding") {
+        if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_branding", "manage_content"])) return json({ error: "Forbidden.", section }, 403);
         const branding = await saveBranding(env.DB, body);
         await writeAudit(env.DB, identity, "branding_update", "company_branding", "main", "Updated company branding.", { serviceName: clean(body.service_name, 180) });
         return json({ branding, saved: true });
       }
       if (section === "support") {
+        if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_support", "manage_crm"])) return json({ error: "Forbidden.", section }, 403);
         const support = await saveSupport(env.DB, body);
         await writeAudit(env.DB, identity, "support_update", "support_tickets", clean(body.id, 120), `Updated support ticket ${clean(body.subject, 250)}.`, { status: clean(body.status, 80), priority: clean(body.priority, 80) });
         return json({ support, saved: true });
       }
       if (section === "system") {
+        if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_settings"])) return json({ error: "Forbidden.", section }, 403);
         const system = await saveSystemEvent(env.DB, body);
         await writeAudit(env.DB, identity, "system_issue_update", "system_events", clean(body.id, 120), `Updated system issue ${clean(body.title, 250)}.`, { status: clean(body.status, 80), severity: clean(body.severity, 80) });
         return json({ system, saved: true });
       }
-      if (section === "datarequests") return json({ datarequests: await saveDataProtectionRequest(env.DB, body, identity, env), saved: true });
-      if (section === "systemreports") return json({ systemreports: await saveSystemReport(env.DB, body, identity), saved: true });
-      if (section === "closures") return json({ closures: await saveClosureRequest(env.DB, body, identity), saved: true });
-      if (section === "affiliate") return json({ affiliate: await saveAffiliateContent(env.DB, body, identity), saved: true });
-      if (section === "appearance") return json({ appearance: await saveAppearance(env.DB, body, identity), saved: true });
+      if (section === "datarequests") {
+        if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_data_requests"])) return json({ error: "Forbidden.", section }, 403);
+        return json({ datarequests: await saveDataProtectionRequest(env.DB, body, identity, env), saved: true });
+      }
+      if (section === "systemreports") {
+        if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_system_reports", "manage_audit"])) return json({ error: "Forbidden.", section }, 403);
+        return json({ systemreports: await saveSystemReport(env.DB, body, identity), saved: true });
+      }
+      if (section === "closures") {
+        if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_closure_requests"])) return json({ error: "Forbidden.", section }, 403);
+        return json({ closures: await saveClosureRequest(env.DB, body, identity), saved: true });
+      }
+      if (section === "affiliate") {
+        if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_content"])) return json({ error: "Forbidden.", section }, 403);
+        return json({ affiliate: await saveAffiliateContent(env.DB, body, identity), saved: true });
+      }
+      if (section === "appearance") {
+        if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_settings"])) return json({ error: "Forbidden.", section }, 403);
+        return json({ appearance: await saveAppearance(env.DB, body, identity), saved: true });
+      }
       if (section === "email") {
+        if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_email"])) return json({ error: "Forbidden.", section }, 403);
         if (body.action === "test") return json({ email: await getEmailSettings(env.DB, env), test: await testNotification(env.DB, body, env, identity), saved: true });
         return json({ email: await saveEmailSettings(env.DB, body, env, identity), saved: true });
       }
       if (section === "maintenance") {
+        if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_content"])) return json({ error: "Forbidden.", section }, 403);
         const previous = await getMaintenance(env.DB);
         const maintenance = await saveMaintenance(env.DB, body);
         await writeAudit(env.DB, identity, "maintenance_update", "site_settings", "maintenance", `Maintenance mode ${body.maintenance_enabled ? "enabled" : "disabled"}.`, {
@@ -1967,6 +2528,7 @@ export async function onRequest(context) {
         return json({ maintenance, saved: true });
       }
       if (section === "comingsoon") {
+        if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_content"])) return json({ error: "Forbidden.", section }, 403);
         const previous = await getComingSoon(env.DB);
         const comingsoon = await saveComingSoon(env.DB, body);
         await writeAudit(env.DB, identity, "comingsoon_update", "site_settings", "comingsoon", `Coming Soon page ${body.comingsoon_enabled ? "enabled" : "disabled"}.`, {
@@ -1976,6 +2538,7 @@ export async function onRequest(context) {
         return json({ comingsoon, saved: true });
       }
       if (section === "stripe") {
+        if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_stripe"])) return json({ error: "Forbidden.", section }, 403);
         const stripe = await saveStripe(env.DB, body, env);
         await writeAudit(env.DB, identity, "stripe_settings_update", "site_settings", "stripe", "Updated Stripe API controls.", { tested: Boolean(body.test_connection), mode: stripe.mode });
         return json({ stripe, saved: true });
