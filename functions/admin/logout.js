@@ -20,7 +20,7 @@ function redirectResponse(location, cookies = []) {
 
 export async function onRequestGet(context) {
   const url = new URL(context.request.url);
-  const signedOut = `${url.origin}/signed-out/`;
-  const accessLogout = `${url.origin}/cdn-cgi/access/logout?redirect_url=${encodeURIComponent(signedOut)}`;
+  const microsoftLogout = `${url.origin}/signed-out/microsoft-logout`;
+  const accessLogout = `${url.origin}/cdn-cgi/access/logout?redirect_url=${encodeURIComponent(microsoftLogout)}`;
   return redirectResponse(accessLogout, clearAdminCookies());
 }
