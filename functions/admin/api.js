@@ -754,7 +754,7 @@ async function getOverview(DB) {
     all(DB, `SELECT action, actor_email, entity_type, entity_id, summary, metadata, created_at FROM admin_audit_log ORDER BY created_at DESC LIMIT 8`),
     all(DB, `SELECT email, verified_name, display_name, contact_email, updated_at FROM profiles ORDER BY updated_at DESC, created_at DESC LIMIT 6`),
     all(DB, `SELECT id, subject, status, priority, updated_at FROM support_tickets ORDER BY updated_at DESC, created_at DESC LIMIT 6`),
-    all(DB, `SELECT id, title, status, updated_at FROM system_reports ORDER BY updated_at DESC, created_at DESC LIMIT 6`),
+    all(DB, `SELECT id, issue_type AS title, status, updated_at FROM system_reports ORDER BY updated_at DESC, created_at DESC LIMIT 6`),
     all(DB, `SELECT token_hash, admin_email, created_at, expires_at, revoked_at, last_used_at FROM admin_bypass_sessions ORDER BY COALESCE(last_used_at, created_at) DESC LIMIT 6`),
     all(DB, `SELECT email, name, role, status, updated_at FROM admin_users WHERE COALESCE(status, 'Active') = 'Active' ORDER BY updated_at DESC LIMIT 12`)
   ]);
