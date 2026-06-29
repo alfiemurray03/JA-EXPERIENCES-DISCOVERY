@@ -380,9 +380,9 @@ async function loadSection(section) {
 
   try {
     if (section === "status") {
-      const status = await fetchLiveStatus();
-      state.data.status = { status };
-      renderSection(section, { status });
+      const data = await api("status");
+      state.data.status = data;
+      renderSection(section, data);
       return;
     }
 
@@ -997,8 +997,9 @@ function renderStatusCentre(statusData = {}) {
   `;
 
   document.querySelector('[data-action="refresh-status-centre"]')?.addEventListener("click", async () => {
-    state.data.status = { status: await fetchLiveStatus(true) };
-    renderStatusCentre(state.data.status);
+    const data = await api("status");
+    state.data.status = data;
+    renderStatusCentre(data);
   });
 }
 

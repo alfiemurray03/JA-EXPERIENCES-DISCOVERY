@@ -2356,6 +2356,7 @@ export async function onRequest(context) {
       if (!ownerAccess && !canAccessSection(adminContext.permissions, section)) return json({ error: "Forbidden.", section }, 403);
       if (section === "overview") return json({ admin: adminContext, overview: await getOverview(env.DB) });
       if (section === "operations") return json({ admin: adminContext, operations: await getOverview(env.DB) });
+      if (section === "status") return json({ admin: adminContext, status: await fetch(`${new URL(request.url).origin}/api/status`, { headers: { "Accept": "application/json" }, cf: { cacheTtl: 0 } }).then((response) => response.json()) });
       if (section === "analytics") return json({ admin: adminContext, analytics: await getAnalytics(env.DB) });
       if (section === "audit") {
         return json({
