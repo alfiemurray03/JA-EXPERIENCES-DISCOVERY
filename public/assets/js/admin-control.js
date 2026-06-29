@@ -1068,8 +1068,11 @@ function renderAdmins(admins = []) {
     <div class="admin-card">
       <div class="section-head">
         <div>
-          <h2>Admin Users / Access Control</h2>
-          <p>Add, review and update Cloudflare Access-authenticated administrators. Default environment admins remain protected.</p>
+          <h2>Identity Management</h2>
+          <p>Add, review and update Microsoft Entra-authenticated administrators. Cloudflare Access continues to protect the portal while the application authorises access from the admin_users table.</p>
+        </div>
+        <div class="section-actions">
+          <a class="admin-button secondary" href="https://entra.microsoft.com/" target="_blank" rel="noopener noreferrer" onclick="window.open(this.href, '_blank', 'noopener,noreferrer'); return false;">Open Microsoft Entra</a>
         </div>
       </div>
 
