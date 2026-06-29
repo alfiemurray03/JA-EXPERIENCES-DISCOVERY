@@ -41,6 +41,7 @@
           <div class="nav-heading">Dashboard</div>
           <nav class="admin-nav" aria-label="Dashboard">
             <button data-section="overview" data-icon="dashboard" class="active">Overview</button>
+            <button data-section="operations" data-icon="pulse">Operations</button>
             <button data-section="analytics" data-icon="chart">Analytics</button>
             <button data-section="status" data-icon="pulse">Status Centre</button>
             <button data-section="audit" data-icon="clock">Audit Log</button>
@@ -62,6 +63,8 @@
           <div class="nav-heading">Platform</div>
           <nav class="admin-nav" aria-label="Platform">
             <button data-section="admins" data-icon="shield">Admin Users</button>
+            <button data-section="roles" data-icon="users">Roles</button>
+            <button data-section="sessions" data-icon="clock">Sessions</button>
             <button data-section="plans" data-icon="plans">Plans &amp; Prices</button>
             <button data-section="stripe" data-icon="card">Stripe</button>
             <button data-section="email" data-icon="mail">Email</button>
@@ -111,6 +114,7 @@
         </div>
 
         <div class="topbar-actions">
+          <button class="mini-button" id="sidebarToggleButton" type="button">Toggle Sidebar</button>
           <button class="icon-button notification-button" type="button" aria-label="Notifications" title="Notifications coming soon">
             <span aria-hidden="true">&#9675;</span><span class="notification-dot"></span>
           </button>
@@ -127,7 +131,7 @@
             <div class="account-menu" id="accountMenu" hidden>
               <div class="account-menu-label">Administrator</div>
               <button type="button" id="accountSettingsButton">Account settings</button>
-              <a href="/cdn-cgi/access/logout">Sign out</a>
+              <a href="/admin/logout">Sign out</a>
             </div>
           </div>
         </div>

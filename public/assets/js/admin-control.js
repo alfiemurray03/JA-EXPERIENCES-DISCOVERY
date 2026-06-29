@@ -1421,7 +1421,7 @@ async function openAdminProfileModal(email, options = {}) {
       <div id="permissionEditorWrap">${renderPermissionEditor(permissionSummary, "", isPlatformOwner)}</div>
       <div class="section-actions">
         ${isDefault ? "" : `<button class="mini-button" type="button" data-action="profile-status-toggle">${isSuspended ? "Reactivate administrator" : "Suspend administrator"}</button>`}
-        ${isOwnProfile ? `<a class="mini-button secondary" href="/cdn-cgi/access/logout">Sign out</a>` : ""}
+        ${isOwnProfile ? `<a class="mini-button secondary" href="/admin/logout">Sign out</a>` : ""}
       </div>
       <div class="admin-card" style="margin:0;">
         <div class="section-head"><div><h3>Login history</h3><p>Recent access and role-related events.</p></div></div>
