@@ -1196,11 +1196,13 @@ async function savePlanChanges() {
       method: "POST",
       body: JSON.stringify({ action: "save_visibility", plans })
     });
-    state.data.plans = data;
+    if (data.debug) {
+      console.table?.(data.debug.updates || []);
+    }
     state.planDraft = null;
     state.planDirty = false;
-    renderPlans(data.plans);
     setSaved("plansSaved", "Plan changes saved.");
+    await loadSection("plans");
   } catch (error) {
     setSaved("plansSaved", error.message || "Unable to save plan changes.", true);
   } finally {

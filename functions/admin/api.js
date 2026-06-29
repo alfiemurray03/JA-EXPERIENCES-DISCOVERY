@@ -759,12 +759,24 @@ async function savePlanVisibility(DB, body) {
     if (active !== 0 && active !== 1) throw new Error(`Invalid active state for plan: ${clean(plan.id, 120)}`);
   }
 
+  const before = current.filter((plan) => ids.includes(plan.id)).map((plan) => ({
+    id: plan.id,
+    is_active: Number(plan.is_active || 0)
+  }));
+  const updates = [];
+
   try {
     await DB.exec("BEGIN TRANSACTION");
     for (const plan of incoming) {
-      await DB.prepare(`UPDATE service_plans SET is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
+      const result = await DB.prepare(`UPDATE service_plans SET is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
         .bind(Number(plan.is_active || 0), clean(plan.id, 120))
         .run();
+      updates.push({
+        id: clean(plan.id, 120),
+        old_value: currentMap.get(clean(plan.id, 120)),
+        new_value: Number(plan.is_active || 0),
+        affected_rows: Number(result.meta?.changes || 0)
+      });
     }
     await DB.exec("COMMIT");
   } catch (error) {
@@ -776,7 +788,25 @@ async function savePlanVisibility(DB, body) {
     throw error;
   }
 
-  return all(DB, `SELECT * FROM service_plans ORDER BY sort_order ASC, plan_name ASC`);
+  const after = await all(DB, `SELECT id, is_active FROM service_plans WHERE id IN (${ids.map(() => "?").join(", ")}) ORDER BY sort_order ASC, plan_name ASC`, ids);
+  const afterMap = new Map(after.map((plan) => [plan.id, Number(plan.is_active || 0)]));
+  for (const plan of incoming) {
+    const id = clean(plan.id, 120);
+    const expected = Number(plan.is_active || 0);
+    const stored = afterMap.get(id);
+    if (stored !== expected) {
+      throw new Error(`Plan ${id} was not persisted. Expected ${expected}, found ${stored}.`);
+    }
+  }
+
+  return {
+    plans: await all(DB, `SELECT * FROM service_plans ORDER BY sort_order ASC, plan_name ASC`),
+    debug: {
+      before,
+      updates,
+      after
+    }
+  };
 }
 
 async function savePolicy(DB, body) {
