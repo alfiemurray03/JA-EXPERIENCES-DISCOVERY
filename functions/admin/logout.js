@@ -1,8 +1,6 @@
 function clearAdminCookies() {
   return [
-    "ja_admin_bypass=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax",
-    "CF_Authorization=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax",
-    "cf_clearance=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax"
+    "ja_admin_bypass=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax"
   ];
 }
 
@@ -24,7 +22,5 @@ export async function onRequestGet(context) {
   const url = new URL(context.request.url);
   const signedOut = `${url.origin}/signed-out/`;
   const accessLogout = `${url.origin}/cdn-cgi/access/logout?redirect_url=${encodeURIComponent(signedOut)}`;
-  const response = redirectResponse(accessLogout, clearAdminCookies());
-  response.headers.set("Clear-Site-Data", "\"cookies\", \"storage\", \"cache\"");
-  return response;
+  return redirectResponse(accessLogout, clearAdminCookies());
 }
