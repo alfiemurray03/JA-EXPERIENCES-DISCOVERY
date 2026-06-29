@@ -757,6 +757,42 @@ async function savePlan(DB, body) {
   return all(DB, `SELECT * FROM service_plans ORDER BY sort_order ASC, plan_name ASC`);
 }
 
+async function savePlanVisibility(DB, body) {
+  const incoming = Array.isArray(body.plans) ? body.plans : [];
+  if (!incoming.length) throw new Error("No plan changes were supplied.");
+
+  const ids = incoming.map((plan) => clean(plan.id, 120)).filter(Boolean);
+  if (ids.length !== incoming.length) throw new Error("One or more plan IDs are invalid.");
+
+  const current = await all(DB, `SELECT id, is_active FROM service_plans ORDER BY sort_order ASC, plan_name ASC`);
+  const currentMap = new Map(current.map((plan) => [plan.id, Number(plan.is_active || 0)]));
+
+  for (const plan of incoming) {
+    if (!currentMap.has(clean(plan.id, 120))) throw new Error(`Unknown plan: ${clean(plan.id, 120)}`);
+    const active = Number(plan.is_active || 0);
+    if (active !== 0 && active !== 1) throw new Error(`Invalid active state for plan: ${clean(plan.id, 120)}`);
+  }
+
+  try {
+    await DB.exec("BEGIN TRANSACTION");
+    for (const plan of incoming) {
+      await DB.prepare(`UPDATE service_plans SET is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
+        .bind(Number(plan.is_active || 0), clean(plan.id, 120))
+        .run();
+    }
+    await DB.exec("COMMIT");
+  } catch (error) {
+    try {
+      await DB.exec("ROLLBACK");
+    } catch {
+      // Ignore rollback failures.
+    }
+    throw error;
+  }
+
+  return all(DB, `SELECT * FROM service_plans ORDER BY sort_order ASC, plan_name ASC`);
+}
+
 async function savePolicy(DB, body) {
   const slug = cleanSlug(body.slug);
   const originalSlug = cleanSlug(body.original_slug || body.slug);
@@ -1725,6 +1761,11 @@ export async function onRequest(context) {
         return json({ admins: await getAdmins(env.DB, env), saved: true });
       }
       if (section === "plans") {
+        if (body.action === "save_visibility") {
+          const plans = await savePlanVisibility(env.DB, body);
+          await writeAudit(env.DB, identity, "plan_visibility_save", "service_plans", "bulk", "Saved plan visibility changes.", {});
+          return json({ plans, saved: true });
+        }
         const plans = await savePlan(env.DB, body);
         await writeAudit(env.DB, identity, "plan_save", "service_plans", clean(body.id, 120), `Saved plan ${clean(body.plan_name, 180)}.`, {});
         return json({ plans, saved: true });

@@ -3,7 +3,10 @@ const state = {
   data: {},
   selectedPolicy: null,
   favourites: [],
-  branding: {}
+  branding: {},
+  planDraft: null,
+  planDirty: false,
+  planSaving: false
 };
 
 const sectionTitles = {
@@ -254,6 +257,14 @@ function bindAdminActions() {
     if (type === "toggle-policy-published") {
       await togglePolicyPublished(action.dataset.slug, action.checked);
     }
+
+    if (type === "save-plan-changes") {
+      await savePlanChanges();
+    }
+
+    if (type === "cancel-plan-changes") {
+      await cancelPlanChanges();
+    }
   });
 
   document.addEventListener("change", async (event) => {
@@ -316,6 +327,10 @@ async function loadSection(section) {
 
     const data = await api(section);
     state.data[section] = data;
+    if (section === "plans") {
+      state.planDraft = null;
+      state.planDirty = false;
+    }
     if (data.admin) setAdmin(data.admin);
     renderSection(section, data);
   } catch (error) {
@@ -994,7 +1009,9 @@ function renderCustomers(customers = []) {
 }
 
 function renderPlans(plans = []) {
-  const cards = plans.map((plan) => `
+  state.data.plans = { plans: Array.isArray(plans) ? plans : [] };
+  const draft = state.planDraft || buildPlanDraft(state.data.plans.plans || []);
+  const cards = draft.map((plan) => `
     <article class="plan-card" data-plan-card data-plan-id="${escapeAttr(plan.id)}">
       <div class="plan-top">
         <div>
@@ -1025,41 +1042,30 @@ function renderPlans(plans = []) {
     <div class="section-head">
       <div>
         <h2>Manage Plans</h2>
-        <p>Use each plan card Active toggle as the single source of truth for public visibility.</p>
+        <p>Toggle changes are staged locally. Save Changes writes every plan state in one update.</p>
       </div>
-      <button class="admin-button" type="button" data-action="open-plan">New plan</button>
+      <div class="section-actions">
+        <button class="admin-button secondary" type="button" data-action="cancel-plan-changes" ${state.planDirty ? "" : "disabled"}>Cancel Changes</button>
+        <button class="admin-button" type="button" data-action="save-plan-changes" ${state.planDirty ? "" : "disabled"}>${state.planSaving ? "Saving…" : "Save Changes"}</button>
+        <button class="admin-button" type="button" data-action="open-plan">New plan</button>
+      </div>
     </div>
+    <div class="admin-alert ${state.planDirty ? "" : "hidden"}" data-plan-unsaved>${state.planDirty ? "You have unsaved changes." : ""}</div>
     <div class="plan-grid">${cards || emptyCard("No plans yet.")}</div>
   `;
+  syncPlanControls();
 }
 
 async function togglePlan(id, isActive) {
-  const plan = (state.data.plans?.plans || []).find((item) => item.id === id);
+  const draft = ensurePlanDraft();
+  const plan = draft.find((item) => item.id === id);
   if (!plan) return;
-  const checkbox = document.querySelector(`[data-plan-toggle="${CSS.escape(id)}"]`);
-  const card = checkbox?.closest(".plan-card");
-  const previous = Number(plan.is_active) === 1;
-  if (checkbox?.disabled) return;
-  setPlanSaving(card, checkbox, true);
-  checkbox.checked = isActive;
-  try {
-    const data = await api("plans", {
-      method: "POST",
-      body: JSON.stringify({
-        ...plan,
-        is_active: isActive,
-        is_featured: Number(plan.is_featured) === 1
-      })
-    });
-    state.data.plans = data;
-    updatePlanCardFromState(id);
-    setSaved("plansSaved", "Plan visibility saved.");
-  } catch (error) {
-    checkbox.checked = previous;
-    setSaved("plansSaved", error.message || "Unable to save plan.", true);
-  } finally {
-    setPlanSaving(card, checkbox, false);
-  }
+  plan.is_active = isActive ? 1 : 0;
+  state.planDraft = draft;
+  state.planDirty = true;
+  updatePlanCardFromState(id);
+  syncPlanControls();
+  setSaved("plansSaved", "You have unsaved changes.");
 }
 
 function openPlanModal(id = "") {
@@ -1131,7 +1137,7 @@ function setPlanSaving(card, checkbox, saving) {
 }
 
 function updatePlanCardFromState(id) {
-  const plan = (state.data.plans?.plans || []).find((item) => item.id === id);
+  const plan = (state.planDraft || state.data.plans?.plans || []).find((item) => item.id === id);
   const card = document.querySelector(`[data-plan-card][data-plan-id="${CSS.escape(id)}"]`);
   if (!plan || !card) return;
 
@@ -1155,6 +1161,62 @@ function updatePlanCardFromState(id) {
   if (stripePrice) stripePrice.textContent = plan.stripe_price_id || "Not stored";
   if (statusBadge) statusBadge.textContent = Number(plan.is_active) === 1 ? "Active" : "Inactive";
   card.classList.toggle("is-saving", false);
+}
+
+function buildPlanDraft(plans) {
+  return plans.map((plan) => ({ ...plan, is_active: Number(plan.is_active || 0) }));
+}
+
+function ensurePlanDraft() {
+  if (!Array.isArray(state.planDraft)) {
+    state.planDraft = buildPlanDraft(state.data.plans?.plans || []);
+  }
+  return state.planDraft.map((plan) => ({ ...plan }));
+}
+
+function syncPlanControls() {
+  const saveButton = document.querySelector('[data-action="save-plan-changes"]');
+  const cancelButton = document.querySelector('[data-action="cancel-plan-changes"]');
+  const notice = document.querySelector("[data-plan-unsaved]");
+  if (saveButton) {
+    saveButton.disabled = !state.planDirty || state.planSaving;
+    saveButton.textContent = state.planSaving ? "Saving…" : "Save Changes";
+  }
+  if (cancelButton) cancelButton.disabled = !state.planDirty || state.planSaving;
+  if (notice) notice.hidden = !state.planDirty;
+}
+
+async function savePlanChanges() {
+  if (!state.planDirty || state.planSaving) return;
+  state.planSaving = true;
+  syncPlanControls();
+  try {
+    const plans = (state.planDraft || []).map((plan) => ({ id: plan.id, is_active: Number(plan.is_active || 0) }));
+    const data = await api("plans", {
+      method: "POST",
+      body: JSON.stringify({ action: "save_visibility", plans })
+    });
+    state.data.plans = data;
+    state.planDraft = null;
+    state.planDirty = false;
+    renderPlans(data.plans);
+    setSaved("plansSaved", "Plan changes saved.");
+  } catch (error) {
+    setSaved("plansSaved", error.message || "Unable to save plan changes.", true);
+  } finally {
+    state.planSaving = false;
+    syncPlanControls();
+  }
+}
+
+async function cancelPlanChanges() {
+  if (state.planSaving) return;
+  state.planDraft = null;
+  state.planDirty = false;
+  const data = await api("plans");
+  state.data.plans = data;
+  renderPlans(data.plans);
+  setSaved("plansSaved", "Unsaved changes discarded.");
 }
 
 function renderStripe(stripe = {}) {
