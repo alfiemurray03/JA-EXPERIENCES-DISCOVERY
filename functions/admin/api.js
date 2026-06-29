@@ -705,9 +705,9 @@ async function savePlan(DB, body) {
   await DB.prepare(`
     INSERT INTO service_plans (
       id, plan_name, plan_type, price_label, price_pence, stripe_product_id, stripe_price_id,
-      delivery_time, revisions, description, button_label, is_active, is_featured, sort_order, updated_at
+      delivery_time, revisions, description, button_label, is_featured, sort_order, updated_at
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
     ON CONFLICT(id) DO UPDATE SET
       plan_name = excluded.plan_name,
       plan_type = excluded.plan_type,
@@ -719,7 +719,6 @@ async function savePlan(DB, body) {
       revisions = excluded.revisions,
       description = excluded.description,
       button_label = excluded.button_label,
-      is_active = excluded.is_active,
       is_featured = excluded.is_featured,
       sort_order = excluded.sort_order,
       updated_at = CURRENT_TIMESTAMP
@@ -735,7 +734,6 @@ async function savePlan(DB, body) {
     clean(body.revisions, 120),
     clean(body.description, 1000),
     clean(body.button_label, 80) || "Buy now securely",
-    body.is_active ? 1 : 0,
     body.is_featured ? 1 : 0,
     Number(body.sort_order || 100)
   ).run();
