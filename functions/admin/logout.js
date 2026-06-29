@@ -20,19 +20,8 @@ function redirectResponse(location, cookies = []) {
   });
 }
 
-function htmlResponse(body) {
-  return new Response(body, {
-    status: 200,
-    headers: {
-      "Content-Type": "text/html; charset=utf-8",
-      "Cache-Control": "no-store"
-    }
-  });
-}
-
 export async function onRequestGet(context) {
   const url = new URL(context.request.url);
-  const signInAgain = `${url.origin}/admin`;
   const signedOut = `${url.origin}/signed-out/`;
   const accessLogout = `${url.origin}/cdn-cgi/access/logout?redirect_url=${encodeURIComponent(signedOut)}`;
   const response = redirectResponse(accessLogout, clearAdminCookies());

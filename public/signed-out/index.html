@@ -3,68 +3,192 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Signed Out | JA Experiences &amp; Discovery</title>
   <meta name="robots" content="noindex,nofollow">
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Signed Out | JA Experiences &amp; Discovery</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/assets/css/ja-travel-rebuild.css?v=20260621-1">
   <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f5f7fb;
+      --panel: rgba(255, 255, 255, 0.96);
+      --panel-border: rgba(148, 163, 184, 0.28);
+      --text: #0f172a;
+      --muted: #52607a;
+      --shadow: 0 24px 70px rgba(15, 23, 42, 0.12);
+      --button: linear-gradient(135deg, #0f172a, #1e293b);
+      --button-hover: linear-gradient(135deg, #111827, #0f172a);
+      --accent: #16a34a;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #08111f;
+        --panel: rgba(15, 23, 42, 0.92);
+        --panel-border: rgba(148, 163, 184, 0.18);
+        --text: #f8fafc;
+        --muted: #c6d3e3;
+        --shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
+        --button: linear-gradient(135deg, #dbeafe, #93c5fd);
+        --button-hover: linear-gradient(135deg, #eff6ff, #bfdbfe);
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
     body {
       margin: 0;
       min-height: 100vh;
       display: grid;
       place-items: center;
-      background: #f6f7f9;
-      color: #111827;
+      padding: clamp(1rem, 4vw, 2.5rem);
+      background:
+        radial-gradient(circle at top, rgba(59, 130, 246, 0.16), transparent 34%),
+        radial-gradient(circle at bottom right, rgba(22, 163, 74, 0.12), transparent 30%),
+        var(--bg);
+      color: var(--text);
       font-family: Inter, system-ui, sans-serif;
-      padding: 1rem;
+      line-height: 1.6;
     }
+
     main {
-      width: min(560px, 100%);
-      background: #fff;
-      border: 1px solid #e2e6eb;
-      border-radius: 16px;
-      padding: clamp(1.5rem, 5vw, 3rem);
-      box-shadow: 0 18px 50px rgba(16, 24, 40, .08);
-      text-align: center;
+      width: min(720px, 100%);
+      border: 1px solid var(--panel-border);
+      background: var(--panel);
+      backdrop-filter: blur(18px);
+      border-radius: 24px;
+      padding: clamp(1.5rem, 5vw, 3.25rem);
+      box-shadow: var(--shadow);
     }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 0.8rem;
+      border-radius: 999px;
+      background: rgba(22, 163, 74, 0.12);
+      color: var(--accent);
+      font-size: 0.8rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 1rem 0 0.75rem;
+      font-family: "DM Sans", Inter, system-ui, sans-serif;
+      font-size: clamp(2rem, 4vw, 3rem);
+      line-height: 1.08;
+      letter-spacing: -0.03em;
+    }
+
+    .lead {
+      margin: 0;
+      font-size: clamp(1rem, 2vw, 1.125rem);
+      color: var(--muted);
+    }
+
+    .panel {
+      margin-top: 1.75rem;
+      padding: 1.25rem;
+      border-radius: 20px;
+      background: rgba(148, 163, 184, 0.08);
+      border: 1px solid rgba(148, 163, 184, 0.18);
+    }
+
+    .panel p { margin: 0; }
+
     .actions {
       display: flex;
       flex-wrap: wrap;
-      gap: .75rem;
-      justify-content: center;
-      margin-top: 1.5rem;
+      gap: 0.9rem;
+      margin-top: 1.75rem;
     }
+
     .button {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      padding: .9rem 1.2rem;
+      min-height: 3.25rem;
+      padding: 0.9rem 1.25rem;
       border-radius: 999px;
       text-decoration: none;
-      background: #0f172a;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+      border: 1px solid transparent;
+      transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease, color 160ms ease;
+    }
+
+    .button.primary {
+      background: var(--button);
       color: #fff;
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.18);
+    }
+
+    .button.primary:hover,
+    .button.primary:focus-visible {
+      background: var(--button-hover);
+      transform: translateY(-1px);
+    }
+
+    .button.secondary {
+      background: transparent;
+      color: var(--text);
+      border-color: var(--panel-border);
+    }
+
+    .button.secondary:hover,
+    .button.secondary:focus-visible {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
+    }
+
+    .footer {
+      margin-top: 1.5rem;
+      font-size: 0.92rem;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .footer strong {
+      display: block;
+      margin-top: 0.4rem;
+      color: var(--text);
       font-weight: 700;
     }
-    .eyebrow {
-      display: inline-block;
-      margin-bottom: .75rem;
-      text-transform: uppercase;
-      letter-spacing: .08em;
-      font-size: .8rem;
-      font-weight: 700;
-      color: #52607a;
+
+    @media (max-width: 520px) {
+      main { border-radius: 20px; }
+      .actions { flex-direction: column; }
+      .button { width: 100%; }
     }
   </style>
 </head>
 <body>
   <main>
     <span class="eyebrow">Signed out</span>
-    <h1>You have successfully signed out.</h1>
-    <p>Your Cloudflare Access session and application session have been cleared. You can sign in again when you are ready.</p>
+    <h1>JA Experiences &amp; Discovery<br>Administrator Control Centre</h1>
+    <p class="lead">✅ You have signed out successfully.</p>
+
+    <div class="panel" role="status" aria-live="polite">
+      <p>Your administrator session has ended successfully.</p>
+      <p>For your security, administrator access now requires fresh authentication using Microsoft Entra ID.</p>
+      <p>To continue, please authenticate again.</p>
+    </div>
+
     <div class="actions">
-      <a class="button" href="/admin">Sign In Again</a>
+      <a class="button primary" href="/admin?prompt=select_account" rel="nofollow">🔐 Sign in to Admin Centre</a>
+    </div>
+
+    <div class="footer">
+      Protected by Microsoft Entra ID • Cloudflare Zero Trust
+      <strong>© JA Group Services Ltd</strong>
     </div>
   </main>
 </body>
