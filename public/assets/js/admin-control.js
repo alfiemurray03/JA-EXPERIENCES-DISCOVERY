@@ -1482,6 +1482,17 @@ async function openAdminProfileModal(email, options = {}) {
         })
       });
       state.data.admins = { ...(state.data.admins || {}), admins: data.admins || [] };
+      const refreshedAdmin = (data.admins || []).find((item) => String(item.email).toLowerCase() === String(admin.email).toLowerCase());
+      if (refreshedAdmin && state.data.admins?.admin && String(state.data.admins.admin.email).toLowerCase() === String(refreshedAdmin.email).toLowerCase()) {
+        state.data.admins.admin = {
+          ...state.data.admins.admin,
+          name: refreshedAdmin.name,
+          role: refreshedAdmin.role,
+          status: refreshedAdmin.status,
+          permissions: refreshedAdmin.permissions
+        };
+        setAdmin(state.data.admins.admin);
+      }
       const updated = (data.admins || []).find((item) => String(item.email).toLowerCase() === String(getValue("admin_profile_email")).toLowerCase()) || (data.admins || []).find((item) => String(item.email).toLowerCase() === String(admin.email).toLowerCase());
       const identity = state.data[state.currentSection]?.admin;
       if (updated && identity && String(identity.email).toLowerCase() === String(updated.email).toLowerCase()) {

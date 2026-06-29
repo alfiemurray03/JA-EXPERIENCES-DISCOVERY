@@ -2178,7 +2178,8 @@ async function adminPayload(DB, identity, env = {}) {
   const preferences = await getAdminPreferences(DB, identity);
   const defaultLanding = defaultLandingPageForRole(role, permissions);
   return {
-    ...identity,
+    email: identity.email,
+    name: admin?.name || identity.name || identity.email,
     role: storedRole,
     effective_role: role,
     permissions,
