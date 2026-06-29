@@ -535,7 +535,7 @@ async function isAllowedAdmin(DB, identity, env) {
 
 async function getEffectivePermissions(DB, adminRow) {
   if (!adminRow) return ["*"];
-  const role = adminRow.role || "Auditor";
+  const role = canonicalRoleName(adminRow.role || "Auditor");
   if (role === "Platform Owner") return ["*"];
 
   const roleRows = await DB.prepare(`SELECT permission_code FROM role_permissions WHERE role_name = ? ORDER BY permission_code ASC`).bind(role).all();
@@ -573,6 +573,12 @@ function requiresAnyPermission(permissions, required = []) {
 function hasAnyPermission(permissions, required = []) {
   if (permissions.includes("*")) return true;
   return required.some((permission) => permissions.includes(permission));
+}
+
+function canonicalRoleName(role) {
+  const normalised = clean(role, 80);
+  if (normalised === "Admin") return "Senior Administrator";
+  return normalised || "Auditor";
 }
 
 function ownerOrPermission(adminContext, required = []) {
@@ -1023,6 +1029,7 @@ async function getRoleSummary(DB) {
 }
 
 function dashboardPresetForRole(role, permissions) {
+  role = canonicalRoleName(role);
   if (role === "Platform Owner" || permissions.includes("*")) {
     return ["overview", "status", "analytics", "customers", "admins", "roles", "sessions", "plans", "stripe", "support", "systemreports", "datarequests", "closures", "policies", "branding", "comingsoon", "maintenance", "audit", "email"];
   }
@@ -1058,6 +1065,7 @@ function widgetCatalog() {
 }
 
 function widgetSetForRole(role, permissions) {
+  role = canonicalRoleName(role);
   const allowed = new Set();
   const available = widgetCatalog();
   const preset = dashboardPresetForRole(role, permissions);
@@ -1226,6 +1234,7 @@ async function getAdminPreferences(DB, identity) {
 }
 
 function defaultLandingPageForRole(role, permissions) {
+  role = canonicalRoleName(role);
   if (role === "Platform Owner" || permissions.includes("*")) return "overview";
   if (role === "Senior Administrator") return "overview";
   if (role === "Finance") return "stripe";
@@ -2151,14 +2160,16 @@ async function getAdminActivity(DB, email) {
 
 async function adminPayload(DB, identity) {
   const admin = await DB.prepare(`SELECT email, name, role, status, permissions, favourites, source, created_by, created_at, updated_at FROM admin_users WHERE lower(email) = lower(?)`).bind(identity.email).first();
-  const role = admin?.role || "Auditor";
+  const storedRole = admin?.role || "Auditor";
+  const role = canonicalRoleName(storedRole);
   const effectiveAdmin = admin || { email: identity.email, role, permissions: "[\"*\"]", favourites: "[]" };
   const permissions = await getEffectivePermissions(DB, effectiveAdmin);
   const preferences = await getAdminPreferences(DB, identity);
   const defaultLanding = defaultLandingPageForRole(role, permissions);
   return {
     ...identity,
-    role,
+    role: storedRole,
+    effective_role: role,
     permissions,
     allowed_sections: allowedSectionsForPermissions(permissions),
     is_platform_owner: role === "Platform Owner",
