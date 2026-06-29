@@ -521,9 +521,16 @@ async function ensureTables(DB, env) {
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       expires_at TEXT,
       revoked_at TEXT,
-      last_used_at TEXT
+      last_used_at TEXT,
+      user_agent TEXT,
+      ip_address TEXT,
+      location TEXT
     )
   `).run();
+
+  await safeAlter(DB, `ALTER TABLE admin_bypass_sessions ADD COLUMN user_agent TEXT`);
+  await safeAlter(DB, `ALTER TABLE admin_bypass_sessions ADD COLUMN ip_address TEXT`);
+  await safeAlter(DB, `ALTER TABLE admin_bypass_sessions ADD COLUMN location TEXT`);
 }
 
 async function isAllowedAdmin(DB, identity, env) {
@@ -647,14 +654,27 @@ async function sha256(value) {
   return [...new Uint8Array(hash)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
-async function createBypass(DB, identity) {
+function getSessionContext(request) {
+  const headers = request.headers;
+  const country = headers.get("cf-ipcountry") || "";
+  const city = headers.get("cf-ipcity") || "";
+  const region = headers.get("cf-region") || headers.get("cf-region-code") || "";
+  return {
+    user_agent: headers.get("user-agent") || "",
+    ip_address: headers.get("cf-connecting-ip") || "",
+    location: [city, region, country].filter(Boolean).join(", ")
+  };
+}
+
+async function createBypass(DB, identity, request) {
   const token = crypto.randomUUID() + crypto.randomUUID();
   const tokenHash = await sha256(token);
   const expires = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
+  const sessionContext = request ? getSessionContext(request) : { user_agent: "", ip_address: "", location: "" };
   await DB.prepare(`
-    INSERT INTO admin_bypass_sessions (token_hash, admin_email, expires_at)
-    VALUES (?, ?, ?)
-  `).bind(tokenHash, identity.email, expires).run();
+    INSERT INTO admin_bypass_sessions (token_hash, admin_email, expires_at, user_agent, ip_address, location)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `).bind(tokenHash, identity.email, expires, sessionContext.user_agent, sessionContext.ip_address, sessionContext.location).run();
   await writeAudit(DB, identity, "admin_bypass_created", "admin_bypass_sessions", tokenHash.slice(0, 12), "Created admin live-site bypass session.", { expires });
   return {
     token,
@@ -663,9 +683,13 @@ async function createBypass(DB, identity) {
   };
 }
 
-async function revokeBypass(DB, request, identity) {
+function readBypassToken(request) {
   const cookie = request.headers.get("Cookie") || "";
-  const token = cookie.split(";").map((part) => part.trim()).find((part) => part.startsWith("ja_admin_bypass="))?.split("=")[1] || "";
+  return cookie.split(";").map((part) => part.trim()).find((part) => part.startsWith("ja_admin_bypass="))?.split("=")[1] || "";
+}
+
+async function revokeBypass(DB, request, identity) {
+  const token = readBypassToken(request);
   if (token) {
     await DB.prepare(`UPDATE admin_bypass_sessions SET revoked_at = CURRENT_TIMESTAMP WHERE token_hash = ?`).bind(await sha256(token)).run();
   }
@@ -2137,13 +2161,18 @@ async function getAuditLog(DB, filters = {}) {
   return all(DB, sql, bindings);
 }
 
-async function getSessions(DB) {
-  return all(DB, `
-    SELECT token_hash, admin_email, created_at, expires_at, revoked_at, last_used_at
+async function getSessions(DB, request) {
+  const currentTokenHash = request ? await sha256(readBypassToken(request)) : "";
+  const sessions = await all(DB, `
+    SELECT token_hash, admin_email, created_at, expires_at, revoked_at, last_used_at, user_agent, ip_address, location
     FROM admin_bypass_sessions
     ORDER BY COALESCE(last_used_at, created_at) DESC
     LIMIT 200
   `);
+  return sessions.map((session) => ({
+    ...session,
+    is_current: Boolean(currentTokenHash && session.token_hash === currentTokenHash)
+  }));
 }
 
 async function getLoginHistory(DB, email) {
@@ -2378,7 +2407,7 @@ export async function onRequest(context) {
       if (section === "prefs") return json({ admin: adminContext, preferences: adminContext.preferences });
       if (section === "admins") return json({ admin: adminContext, admins: await getAdmins(env.DB, env), roles: await getRoles(env.DB), permission_catalog: PERMISSION_CATALOG });
       if (section === "roles") return json({ admin: adminContext, roles: await getRoles(env.DB), permission_catalog: PERMISSION_CATALOG });
-      if (section === "sessions") return json({ admin: adminContext, sessions: await getSessions(env.DB) });
+      if (section === "sessions") return json({ admin: adminContext, sessions: await getSessions(env.DB, request) });
       if (section === "customers") {
         return json({
           admin: adminContext,
@@ -2424,7 +2453,7 @@ export async function onRequest(context) {
           const removed = await revokeBypass(env.DB, request, identity);
           return jsonWithHeaders({ bypass: { active: false }, saved: true }, { "Set-Cookie": removed.cookie });
         }
-        const bypass = await createBypass(env.DB, identity);
+        const bypass = await createBypass(env.DB, identity, request);
         return jsonWithHeaders({ bypass: { active: true, expires: bypass.expires, redirect: "/" }, saved: true }, { "Set-Cookie": bypass.cookie });
       }
       if (body.action === "export_customer_data") {
@@ -2475,7 +2504,21 @@ export async function onRequest(context) {
         if (body.action === "revoke") {
           await DB.prepare(`UPDATE admin_bypass_sessions SET revoked_at = CURRENT_TIMESTAMP WHERE token_hash = ?`).bind(clean(body.token_hash, 120)).run();
           await writeAudit(env.DB, identity, "session_revoke", "admin_bypass_sessions", clean(body.token_hash, 120), "Revoked an admin session.", {});
-          return json({ sessions: await getSessions(env.DB), saved: true });
+          const currentTokenHash = readBypassToken(request) ? await sha256(readBypassToken(request)) : "";
+          const headers = currentTokenHash && currentTokenHash === clean(body.token_hash, 120)
+            ? { "Set-Cookie": "ja_admin_bypass=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax" }
+            : {};
+          return headers["Set-Cookie"]
+            ? jsonWithHeaders({ sessions: await getSessions(env.DB, request), saved: true }, headers)
+            : json({ sessions: await getSessions(env.DB, request), saved: true });
+        }
+        if (body.action === "revoke_all") {
+          await DB.prepare(`UPDATE admin_bypass_sessions SET revoked_at = CURRENT_TIMESTAMP WHERE revoked_at IS NULL`).run();
+          await writeAudit(env.DB, identity, "session_revoke_all", "admin_bypass_sessions", "all", "Revoked all admin sessions.", {});
+          return jsonWithHeaders(
+            { sessions: await getSessions(env.DB, request), saved: true },
+            { "Set-Cookie": "ja_admin_bypass=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax" }
+          );
         }
         throw new Error("Unknown session action.");
       }

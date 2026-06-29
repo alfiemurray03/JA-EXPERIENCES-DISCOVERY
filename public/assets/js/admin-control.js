@@ -250,6 +250,12 @@ function bindAdminActions() {
       await loadSection("sessions");
     }
 
+    if (type === "revoke-all-sessions") {
+      if (!window.confirm("Revoke all administrator sessions? Every active bypass session will be ended.")) return;
+      await api("sessions", { method: "POST", body: JSON.stringify({ action: "revoke_all" }) });
+      await loadSection("sessions");
+    }
+
     if (type === "open-customer") {
       openCustomerDrawer(action.dataset.email);
     }
@@ -2546,11 +2552,12 @@ function renderAudit(items = []) {
 
 function renderSessions(sessions = []) {
   const rows = sessions.map((session) => `
-    <tr>
-      <td><strong>${escapeHtml(session.admin_email || "")}</strong><span>${escapeHtml(session.token_hash || "")}</span></td>
+    <tr class="${session.is_current ? "active" : ""}">
+      <td><strong>${escapeHtml(session.admin_email || "")}</strong><span>${escapeHtml(session.is_current ? "Current session" : session.token_hash || "")}</span></td>
       <td>${escapeHtml(formatDate(session.created_at))}</td>
       <td>${escapeHtml(formatDate(session.last_used_at || session.created_at))}</td>
       <td>${escapeHtml(formatDate(session.expires_at))}</td>
+      <td>${escapeHtml([session.user_agent, session.ip_address, session.location].filter(Boolean).join(" • ") || "Not available")}</td>
       <td>${badge(session.revoked_at ? "Revoked" : "Active", session.revoked_at ? "amber" : "green")}</td>
       <td>
         ${session.revoked_at ? "" : `<button class="mini-button danger" type="button" data-action="revoke-session" data-token="${escapeAttr(session.token_hash)}">Revoke</button>`}
@@ -2561,8 +2568,11 @@ function renderSessions(sessions = []) {
     <div class="admin-card">
       <div class="section-head">
         <div><h2>Administrator Sessions</h2><p>View active bypass sessions and revoke them remotely.</p></div>
+        <div class="section-actions">
+          <button class="admin-button danger" type="button" data-action="revoke-all-sessions">Revoke All Sessions</button>
+        </div>
       </div>
-      ${table(["Administrator", "Created", "Last used", "Expires", "Status", "Actions"], rows)}
+      ${table(["Administrator", "Created", "Last used", "Expires", "Device", "Status", "Actions"], rows)}
     </div>
   `;
 }
