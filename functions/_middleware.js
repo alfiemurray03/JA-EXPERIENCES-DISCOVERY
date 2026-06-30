@@ -415,6 +415,8 @@ export async function onRequest(context) {
     path.startsWith("/api/status/") ||
     path.startsWith("/cdn-cgi") ||
     path.startsWith("/assets") ||
+    path === "/signed-out" ||
+    path.startsWith("/signed-out/") ||
     path === "/favicon.ico" ||
     path === "/robots.txt" ||
     path === "/sitemap.xml";
