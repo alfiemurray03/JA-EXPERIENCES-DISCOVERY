@@ -409,6 +409,8 @@ export async function onRequest(context) {
 
   const bypass =
     path.startsWith("/admin") ||
+    path === "/account/logout" ||
+    path === "/account/logout/" ||
     path === "/status" ||
     path.startsWith("/status/") ||
     path === "/api/status" ||
