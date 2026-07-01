@@ -6,6 +6,8 @@ Production domain: `experiences.jagroupservices.co.uk`
 
 Administrator authentication and Access branding deployment steps are documented in [docs/CLOUDFLARE-ACCESS-ADMIN-LOGIN.md](docs/CLOUDFLARE-ACCESS-ADMIN-LOGIN.md).
 
+Customer Portal logout and fresh Microsoft Entra authentication deployment steps are documented in [docs/CLOUDFLARE-ACCESS-CUSTOMER-FRESH-AUTH.md](docs/CLOUDFLARE-ACCESS-CUSTOMER-FRESH-AUTH.md).
+
 ## Local preview
 
 ```powershell
