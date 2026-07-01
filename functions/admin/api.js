@@ -1,3 +1,11 @@
+import {
+  ensureEnquiryTables,
+  getEnquiryThread,
+  isSameOriginRequest,
+  listAdminEnquiries,
+  updateEnquiryAsAdmin
+} from "../_shared/enquiries.js";
+
 const DEFAULT_ADMIN_EMAIL = "alfieholywoodmurray@jagroupservices.co.uk";
 const CLOSURE_STATUSES = ["Open", "In Progress", "Approved", "Rejected", "Completed"];
 const DPR_STATUSES = ["Received", "Verifying Identity", "In Progress", "Ready to Send", "Sent", "Closed", "Rejected"];
@@ -17,6 +25,7 @@ const PERMISSION_SECTIONS = {
   systemreports: ["manage_system_reports", "manage_audit"],
   closures: ["manage_closure_requests"],
   support: ["manage_support", "manage_crm"],
+  enquiries: ["manage_support", "manage_crm"],
   system: ["manage_settings"],
   plans: ["manage_plans", "manage_pricing"],
   stripe: ["manage_stripe"],
@@ -1061,17 +1070,17 @@ async function getRoleSummary(DB) {
 function dashboardPresetForRole(role, permissions) {
   role = canonicalRoleName(role);
   if (role === "Platform Owner" || permissions.includes("*")) {
-    return ["overview", "status", "analytics", "customers", "admins", "roles", "sessions", "plans", "stripe", "support", "systemreports", "datarequests", "closures", "policies", "branding", "comingsoon", "maintenance", "audit", "email"];
+    return ["overview", "status", "analytics", "customers", "admins", "roles", "sessions", "plans", "stripe", "enquiries", "support", "systemreports", "datarequests", "closures", "policies", "branding", "comingsoon", "maintenance", "audit", "email"];
   }
   if (role === "Senior Administrator") {
-    return ["overview", "customers", "users", "plans", "branding", "comingsoon", "maintenance", "status", "analytics", "support", "systemreports", "audit"];
+    return ["overview", "customers", "users", "plans", "branding", "comingsoon", "maintenance", "status", "analytics", "enquiries", "support", "systemreports", "audit"];
   }
   if (role === "Finance") return ["overview", "stripe", "plans", "audit", "reports"];
-  if (role === "Customer Support") return ["overview", "customers", "support", "datarequests", "closures", "systemreports", "audit"];
+  if (role === "Customer Support") return ["overview", "customers", "enquiries", "support", "datarequests", "closures", "systemreports", "audit"];
   if (role === "Marketing & Content") return ["overview", "branding", "comingsoon", "maintenance", "policies", "affiliate", "email"];
   if (role === "Compliance & Data Protection") return ["overview", "audit", "datarequests", "closures", "policies", "reports"];
   if (role === "Auditor") return ["overview", "audit"];
-  return ["overview", "customers", "plans", "status", "analytics", "support"];
+  return ["overview", "customers", "plans", "status", "analytics", "enquiries", "support"];
 }
 
 function widgetCatalog() {
@@ -1202,7 +1211,7 @@ async function removeAdmin(DB, body, identity, env) {
 }
 
 async function saveAdminPreferences(DB, body, identity) {
-  const allowedSections = new Set(["overview", "operations", "status", "analytics", "audit", "admins", "roles", "sessions", "customers", "datarequests", "systemreports", "closures", "support", "system", "plans", "stripe", "email", "branding", "appearance", "affiliate", "comingsoon", "maintenance", "policies"]);
+  const allowedSections = new Set(["overview", "operations", "status", "analytics", "audit", "admins", "roles", "sessions", "customers", "datarequests", "systemreports", "closures", "support", "enquiries", "system", "plans", "stripe", "email", "branding", "appearance", "affiliate", "comingsoon", "maintenance", "policies"]);
   const favourites = Array.isArray(body.favourites)
     ? body.favourites.map((item) => clean(item, 80)).filter((item) => allowedSections.has(item)).slice(0, 12)
     : [];
@@ -2377,6 +2386,7 @@ export async function onRequest(context) {
   if (!env.DB) return json({ error: "Database binding DB is missing." }, 500);
 
   await ensureTables(env.DB, env);
+  await ensureEnquiryTables(env.DB);
   await seedDefaults(env.DB);
 
   const identity = getAccessIdentity(request);
@@ -2430,6 +2440,12 @@ export async function onRequest(context) {
       if (section === "policies") return json({ admin: adminContext, policies: await all(env.DB, `SELECT * FROM policy_pages ORDER BY title ASC`) });
       if (section === "branding") return json({ admin: adminContext, branding: await env.DB.prepare(`SELECT * FROM company_branding WHERE id = 'main'`).first() });
       if (section === "support") return json({ admin: adminContext, support: await all(env.DB, `SELECT * FROM support_tickets ORDER BY updated_at DESC, created_at DESC LIMIT 500`) });
+      if (section === "enquiries") {
+        const filters = Object.fromEntries(url.searchParams.entries());
+        const enquiries = await listAdminEnquiries(env.DB, filters);
+        const reference = clean(url.searchParams.get("reference"), 40);
+        return json({ admin: adminContext, enquiries, thread: reference ? await getEnquiryThread(env.DB, reference, true) : null, filters });
+      }
       if (section === "system") return json({ admin: adminContext, system: await all(env.DB, `SELECT * FROM system_events ORDER BY updated_at DESC, created_at DESC LIMIT 500`) });
       if (section === "datarequests") return json({ admin: adminContext, datarequests: await getDataProtectionRequests(env.DB) });
       if (section === "systemreports") return json({ admin: adminContext, systemreports: await getSystemReports(env.DB) });
@@ -2443,6 +2459,7 @@ export async function onRequest(context) {
     }
 
     if (request.method === "POST") {
+      if (!isSameOriginRequest(request)) return json({ error: "This request could not be verified." }, 403);
       const body = await request.json().catch(() => ({}));
       if (section === "prefs") return json({ preferences: await saveAdminPreferences(env.DB, body, identity), saved: true });
       if (section === "bypass") {
@@ -2552,6 +2569,12 @@ export async function onRequest(context) {
         const support = await saveSupport(env.DB, body);
         await writeAudit(env.DB, identity, "support_update", "support_tickets", clean(body.id, 120), `Updated support ticket ${clean(body.subject, 250)}.`, { status: clean(body.status, 80), priority: clean(body.priority, 80) });
         return json({ support, saved: true });
+      }
+      if (section === "enquiries") {
+        if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_support", "manage_crm"])) return json({ error: "Forbidden.", section }, 403);
+        const thread = await updateEnquiryAsAdmin(env.DB, env, body, identity);
+        await writeAudit(env.DB, identity, "enquiry_update", "enquiries", clean(body.reference, 40), `Updated enquiry ${clean(body.reference, 40)}.`, { status: clean(body.status, 80), priority: clean(body.priority, 80), replied: Boolean(clean(body.reply, 10)), internal_note: Boolean(clean(body.internalNote, 10)) });
+        return json({ enquiries: await listAdminEnquiries(env.DB), thread, saved: true });
       }
       if (section === "system") {
         if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_settings"])) return json({ error: "Forbidden.", section }, 403);
