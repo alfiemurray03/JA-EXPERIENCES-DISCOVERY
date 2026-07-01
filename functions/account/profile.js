@@ -24,6 +24,8 @@ function wantsJson(request) {
 }
 
 function getAccessIdentity(request) {
+  const nativeEmail = request.headers.get("x-ja-auth-email") || "";
+  if (nativeEmail) return { email: nativeEmail.trim().toLowerCase(), verifiedName: (request.headers.get("x-ja-auth-name") || nativeEmail).trim() };
   const emailHeader =
     request.headers.get("cf-access-authenticated-user-email") ||
     request.headers.get("CF-Access-Authenticated-User-Email") ||

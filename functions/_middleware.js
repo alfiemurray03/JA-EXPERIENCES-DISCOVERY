@@ -7,33 +7,15 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
-function decodeJwtPayload(jwt) {
-  try {
-    if (!jwt || !jwt.includes(".")) return {};
-    const payload = jwt.split(".")[1];
-    const normalised = payload.replace(/-/g, "+").replace(/_/g, "/");
-    const padded = normalised.padEnd(normalised.length + ((4 - normalised.length % 4) % 4), "=");
-    return JSON.parse(atob(padded));
-  } catch {
-    return {};
-  }
+function getAccessIdentity(request) {
+  return String(request.headers.get("x-ja-auth-email") || "").trim().toLowerCase();
 }
 
-function getAccessIdentity(request) {
-  const emailHeader =
-    request.headers.get("cf-access-authenticated-user-email") ||
-    request.headers.get("CF-Access-Authenticated-User-Email") ||
-    "";
-
-  const jwt =
-    request.headers.get("cf-access-jwt-assertion") ||
-    request.headers.get("CF-Access-Jwt-Assertion") ||
-    "";
-
-  const tokenIdentity = decodeJwtPayload(jwt);
-  const email = emailHeader || tokenIdentity.email || tokenIdentity.user_email || tokenIdentity.username || "";
-
-  return String(email || "").trim().toLowerCase();
+function withoutCloudflareAccessIdentity(request) {
+  const headers = new Headers(request.headers);
+  headers.delete("cf-access-authenticated-user-email");
+  headers.delete("cf-access-jwt-assertion");
+  return new Request(request, { headers });
 }
 
 function configuredAdmins(env) {
@@ -44,8 +26,8 @@ function configuredAdmins(env) {
 async function isAdminRequest(request, env) {
   const email = getAccessIdentity(request);
   if (!email) return false;
-  if (configuredAdmins(env).includes(email)) return true;
-  if (!env.DB) return false;
+  const configured = configuredAdmins(env).includes(email);
+  if (!env.DB) return configured;
 
   try {
     await env.DB.prepare(`
@@ -59,10 +41,12 @@ async function isAdminRequest(request, env) {
       )
     `).run();
 
-    const admin = await env.DB.prepare(`SELECT email FROM admin_users WHERE lower(email) = lower(?)`).bind(email).first();
-    return Boolean(admin);
+    const admin = await env.DB.prepare(`SELECT * FROM admin_users WHERE lower(email) = lower(?)`).bind(email).first();
+    const status = String(admin?.status || "Active").trim().toLowerCase();
+    if (admin && ["blocked", "closed", "disabled", "inactive", "suspended"].includes(status)) return false;
+    return configured || Boolean(admin);
   } catch {
-    return false;
+    return configured;
   }
 }
 
@@ -379,9 +363,75 @@ function injectAccessibility(html) {
 }
 
 export async function onRequest(context) {
-  const { request, env, next } = context;
+  const { env, next } = context;
+  let request = withoutCloudflareAccessIdentity(withIdentity(context.request, null));
   const url = new URL(request.url);
   const path = url.pathname;
+  const publicAuthPath = new Set([
+    "/admin/login", "/admin/login/", "/admin/auth/callback", "/admin/auth/callback/", "/admin/logout", "/admin/logout/",
+    "/account/login", "/account/login/", "/account/auth/callback", "/account/auth/callback/", "/account/logout", "/account/logout/"
+  ]).has(path);
+  const realm = path === "/admin" || path.startsWith("/admin/")
+    ? "admin"
+    : path === "/account" || path.startsWith("/account/")
+      ? "customer"
+      : "";
+
+  if (realm === "admin" && !publicAuthPath) {
+    request = withIdentity(request, null);
+    const headers = new Headers(request.headers);
+    headers.delete("cf-access-authenticated-user-email");
+    headers.delete("cf-access-jwt-assertion");
+    request = new Request(request, { headers });
+  }
+
+  if (realm && !publicAuthPath) {
+    let identity;
+    try {
+      identity = await getNativeSession(request, env, realm);
+    } catch (error) {
+      console.error(JSON.stringify({
+        event: "native_oidc_session_validation_error",
+        realm,
+        message: error instanceof Error ? error.message : "Unknown session error"
+      }));
+      return new Response("Authentication is temporarily unavailable.", {
+        status: 503,
+        headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" }
+      });
+    }
+    if (!identity) return loginRedirect(request, realm);
+    if (!assertSameOrigin(request)) {
+      return new Response(JSON.stringify({ error: "Invalid request origin." }), {
+        status: 403,
+        headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" }
+      });
+    }
+    request = withIdentity(request, identity);
+
+    if (realm === "admin" && !(await isAdminRequest(request, env))) {
+      return new Response("Forbidden", {
+        status: 403,
+        headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" }
+      });
+    }
+
+    if (realm === "customer" && env.DB) {
+      try {
+        const profile = await env.DB.prepare(`SELECT admin_customer_status FROM profiles WHERE lower(email) = lower(?)`)
+          .bind(identity.email).first();
+        const status = String(profile?.admin_customer_status || "").trim().toLowerCase();
+        if (["blocked", "closed", "disabled", "suspended"].includes(status)) {
+          return new Response("This customer account is not active.", {
+            status: 403,
+            headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" }
+          });
+        }
+      } catch {
+        // Profile provisioning may not have occurred yet; authenticated first visits remain valid.
+      }
+    }
+  }
 
   if (path === "/admin" || path === "/admin/" || path.startsWith("/admin/index")) {
     if (!(await isAdminRequest(request, env))) {
@@ -394,7 +444,7 @@ export async function onRequest(context) {
       });
     }
 
-    const response = await next();
+    const response = await next(request);
     if (!env.DB || !(response.headers.get("Content-Type") || "").includes("text/html")) return response;
     const settings = await getSiteSettings(env.DB);
     const headers = new Headers(response.headers);
@@ -426,7 +476,7 @@ export async function onRequest(context) {
     path === "/sitemap.xml";
 
   if (bypass || !env.DB) {
-    return next();
+    return next(request);
   }
 
   const settings = await getSiteSettings(env.DB);
@@ -434,7 +484,7 @@ export async function onRequest(context) {
   const adminBypass = !previewBlocked && await hasAdminBypass(request, env);
 
   if (adminBypass) {
-    return next();
+    return next(request);
   }
 
   if (settings.maintenance_enabled === "true") {
@@ -458,7 +508,7 @@ export async function onRequest(context) {
     });
   }
 
-  const response = await next();
+  const response = await next(request);
   const contentType = response.headers.get("Content-Type") || "";
   if (!contentType.includes("text/html")) return response;
 
@@ -472,3 +522,9 @@ export async function onRequest(context) {
     headers
   });
 }
+import {
+  assertSameOrigin,
+  getNativeSession,
+  loginRedirect,
+  withIdentity
+} from "./_shared/oidc.js";

@@ -1083,7 +1083,7 @@ function renderAdmins(admins = []) {
       <div class="section-head">
         <div>
           <h2>Identity Management</h2>
-          <p>Add, review and update Microsoft Entra-authenticated administrators. Cloudflare Access continues to protect the portal while the application authorises access from the admin_users table.</p>
+          <p>Add, review and update Microsoft Entra-authenticated administrators. The application authorises access from the admin_users table.</p>
         </div>
         <div class="section-actions">
           <a class="admin-button secondary" href="https://entra.microsoft.com/" target="_blank" rel="noopener noreferrer" onclick="window.open(this.href, '_blank', 'noopener,noreferrer'); return false;">Open Microsoft Entra</a>
@@ -1117,7 +1117,7 @@ function renderAdmins(admins = []) {
     const notice = document.getElementById("adminUserSaved");
     if (notice) {
       notice.hidden = false;
-      notice.textContent = "Admin added. They can access once their Microsoft Entra / Cloudflare Access account is authorised.";
+      notice.textContent = "Admin added. They can access once their Microsoft Entra ID account is authorised.";
     }
   });
   setValue("new_admin_role", "Administrator");
@@ -1419,7 +1419,7 @@ async function openAdminProfileModal(email, options = {}) {
   const isSuspended = String(admin.status || "").toLowerCase() === "suspended";
   openModal(`
     <div class="modal-head">
-      <div><h2>${isOwnProfile ? "Account settings" : "Admin profile"}</h2><p>${isOwnProfile ? "Manage your supported display details. Your sign-in identity remains controlled by Cloudflare Access." : "Review and update this administrator's supported profile details."}</p></div>
+      <div><h2>${isOwnProfile ? "Account settings" : "Admin profile"}</h2><p>${isOwnProfile ? "Manage your supported display details. Your sign-in identity remains controlled by Microsoft Entra ID." : "Review and update this administrator's supported profile details."}</p></div>
       <button class="drawer-close" type="button" data-action="close-modal">×</button>
     </div>
     <form class="admin-form single admin-profile-form" id="adminProfileForm">

@@ -54,6 +54,8 @@ export function decodeJwtPayload(jwt) {
 }
 
 export function getAccessIdentity(request) {
+  const nativeEmail = request.headers.get("x-ja-auth-email") || "";
+  if (nativeEmail) return { email: cleanEmail(nativeEmail), name: clean(request.headers.get("x-ja-auth-name") || nativeEmail, 160) };
   const emailHeader = request.headers.get("cf-access-authenticated-user-email") || request.headers.get("CF-Access-Authenticated-User-Email") || "";
   const jwt = request.headers.get("cf-access-jwt-assertion") || request.headers.get("CF-Access-Jwt-Assertion") || "";
   const token = decodeJwtPayload(jwt);

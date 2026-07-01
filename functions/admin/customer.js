@@ -8,49 +8,10 @@ function json(data, status = 200) {
   });
 }
 
-function decodeJwtPayload(jwt) {
-  try {
-    if (!jwt || !jwt.includes(".")) return {};
-    const payload = jwt.split(".")[1];
-    const normalised = payload.replace(/-/g, "+").replace(/_/g, "/");
-    const padded = normalised.padEnd(normalised.length + ((4 - normalised.length % 4) % 4), "=");
-    return JSON.parse(atob(padded));
-  } catch {
-    return {};
-  }
-}
-
 function getAccessIdentity(request) {
-  const emailHeader =
-    request.headers.get("cf-access-authenticated-user-email") ||
-    request.headers.get("CF-Access-Authenticated-User-Email") ||
-    "";
-
-  const jwt =
-    request.headers.get("cf-access-jwt-assertion") ||
-    request.headers.get("CF-Access-Jwt-Assertion") ||
-    "";
-
-  const tokenIdentity = decodeJwtPayload(jwt);
-
-  const email =
-    emailHeader ||
-    tokenIdentity.email ||
-    tokenIdentity.user_email ||
-    tokenIdentity.username ||
-    "";
-
-  const name =
-    tokenIdentity.name ||
-    tokenIdentity.common_name ||
-    tokenIdentity.user_name ||
-    tokenIdentity.preferred_username ||
-    email ||
-    "";
-
   return {
-    email: String(email || "").trim().toLowerCase(),
-    name: String(name || "").trim()
+    email: String(request.headers.get("x-ja-auth-email") || "").trim().toLowerCase(),
+    name: String(request.headers.get("x-ja-auth-name") || request.headers.get("x-ja-auth-email") || "").trim()
   };
 }
 
