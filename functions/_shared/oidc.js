@@ -439,7 +439,15 @@ export async function completeLogin(context, realm) {
   const email = emailFromClaims(claims);
   if (!email) throw new Error("Microsoft did not provide an email identity.");
   if (realm === "customer") {
-    await syncCustomerProfileFromClaims(context, claims, email);
+    try {
+      await syncCustomerProfileFromClaims(context, claims, email);
+    } catch (error) {
+      console.error(JSON.stringify({
+        event: "customer_profile_sync_failed",
+        message: error instanceof Error ? error.message : "Unknown profile sync error",
+        email
+      }));
+    }
   }
 
   const sessionToken = randomValue(48);
