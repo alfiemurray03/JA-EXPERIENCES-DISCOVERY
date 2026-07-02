@@ -22,7 +22,7 @@ for (const destination of destinations) {
   <div id="siteShellHeader"></div>
   <main id="destinationGuide" data-slug="${destination.slug}" data-name="${destination.name.replaceAll('"', "&quot;")}"></main>
   <div id="siteShellFooter"></div>
-  <script src="/assets/js/site-shell.js"></script>
+  <script src="/assets/js/site-shell.js?v=20260702-1"></script>
   <script src="/assets/js/destination-page.js?v=20260620-3"></script>
 </body>
 </html>

@@ -80,7 +80,7 @@
       </div>
       <div class="person">
         <div class="avatar" id="sidebarAvatar">JA</div>
-        <div><strong id="sidebarName">Loading account…</strong><span id="sidebarEmail">Checking secure session…</span></div>
+        <div><strong id="sidebarName">Customer account</strong><span id="sidebarEmail">Signed in securely</span></div>
         <span class="status-pill" id="sidebarStatus">Secure</span>
       </div>
       <nav class="nav" aria-label="Customer portal navigation">
@@ -116,7 +116,7 @@
             </div>
             <div class="hero-badges">
               <span class="badge green" id="billingBadge">Secure billing</span>
-              <span class="badge" id="billingStatusBadge">Loading…</span>
+              <span class="badge" id="billingStatusBadge">Account status</span>
             </div>
             <div class="toolbar">
               <a class="button" href="/pricing/">View available plans</a>
@@ -127,16 +127,16 @@
             <div class="hero-panel-top">
               <div>
                 <span class="eyebrow">Billing snapshot</span>
-                <h2 id="subscriptionHeading" style="margin: .55rem 0 .35rem;font-size:1.5rem;">Loading…</h2>
+                <h2 id="subscriptionHeading" style="margin: .55rem 0 .35rem;font-size:1.5rem;">Subscription</h2>
                 <p id="subscriptionCaption">Fetching your current plan and Stripe status.</p>
               </div>
               <div class="avatar-lg" id="subscriptionAvatar">JA</div>
             </div>
             <div class="mini-grid">
-              <article class="mini-card"><span>Current plan</span><strong id="currentSubscription">Loading…</strong></article>
-              <article class="mini-card"><span>Billing frequency</span><strong id="billingFrequency">Loading…</strong></article>
-              <article class="mini-card"><span>Status</span><strong id="billingStatus">Loading…</strong></article>
-              <article class="mini-card"><span>Next payment</span><strong id="nextPayment">Loading…</strong></article>
+              <article class="mini-card"><span>Current plan</span><strong id="currentSubscription">Not available</strong></article>
+              <article class="mini-card"><span>Billing frequency</span><strong id="billingFrequency">Not available</strong></article>
+              <article class="mini-card"><span>Status</span><strong id="billingStatus">Not available</strong></article>
+              <article class="mini-card"><span>Next payment</span><strong id="nextPayment">Not available</strong></article>
             </div>
           </div>
         </section>
@@ -145,12 +145,12 @@
           <article class="card span-6">
             <h2>Plan summary</h2>
             <div class="detail-grid">
-              <div class="detail"><span>Current subscription</span><strong id="currentSubscriptionDetail">Loading…</strong></div>
-              <div class="detail"><span>Billing frequency</span><strong id="billingFrequencyDetail">Loading…</strong></div>
-              <div class="detail"><span>Status</span><strong id="billingStatusDetail">Loading…</strong></div>
-              <div class="detail"><span>Renewal date</span><strong id="renewalDate">Loading…</strong></div>
-              <div class="detail"><span>Next payment</span><strong id="nextPaymentDetail">Loading…</strong></div>
-              <div class="detail"><span>Features included</span><strong id="planFeatures">Loading…</strong></div>
+              <div class="detail"><span>Current subscription</span><strong id="currentSubscriptionDetail">Not available</strong></div>
+              <div class="detail"><span>Billing frequency</span><strong id="billingFrequencyDetail">Not available</strong></div>
+              <div class="detail"><span>Status</span><strong id="billingStatusDetail">Not available</strong></div>
+              <div class="detail"><span>Renewal date</span><strong id="renewalDate">Not available</strong></div>
+              <div class="detail"><span>Next payment</span><strong id="nextPaymentDetail">Not available</strong></div>
+              <div class="detail"><span>Features included</span><strong id="planFeatures">Not available</strong></div>
             </div>
           </article>
 
@@ -180,42 +180,6 @@
     </main>
   </div>
 
-  <script>
-    fetch('/account/profile', { credentials:'include', cache:'no-store', headers:{Accept:'application/json'} })
-      .then((r)=>r.ok ? r.json() : Promise.reject(new Error('Profile data was not available.')))
-      .then((data)=>{
-        const p = data.profile || {};
-        const fullName = p.displayName || p.verifiedName || 'Customer';
-        const plan = p.currentPlan || 'Standard';
-        const planType = p.currentPlanType || p.customerStatus || 'Standard';
-        const linked = Boolean(p.stripeCustomerId);
-        document.getElementById('subscriptionHeading').textContent = fullName;
-        document.getElementById('subscriptionCaption').textContent = p.email ? `Signed in as ${p.email}` : 'Signed in securely with Microsoft Entra ID';
-        document.getElementById('subscriptionAvatar').textContent = (fullName || 'JA').split(/\s+/).slice(0,2).map((part)=>part[0] || '').join('').toUpperCase() || 'JA';
-        document.getElementById('currentSubscription').textContent = plan;
-        document.getElementById('currentSubscriptionDetail').textContent = plan;
-        document.getElementById('billingFrequency').textContent = p.lifetimeAccess ? 'Lifetime' : 'Monthly / per plan';
-        document.getElementById('billingFrequencyDetail').textContent = p.lifetimeAccess ? 'Lifetime' : 'Monthly / per plan';
-        document.getElementById('billingStatus').textContent = linked ? 'Linked' : 'Not linked';
-        document.getElementById('billingStatusDetail').textContent = p.hasEligibleAccess ? 'Active' : 'Restricted';
-        document.getElementById('billingStatusBadge').textContent = p.hasEligibleAccess ? 'Active account' : 'Restricted access';
-        document.getElementById('renewalDate').textContent = 'Managed by current plan terms';
-        document.getElementById('nextPayment').textContent = p.lifetimeAccess ? 'No renewal due' : 'Shown in Stripe checkout and receipts';
-        document.getElementById('nextPaymentDetail').textContent = p.lifetimeAccess ? 'No renewal due' : 'Shown in Stripe checkout and receipts';
-        document.getElementById('planFeatures').textContent = planType;
-        document.getElementById('sidebarAvatar').textContent = (fullName || 'JA').split(/\s+/).slice(0,2).map((part)=>part[0] || '').join('').toUpperCase() || 'JA';
-        document.getElementById('sidebarName').textContent = fullName;
-        document.getElementById('sidebarEmail').textContent = p.email || 'Signed in securely';
-      })
-      .catch((error)=>{
-        document.getElementById('subscriptionHeading').textContent = 'Unable to load billing';
-        document.getElementById('subscriptionCaption').textContent = error.message || 'Billing data could not be loaded.';
-        document.getElementById('currentSubscription').textContent = 'Unavailable';
-        document.getElementById('currentSubscriptionDetail').textContent = 'Unavailable';
-        document.getElementById('billingStatus').textContent = 'Unavailable';
-        document.getElementById('billingStatusDetail').textContent = 'Unavailable';
-        document.getElementById('planFeatures').textContent = 'Unavailable';
-      });
-  </script>
+  <script src="/assets/js/account-subscription.js?v=20260702-1"></script>
 </body>
 </html>

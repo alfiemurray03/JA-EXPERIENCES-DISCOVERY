@@ -313,40 +313,7 @@ async function getLatestConsent(DB, email) {
 
 async function getProfile(DB, identity, env = {}) {
   const existing = await DB.prepare(`
-    SELECT
-      email,
-      verified_name,
-      display_name,
-      contact_email,
-      phone,
-      communication_preference,
-      support_notes,
-      admin_lifetime,
-      admin_lifetime_plan_id,
-      admin_customer_status,
-      microsoft_object_id,
-      microsoft_tenant_id,
-      microsoft_display_name,
-      microsoft_given_name,
-      microsoft_family_name,
-      microsoft_email,
-      microsoft_preferred_username,
-      microsoft_locale,
-      microsoft_job_title,
-      microsoft_department,
-      microsoft_company_name,
-      microsoft_mobile_phone,
-      microsoft_business_phone,
-      microsoft_country,
-      microsoft_preferred_language,
-      microsoft_photo_url,
-      microsoft_updated_at,
-      stripe_customer_id,
-      stripe_customer_created_at,
-      stripe_customer_synced_at,
-      created_at,
-      updated_at
-    FROM profiles
+    SELECT * FROM profiles
     WHERE email = ?
   `).bind(identity.email).first();
 
@@ -718,18 +685,6 @@ async function ensureStripeCustomer(DB, env, identity, profile) {
 
 export async function onRequest(context) {
   const { request, env } = context;
-  const requestId = request.headers.get("cf-ray") || request.headers.get("x-request-id") || request.headers.get("x-correlation-id") || "";
-  console.error(JSON.stringify({
-    component: "account-profile",
-    stage: "request_entry",
-    requestId,
-    timestamp: new Date().toISOString(),
-    url: request.url,
-    method: request.method,
-    referer: request.headers.get("Referer") || "",
-    userAgent: request.headers.get("User-Agent") || "",
-    accept: request.headers.get("Accept") || ""
-  }));
 
   if (request.method === "OPTIONS") {
     return new Response(null, { status: 204 });
@@ -740,64 +695,21 @@ export async function onRequest(context) {
   }
 
   const identity = getAccessIdentity(request);
-  console.error(JSON.stringify({
-    component: "account-profile",
-    stage: "identity_read",
-    requestId,
-    email: identity.email,
-    realm: identity.realm,
-    subject: identity.subject,
-    tenantId: identity.tenantId
-  }));
 
   if (!identity.email) {
     return json({ error: "Not signed in." }, 401);
   }
 
   if (request.method === "GET") {
-    console.error(JSON.stringify({
-      component: "account-profile",
-      stage: "get_profile_begin",
-      requestId,
-      email: identity.email
-    }));
     const profile = await getProfile(env.DB, identity, env);
-    console.error(JSON.stringify({
-      component: "account-profile",
-      stage: "get_profile_result",
-      requestId,
-      email: identity.email,
-      displayName: profile.displayName || "",
-      microsoftObjectId: profile.microsoftObjectId || "",
-      microsoftTenantId: profile.microsoftTenantId || "",
-      verificationStatus: profile.verificationStatus || ""
-    }));
     await ensureStripeCustomer(env.DB, env, identity, profile).catch(() => {});
     if (!wantsJson(request)) {
-      console.error(JSON.stringify({
-        component: "account-profile",
-        stage: "html_return",
-        requestId,
-        email: identity.email,
-        renderedPage: "/account/profile/index.html"
-      }));
       return fetch(new URL("/account/profile/index.html", request.url), {
         headers: request.headers
       });
     }
     const consent = await getLatestConsent(env.DB, identity.email);
     const refreshedProfile = await getProfile(env.DB, identity, env);
-    console.error(JSON.stringify({
-      component: "account-profile",
-      stage: "json_return",
-      requestId,
-      email: identity.email,
-      displayName: refreshedProfile.displayName || "",
-      microsoftObjectId: refreshedProfile.microsoftObjectId || "",
-      microsoftTenantId: refreshedProfile.microsoftTenantId || "",
-      verificationStatus: refreshedProfile.verificationStatus || "",
-      consent: Boolean(consent)
-    }));
     return json({ profile: refreshedProfile, consent });
   }
 

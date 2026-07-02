@@ -43,24 +43,5 @@
       <article class="card meta"><strong>Dedicated session</strong><span>Your customer session does not affect the Administrator Control Centre.</span></article>
     </section>
   </main>
-  <script>
-    console.log(JSON.stringify({
-      component: "customer-landing",
-      stage: "render",
-      url: window.location.href,
-      referrer: document.referrer || "",
-      userAgent: navigator.userAgent
-    }));
-    document.querySelectorAll('a[href^="/account/login"]').forEach((link) => {
-      link.addEventListener("click", () => {
-        console.log(JSON.stringify({
-          component: "customer-landing",
-          stage: "login_click",
-          href: link.href,
-          url: window.location.href
-        }));
-      });
-    });
-  </script>
 </body>
 </html>

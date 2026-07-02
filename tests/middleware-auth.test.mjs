@@ -83,26 +83,6 @@ test("middleware replaces spoofable identity headers with the validated native s
   assert.ok(downstreamRequest.headers.get("x-ja-auth-session"));
 });
 
-test("public requests are not rewritten by legacy Cloudflare Access header stripping", async () => {
-  let downstreamRequest;
-  const response = await onRequest({
-    request: new Request("https://experiences.example.test/api/enquiries", {
-      headers: {
-        "Cf-Access-Authenticated-User-Email": "victim@example.test",
-        "Cf-Access-Jwt-Assertion": "spoofed.jwt.value"
-      }
-    }),
-    env: environment(new MiddlewareD1()),
-    next: async (request) => {
-      downstreamRequest = request;
-      return Response.json({ ok: true });
-    }
-  });
-  assert.equal(response.status, 200);
-  assert.equal(downstreamRequest.headers.get("cf-access-authenticated-user-email"), "victim@example.test");
-  assert.equal(downstreamRequest.headers.get("cf-access-jwt-assertion"), "spoofed.jwt.value");
-});
-
 test("middleware redirects an unauthenticated administrator and preserves the deep link", async () => {
   const response = await onRequest({
     request: new Request("https://experiences.example.test/admin/api?section=customers"),
@@ -135,6 +115,31 @@ test("authenticated users bypass the public customer landing page", async () => 
   });
   assert.equal(response.status, 302);
   assert.equal(response.headers.get("location"), "/account/dashboard/");
+});
+
+test("signed-out users can view portal landing pages before authentication", async () => {
+  for (const path of ["/account/", "/admin/"]) {
+    const response = await onRequest({
+      request: new Request(`https://experiences.example.test${path}`),
+      env: environment(new MiddlewareD1({ session: false })),
+      next: async () => new Response("landing")
+    });
+    assert.equal(response.status, 200);
+    assert.equal(await response.text(), "landing");
+  }
+});
+
+test("signed-out JSON profile checks do not start a login transaction", async () => {
+  const response = await onRequest({
+    request: new Request("https://experiences.example.test/account/profile", {
+      headers: { Accept: "application/json" }
+    }),
+    env: environment(new MiddlewareD1({ session: false })),
+    next: async () => { throw new Error("Signed-out profile check reached the origin."); }
+  });
+  assert.equal(response.status, 401);
+  assert.deepEqual(await response.json(), { error: "Not signed in." });
+  assert.equal(response.headers.get("location"), null);
 });
 
 test("middleware fails closed when native realm configuration is incomplete", async () => {

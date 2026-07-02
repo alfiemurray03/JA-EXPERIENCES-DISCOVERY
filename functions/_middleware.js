@@ -357,7 +357,7 @@ function injectAccessibility(html) {
 
 function injectNativeIdentity(html, identity) {
   if (!identity) return html;
-  const script = `<script>window.__JA_NATIVE_IDENTITY__=${JSON.stringify({
+  const metadata = `<meta name="ja-native-identity" content="${escapeHtml(JSON.stringify({
     email: identity.email || "",
     name: identity.name || "",
     realm: identity.realm || "",
@@ -376,9 +376,9 @@ function injectNativeIdentity(html, identity) {
     country: identity.country || "",
     preferredLanguage: identity.preferredLanguage || "",
     photoUrl: identity.photoUrl || ""
-  })}</script>`;
-  if (html.includes("</head>")) return html.replace("</head>", `${script}</head>`);
-  return `${script}${html}`;
+  }))}">`;
+  if (html.includes("</head>")) return html.replace("</head>", `${metadata}</head>`);
+  return `${metadata}${html}`;
 }
 
 function requestIdentitySnapshot(request) {
@@ -411,25 +411,15 @@ export async function onRequest(context) {
   let request = withIdentity(context.request, null);
   const url = new URL(request.url);
   const path = url.pathname;
-  const requestId = request.headers.get("cf-ray") || request.headers.get("x-request-id") || request.headers.get("x-correlation-id") || "";
-  console.error(JSON.stringify({
-    component: "middleware",
-    stage: "request_entry",
-    requestId,
-    timestamp: new Date().toISOString(),
-    url: url.toString(),
-    referer: request.headers.get("Referer") || "",
-    userAgent: request.headers.get("User-Agent") || ""
-  }));
   const rootLanding = path === "/admin" || path === "/admin/" || path === "/account" || path === "/account/";
   const landingRealm = path.startsWith("/admin") ? "admin" : path.startsWith("/account") ? "customer" : "";
   const publicAuthPath = new Set([
     "/admin/login", "/admin/login/", "/admin/auth/callback", "/admin/auth/callback/", "/admin/logout", "/admin/logout/",
     "/account/login", "/account/login/", "/account/auth/callback", "/account/auth/callback/", "/account/logout", "/account/logout/"
   ]).has(path);
-  const realm = path.startsWith("/admin/") || path === "/admin/dashboard"
+  const realm = !rootLanding && (path.startsWith("/admin/") || path === "/admin/dashboard")
     ? "admin"
-    : path.startsWith("/account/") || path === "/account/dashboard"
+    : !rootLanding && (path.startsWith("/account/") || path === "/account/dashboard")
       ? "customer"
       : "";
 
@@ -439,25 +429,7 @@ export async function onRequest(context) {
 
   if (rootLanding && landingRealm) {
     try {
-      console.error(JSON.stringify({
-        component: "middleware",
-        stage: "landing_session_check",
-        requestId,
-        url: url.toString(),
-        realm: landingRealm,
-        authenticated: false,
-        getNativeSessionCalled: true
-      }));
       const landingIdentity = await getNativeSession(request, env, landingRealm);
-      console.error(JSON.stringify({
-        component: "middleware",
-        stage: "landing_session_check_result",
-        requestId,
-        url: url.toString(),
-        realm: landingRealm,
-        authenticated: Boolean(landingIdentity),
-        redirectDestination: landingIdentity ? (landingRealm === "admin" ? "/admin/dashboard/" : "/account/dashboard/") : ""
-      }));
       if (landingIdentity) {
         const headers = new Headers({
           Location: landingRealm === "admin" ? "/admin/dashboard/" : "/account/dashboard/",
@@ -481,24 +453,7 @@ export async function onRequest(context) {
   if (realm && !publicAuthPath) {
     let identity;
     try {
-      console.error(JSON.stringify({
-        component: "middleware",
-        stage: "protected_session_check",
-        requestId,
-        url: url.toString(),
-        realm,
-        getNativeSessionCalled: true
-      }));
       identity = await getNativeSession(request, env, realm);
-      console.error(JSON.stringify({
-        component: "middleware",
-        stage: "protected_session_check_result",
-        requestId,
-        url: url.toString(),
-        realm,
-        authenticated: Boolean(identity),
-        redirectDestination: identity ? "" : (realm === "admin" ? "/admin/login" : "/account/login")
-      }));
     } catch (error) {
       console.error(JSON.stringify({
         event: "native_oidc_session_validation_error",
@@ -510,7 +465,19 @@ export async function onRequest(context) {
         headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" }
       });
     }
-    if (!identity) return loginRedirect(request, realm);
+    if (!identity) {
+      const expectsJson = (request.headers.get("Accept") || "").toLowerCase().includes("application/json");
+      if (expectsJson) {
+        return new Response(JSON.stringify({ error: "Not signed in." }), {
+          status: 401,
+          headers: {
+            "Content-Type": "application/json; charset=utf-8",
+            "Cache-Control": "no-store"
+          }
+        });
+      }
+      return loginRedirect(request, realm);
+    }
     if (!assertSameOrigin(request)) {
       return new Response(JSON.stringify({ error: "Invalid request origin." }), {
         status: 403,
@@ -623,16 +590,6 @@ export async function onRequest(context) {
   }
 
   const response = await next(request);
-  console.error(JSON.stringify({
-    component: "middleware",
-    stage: "next_response",
-    requestId,
-    url: url.toString(),
-    path,
-    status: response.status,
-    contentType: response.headers.get("Content-Type") || "",
-    authenticated: Boolean(request.headers.get("x-ja-auth-email"))
-  }));
   const contentType = response.headers.get("Content-Type") || "";
   if (!contentType.includes("text/html")) return response;
 

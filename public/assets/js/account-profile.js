@@ -1,15 +1,8 @@
 async function loadAccessProfile() {
-  console.log(JSON.stringify({
-    component: "customer-profile-page",
-    stage: "page_load",
-    url: window.location.href,
-    referrer: document.referrer || "",
-    userAgent: navigator.userAgent
-  }));
   bindDashboardShell();
   await applyAccountBranding();
 
-  const bootstrap = window.__JA_NATIVE_IDENTITY__ || null;
+  const bootstrap = readNativeIdentity();
   if (bootstrap) {
     updateProfile({
       ...bootstrap,
@@ -42,11 +35,6 @@ async function loadAccessProfile() {
   }
 
   try {
-    console.log(JSON.stringify({
-      component: "customer-profile-page",
-      stage: "profile_fetch_start",
-      url: window.location.href
-    }));
     const response = await fetch("/account/profile", {
       credentials: "include",
       cache: "no-store",
@@ -54,26 +42,12 @@ async function loadAccessProfile() {
         "Accept": "application/json"
       }
     });
-    console.log(JSON.stringify({
-      component: "customer-profile-page",
-      stage: "profile_fetch_response",
-      status: response.status,
-      ok: response.ok,
-      redirected: response.redirected,
-      url: response.url
-    }));
 
     if (!response.ok) {
       throw new Error("Profile response was not available.");
     }
 
     const data = await response.json();
-    console.log(JSON.stringify({
-      component: "customer-profile-page",
-      stage: "profile_fetch_payload",
-      keys: Object.keys(data || {}),
-      hasProfile: Boolean(data?.profile)
-    }));
     const profile = { ...(bootstrap || {}), ...(data.profile || {}) };
 
     updateProfile(profile);
@@ -93,6 +67,16 @@ async function loadAccessProfile() {
       return;
     }
     showProfileError(error);
+  }
+}
+
+function readNativeIdentity() {
+  const content = document.querySelector('meta[name="ja-native-identity"]')?.getAttribute("content");
+  if (!content) return null;
+  try {
+    return JSON.parse(content);
+  } catch {
+    return null;
   }
 }
 
@@ -209,6 +193,7 @@ function updateProfile(profile) {
   setText("profileMicrosoftPhotoUrl", profile.microsoftPhotoUrl || profile.photoUrl || "Not available");
   setText("profileMicrosoftUpdated", formatDate(profile.microsoftUpdatedAt));
   setText("profileStripeCustomer", profile.stripeCustomerId || "Not provided");
+  setText("profileStripeCustomerMicrosoft", profile.stripeCustomerId || "Not provided");
   setText("profileMicrosoftJobTitle", profile.microsoftJobTitle || "Not provided");
   setText("profileMicrosoftDepartment", profile.microsoftDepartment || "Not provided");
   setText("profileMicrosoftCompanyName", profile.microsoftCompanyName || "Not provided");
@@ -228,6 +213,8 @@ function updateProfile(profile) {
 
   setBadge("profilePlanBadge", profile.lifetimeAccess ? "Lifetime" : (profile.currentPlanType || profile.customerStatus || "Standard"), profile.lifetimeAccess ? "amber" : "");
   setBadge("planStatusBadge", profile.lifetimeAccess ? "Lifetime" : "Active", profile.lifetimeAccess ? "amber" : "green");
+  setBadge("sidebarProfilePlanBadge", profile.lifetimeAccess ? "Lifetime" : (profile.currentPlanType || profile.customerStatus || "Standard"), profile.lifetimeAccess ? "amber" : "green");
+  setBadge("sidebarPlanStatusBadge", profile.lifetimeAccess ? "Lifetime" : "Active session", profile.lifetimeAccess ? "amber" : "green");
 
   const lifetimeBadge = document.getElementById("lifetimeBadge");
   if (lifetimeBadge) {
@@ -557,6 +544,7 @@ function showProfileError(error) {
   setText("profileMicrosoftUsername", "Not provided");
   setText("profileMicrosoftUpdated", "Not available");
   setText("profileStripeCustomer", "Not provided");
+  setText("profileStripeCustomerMicrosoft", "Not provided");
   setText("profileMicrosoftJobTitle", "Not provided");
   setText("profileMicrosoftDepartment", "Not provided");
   setText("profileMicrosoftCompanyName", "Not provided");
@@ -567,6 +555,8 @@ function showProfileError(error) {
   setText("sysList", "Sign in to view your system reports.");
   setBadge("profilePlanBadge", "Sign-in required", "amber");
   setBadge("planStatusBadge", "Sign-in required", "amber");
+  setBadge("sidebarProfilePlanBadge", "Sign-in required", "amber");
+  setBadge("sidebarPlanStatusBadge", "Sign-in required", "amber");
 
   const savedMessage = document.getElementById("profileSavedMessage");
   if (savedMessage) {

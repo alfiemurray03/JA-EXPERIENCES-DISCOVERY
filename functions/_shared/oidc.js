@@ -408,11 +408,6 @@ async function ensureProfileColumns(DB) {
   }
 }
 
-function isDebugAuthLoggingEnabled(env) {
-  const value = String(env?.JA_DEBUG_AUTH_LOGGING || env?.NODE_ENV || env?.ENVIRONMENT || "").toLowerCase();
-  return value === "true" || value === "development" || value === "preview";
-}
-
 function requestCorrelationId(request) {
   return String(
     request.headers.get("cf-ray") ||
@@ -420,21 +415,6 @@ function requestCorrelationId(request) {
     request.headers.get("x-correlation-id") ||
     crypto.randomUUID()
   ).trim();
-}
-
-function logAuthEvent(env, payload) {
-  if (!isDebugAuthLoggingEnabled(env)) return;
-  console.error(JSON.stringify({
-    component: "native-oidc",
-    ...payload
-  }));
-}
-
-function serialiseError(error) {
-  return {
-    message: error instanceof Error ? error.message : String(error || "Unknown error"),
-    stack: error instanceof Error ? error.stack : ""
-  };
 }
 
 async function stage(context, realm, name, fn, extra = {}) {
@@ -451,15 +431,6 @@ async function stage(context, realm, name, fn, extra = {}) {
         ...extra
       };
     }
-    logAuthEvent(context.env, {
-      realm,
-      stage: name,
-      file: "functions/_shared/oidc.js",
-      function: "completeLogin",
-      requestId: requestCorrelationId(context.request),
-      ...extra,
-      error: serialiseError(error)
-    });
     throw error;
   }
 }
@@ -566,28 +537,12 @@ export async function beginLogin(context, realm) {
   await context.env.DB.prepare(`DELETE FROM oidc_login_transactions WHERE datetime(expires_at) <= datetime('now') OR datetime(created_at) < datetime('now', '-1 day')`).run();
   const metadata = await discover(config);
   const requestUrl = new URL(context.request.url);
-  const requestId = requestCorrelationId(context.request);
   const returnTo = safeReturnPath(requestUrl.searchParams.get("return_to"), realm);
   const state = randomValue(32);
   const nonce = randomValue(32);
   const verifier = randomValue(64);
   const challenge = base64Url(await sha256Bytes(verifier));
   const stateHash = await hashToken(state);
-  logAuthEvent(context.env, {
-    realm,
-    stage: "beginLogin",
-    file: "functions/_shared/oidc.js",
-    function: "beginLogin",
-    requestId,
-    timestamp: new Date().toISOString(),
-    url: requestUrl.toString(),
-    referer: context.request.headers.get("Referer") || "",
-    userAgent: context.request.headers.get("User-Agent") || "",
-    generatedState: state,
-    generatedNonce: nonce,
-    generatedTransactionCookie: state,
-    redirectDestination: `${metadata.authorization_endpoint}?client_id=${encodeURIComponent(config.clientId)}`
-  });
   await context.env.DB.prepare(`
     INSERT INTO oidc_login_transactions (state_hash, realm, nonce, code_verifier, return_to, expires_at)
     VALUES (?, ?, ?, ?, ?, datetime('now', '+10 minutes'))
@@ -623,18 +578,6 @@ export async function completeLogin(context, realm) {
   const requestId = requestCorrelationId(context.request);
   const state = url.searchParams.get("state") || "";
   const cookieState = readCookie(context.request, config.transactionCookie);
-  logAuthEvent(context.env, {
-    realm,
-    stage: "callback_state_check",
-    file: "functions/_shared/oidc.js",
-    function: "completeLogin",
-    requestId,
-    timestamp: new Date().toISOString(),
-    url: url.toString(),
-    state,
-    cookieState,
-    matches: Boolean(state && cookieState && state === cookieState)
-  });
   if (!state || !cookieState || state !== cookieState) throw new Error("Authentication state validation failed.");
   if (url.searchParams.get("error")) throw new Error(`Microsoft authentication failed: ${url.searchParams.get("error")}.`);
   const code = url.searchParams.get("code") || "";
@@ -797,33 +740,11 @@ export async function getNativeSession(request, env, realm) {
   const token = readCookie(request, config.cookie);
   if (!token) return null;
   const tokenHash = await hashToken(token);
+  // Session validation must work across schema versions. Optional Microsoft
+  // claim columns are read from the row when present, without making them a
+  // prerequisite for recognising an otherwise valid session.
   const selectSql = `
-    SELECT
-      token_hash,
-      subject,
-      tenant_id,
-      email,
-      name,
-      refresh_token_encrypted,
-      created_at,
-      last_seen_at,
-      idle_expires_at,
-      absolute_expires_at,
-      refresh_after,
-      revoked_at,
-      microsoft_object_id,
-      microsoft_given_name,
-      microsoft_family_name,
-      microsoft_preferred_username,
-      microsoft_locale,
-      microsoft_job_title,
-      microsoft_department,
-      microsoft_company_name,
-      microsoft_mobile_phone,
-      microsoft_business_phone,
-      microsoft_country,
-      microsoft_preferred_language,
-      microsoft_photo_url
+    SELECT *
     FROM ${config.sessionTable}
     WHERE token_hash = ? AND revoked_at IS NULL
       AND datetime(idle_expires_at) > datetime('now')

@@ -57,9 +57,6 @@
 
   function runSafely() {
     refreshAccountHeader();
-    setTimeout(refreshAccountHeader, 400);
-    setTimeout(refreshAccountHeader, 1200);
-    setTimeout(refreshAccountHeader, 2500);
   }
 
   if (document.readyState === "loading") {

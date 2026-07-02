@@ -799,7 +799,7 @@ function renderOverview(overview) {
             ${health("Database", "Connected", "online")}
             ${health("Email", "Check settings", "warning")}
             ${health("Workers", "Operational", "online")}
-            ${health("Cloudflare", "Access verified", "online")}
+            ${health("Cloudflare edge", "Online", "online")}
           </div>
         </section>
 
@@ -807,7 +807,7 @@ function renderOverview(overview) {
           <div class="section-head"><div><h2>Website access</h2><p>Preview or manage secure access to the public website.</p></div></div>
           <div class="section-actions">
             <button class="admin-button" type="button" data-action="create-bypass">Enter as Admin</button>
-            <a class="admin-button secondary" href="/?preview_public_block=1" target="_blank" rel="noopener noreferrer" onclick="window.open(this.href, '_blank', 'noopener,noreferrer'); return false;">Preview Public View</a>
+            <a class="admin-button secondary" href="/?preview_public_block=1" target="_blank" rel="noopener noreferrer">Preview Public View</a>
             <button class="admin-button secondary" type="button" data-action="remove-bypass">Exit Admin Access</button>
           </div>
         </section>
@@ -949,8 +949,8 @@ function renderStatusCentre(statusData = {}) {
         </div>
         <div class="section-actions">
           <button class="admin-button secondary" type="button" data-action="refresh-status-centre">Refresh Status</button>
-          <a class="admin-button secondary" href="/status/" target="_blank" rel="noopener noreferrer" onclick="window.open(this.href, '_blank', 'noopener,noreferrer'); return false;">Open Public Status Page</a>
-          <a class="admin-button" href="https://jagroupservices.statuspage.io" target="_blank" rel="noopener noreferrer" onclick="window.open(this.href, '_blank', 'noopener,noreferrer'); return false;">Open Atlassian Statuspage</a>
+          <a class="admin-button secondary" href="/status/" target="_blank" rel="noopener noreferrer">Open Public Status Page</a>
+          <a class="admin-button" href="https://jagroupservices.statuspage.io" target="_blank" rel="noopener noreferrer">Open Atlassian Statuspage</a>
         </div>
       </div>
       <div class="admin-grid">
@@ -1086,7 +1086,7 @@ function renderAdmins(admins = []) {
           <p>Add, review and update Microsoft Entra-authenticated administrators. The application authorises access from the admin_users table.</p>
         </div>
         <div class="section-actions">
-          <a class="admin-button secondary" href="https://entra.microsoft.com/" target="_blank" rel="noopener noreferrer" onclick="window.open(this.href, '_blank', 'noopener,noreferrer'); return false;">Open Microsoft Entra</a>
+          <a class="admin-button secondary" href="https://entra.microsoft.com/" target="_blank" rel="noopener noreferrer">Open Microsoft Entra</a>
         </div>
       </div>
 
@@ -3066,7 +3066,7 @@ function renderStatusForm(section, settings, labels) {
         <div class="admin-alert" id="${section}ModeHelp">Plain text mode escapes HTML and preserves line breaks.</div>
         <div class="section-actions">
           <button class="admin-button" type="submit">${escapeHtml(labels.saveLabel)}</button>
-          <a class="admin-button secondary" href="/?preview_public_block=1" target="_blank" rel="noopener noreferrer" onclick="window.open(this.href, '_blank', 'noopener,noreferrer'); return false;">${escapeHtml(labels.previewLabel)}</a>
+          <a class="admin-button secondary" href="/?preview_public_block=1" target="_blank" rel="noopener noreferrer">${escapeHtml(labels.previewLabel)}</a>
         </div>
         <div id="${section}Saved" class="admin-success" hidden></div>
       </form>

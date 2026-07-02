@@ -23,8 +23,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.body.appendChild(script);
   }
 
-  loadSharedStyles("/assets/includes/header.css?v=20260621-1");
-  loadSharedStyles("/assets/includes/footer.css?v=20260621-1");
+  loadSharedStyles("/assets/includes/header.css?v=20260702-1");
+  loadSharedStyles("/assets/includes/footer.css?v=20260702-1");
 
   let siteSettings = { branding: {}, theme: document.documentElement.dataset.siteTheme || "dark" };
 
@@ -49,8 +49,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   try {
     await Promise.all([
-      loadPartial(headerTarget, "/assets/includes/header.html?v=20260621-1"),
-      loadPartial(footerTarget, "/assets/includes/footer.html?v=20260621-1")
+      loadPartial(headerTarget, "/assets/includes/header.html?v=20260702-1"),
+      loadPartial(footerTarget, "/assets/includes/footer.html?v=20260702-1")
     ]);
   } catch (error) {
     console.error(error);
@@ -63,7 +63,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const branding = siteSettings.branding || {};
   const serviceName = branding.service_name || branding.trading_name || "JA Experiences & Discovery";
-  const businessName = branding.business_name || "JA Group Services Ltd";
   const brandText = branding.public_brand_text || "Curated discovery, planning and experience guidance.";
   const currentTitle = document.title || "";
   if (currentTitle.includes("JA Experiences & Discovery")) {
@@ -91,17 +90,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.querySelectorAll(".brand-name, [data-brand-name], .service-brand-text strong, .footer-service-brand-text strong").forEach((element) => {
     element.textContent = serviceName;
   });
-  document.querySelectorAll(".service-brand-text small, .footer-service-brand-text small").forEach((element) => {
-    element.textContent = `by ${businessName}`;
-  });
   document.querySelectorAll("[data-brand-text]").forEach((element) => {
     element.textContent = brandText;
   });
-  document.querySelectorAll("[data-footer-notice]").forEach((element) => {
-    element.textContent = branding.footer_notice || `${serviceName} is operated by ${businessName}.`;
-  });
-  const footerParagraphs = document.querySelectorAll(".footer-bottom p");
-  if (footerParagraphs[1]) footerParagraphs[1].textContent = branding.footer_notice || `${serviceName} is operated by ${businessName}.`;
 
   const toggle = document.querySelector(".menu-toggle");
   const nav = document.querySelector("#siteNav");

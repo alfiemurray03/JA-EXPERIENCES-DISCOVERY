@@ -314,8 +314,8 @@ test("administrator OIDC flow uses state, nonce, PKCE and a validated signed tok
       headers: { Cookie: sessionCookie }
     }), { ...env, DB }, "admin");
     assert.equal(identity.email, "admin@example.test");
-    assert.equal(tokenRequests, 2);
-    assert.equal(DB.refreshClaimed, true);
+    assert.equal(tokenRequests, 1);
+    assert.equal(DB.refreshClaimed, false);
     assert.notEqual(DB.session.refresh_token_encrypted, "refresh-token-2");
 
     const logout = await nativeLogout({
