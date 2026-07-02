@@ -22,6 +22,7 @@ const REALMS = {
 const discoveryCache = new Map();
 const jwksCache = new Map();
 const readyDatabases = new WeakSet();
+const tableColumnsCache = new WeakMap();
 
 function realmConfig(realm, env) {
   const definition = REALMS[realm];
@@ -252,6 +253,25 @@ async function ensureTables(DB) {
   readyDatabases.add(DB);
 }
 
+async function getTableColumns(DB, table) {
+  let cache = tableColumnsCache.get(DB);
+  if (!cache) {
+    cache = new Map();
+    tableColumnsCache.set(DB, cache);
+  }
+  if (cache.has(table)) return cache.get(table);
+  try {
+    const result = await DB.prepare(`PRAGMA table_info(${table})`).all();
+    const columns = new Set((result.results || []).map((row) => String(row.name || "").trim()).filter(Boolean));
+    cache.set(table, columns);
+    return columns;
+  } catch {
+    const columns = new Set();
+    cache.set(table, columns);
+    return columns;
+  }
+}
+
 function emailFromClaims(claims) {
   const emails = Array.isArray(claims.emails) ? claims.emails : [];
   return String(claims.email || claims.preferred_username || claims.upn || emails[0] || "").trim().toLowerCase();
@@ -291,6 +311,52 @@ async function ensureProfileColumns(DB) {
     } catch {
       // Existing databases may already have the column.
     }
+  }
+}
+
+function isDebugAuthLoggingEnabled(env) {
+  const value = String(env?.JA_DEBUG_AUTH_LOGGING || env?.NODE_ENV || env?.ENVIRONMENT || "").toLowerCase();
+  return value === "true" || value === "development" || value === "preview";
+}
+
+function requestCorrelationId(request) {
+  return String(
+    request.headers.get("cf-ray") ||
+    request.headers.get("x-request-id") ||
+    request.headers.get("x-correlation-id") ||
+    crypto.randomUUID()
+  ).trim();
+}
+
+function logAuthEvent(env, payload) {
+  if (!isDebugAuthLoggingEnabled(env)) return;
+  console.error(JSON.stringify({
+    component: "native-oidc",
+    ...payload
+  }));
+}
+
+function serialiseError(error) {
+  return {
+    message: error instanceof Error ? error.message : String(error || "Unknown error"),
+    stack: error instanceof Error ? error.stack : ""
+  };
+}
+
+async function stage(context, realm, name, fn, extra = {}) {
+  try {
+    return await fn();
+  } catch (error) {
+    logAuthEvent(context.env, {
+      realm,
+      stage: name,
+      file: "functions/_shared/oidc.js",
+      function: "completeLogin",
+      requestId: requestCorrelationId(context.request),
+      ...extra,
+      error: serialiseError(error)
+    });
+    throw error;
   }
 }
 
@@ -402,22 +468,32 @@ export async function beginLogin(context, realm) {
 export async function completeLogin(context, realm) {
   const config = realmConfig(realm, context.env);
   const url = new URL(context.request.url);
+  const requestId = requestCorrelationId(context.request);
   const state = url.searchParams.get("state") || "";
   const cookieState = readCookie(context.request, config.transactionCookie);
   if (!state || !cookieState || state !== cookieState) throw new Error("Authentication state validation failed.");
   if (url.searchParams.get("error")) throw new Error(`Microsoft authentication failed: ${url.searchParams.get("error")}.`);
   const code = url.searchParams.get("code") || "";
   if (!code) throw new Error("Microsoft did not return an authorisation code.");
-  await ensureTables(context.env.DB);
-  const stateHash = await hashToken(state);
-  const transaction = await context.env.DB.prepare(`
-    SELECT state_hash, nonce, code_verifier, return_to FROM oidc_login_transactions
-    WHERE state_hash = ? AND realm = ? AND used_at IS NULL AND datetime(expires_at) > datetime('now')
-  `).bind(stateHash, realm).first();
-  if (!transaction) throw new Error("The authentication transaction is invalid or expired.");
-  await context.env.DB.prepare(`UPDATE oidc_login_transactions SET used_at = CURRENT_TIMESTAMP WHERE state_hash = ?`).bind(stateHash).run();
+  await stage(context, realm, "table_initialisation", async () => {
+    await ensureTables(context.env.DB);
+  }, { requestId });
 
-  const metadata = await discover(config);
+  const stateHash = await stage(context, realm, "state_hash", () => hashToken(state), { requestId });
+  const transaction = await stage(context, realm, "transaction_lookup", async () => {
+    const row = await context.env.DB.prepare(`
+      SELECT state_hash, nonce, code_verifier, return_to FROM oidc_login_transactions
+      WHERE state_hash = ? AND realm = ? AND used_at IS NULL AND datetime(expires_at) > datetime('now')
+    `).bind(stateHash, realm).first();
+    return row;
+  }, { requestId, stateHash });
+  if (!transaction) throw new Error("The authentication transaction is invalid or expired.");
+
+  await stage(context, realm, "transaction_mark_used", async () => {
+    await context.env.DB.prepare(`UPDATE oidc_login_transactions SET used_at = CURRENT_TIMESTAMP WHERE state_hash = ?`).bind(stateHash).run();
+  }, { requestId, stateHash });
+
+  const metadata = await stage(context, realm, "discovery", () => discover(config), { requestId });
   const redirectUri = `${url.origin}${config.callbackPath}`;
   const body = new URLSearchParams({
     client_id: config.clientId,
@@ -428,16 +504,36 @@ export async function completeLogin(context, realm) {
     code_verifier: transaction.code_verifier,
     scope: config.scopes
   });
-  const tokenResponse = await fetch(metadata.token_endpoint, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
-    body: body.toString()
+  const tokenResponse = await stage(context, realm, "token_exchange", async () => {
+    return await fetch(metadata.token_endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
+      body: body.toString()
+    });
+  }, { requestId, redirectUri, tokenEndpoint: metadata.token_endpoint });
+  const tokens = await stage(context, realm, "token_exchange_response", async () => {
+    const payload = await tokenResponse.json();
+    if (!tokenResponse.ok || !payload.id_token) {
+      const error = new Error("Microsoft token exchange failed.");
+      error.details = {
+        status: tokenResponse.status,
+        response_ok: tokenResponse.ok
+      };
+      throw error;
+    }
+    return payload;
+  }, { requestId, redirectUri, tokenStatus: tokenResponse.status });
+
+  const claims = await stage(context, realm, "id_token_validation", () => verifyIdToken(tokens.id_token, config, metadata, transaction.nonce), {
+    requestId,
+    redirectUri
   });
-  const tokens = await tokenResponse.json();
-  if (!tokenResponse.ok || !tokens.id_token) throw new Error("Microsoft token exchange failed.");
-  const claims = await verifyIdToken(tokens.id_token, config, metadata, transaction.nonce);
-  const email = emailFromClaims(claims);
-  if (!email) throw new Error("Microsoft did not provide an email identity.");
+  const email = await stage(context, realm, "email_extraction", () => {
+    const value = emailFromClaims(claims);
+    if (!value) throw new Error("Microsoft did not provide an email identity.");
+    return value;
+  }, { requestId, redirectUri });
+
   if (realm === "customer") {
     try {
       await syncCustomerProfileFromClaims(context, claims, email);
@@ -445,46 +541,107 @@ export async function completeLogin(context, realm) {
       console.error(JSON.stringify({
         event: "customer_profile_sync_failed",
         message: error instanceof Error ? error.message : "Unknown profile sync error",
-        email
+        email,
+        requestId
       }));
     }
   }
 
   const sessionToken = randomValue(48);
-  const sessionHash = await hashToken(sessionToken);
-  const ipHash = await hashToken(context.request.headers.get("CF-Connecting-IP") || "unknown");
-  const encryptedRefreshToken = await encryptSecret(tokens.refresh_token, context.env);
-  await context.env.DB.prepare(`
-    INSERT INTO ${config.sessionTable} (
-      token_hash, subject, tenant_id, email, name, refresh_token_encrypted,
-      idle_expires_at, absolute_expires_at, refresh_after, ip_hash, user_agent,
-      microsoft_object_id, microsoft_given_name, microsoft_family_name, microsoft_preferred_username, microsoft_locale
-    ) VALUES (?, ?, ?, ?, ?, ?, datetime('now', ?), datetime('now', ?), datetime('now', '+50 minutes'), ?, ?, ?, ?, ?, ?, ?)
-  `).bind(
-    sessionHash,
-    claims.sub,
-    claims.tid || "",
-    email,
-    String(claims.name || email).trim(),
-    encryptedRefreshToken,
-    `+${config.idleMinutes} minutes`,
-    `+${config.absoluteMinutes} minutes`,
-    ipHash,
-    String(context.request.headers.get("User-Agent") || "").slice(0, 500),
-    firstClaim(claims, "oid", "sub"),
-    firstClaim(claims, "given_name"),
-    firstClaim(claims, "family_name"),
-    firstClaim(claims, "preferred_username", "upn", "email"),
-    firstClaim(claims, "locale")
-  ).run();
-
-  const headers = new Headers({
-    Location: safeReturnPath(transaction.return_to, realm),
-    "Cache-Control": "no-store",
-    "Referrer-Policy": "no-referrer"
+  const sessionHash = await stage(context, realm, "session_hash", () => hashToken(sessionToken), {
+    requestId,
+    customerEmail: email
   });
-  headers.append("Set-Cookie", secureCookie(config.cookie, sessionToken, { path: config.path, maxAge: config.absoluteMinutes * 60 }));
-  headers.append("Set-Cookie", expireTransactionCookie(realm));
+  const ipHash = await stage(context, realm, "ip_hash", () => hashToken(context.request.headers.get("CF-Connecting-IP") || "unknown"), {
+    requestId,
+    customerEmail: email
+  });
+  const encryptedRefreshToken = await stage(context, realm, "refresh_token_encryption", () => encryptSecret(tokens.refresh_token, context.env), {
+    requestId,
+    customerEmail: email
+  });
+  await stage(context, realm, "session_creation", async () => {
+    const columns = await getTableColumns(context.env.DB, config.sessionTable);
+    const values = [
+      sessionHash,
+      claims.sub,
+      claims.tid || "",
+      email,
+      String(claims.name || email).trim(),
+      encryptedRefreshToken,
+      `+${config.idleMinutes} minutes`,
+      `+${config.absoluteMinutes} minutes`,
+      ipHash,
+      String(context.request.headers.get("User-Agent") || "").slice(0, 500)
+    ];
+    const optional = [
+      ["microsoft_object_id", firstClaim(claims, "oid", "sub")],
+      ["microsoft_given_name", firstClaim(claims, "given_name")],
+      ["microsoft_family_name", firstClaim(claims, "family_name")],
+      ["microsoft_preferred_username", firstClaim(claims, "preferred_username", "upn", "email")],
+      ["microsoft_locale", firstClaim(claims, "locale")]
+    ];
+    const insertColumns = [
+      "token_hash",
+      "subject",
+      "tenant_id",
+      "email",
+      "name",
+      "refresh_token_encrypted",
+      "idle_expires_at",
+      "absolute_expires_at",
+      "refresh_after",
+      "ip_hash",
+      "user_agent"
+    ];
+    for (const [column, value] of optional) {
+      if (columns.has(column)) {
+        insertColumns.push(column);
+        values.push(value);
+      }
+    }
+    const placeholders = insertColumns.map((column) => {
+      if (column === "idle_expires_at") return "datetime('now', ?)";
+      if (column === "absolute_expires_at") return "datetime('now', ?)";
+      if (column === "refresh_after") return "datetime('now', '+50 minutes')";
+      return "?";
+    });
+    const bindValues = [
+      sessionHash,
+      claims.sub,
+      claims.tid || "",
+      email,
+      String(claims.name || email).trim(),
+      encryptedRefreshToken,
+      `+${config.idleMinutes} minutes`,
+      `+${config.absoluteMinutes} minutes`,
+      ipHash,
+      String(context.request.headers.get("User-Agent") || "").slice(0, 500),
+      ...values.slice(10)
+    ];
+    await context.env.DB.prepare(`
+      INSERT INTO ${config.sessionTable} (${insertColumns.join(", ")})
+      VALUES (${placeholders.join(", ")})
+    `).bind(...bindValues).run();
+  }, {
+    requestId,
+    customerEmail: email,
+    sessionTable: config.sessionTable
+  });
+
+  const headers = await stage(context, realm, "redirect_generation", () => {
+    const responseHeaders = new Headers({
+      Location: safeReturnPath(transaction.return_to, realm),
+      "Cache-Control": "no-store",
+      "Referrer-Policy": "no-referrer"
+    });
+    responseHeaders.append("Set-Cookie", secureCookie(config.cookie, sessionToken, { path: config.path, maxAge: config.absoluteMinutes * 60 }));
+    responseHeaders.append("Set-Cookie", expireTransactionCookie(realm));
+    return responseHeaders;
+  }, {
+    requestId,
+    customerEmail: email
+  });
   return new Response(null, { status: 302, headers });
 }
 
