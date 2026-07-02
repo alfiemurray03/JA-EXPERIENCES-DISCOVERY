@@ -530,7 +530,6 @@ export async function onRequest(context) {
     path === "/account/logout/" ||
     path === "/account" ||
     path === "/account/" ||
-    path.startsWith("/account/dashboard") ||
     path === "/status" ||
     path.startsWith("/status/") ||
     path === "/api/status" ||
