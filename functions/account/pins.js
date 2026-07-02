@@ -134,10 +134,9 @@ export async function onRequest(context) {
     if (!active || !active.active_pin) {
       const created = await createSupportPinRecord(env.DB, env, identity.email, identity.email);
       active = { id: null, pin_last4: created.pin.slice(-4), status: "Active", expires_at: created.expiresAt, used_at: null, revoked_at: null, revoked_by: null, last_used_at: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), active_pin: created.pin, generated: true };
-      pins = [active];
-      return json({ pins });
+      return json({ pins: [active] });
     }
-    return json({ pins: pins.map((pin) => ({ ...serializePinRow(pin), active_pin: pin.id === active?.id ? active.active_pin : "" })) });
+    return json({ pins: [serializePinRow({ ...active, active_pin: active.active_pin })] });
   }
 
   if (request.method === "POST") {

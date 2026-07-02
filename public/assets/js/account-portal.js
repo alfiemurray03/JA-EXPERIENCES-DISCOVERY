@@ -351,6 +351,8 @@ async function renderPage(page) {
 
   if (page === "security") {
     const pins = await loadPins(true).catch(() => ({ pins: [] }));
+    const activePinRecord = (pins.pins || []).find((pin) => pin.active_pin) || (pins.pins || [])[0] || null;
+    const activePinValue = activePinRecord?.active_pin || "PIN UNAVAILABLE";
     pageRoot.innerHTML = `
       <section class="portal-grid">
         <article class="portal-card portal-span-6">
@@ -367,10 +369,10 @@ async function renderPage(page) {
           <div class="portal-surface" style="background:rgba(9,14,30,.82);border:1px solid rgba(255,255,255,.12);border-radius:24px;padding:1.25rem;color:#fff;box-shadow:0 20px 50px rgba(3,8,25,.2)">
             <div class="portal-eyebrow" style="color:rgba(255,255,255,.68);">ONE TIME SUPPORT PIN</div>
             <div style="font-size:2rem;font-weight:800;letter-spacing:.2em;margin:.25rem 0 1rem;">
-              ${(pins.pins || []).find((pin) => pin.active_pin)?.active_pin ? escapeHtml((pins.pins || []).find((pin) => pin.active_pin)?.active_pin) : "PIN UNAVAILABLE"}
+              ${escapeHtml(activePinValue)}
             </div>
             <div class="portal-stack" id="pinHistory">
-              ${(pins.pins || []).map((pin) => `<div class="portal-entry" style="background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.12);color:#fff"><strong>${escapeHtml(pin.active_pin || `${pin.status || "Active"} PIN`)}</strong><small>Status: ${escapeHtml(pin.status || "Active")} · Created ${escapeHtml(fmt(pin.created_at))} · Expires ${escapeHtml(fmt(pin.expires_at))}</small></div>`).join("") || '<div class="portal-note inline">Your support PIN will appear here automatically.</div>'}
+              ${(pins.pins || []).map((pin) => `<div class="portal-entry" style="background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.12);color:#fff"><strong>${escapeHtml(pin.active_pin || activePin || `${pin.status || "Active"} PIN`)}</strong><small>Status: ${escapeHtml(pin.status || "Active")} · Created ${escapeHtml(fmt(pin.created_at))} · Expires ${escapeHtml(fmt(pin.expires_at))}</small></div>`).join("") || `<div class="portal-note inline" style="color:#fff;background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.12)">Your support PIN is ready and will appear here automatically.</div>`}
             </div>
           </div>
           <div class="portal-actions" style="margin-top:1rem">
@@ -389,12 +391,12 @@ async function renderPage(page) {
         const action = button.dataset.pinAction;
         const target = pins.pins?.[0]?.id || "";
         if (action === "copy") {
-          const activePin = pins.pins?.find((pin) => pin.active_pin)?.active_pin;
-          if (!activePin) {
+          const currentPin = activePinRecord?.active_pin || activePinValue;
+          if (!currentPin || currentPin === "PIN UNAVAILABLE") {
             alert("Generate or rotate the PIN first.");
             return;
           }
-          await navigator.clipboard.writeText(activePin).catch(() => {});
+          await navigator.clipboard.writeText(currentPin).catch(() => {});
           alert("Support PIN copied.");
           return;
         }
