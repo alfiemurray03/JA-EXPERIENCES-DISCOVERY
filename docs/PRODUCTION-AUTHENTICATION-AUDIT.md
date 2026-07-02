@@ -61,9 +61,9 @@ The correction is two-part:
 
 ## Profile failure boundary
 
-In the production revision that was audited, execution stopped in `getNativeSession()` at `functions/_shared/oidc.js:832`, before `functions/account/profile.js` ran. The middleware catch converted that D1 session-read exception to `Authentication is temporarily unavailable.`
+In the production revision that was audited, the visible `Authentication is temporarily unavailable.` response came from middleware's `getNativeSession()` catch. The HTML branch of `functions/account/profile.js` then made a second same-origin HTTP request for `/account/profile/index.html`, which re-entered global middleware and repeated session validation for the same page view.
 
-The session query required every optional Microsoft claim column by name. It now reads the complete row with `SELECT *`; optional claim columns are consumed when present and no longer determine whether a valid core session can be recognised. The profile-table read follows the same schema-tolerant rule.
+The HTML branch now uses `context.next()` to continue directly to the static asset handler. This removes the recursive HTTP request and the second session check. Session and profile reads also use schema-tolerant `SELECT *` rows, so optional Microsoft claim columns are consumed when present and do not determine whether a valid core session can be recognised.
 
 ## Proven divergence: dashboard never renders
 
