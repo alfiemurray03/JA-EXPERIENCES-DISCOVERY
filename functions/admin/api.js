@@ -85,36 +85,10 @@ function jsonWithHeaders(data, headers, status = 200) {
   });
 }
 
-function decodeJwtPayload(jwt) {
-  try {
-    if (!jwt || !jwt.includes(".")) return {};
-    const payload = jwt.split(".")[1];
-    const normalised = payload.replace(/-/g, "+").replace(/_/g, "/");
-    const padded = normalised.padEnd(normalised.length + ((4 - normalised.length % 4) % 4), "=");
-    return JSON.parse(atob(padded));
-  } catch {
-    return {};
-  }
-}
-
 function getAccessIdentity(request) {
-  const emailHeader =
-    request.headers.get("cf-access-authenticated-user-email") ||
-    request.headers.get("CF-Access-Authenticated-User-Email") ||
-    "";
-
-  const jwt =
-    request.headers.get("cf-access-jwt-assertion") ||
-    request.headers.get("CF-Access-Jwt-Assertion") ||
-    "";
-
-  const tokenIdentity = decodeJwtPayload(jwt);
-  const email = emailHeader || tokenIdentity.email || tokenIdentity.user_email || tokenIdentity.username || "";
-  const name = tokenIdentity.name || tokenIdentity.common_name || tokenIdentity.user_name || tokenIdentity.preferred_username || email || "";
-
   return {
-    email: String(email || "").trim().toLowerCase(),
-    name: String(name || "").trim()
+    email: String(request.headers.get("x-ja-auth-email") || "").trim().toLowerCase(),
+    name: String(request.headers.get("x-ja-auth-name") || request.headers.get("x-ja-auth-email") || "").trim()
   };
 }
 
@@ -2171,17 +2145,33 @@ async function getAuditLog(DB, filters = {}) {
 }
 
 async function getSessions(DB, request) {
-  const currentTokenHash = request ? await sha256(readBypassToken(request)) : "";
-  const sessions = await all(DB, `
+  const bypassTokenHash = request && readBypassToken(request) ? await sha256(readBypassToken(request)) : "";
+  const nativeTokenHash = request?.headers.get("x-ja-auth-session") || "";
+  const bypassSessions = await all(DB, `
     SELECT token_hash, admin_email, created_at, expires_at, revoked_at, last_used_at, user_agent, ip_address, location
     FROM admin_bypass_sessions
     ORDER BY COALESCE(last_used_at, created_at) DESC
     LIMIT 200
   `);
-  return sessions.map((session) => ({
-    ...session,
-    is_current: Boolean(currentTokenHash && session.token_hash === currentTokenHash)
-  }));
+  let nativeSessions = [];
+  try {
+    nativeSessions = await all(DB, `
+      SELECT token_hash, email AS admin_email, created_at, absolute_expires_at AS expires_at,
+        revoked_at, last_seen_at AS last_used_at, user_agent, NULL AS ip_address, NULL AS location
+      FROM admin_oidc_sessions
+      ORDER BY COALESCE(last_seen_at, created_at) DESC
+      LIMIT 200
+    `);
+  } catch {
+    // The additive native OIDC migration has not been applied while Access remains active.
+  }
+  return [...nativeSessions, ...bypassSessions]
+    .sort((left, right) => String(right.last_used_at || right.created_at).localeCompare(String(left.last_used_at || left.created_at)))
+    .slice(0, 200)
+    .map((session) => ({
+      ...session,
+      is_current: session.token_hash === nativeTokenHash || session.token_hash === bypassTokenHash
+    }));
 }
 
 async function getLoginHistory(DB, email) {
@@ -2519,22 +2509,38 @@ export async function onRequest(context) {
           return json({ error: "Forbidden.", section }, 403);
         }
         if (body.action === "revoke") {
-          await DB.prepare(`UPDATE admin_bypass_sessions SET revoked_at = CURRENT_TIMESTAMP WHERE token_hash = ?`).bind(clean(body.token_hash, 120)).run();
-          await writeAudit(env.DB, identity, "session_revoke", "admin_bypass_sessions", clean(body.token_hash, 120), "Revoked an admin session.", {});
-          const currentTokenHash = readBypassToken(request) ? await sha256(readBypassToken(request)) : "";
-          const headers = currentTokenHash && currentTokenHash === clean(body.token_hash, 120)
-            ? { "Set-Cookie": "ja_admin_bypass=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax" }
-            : {};
+          const requestedHash = clean(body.token_hash, 120);
+          await DB.prepare(`UPDATE admin_bypass_sessions SET revoked_at = CURRENT_TIMESTAMP WHERE token_hash = ?`).bind(requestedHash).run();
+          try {
+            await DB.prepare(`UPDATE admin_oidc_sessions SET revoked_at = CURRENT_TIMESTAMP WHERE token_hash = ?`).bind(requestedHash).run();
+          } catch {
+            // Native session storage is additive and may not exist before migration.
+          }
+          await writeAudit(env.DB, identity, "session_revoke", "admin_sessions", requestedHash, "Revoked an admin session.", {});
+          const bypassTokenHash = readBypassToken(request) ? await sha256(readBypassToken(request)) : "";
+          const nativeTokenHash = request.headers.get("x-ja-auth-session") || "";
+          const headers = requestedHash === nativeTokenHash
+            ? { "Set-Cookie": "ja_admin_session=; Path=/admin; Max-Age=0; HttpOnly; Secure; SameSite=Lax" }
+            : requestedHash === bypassTokenHash
+              ? { "Set-Cookie": "ja_admin_bypass=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax" }
+              : {};
           return headers["Set-Cookie"]
             ? jsonWithHeaders({ sessions: await getSessions(env.DB, request), saved: true }, headers)
             : json({ sessions: await getSessions(env.DB, request), saved: true });
         }
         if (body.action === "revoke_all") {
           await DB.prepare(`UPDATE admin_bypass_sessions SET revoked_at = CURRENT_TIMESTAMP WHERE revoked_at IS NULL`).run();
-          await writeAudit(env.DB, identity, "session_revoke_all", "admin_bypass_sessions", "all", "Revoked all admin sessions.", {});
+          try {
+            await DB.prepare(`UPDATE admin_oidc_sessions SET revoked_at = CURRENT_TIMESTAMP WHERE revoked_at IS NULL`).run();
+          } catch {
+            // Native session storage is additive and may not exist before migration.
+          }
+          await writeAudit(env.DB, identity, "session_revoke_all", "admin_sessions", "all", "Revoked all admin sessions.", {});
           return jsonWithHeaders(
             { sessions: await getSessions(env.DB, request), saved: true },
-            { "Set-Cookie": "ja_admin_bypass=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax" }
+            { "Set-Cookie": request.headers.get("x-ja-auth-session")
+              ? "ja_admin_session=; Path=/admin; Max-Age=0; HttpOnly; Secure; SameSite=Lax"
+              : "ja_admin_bypass=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax" }
           );
         }
         throw new Error("Unknown session action.");

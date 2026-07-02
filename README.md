@@ -4,9 +4,9 @@ Public website for **JA Experiences & Discovery**, a trading division and servic
 
 Production domain: `experiences.jagroupservices.co.uk`
 
-Administrator authentication and Access branding deployment steps are documented in [docs/CLOUDFLARE-ACCESS-ADMIN-LOGIN.md](docs/CLOUDFLARE-ACCESS-ADMIN-LOGIN.md).
+Administrator authentication now uses native Microsoft Entra ID directly through the application.
 
-Customer Portal logout and fresh Microsoft Entra authentication deployment steps are documented in [docs/CLOUDFLARE-ACCESS-CUSTOMER-FRESH-AUTH.md](docs/CLOUDFLARE-ACCESS-CUSTOMER-FRESH-AUTH.md).
+The Customer Portal remains on its existing Microsoft Entra External ID and Cloudflare Access configuration.
 
 ## Local preview
 
