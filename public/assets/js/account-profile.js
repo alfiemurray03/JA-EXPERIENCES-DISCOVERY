@@ -2,6 +2,29 @@ async function loadAccessProfile() {
   bindDashboardShell();
   await applyAccountBranding();
 
+  const bootstrap = window.__JA_NATIVE_IDENTITY__ || null;
+  if (bootstrap) {
+    updateProfile({
+      ...bootstrap,
+      displayName: bootstrap.name || bootstrap.displayName || bootstrap.email,
+      verifiedName: bootstrap.name || bootstrap.displayName || bootstrap.email,
+      microsoftDisplayName: bootstrap.name || bootstrap.displayName || bootstrap.email,
+      microsoftGivenName: bootstrap.givenName || "",
+      microsoftFamilyName: bootstrap.familyName || "",
+      microsoftEmail: bootstrap.email || "",
+      microsoftPreferredUsername: bootstrap.preferredUsername || bootstrap.email || "",
+      microsoftLocale: bootstrap.locale || "",
+      microsoftJobTitle: bootstrap.jobTitle || "",
+      microsoftDepartment: bootstrap.department || "",
+      microsoftCompanyName: bootstrap.companyName || "",
+      microsoftMobilePhone: bootstrap.mobilePhone || "",
+      microsoftBusinessPhone: bootstrap.businessPhone || "",
+      microsoftCountry: bootstrap.country || "",
+      microsoftPreferredLanguage: bootstrap.preferredLanguage || "",
+      microsoftPhotoUrl: bootstrap.photoUrl || ""
+    });
+  }
+
   try {
     const response = await fetch("/account/profile", {
       credentials: "include",

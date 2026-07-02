@@ -406,7 +406,7 @@
     }
 
     async function loadDashboard() {
-      state.profile = state.profile || {};
+      state.profile = window.__JA_NATIVE_IDENTITY__ || state.profile || {};
       renderProfile();
 
       const profileTask = loadProfile()

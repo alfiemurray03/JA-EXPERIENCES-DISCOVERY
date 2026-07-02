@@ -355,6 +355,57 @@ function injectAccessibility(html) {
   return output;
 }
 
+function injectNativeIdentity(html, identity) {
+  if (!identity) return html;
+  const script = `<script>window.__JA_NATIVE_IDENTITY__=${JSON.stringify({
+    email: identity.email || "",
+    name: identity.name || "",
+    realm: identity.realm || "",
+    subject: identity.subject || "",
+    tenantId: identity.tenantId || "",
+    objectId: identity.objectId || "",
+    givenName: identity.givenName || "",
+    familyName: identity.familyName || "",
+    preferredUsername: identity.preferredUsername || "",
+    locale: identity.locale || "",
+    jobTitle: identity.jobTitle || "",
+    department: identity.department || "",
+    companyName: identity.companyName || "",
+    mobilePhone: identity.mobilePhone || "",
+    businessPhone: identity.businessPhone || "",
+    country: identity.country || "",
+    preferredLanguage: identity.preferredLanguage || "",
+    photoUrl: identity.photoUrl || ""
+  })}</script>`;
+  if (html.includes("</head>")) return html.replace("</head>", `${script}</head>`);
+  return `${script}${html}`;
+}
+
+function requestIdentitySnapshot(request) {
+  const email = request.headers.get("x-ja-auth-email") || "";
+  if (!email) return null;
+  return {
+    email,
+    name: request.headers.get("x-ja-auth-name") || "",
+    realm: request.headers.get("x-ja-auth-realm") || "",
+    subject: request.headers.get("x-ja-auth-subject") || "",
+    tenantId: request.headers.get("x-ja-auth-tenant") || "",
+    objectId: request.headers.get("x-ja-auth-object-id") || "",
+    givenName: request.headers.get("x-ja-auth-given-name") || "",
+    familyName: request.headers.get("x-ja-auth-family-name") || "",
+    preferredUsername: request.headers.get("x-ja-auth-preferred-username") || "",
+    locale: request.headers.get("x-ja-auth-locale") || "",
+    jobTitle: request.headers.get("x-ja-auth-job-title") || "",
+    department: request.headers.get("x-ja-auth-department") || "",
+    companyName: request.headers.get("x-ja-auth-company-name") || "",
+    mobilePhone: request.headers.get("x-ja-auth-mobile-phone") || "",
+    businessPhone: request.headers.get("x-ja-auth-business-phone") || "",
+    country: request.headers.get("x-ja-auth-country") || "",
+    preferredLanguage: request.headers.get("x-ja-auth-preferred-language") || "",
+    photoUrl: request.headers.get("x-ja-auth-photo-url") || ""
+  };
+}
+
 export async function onRequest(context) {
   const { env, next } = context;
   let request = withIdentity(context.request, null);
@@ -464,7 +515,7 @@ export async function onRequest(context) {
     const headers = new Headers(response.headers);
     headers.set("Cache-Control", "no-store");
     headers.delete("Content-Length");
-    return new Response(injectAccessibility(injectTheme(await response.text(), settings)), {
+    return new Response(injectAccessibility(injectNativeIdentity(injectTheme(await response.text(), settings), requestIdentitySnapshot(request))), {
       status: response.status,
       statusText: response.statusText,
       headers
@@ -535,7 +586,7 @@ export async function onRequest(context) {
   const headers = new Headers(response.headers);
   headers.set("Cache-Control", "no-store");
   headers.delete("Content-Length");
-  return new Response(injectAccessibility(injectTheme(html, settings)), {
+  return new Response(injectAccessibility(injectNativeIdentity(injectTheme(html, settings), requestIdentitySnapshot(request))), {
     status: response.status,
     statusText: response.statusText,
     headers
