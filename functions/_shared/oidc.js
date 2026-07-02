@@ -96,13 +96,16 @@ function realmConfig(realm, env) {
   const clientId = value("CLIENT_ID");
   const clientSecret = value("CLIENT_SECRET");
   if (!issuer || !clientId || !clientSecret) throw new Error(`${definition.prefix} is not configured.`);
+  const baseScopes = value("SCOPES") || "openid profile email offline_access";
   return {
     ...definition,
     realm,
     issuer,
     clientId,
     clientSecret,
-    scopes: value("SCOPES") || "openid profile email offline_access",
+    scopes: realm === "customer"
+      ? `${baseScopes} https://graph.microsoft.com/User.Read https://graph.microsoft.com/User.ReadWrite`
+      : baseScopes,
     prompt: value("PROMPT"),
     idleMinutes: boundedNumber(value("IDLE_MINUTES"), realm === "admin" ? 30 : 60, 5, 1440),
     absoluteMinutes: boundedNumber(value("ABSOLUTE_MINUTES"), realm === "admin" ? 480 : 1440, 15, 43200)
@@ -607,34 +610,69 @@ export async function completeLogin(context, realm) {
 
   const metadata = await stage(context, realm, "discovery", () => discover(config), { requestId });
   const redirectUri = `${url.origin}${config.callbackPath}`;
-  const body = new URLSearchParams({
-    client_id: config.clientId,
-    client_secret: config.clientSecret,
-    grant_type: "authorization_code",
-    code,
-    redirect_uri: redirectUri,
-    code_verifier: transaction.code_verifier,
-    scope: config.scopes
-  });
-  const tokenResponse = await stage(context, realm, "token_exchange", async () => {
-    return await fetch(metadata.token_endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
-      body: body.toString()
+  const baseScopes = String(config.scopes || "").split(/\s+/).filter((scope) => scope && !scope.startsWith("https://graph.microsoft.com/"));
+  const tokenExchange = async (scopeValue) => {
+    const body = new URLSearchParams({
+      client_id: config.clientId,
+      client_secret: config.clientSecret,
+      grant_type: "authorization_code",
+      code,
+      redirect_uri: redirectUri,
+      code_verifier: transaction.code_verifier,
+      scope: scopeValue
     });
-  }, { requestId, redirectUri, tokenEndpoint: metadata.token_endpoint });
-  const tokens = await stage(context, realm, "token_exchange_response", async () => {
-    const payload = await tokenResponse.json();
-    if (!tokenResponse.ok || !payload.id_token) {
-      const error = new Error("Microsoft token exchange failed.");
-      error.details = {
-        status: tokenResponse.status,
-        response_ok: tokenResponse.ok
-      };
-      throw error;
-    }
-    return payload;
-  }, { requestId, redirectUri, tokenStatus: tokenResponse.status });
+    const tokenResponse = await stage(context, realm, "token_exchange", async () => {
+      return await fetch(metadata.token_endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
+        body: body.toString()
+      });
+    }, { requestId, redirectUri, tokenEndpoint: metadata.token_endpoint, scope: scopeValue });
+    const tokens = await stage(context, realm, "token_exchange_response", async () => {
+      const payload = await tokenResponse.json();
+      if (!tokenResponse.ok || !payload.id_token) {
+        const error = new Error("Microsoft token exchange failed.");
+        error.details = {
+          status: tokenResponse.status,
+          response_ok: tokenResponse.ok,
+          response_body: payload
+        };
+        throw error;
+      }
+      return payload;
+    }, { requestId, redirectUri, tokenStatus: tokenResponse.status, scope: scopeValue });
+    return tokens;
+  };
+
+  let tokens;
+  try {
+    tokens = await tokenExchange(config.scopes);
+  } catch (error) {
+    const details = error?.details || {};
+    const errorBody = details.response_body || {};
+    const errorCode = errorBody?.error || errorBody?.error_codes?.[0] || "";
+    const errorDescription = errorBody?.error_description || errorBody?.error?.message || "";
+    const retryable = realm === "customer"
+      && config.scopes.includes("https://graph.microsoft.com/")
+      && (
+        errorCode === "invalid_scope" ||
+        errorCode === "consent_required" ||
+        errorCode === "interaction_required" ||
+        String(errorDescription || "").toLowerCase().includes("consent") ||
+        String(errorDescription || "").toLowerCase().includes("permission")
+      );
+    if (!retryable) throw error;
+    console.error(JSON.stringify({
+      event: "customer_token_exchange_graph_scope_retry",
+      requestId,
+      redirectUri,
+      status: details.status || 0,
+      error_code: errorCode || "unknown",
+      error_description: errorDescription || "Token exchange failed with Graph scopes.",
+      fallback_scopes: baseScopes.join(" ")
+    }));
+    tokens = await tokenExchange(baseScopes.join(" "));
+  }
 
   const claims = await stage(context, realm, "id_token_validation", () => verifyIdToken(tokens.id_token, config, metadata, transaction.nonce), {
     requestId,
