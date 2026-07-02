@@ -255,10 +255,12 @@ function setAccountSignedInState(isSignedIn, isEligible = false) {
   const actionRow = document.getElementById("accessActionRow");
   if (actionRow) actionRow.hidden = Boolean(isSignedIn);
 
-  document.querySelectorAll("#profileForm input, #profileForm select, #profileForm textarea, #profileForm button, #dataProtectionForm input, #dataProtectionForm select, #dataProtectionForm textar[...")
-    .forEach((element) => {
-      element.disabled = !isSignedIn;
-    });
+  for (const formId of ["profileForm", "dataProtectionForm", "systemReportForm"]) {
+    document.querySelectorAll(`#${formId} input, #${formId} select, #${formId} textarea, #${formId} button`)
+      .forEach((element) => {
+        element.disabled = !isSignedIn;
+      });
+  }
 }
 
 function bindDashboardShell() {
