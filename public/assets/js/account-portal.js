@@ -1,4 +1,4 @@
-const portalState = { profile: null, requests: null, pins: null };
+const portalState = { profile: null, requests: null, pins: null, saved: null };
 
 const navItems = [
   ["/account/dashboard/", "Overview"],
@@ -11,8 +11,7 @@ const navItems = [
   ["/account/messages/", "Messages"],
   ["/account/enquiries/", "Support"],
   ["/account/data-protection/", "Data Protection"],
-  ["/account/downloads/", "Downloads"],
-  ["/account/notifications/", "Notifications"]
+  ["/account/downloads/", "Downloads"]
 ];
 
 const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[c]));
@@ -48,6 +47,7 @@ function shell(title, lead) {
           </div>
         </nav>
         <div class="portal-sidebar-footer">
+          <a class="portal-button secondary" href="/">&larr; Back to JA Experiences &amp; Discovery</a>
           <a class="portal-button" href="/account/profile/">View profile</a>
           <a class="portal-button secondary" href="/account/logout">Sign out</a>
         </div>
@@ -69,6 +69,7 @@ function shell(title, lead) {
         <div class="portal-entry"><span class="portal-label">Account</span><strong id="heroAccount">Loading…</strong></div>
         <div class="portal-entry"><span class="portal-label">Status</span><strong id="heroStatus">Loading…</strong></div>
         <div class="portal-entry"><span class="portal-label">Last sync</span><strong id="heroSync">Loading…</strong></div>
+        <div class="portal-entry"><span class="portal-label">Notifications</span><strong id="heroNotifications">Loading…</strong></div>
       </div>
     </section>
     <section id="portalPage"></section>`;
@@ -99,6 +100,14 @@ async function loadPins() {
   return portalState.pins;
 }
 
+async function loadSaved() {
+  if (portalState.saved) return portalState.saved;
+  const response = await fetch("/account/saved", { credentials: "include", cache: "no-store", headers: { Accept: "application/json" } });
+  if (!response.ok) return { items: [] };
+  portalState.saved = await response.json().catch(() => ({ items: [] }));
+  return portalState.saved;
+}
+
 function updateShared(profile = {}) {
   const name = profile.displayName || profile.verifiedName || profile.name || "Customer";
   const email = profile.email || "";
@@ -108,6 +117,7 @@ function updateShared(profile = {}) {
   document.getElementById("heroAccount").textContent = name;
   document.getElementById("heroStatus").textContent = profile.lifetimeAccess ? "Lifetime access" : (profile.customerStatus || "Active session");
   document.getElementById("heroSync").textContent = fmt(profile.microsoftUpdatedAt || profile.updatedAt || profile.createdAt);
+  document.getElementById("heroNotifications").textContent = `${(portalState.requests?.notifications || []).filter((n) => n.status !== "Read" && n.status !== "Archived").length} unread`;
 }
 
 function timelineItems(profile = {}, requests = {}) {
@@ -144,12 +154,13 @@ function timelineMarkup(items = []) {
   `).join("")}</div>`;
 }
 
-window.JAPortal = { shell, loadProfile, loadRequests, loadPins, updateShared, timelineItems, timelineMarkup, fmt, escapeHtml, initials, state: portalState };
+window.JAPortal = { shell, loadProfile, loadRequests, loadPins, loadSaved, updateShared, timelineItems, timelineMarkup, fmt, escapeHtml, initials, state: portalState };
 
 document.addEventListener("DOMContentLoaded", async () => {
   const page = document.body.dataset.portalPage || "dashboard";
-  const needsRequests = new Set(["dashboard", "membership", "support", "messages", "data", "notifications"]);
+  const needsRequests = new Set(["dashboard", "membership", "support", "messages", "data", "bookings", "saved"]);
   const needsPins = page === "security";
+  const needsSaved = new Set(["dashboard", "membership", "bookings", "saved"]);
   const titleMap = {
     dashboard: ["Overview", "Live overview of your account activity, support and membership."],
     profile: ["Profile", "Your master customer record, identity and preferences."],
@@ -171,6 +182,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const bootstrap = [loadProfile()];
     if (needsRequests.has(page)) bootstrap.push(loadRequests());
     if (needsPins) bootstrap.push(loadPins());
+    if (needsSaved.has(page)) bootstrap.push(loadSaved());
     await Promise.all(bootstrap);
     updateShared(portalState.profile || {});
     await renderPage(page);
@@ -298,6 +310,45 @@ async function renderPage(page) {
     return;
   }
 
+  if (page === "settings") {
+    pageRoot.innerHTML = `
+      <section class="portal-grid">
+        <article class="portal-card portal-span-6">
+          <h2>Appearance</h2>
+          <div class="portal-stack">
+            <div class="portal-entry"><span class="portal-label">Theme</span><strong>Default portal theme</strong></div>
+            <div class="portal-entry"><span class="portal-label">Density</span><strong>Comfortable</strong></div>
+            <div class="portal-entry"><span class="portal-label">Motion</span><strong>Reduced where preferred</strong></div>
+          </div>
+        </article>
+        <article class="portal-card portal-span-6">
+          <h2>Communication and privacy</h2>
+          <div class="portal-stack">
+            <div class="portal-entry"><span class="portal-label">Language</span><strong>${escapeHtml(profile.microsoftPreferredLanguage || "English (United Kingdom)")}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Marketing consent</span><strong>${profile.marketingConsent ? "Enabled" : "Disabled"}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Privacy preferences</span><strong>Managed in your account record</strong></div>
+          </div>
+        </article>
+        <article class="portal-card portal-span-6">
+          <h2>Notifications</h2>
+          <div class="portal-stack">
+            <div class="portal-entry"><span class="portal-label">Account alerts</span><strong>On</strong></div>
+            <div class="portal-entry"><span class="portal-label">Support updates</span><strong>On</strong></div>
+            <div class="portal-entry"><span class="portal-label">Membership updates</span><strong>On</strong></div>
+          </div>
+        </article>
+        <article class="portal-card portal-span-6">
+          <h2>Connected account</h2>
+          <div class="portal-stack">
+            <div class="portal-entry"><span class="portal-label">Microsoft Entra</span><strong>${profile.microsoftEmail ? "Connected" : "Not connected"}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Stripe customer</span><strong>${profile.stripeCustomerId ? "Linked" : "Not linked"}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Accessibility</span><strong>Readable, keyboard-friendly layout</strong></div>
+          </div>
+        </article>
+      </section>`;
+    return;
+  }
+
   if (page === "security") {
     const pins = portalState.pins || await loadPins().catch(() => ({ pins: [] }));
     pageRoot.innerHTML = `
@@ -312,14 +363,15 @@ async function renderPage(page) {
         </article>
         <article class="portal-card portal-span-6">
           <h2>One-time PINs</h2>
-          <div class="portal-note inline">Generate, rotate and revoke PINs here. The backend stores only hashed PINs.</div>
+          <div class="portal-note inline">Support staff may request this PIN to verify identity before discussing the account. The backend stores only hashed PINs.</div>
           <div class="portal-actions">
             <button class="portal-action" type="button" data-pin-action="generate"><strong>Generate PIN</strong><span>6-digit, 10 minute expiry</span></button>
             <button class="portal-action" type="button" data-pin-action="rotate"><strong>Rotate PIN</strong><span>Refresh an existing PIN</span></button>
             <button class="portal-action" type="button" data-pin-action="revoke"><strong>Revoke PIN</strong><span>Disable a support PIN</span></button>
+            <button class="portal-action" type="button" data-pin-action="copy"><strong>Copy PIN</strong><span>Copy the active PIN to your clipboard</span></button>
           </div>
           <div class="portal-stack" id="pinHistory">
-            ${(pins.pins || []).map((pin) => `<div class="portal-entry"><strong>${escapeHtml(pin.status || "Active")} PIN</strong><small>Last 4: ${escapeHtml(pin.pin_last4 || "----")} · Expires ${escapeHtml(fmt(pin.expires_at))}</small></div>`).join("") || '<div class="portal-note inline">No support PINs generated yet.</div>'}
+            ${(pins.pins || []).map((pin) => `<div class="portal-entry"><strong>${escapeHtml(pin.active_pin || `${pin.status || "Active"} PIN`)}</strong><small>Status: ${escapeHtml(pin.status || "Active")} · Created ${escapeHtml(fmt(pin.created_at))} · Expires ${escapeHtml(fmt(pin.expires_at))}</small></div>`).join("") || '<div class="portal-note inline">No support PINs generated yet.</div>'}
           </div>
         </article>
         <article class="portal-card portal-span-12">
@@ -331,6 +383,16 @@ async function renderPage(page) {
       button.addEventListener("click", async () => {
         const action = button.dataset.pinAction;
         const target = pins.pins?.[0]?.id || "";
+        if (action === "copy") {
+          const activePin = pins.pins?.[0]?.active_pin;
+          if (!activePin) {
+            alert("Generate or rotate the PIN first.");
+            return;
+          }
+          await navigator.clipboard.writeText(activePin).catch(() => {});
+          alert("Support PIN copied.");
+          return;
+        }
         const response = await fetch("/account/pins", {
           method: "POST",
           credentials: "include",
@@ -349,27 +411,36 @@ async function renderPage(page) {
   }
 
   if (page === "membership") {
+    const saved = portalState.saved || { items: [] };
+    const savedDestinations = (saved.items || []).filter((item) => item.item_type === "destination");
+    const savedExperiences = (saved.items || []).filter((item) => item.item_type === "experience");
     pageRoot.innerHTML = `
       <section class="portal-grid">
         <article class="portal-card portal-span-6">
           <h2>Plan</h2>
           <div class="portal-stack">
             <div class="portal-entry"><span class="portal-label">Current plan</span><strong>${escapeHtml(profile.currentPlan || "Standard")}</strong></div>
-            <div class="portal-entry"><span class="portal-label">Lifetime access</span><strong>${profile.lifetimeAccess ? "Enabled" : "Not enabled"}</strong></div>
-            <div class="portal-entry"><span class="portal-label">Stripe status</span><strong>${profile.stripeCustomerId ? "Linked" : "Not linked"}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Membership tier</span><strong>${escapeHtml(profile.membershipStatus || profile.customerStatus || "Standard")}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Billing interval</span><strong>${escapeHtml(profile.membershipInterval || "Monthly")}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Status</span><strong>${escapeHtml(profile.subscriptionStatus || (profile.stripeCustomerId ? "Active" : "Not linked"))}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Renewal date</span><strong>${escapeHtml(fmt(profile.membershipRenewalAt || profile.updatedAt))}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Cancellation date</span><strong>${escapeHtml(fmt(profile.membershipCancellationAt))}</strong></div>
           </div>
         </article>
         <article class="portal-card portal-span-6">
           <h2>Benefits</h2>
           <div class="portal-stack">
-            <div class="portal-entry"><span class="portal-label">Included services</span><strong>Support, profile, data requests</strong></div>
-            <div class="portal-entry"><span class="portal-label">Upgrade path</span><strong>Compare plans through pricing</strong></div>
-            <div class="portal-entry"><span class="portal-label">Membership timeline</span><strong>${escapeHtml(fmt(profile.createdAt || profile.updatedAt))}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Included services</span><strong>Support, data protection requests, downloads and account management</strong></div>
+            <div class="portal-entry"><span class="portal-label">Latest invoice</span><strong>${profile.stripeCustomerId ? "Available in Stripe-backed records" : "Not linked"}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Payment status</span><strong>${profile.subscriptionStatus || "Not available"}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Payment history</span><strong>${profile.stripeCustomerId ? "Shown from existing Stripe data" : "Not linked"}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Saved destinations</span><strong>${savedDestinations.length}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Saved experiences</span><strong>${savedExperiences.length}</strong></div>
           </div>
         </article>
         <article class="portal-card portal-span-12">
           <h2>Billing history</h2>
-          <div class="portal-note inline">Invoices, receipts and billing history are surfaced from Stripe-backed records where enabled.</div>
+          <div class="portal-note inline">${profile.stripeCustomerId ? "Invoices, receipts and payment confirmations are surfaced from existing Stripe records." : "No Stripe customer is linked yet, so billing history is not available."}</div>
         </article>
       </section>`;
     return;
@@ -380,56 +451,35 @@ async function renderPage(page) {
     pageRoot.innerHTML = `
       <section class="portal-grid">
         <article class="portal-card portal-span-6">
-          <h2>My support tickets</h2>
-          <div class="portal-stack">
-            ${supportCases.slice(0, 3).map((request) => `
-              <div class="portal-entry"><strong>${escapeHtml(request.reference)}</strong><small>${escapeHtml(request.request_type || "Support request")} · ${escapeHtml(request.status || "New")} · ${escapeHtml(request.priority || "Normal")}</small></div>
-            `).join("") || '<div class="portal-note inline">No support tickets yet.</div>'}
-          </div>
-          <div class="portal-form-actions">
-            <button class="portal-button" type="button" data-support-create="general_enquiry">General enquiry</button>
-            <button class="portal-button" type="button" data-support-create="website_issue">Website issue</button>
-            <button class="portal-button" type="button" data-support-create="account_support">Account support</button>
-            <button class="portal-button" type="button" data-support-create="billing_support">Billing support</button>
+          <h2>Search knowledge base</h2>
+          <div class="portal-note inline">Search support articles, travel help, payments, memberships, refunds, accessibility and account guidance.</div>
+          <div class="portal-actions">
+            <a class="portal-action" href="/enquiry/"><strong>Create request</strong><span>Open a new support case</span></a>
+            <a class="portal-action" href="/account/data-protection/"><strong>GDPR request</strong><span>Use the privacy centre</span></a>
           </div>
         </article>
         <article class="portal-card portal-span-6">
-          <h2>Website issues and enquiries</h2>
+          <h2>Tickets</h2>
           <div class="portal-stack">
-            ${(requests.systemReports || []).slice(0, 3).map((report) => `
-              <div class="portal-entry"><strong>${escapeHtml(report.reference)}</strong><small>${escapeHtml(report.issue_type || "Website issue")} · ${escapeHtml(report.status || "New")}</small></div>
-            `).join("") || '<div class="portal-note inline">No website issues reported yet.</div>'}
+            ${supportCases.slice(0, 3).map((request) => `
+              <div class="portal-entry"><strong>${escapeHtml(request.reference)}</strong><small>Status: ${escapeHtml(request.status || "New")} · Team: ${escapeHtml(request.assigned_department || "Support")} · Updated ${escapeHtml(fmt(request.updated_at || request.created_at))}</small></div>
+            `).join("") || '<div class="portal-note inline">No support tickets yet. Create a request and the team will respond here.</div>'}
+          </div>
+        </article>
+        <article class="portal-card portal-span-6">
+          <h2>Categories</h2>
+          <div class="portal-stack">
+            <div class="portal-entry"><span class="portal-label">Membership</span><strong>Plan help and entitlement questions</strong></div>
+            <div class="portal-entry"><span class="portal-label">Billing</span><strong>Stripe payments, invoices and receipts</strong></div>
+            <div class="portal-entry"><span class="portal-label">Technical</span><strong>Website errors and account issues</strong></div>
+            <div class="portal-entry"><span class="portal-label">Data Protection</span><strong>Privacy and rights requests</strong></div>
           </div>
         </article>
         <article class="portal-card portal-span-12">
           <h2>Conversation history</h2>
-          <div class="portal-stack">
-            ${timelineMarkup((requests.timeline || []).slice(0, 6))}
-          </div>
+          <div class="portal-stack">${timelineMarkup((requests.timeline || []).slice(0, 6))}</div>
         </article>
       </section>`;
-    pageRoot.querySelectorAll("[data-support-create]").forEach((button) => {
-      button.addEventListener("click", async () => {
-        const type = button.dataset.supportCreate;
-        const subject = prompt("Subject");
-        if (!subject) return;
-        const customer_message = prompt("Describe the issue");
-        if (!customer_message) return;
-        const response = await fetch("/account/requests", {
-          method: "POST",
-          credentials: "include",
-          headers: { "Accept": "application/json", "Content-Type": "application/json" },
-          body: JSON.stringify({ type, subject, category: type.replaceAll("_", " "), customer_message })
-        });
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok) {
-          alert(data.error || "Request could not be submitted.");
-          return;
-        }
-        alert(`Created ${data.reference || data.record?.reference || "request"}.`);
-        await renderPage(page);
-      });
-    });
     return;
   }
 
@@ -437,15 +487,24 @@ async function renderPage(page) {
     pageRoot.innerHTML = `
       <section class="portal-grid">
         <article class="portal-card portal-span-6">
-          <h2>Submit request</h2>
-          <div class="portal-note inline">Subject access, deletion, rectification, restriction, portability and objection requests are supported by the existing account workflow.</div>
+          <h2>Information</h2>
+          <div class="portal-note inline">The Data Protection Act 2018 and UK GDPR give you rights over your personal information. JA Group Services Ltd and its trading names are registered with the ICO.</div>
         </article>
         <article class="portal-card portal-span-6">
-          <h2>Current requests</h2>
+          <h2>Rights</h2>
+          <div class="portal-stack">
+            <div class="portal-entry"><span class="portal-label">Access</span><strong>Subject Access Request</strong></div>
+            <div class="portal-entry"><span class="portal-label">Rectification</span><strong>Request corrections to your details</strong></div>
+            <div class="portal-entry"><span class="portal-label">Erasure</span><strong>Request deletion where lawful</strong></div>
+            <div class="portal-entry"><span class="portal-label">Portability</span><strong>Request a portable copy of your data</strong></div>
+          </div>
+        </article>
+        <article class="portal-card portal-span-12">
+          <h2>Request history</h2>
           <div class="portal-stack">
             ${(requests.dataProtectionRequests || []).map((request) => `
-              <div class="portal-entry"><strong>${escapeHtml(request.reference)}</strong><small>${escapeHtml(request.request_type || "Request")} · ${escapeHtml(request.status || "New")}</small></div>
-            `).join("") || '<div class="portal-note inline">No current requests.</div>'}
+              <div class="portal-entry"><strong>${escapeHtml(request.reference)}</strong><small>${escapeHtml(request.request_type || "Request")} · ${escapeHtml(request.status || "New")} · Due ${escapeHtml(fmt(request.due_at || request.updated_at))}</small></div>
+            `).join("") || '<div class="portal-note inline">No privacy requests yet. Submit one through the support team when needed.</div>'}
           </div>
         </article>
       </section>`;
@@ -457,11 +516,11 @@ async function renderPage(page) {
     pageRoot.innerHTML = `
       <section class="portal-grid">
         <article class="portal-card portal-span-6">
-          <h2>Unread notifications</h2>
+          <h2>Notification summary</h2>
           <div class="portal-stack">
             <div class="portal-entry"><span class="portal-label">Unread</span><strong>${notifications.filter((n) => n.status !== "Read").length}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Read</span><strong>${notifications.filter((n) => n.status === "Read").length}</strong></div>
             <div class="portal-entry"><span class="portal-label">Archived</span><strong>${notifications.filter((n) => n.status === "Archived").length}</strong></div>
-            <div class="portal-entry"><span class="portal-label">Priority</span><strong>${notifications.filter((n) => n.priority === "Urgent").length}</strong></div>
           </div>
         </article>
         <article class="portal-card portal-span-6">
@@ -477,17 +536,50 @@ async function renderPage(page) {
   }
 
   if (page === "saved") {
+    const saved = portalState.saved || { items: [] };
+    const savedDestinations = (saved.items || []).filter((item) => item.item_type === "destination");
+    const savedExperiences = (saved.items || []).filter((item) => item.item_type === "experience");
     pageRoot.innerHTML = `
       <section class="portal-grid">
         <article class="portal-card portal-span-6">
           <h2>Favourite destinations</h2>
-          <div class="portal-note inline">Wishlist, recently viewed and recommended items will appear here.</div>
+          <div class="portal-stack">
+            ${savedDestinations.map((item) => `<div class="portal-entry"><strong>${escapeHtml(item.item_title)}</strong><small>${escapeHtml(item.category || item.source_page || "Destination")}</small><button class="portal-mini" type="button" data-saved-remove="destination" data-item-key="${escapeHtml(item.item_key)}">Remove</button></div>`).join("") || '<div class="portal-note inline">No favourite destinations yet. Save destinations while browsing to build your shortlist.</div>'}
+          </div>
         </article>
         <article class="portal-card portal-span-6">
           <h2>Saved experiences</h2>
-          <div class="portal-note inline">This page is ready for storage-backed favourites and categories.</div>
+          <div class="portal-stack">
+            ${savedExperiences.map((item) => `<div class="portal-entry"><strong>${escapeHtml(item.item_title)}</strong><small>${escapeHtml(item.category || item.source_page || "Experience")}</small><button class="portal-mini" type="button" data-saved-remove="experience" data-item-key="${escapeHtml(item.item_key)}">Remove</button></div>`).join("") || '<div class="portal-note inline">No saved experiences yet. Add experiences to keep them in one place.</div>'}
+          </div>
+        </article>
+        <article class="portal-card portal-span-12">
+          <h2>Recently viewed</h2>
+          <div class="portal-note inline">Recently viewed destinations and experiences will appear here as you browse the site.</div>
         </article>
       </section>`;
+    pageRoot.querySelectorAll("[data-saved-remove]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const response = await fetch("/account/saved", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Accept": "application/json", "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "remove",
+            item_type: button.dataset.savedRemove,
+            item_key: button.dataset.itemKey,
+            item_title: button.closest(".portal-entry")?.querySelector("strong")?.textContent || button.dataset.itemKey
+          })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          alert(data.error || "Unable to remove saved item.");
+          return;
+        }
+        portalState.saved = data;
+        await renderPage("saved");
+      });
+    });
     return;
   }
 
@@ -495,12 +587,16 @@ async function renderPage(page) {
     pageRoot.innerHTML = `
       <section class="portal-grid">
         <article class="portal-card portal-span-6">
-          <h2>Upcoming</h2>
-          <div class="portal-note inline">No bookings are currently linked.</div>
+          <h2>My travel planner</h2>
+          <div class="portal-note inline">Save trip ideas, favourite destinations, experiences and notes here while you plan your visit.</div>
         </article>
         <article class="portal-card portal-span-6">
-          <h2>Past and cancelled</h2>
-          <div class="portal-note inline">Booking history, Stripe payments, invoices and receipts will be added here.</div>
+          <h2>Planning checklist</h2>
+          <div class="portal-note inline">No trips are saved yet. Add destinations and experiences to create a personal shortlist.</div>
+        </article>
+        <article class="portal-card portal-span-12">
+          <h2>Recent activity</h2>
+          ${timelineMarkup(timelineItems(profile, requests).slice(0, 4))}
         </article>
       </section>`;
     return;
@@ -512,18 +608,18 @@ async function renderPage(page) {
         <article class="portal-card portal-span-6">
           <h2>Downloads</h2>
           <div class="portal-stack">
-            <div class="portal-entry"><span class="portal-label">Invoices</span><strong>Ready</strong></div>
-            <div class="portal-entry"><span class="portal-label">Receipts</span><strong>Ready</strong></div>
-            <div class="portal-entry"><span class="portal-label">Exports</span><strong>Ready</strong></div>
+            <div class="portal-entry"><span class="portal-label">Invoices</span><strong>${profile.stripeCustomerId ? "Available from Stripe records" : "Not linked"}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Receipts</span><strong>${profile.stripeCustomerId ? "Available from Stripe records" : "Not linked"}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Exported data</span><strong>Available on request</strong></div>
           </div>
         </article>
         <article class="portal-card portal-span-6">
           <h2>Documents</h2>
-          <div class="portal-note inline">Your invoices, itineraries, reports and exported data will appear here when they are ready.</div>
+          <div class="portal-note inline">Invoices, receipts, itineraries, reports and exported data are shown here when available.</div>
         </article>
       </section>`;
     return;
   }
 
-  pageRoot.innerHTML = `<div class="portal-note inline">No items are available in this section yet. When content is ready, it will appear here.</div>`;
+  pageRoot.innerHTML = `<div class="portal-note inline">This section is not available right now.</div>`;
 }

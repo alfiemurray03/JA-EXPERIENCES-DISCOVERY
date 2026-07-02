@@ -2603,7 +2603,7 @@ export async function onRequest(context) {
         const email = clean(url.searchParams.get("email"), 254);
         if (!email) return json({ error: "Customer email is required." }, 400);
         const [customer, flags, timeline, supportCases, notifications, pins, plans, notes] = await Promise.all([
-          DB.prepare(`
+          env.DB.prepare(`
             SELECT
               email,
               verified_name,

@@ -40,6 +40,21 @@ function generatePin() {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
 
+function serializePinRow(row) {
+  return row ? {
+    id: row.id,
+    pin_last4: row.pin_last4,
+    status: row.status,
+    expires_at: row.expires_at,
+    used_at: row.used_at,
+    revoked_at: row.revoked_at,
+    revoked_by: row.revoked_by,
+    last_used_at: row.last_used_at,
+    created_at: row.created_at,
+    updated_at: row.updated_at
+  } : null;
+}
+
 export async function onRequest(context) {
   const { request, env } = context;
   if (!env.DB) return json({ error: "Database unavailable." }, 500);
@@ -48,8 +63,19 @@ export async function onRequest(context) {
   await ensureTables(env.DB);
 
   if (request.method === "GET") {
-    const result = await env.DB.prepare(`SELECT id, pin_last4, status, expires_at, used_at, revoked_at, revoked_by, last_used_at, created_at, updated_at FROM customer_support_pins WHERE lower(email) = lower(?) ORDER BY created_at DESC LIMIT 50`).bind(identity.email).all();
-    return json({ pins: result.results || [] });
+    const result = await env.DB.prepare(`SELECT id, pin_hash, pin_last4, status, expires_at, used_at, revoked_at, revoked_by, last_used_at, created_at, updated_at FROM customer_support_pins WHERE lower(email) = lower(?) ORDER BY created_at DESC LIMIT 50`).bind(identity.email).all();
+    let pins = result.results || [];
+    if (!pins.length) {
+      const pin = generatePin();
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+      const payload = JSON.stringify([{ event: "generated", at: new Date().toISOString(), actor: identity.email }]);
+      await env.DB.prepare(`INSERT INTO customer_support_pins (id, email, pin_hash, pin_last4, status, expires_at, audit_history) VALUES (?, ?, ?, ?, 'Active', ?, ?)`).bind(
+        crypto.randomUUID(), identity.email, await hashPin(pin), pin.slice(-4), expiresAt, payload
+      ).run();
+      pins = [{ id: null, pin_last4: pin.slice(-4), status: "Active", expires_at: expiresAt, used_at: null, revoked_at: null, revoked_by: null, last_used_at: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), active_pin: pin, generated: true }];
+      return json({ pins });
+    }
+    return json({ pins: pins.map(serializePinRow) });
   }
 
   if (request.method === "POST") {

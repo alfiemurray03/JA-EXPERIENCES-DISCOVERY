@@ -223,7 +223,7 @@ function renderDestination() {
         <h1>${name}</h1>
         <p>${profile.summary}</p>
         <div class="destination-hero-tags">${tags}</div>
-        <div class="actions"><a class="button light" href="/headout/">Browse Headout experiences</a><a class="button destination-outline" href="/getyourguide/">Browse GetYourGuide activities</a></div>
+        <div class="actions"><a class="button light" href="/headout/">Browse Headout experiences</a><a class="button destination-outline" href="/getyourguide/">Browse GetYourGuide activities</a><button class="button destination-outline" type="button" id="saveDestinationBtn">Save destination</button></div>
       </div>
     </section>
     <nav class="guide-nav" aria-label="On this page"><div class="container guide-nav-inner"><a href="#overview">Overview</a><a href="#highlights">What to include</a><a href="#sample-plan">Suggested plan</a><a href="#practical">Practical checks</a><a href="#support">Planning support</a></div></nav>
@@ -250,3 +250,25 @@ if (document.querySelector("#destinationGuide")) {
   headoutScript.src = "/assets/js/headout-widgets.js?v=20260620-6";
   document.body.appendChild(headoutScript);
 }
+
+document.getElementById("saveDestinationBtn")?.addEventListener("click", async () => {
+  const root = document.querySelector("#destinationGuide");
+  const slug = root?.dataset.slug || "";
+  const name = root?.dataset.name || titleCase(slug);
+  const response = await fetch("/account/saved", {
+    method: "POST",
+    credentials: "include",
+    headers: { "Accept": "application/json", "Content-Type": "application/json" },
+    body: JSON.stringify({
+      action: "save",
+      item_type: "destination",
+      item_key: slug,
+      item_title: name,
+      item_url: window.location.pathname,
+      source_page: "destination",
+      category: "Destination"
+    })
+  });
+  const data = await response.json().catch(() => ({}));
+  alert(response.ok ? "Destination saved to your shortlist." : (data.error || "Unable to save destination."));
+});
