@@ -459,7 +459,8 @@ async function getProfile(DB, identity, env = {}) {
     identity.businessPhone || "",
     identity.country || "",
     identity.preferredLanguage || "",
-    identity.photoUrl || ""
+    identity.photoUrl || "",
+    new Date().toISOString()
   ).run();
 
   await notifyCustomerSignup(DB, env, identity, nowProfile).catch(() => {});
@@ -526,7 +527,7 @@ async function saveProfile(DB, identity, body, request, env = {}) {
       microsoft_updated_at,
       updated_at
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
     ON CONFLICT(email) DO UPDATE SET
       verified_name = excluded.verified_name,
       display_name = excluded.display_name,
