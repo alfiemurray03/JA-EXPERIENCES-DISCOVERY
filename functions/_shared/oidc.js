@@ -347,6 +347,16 @@ async function stage(context, realm, name, fn, extra = {}) {
   try {
     return await fn();
   } catch (error) {
+    if (error instanceof Error) {
+      error.authStage = {
+        realm,
+        stage: name,
+        file: "functions/_shared/oidc.js",
+        function: "completeLogin",
+        requestId: requestCorrelationId(context.request),
+        ...extra
+      };
+    }
     logAuthEvent(context.env, {
       realm,
       stage: name,
@@ -562,63 +572,36 @@ export async function completeLogin(context, realm) {
   });
   await stage(context, realm, "session_creation", async () => {
     const columns = await getTableColumns(context.env.DB, config.sessionTable);
-    const values = [
-      sessionHash,
-      claims.sub,
-      claims.tid || "",
-      email,
-      String(claims.name || email).trim(),
-      encryptedRefreshToken,
-      `+${config.idleMinutes} minutes`,
-      `+${config.absoluteMinutes} minutes`,
-      ipHash,
-      String(context.request.headers.get("User-Agent") || "").slice(0, 500)
+    const insertSpec = [
+      ["token_hash", "?", sessionHash],
+      ["subject", "?", claims.sub],
+      ["tenant_id", "?", claims.tid || ""],
+      ["email", "?", email],
+      ["name", "?", String(claims.name || email).trim()],
+      ["refresh_token_encrypted", "?", encryptedRefreshToken],
+      ["idle_expires_at", "datetime('now', ?)", `+${config.idleMinutes} minutes`],
+      ["absolute_expires_at", "datetime('now', ?)", `+${config.absoluteMinutes} minutes`],
+      ["refresh_after", "datetime('now', '+50 minutes')", null],
+      ["ip_hash", "?", ipHash],
+      ["user_agent", "?", String(context.request.headers.get("User-Agent") || "").slice(0, 500)]
     ];
     const optional = [
-      ["microsoft_object_id", firstClaim(claims, "oid", "sub")],
-      ["microsoft_given_name", firstClaim(claims, "given_name")],
-      ["microsoft_family_name", firstClaim(claims, "family_name")],
-      ["microsoft_preferred_username", firstClaim(claims, "preferred_username", "upn", "email")],
-      ["microsoft_locale", firstClaim(claims, "locale")]
+      ["microsoft_object_id", "?", firstClaim(claims, "oid", "sub")],
+      ["microsoft_given_name", "?", firstClaim(claims, "given_name")],
+      ["microsoft_family_name", "?", firstClaim(claims, "family_name")],
+      ["microsoft_preferred_username", "?", firstClaim(claims, "preferred_username", "upn", "email")],
+      ["microsoft_locale", "?", firstClaim(claims, "locale")]
     ];
-    const insertColumns = [
-      "token_hash",
-      "subject",
-      "tenant_id",
-      "email",
-      "name",
-      "refresh_token_encrypted",
-      "idle_expires_at",
-      "absolute_expires_at",
-      "refresh_after",
-      "ip_hash",
-      "user_agent"
-    ];
-    for (const [column, value] of optional) {
+    for (const [column, placeholder, value] of optional) {
       if (columns.has(column)) {
-        insertColumns.push(column);
-        values.push(value);
+        insertSpec.push([column, placeholder, value]);
       }
     }
-    const placeholders = insertColumns.map((column) => {
-      if (column === "idle_expires_at") return "datetime('now', ?)";
-      if (column === "absolute_expires_at") return "datetime('now', ?)";
-      if (column === "refresh_after") return "datetime('now', '+50 minutes')";
-      return "?";
-    });
-    const bindValues = [
-      sessionHash,
-      claims.sub,
-      claims.tid || "",
-      email,
-      String(claims.name || email).trim(),
-      encryptedRefreshToken,
-      `+${config.idleMinutes} minutes`,
-      `+${config.absoluteMinutes} minutes`,
-      ipHash,
-      String(context.request.headers.get("User-Agent") || "").slice(0, 500),
-      ...values.slice(10)
-    ];
+    const insertColumns = insertSpec.map(([column]) => column);
+    const placeholders = insertSpec.map(([, placeholder]) => placeholder);
+    const bindValues = insertSpec
+      .filter(([, , value]) => value !== null)
+      .map(([, , value]) => value);
     await context.env.DB.prepare(`
       INSERT INTO ${config.sessionTable} (${insertColumns.join(", ")})
       VALUES (${placeholders.join(", ")})
@@ -626,7 +609,8 @@ export async function completeLogin(context, realm) {
   }, {
     requestId,
     customerEmail: email,
-    sessionTable: config.sessionTable
+    sessionTable: config.sessionTable,
+    sqlStatement: "insert_customer_oidc_session"
   });
 
   const headers = await stage(context, realm, "redirect_generation", () => {

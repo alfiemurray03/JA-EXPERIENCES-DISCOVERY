@@ -41,6 +41,14 @@ class MockD1 {
                 idle_expires_at: "2026-07-01 12:30:00", absolute_expires_at: "2026-07-01 20:00:00"
               };
             }
+            if (sql.includes("INSERT INTO customer_oidc_sessions")) {
+              database.customerSession = {
+                token_hash: values[0], subject: values[1], tenant_id: values[2], email: values[3],
+                name: values[4], refresh_token_encrypted: values[5], refresh_due: 0,
+                created_at: "2026-07-01 12:00:00", last_seen_at: "2026-07-01 12:00:00",
+                idle_expires_at: "2026-07-01 12:30:00", absolute_expires_at: "2026-07-01 20:00:00"
+              };
+            }
             if (sql.includes("SET refresh_after = datetime('now', '+2 minutes')")) {
               if (database.refreshClaimed) return { success: true, meta: { changes: 0 } };
               database.refreshClaimed = true;
@@ -52,12 +60,20 @@ class MockD1 {
                 refresh_token_encrypted: values[4], refresh_due: 0
               });
             }
+            if (sql.includes("SET subject = ?") && database.customerSession) {
+              Object.assign(database.customerSession, {
+                subject: values[0], tenant_id: values[1], email: values[2], name: values[3],
+                refresh_token_encrypted: values[4], refresh_due: 0
+              });
+            }
             if (sql.includes("SET revoked_at = CURRENT_TIMESTAMP")) database.revoked = true;
+            if (sql.includes("SET revoked_at = CURRENT_TIMESTAMP") && sql.includes("customer_oidc_sessions")) database.customerRevoked = true;
             return { success: true };
           },
           async first() {
             if (sql.includes("FROM oidc_login_transactions")) return database.transaction;
             if (sql.includes("FROM admin_oidc_sessions")) return database.revoked ? null : database.session;
+            if (sql.includes("FROM customer_oidc_sessions")) return database.customerRevoked ? null : database.customerSession;
             return null;
           }
         };
@@ -76,16 +92,26 @@ const env = {
   OIDC_TOKEN_ENCRYPTION_KEY: "test-only-encryption-key-with-more-than-32-characters"
 };
 
-async function signedIdToken(privateKey, kid, nonce) {
+async function signedIdToken(
+  privateKey,
+  kid,
+  nonce,
+  issuer = "https://login.example.test/tenant/v2.0",
+  audience = "admin-client-id",
+  email = "admin@example.test",
+  subject = "subject-1",
+  tenantId = "tenant-1",
+  name = "Test Administrator"
+) {
   const now = Math.floor(Date.now() / 1000);
   const header = base64Url(JSON.stringify({ alg: "RS256", kid, typ: "JWT" }));
   const payload = base64Url(JSON.stringify({
-    iss: "https://login.example.test/tenant/v2.0",
-    aud: "admin-client-id",
-    sub: "subject-1",
-    tid: "tenant-1",
-    email: "admin@example.test",
-    name: "Test Administrator",
+    iss: issuer,
+    aud: audience,
+    sub: subject,
+    tid: tenantId,
+    email,
+    name,
     nonce,
     iat: now,
     nbf: now - 1,
@@ -132,6 +158,78 @@ test("customer and administrator realms use independent authorities and cookies"
   }
 });
 
+test("customer OIDC flow creates a session and redirects into the portal", async () => {
+  const originalFetch = globalThis.fetch;
+  const DB = new MockD1();
+  const keys = await crypto.subtle.generateKey({
+    name: "RSASSA-PKCS1-v1_5", modulusLength: 2048,
+    publicExponent: new Uint8Array([1, 0, 1]), hash: "SHA-256"
+  }, true, ["sign", "verify"]);
+  const publicJwk = await crypto.subtle.exportKey("jwk", keys.publicKey);
+  publicJwk.kid = "test-key";
+  publicJwk.alg = "RS256";
+  const customerEnv = {
+    ...env,
+    CUSTOMER_OIDC_ISSUER: "https://customer.ciamlogin.com/customer-tenant/v2.0",
+    CUSTOMER_OIDC_CLIENT_ID: "customer-client-id",
+    CUSTOMER_OIDC_CLIENT_SECRET: "customer-client-secret",
+    CUSTOMER_OIDC_PROMPT: "login",
+    CUSTOMER_OIDC_SCOPES: "openid profile email offline_access"
+  };
+  globalThis.fetch = async (url) => {
+    const target = String(url);
+    if (target.endsWith("/.well-known/openid-configuration")) {
+      return Response.json({
+        issuer: customerEnv.CUSTOMER_OIDC_ISSUER,
+        authorization_endpoint: "https://customer.ciamlogin.com/authorize",
+        token_endpoint: "https://customer.ciamlogin.com/token",
+        jwks_uri: "https://customer.ciamlogin.com/keys",
+        end_session_endpoint: "https://customer.ciamlogin.com/logout"
+      });
+    }
+    if (target.endsWith("/keys")) {
+      return Response.json({ keys: [publicJwk] });
+    }
+    if (target.endsWith("/token")) {
+      return Response.json({
+        id_token: await signedIdToken(
+          keys.privateKey,
+          "test-key",
+          DB.transaction.nonce,
+          customerEnv.CUSTOMER_OIDC_ISSUER,
+          customerEnv.CUSTOMER_OIDC_CLIENT_ID,
+          "customer@example.test",
+          "customer-subject-1",
+          "customer-tenant-1",
+          "Test Customer"
+        ),
+        refresh_token: "customer-refresh-token"
+      });
+    }
+    throw new Error(`Unexpected fetch: ${target}`);
+  };
+  try {
+    const start = await beginLogin({
+      request: new Request("https://experiences.example.test/account/login?return_to=%2Faccount%2Fdashboard%2F"),
+      env: { ...customerEnv, DB }
+    }, "customer");
+    const state = new URL(start.headers.get("location")).searchParams.get("state");
+    const transactionCookie = start.headers.get("set-cookie").split(";")[0];
+    const callback = await completeLogin({
+      request: new Request(`https://experiences.example.test/account/auth/callback?code=test-code&state=${encodeURIComponent(state)}`, {
+        headers: { Cookie: transactionCookie }
+      }),
+      env: { ...customerEnv, DB }
+    }, "customer");
+    assert.equal(callback.status, 302);
+    assert.equal(callback.headers.get("location"), "/account/dashboard/");
+    assert.match(callback.headers.get("set-cookie"), /ja_customer_oidc_session=/);
+    assert.equal(DB.customerSession.email, "customer@example.test");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("administrator OIDC flow uses state, nonce, PKCE and a validated signed token", async () => {
   const originalFetch = globalThis.fetch;
   const DB = new MockD1();
@@ -159,7 +257,17 @@ test("administrator OIDC flow uses state, nonce, PKCE and a validated signed tok
     if (target.endsWith("/token")) {
       tokenRequests += 1;
       return Response.json({
-        id_token: await signedIdToken(keys.privateKey, "test-key", DB.transaction.nonce),
+        id_token: await signedIdToken(
+          keys.privateKey,
+          "test-key",
+          DB.transaction.nonce,
+          env.ADMIN_OIDC_ISSUER,
+          env.ADMIN_OIDC_CLIENT_ID,
+          "admin@example.test",
+          "subject-1",
+          "tenant-1",
+          "Test Administrator"
+        ),
         refresh_token: `refresh-token-${tokenRequests}`
       });
     }
