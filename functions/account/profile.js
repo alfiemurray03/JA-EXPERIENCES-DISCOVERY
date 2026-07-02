@@ -35,7 +35,15 @@ function getAccessIdentity(request) {
     givenName: (request.headers.get("x-ja-auth-given-name") || "").trim(),
     familyName: (request.headers.get("x-ja-auth-family-name") || "").trim(),
     preferredUsername: (request.headers.get("x-ja-auth-preferred-username") || "").trim(),
-    locale: (request.headers.get("x-ja-auth-locale") || "").trim()
+    locale: (request.headers.get("x-ja-auth-locale") || "").trim(),
+    jobTitle: (request.headers.get("x-ja-auth-job-title") || "").trim(),
+    department: (request.headers.get("x-ja-auth-department") || "").trim(),
+    companyName: (request.headers.get("x-ja-auth-company-name") || "").trim(),
+    mobilePhone: (request.headers.get("x-ja-auth-mobile-phone") || "").trim(),
+    businessPhone: (request.headers.get("x-ja-auth-business-phone") || "").trim(),
+    country: (request.headers.get("x-ja-auth-country") || "").trim(),
+    preferredLanguage: (request.headers.get("x-ja-auth-preferred-language") || "").trim(),
+    photoUrl: (request.headers.get("x-ja-auth-photo-url") || "").trim()
   };
 }
 
@@ -87,6 +95,14 @@ async function ensureProfileTable(DB) {
   await safeAlter(DB, `ALTER TABLE profiles ADD COLUMN microsoft_email TEXT`);
   await safeAlter(DB, `ALTER TABLE profiles ADD COLUMN microsoft_preferred_username TEXT`);
   await safeAlter(DB, `ALTER TABLE profiles ADD COLUMN microsoft_locale TEXT`);
+  await safeAlter(DB, `ALTER TABLE profiles ADD COLUMN microsoft_job_title TEXT`);
+  await safeAlter(DB, `ALTER TABLE profiles ADD COLUMN microsoft_department TEXT`);
+  await safeAlter(DB, `ALTER TABLE profiles ADD COLUMN microsoft_company_name TEXT`);
+  await safeAlter(DB, `ALTER TABLE profiles ADD COLUMN microsoft_mobile_phone TEXT`);
+  await safeAlter(DB, `ALTER TABLE profiles ADD COLUMN microsoft_business_phone TEXT`);
+  await safeAlter(DB, `ALTER TABLE profiles ADD COLUMN microsoft_country TEXT`);
+  await safeAlter(DB, `ALTER TABLE profiles ADD COLUMN microsoft_preferred_language TEXT`);
+  await safeAlter(DB, `ALTER TABLE profiles ADD COLUMN microsoft_photo_url TEXT`);
   await safeAlter(DB, `ALTER TABLE profiles ADD COLUMN microsoft_updated_at TEXT`);
   await safeAlter(DB, `ALTER TABLE profiles ADD COLUMN stripe_customer_id TEXT`);
   await safeAlter(DB, `ALTER TABLE profiles ADD COLUMN stripe_customer_created_at TEXT`);
@@ -318,6 +334,14 @@ async function getProfile(DB, identity, env = {}) {
       microsoft_email,
       microsoft_preferred_username,
       microsoft_locale,
+      microsoft_job_title,
+      microsoft_department,
+      microsoft_company_name,
+      microsoft_mobile_phone,
+      microsoft_business_phone,
+      microsoft_country,
+      microsoft_preferred_language,
+      microsoft_photo_url,
       microsoft_updated_at,
       stripe_customer_id,
       stripe_customer_created_at,
@@ -353,8 +377,16 @@ async function getProfile(DB, identity, env = {}) {
       microsoftEmail: existing.microsoft_email || identity.email || "",
       microsoftPreferredUsername: existing.microsoft_preferred_username || identity.preferredUsername || identity.email || "",
       microsoftLocale: existing.microsoft_locale || identity.locale || "",
-      country: countryFromLocale(existing.microsoft_locale || identity.locale || ""),
-      photoUrl: "",
+      microsoftJobTitle: existing.microsoft_job_title || identity.jobTitle || "",
+      microsoftDepartment: existing.microsoft_department || identity.department || "",
+      microsoftCompanyName: existing.microsoft_company_name || identity.companyName || "",
+      microsoftMobilePhone: existing.microsoft_mobile_phone || identity.mobilePhone || "",
+      microsoftBusinessPhone: existing.microsoft_business_phone || identity.businessPhone || "",
+      microsoftCountry: existing.microsoft_country || identity.country || "",
+      microsoftPreferredLanguage: existing.microsoft_preferred_language || identity.preferredLanguage || "",
+      microsoftPhotoUrl: existing.microsoft_photo_url || identity.photoUrl || "",
+      country: existing.microsoft_country || identity.country || countryFromLocale(existing.microsoft_locale || identity.locale || ""),
+      photoUrl: existing.microsoft_photo_url || identity.photoUrl || "",
       verificationStatus: existing.microsoft_email || existing.microsoft_object_id ? "Verified" : "Unverified",
       microsoftUpdatedAt: existing.microsoft_updated_at || "",
       stripeCustomerId: existing.stripe_customer_id || "",
@@ -385,11 +417,19 @@ async function getProfile(DB, identity, env = {}) {
     microsoftGivenName: identity.givenName || "",
     microsoftFamilyName: identity.familyName || "",
     microsoftEmail: identity.email || "",
-      microsoftPreferredUsername: identity.preferredUsername || identity.email || "",
-      microsoftLocale: identity.locale || "",
-      country: countryFromLocale(identity.locale || ""),
-      photoUrl: "",
-      verificationStatus: identity.email ? "Verified" : "Unverified",
+    microsoftPreferredUsername: identity.preferredUsername || identity.email || "",
+    microsoftLocale: identity.locale || "",
+    microsoftJobTitle: identity.jobTitle || "",
+    microsoftDepartment: identity.department || "",
+    microsoftCompanyName: identity.companyName || "",
+    microsoftMobilePhone: identity.mobilePhone || "",
+    microsoftBusinessPhone: identity.businessPhone || "",
+    microsoftCountry: identity.country || "",
+    microsoftPreferredLanguage: identity.preferredLanguage || "",
+    microsoftPhotoUrl: identity.photoUrl || "",
+    country: identity.country || countryFromLocale(identity.locale || ""),
+    photoUrl: identity.photoUrl || "",
+    verificationStatus: identity.email ? "Verified" : "Unverified",
       microsoftUpdatedAt: "",
     stripeCustomerId: "",
     stripeCustomerCreatedAt: "",
@@ -415,9 +455,17 @@ async function getProfile(DB, identity, env = {}) {
       microsoft_email,
       microsoft_preferred_username,
       microsoft_locale,
+      microsoft_job_title,
+      microsoft_department,
+      microsoft_company_name,
+      microsoft_mobile_phone,
+      microsoft_business_phone,
+      microsoft_country,
+      microsoft_preferred_language,
+      microsoft_photo_url,
       microsoft_updated_at
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
   `).bind(
     nowProfile.email,
     nowProfile.verifiedName,
@@ -433,7 +481,15 @@ async function getProfile(DB, identity, env = {}) {
     identity.familyName || "",
     identity.email || "",
     identity.preferredUsername || identity.email || "",
-    identity.locale || ""
+    identity.locale || "",
+    identity.jobTitle || "",
+    identity.department || "",
+    identity.companyName || "",
+    identity.mobilePhone || "",
+    identity.businessPhone || "",
+    identity.country || "",
+    identity.preferredLanguage || "",
+    identity.photoUrl || ""
   ).run();
 
   await notifyCustomerSignup(DB, env, identity, nowProfile).catch(() => {});
@@ -489,10 +545,18 @@ async function saveProfile(DB, identity, body, request, env = {}) {
       microsoft_email,
       microsoft_preferred_username,
       microsoft_locale,
+      microsoft_job_title,
+      microsoft_department,
+      microsoft_company_name,
+      microsoft_mobile_phone,
+      microsoft_business_phone,
+      microsoft_country,
+      microsoft_preferred_language,
+      microsoft_photo_url,
       microsoft_updated_at,
       updated_at
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
     ON CONFLICT(email) DO UPDATE SET
       verified_name = excluded.verified_name,
       display_name = excluded.display_name,
@@ -508,6 +572,14 @@ async function saveProfile(DB, identity, body, request, env = {}) {
       microsoft_email = COALESCE(profiles.microsoft_email, excluded.microsoft_email),
       microsoft_preferred_username = COALESCE(profiles.microsoft_preferred_username, excluded.microsoft_preferred_username),
       microsoft_locale = COALESCE(profiles.microsoft_locale, excluded.microsoft_locale),
+      microsoft_job_title = COALESCE(profiles.microsoft_job_title, excluded.microsoft_job_title),
+      microsoft_department = COALESCE(profiles.microsoft_department, excluded.microsoft_department),
+      microsoft_company_name = COALESCE(profiles.microsoft_company_name, excluded.microsoft_company_name),
+      microsoft_mobile_phone = COALESCE(profiles.microsoft_mobile_phone, excluded.microsoft_mobile_phone),
+      microsoft_business_phone = COALESCE(profiles.microsoft_business_phone, excluded.microsoft_business_phone),
+      microsoft_country = COALESCE(profiles.microsoft_country, excluded.microsoft_country),
+      microsoft_preferred_language = COALESCE(profiles.microsoft_preferred_language, excluded.microsoft_preferred_language),
+      microsoft_photo_url = COALESCE(profiles.microsoft_photo_url, excluded.microsoft_photo_url),
       microsoft_updated_at = COALESCE(profiles.microsoft_updated_at, excluded.microsoft_updated_at),
       updated_at = CURRENT_TIMESTAMP
   `).bind(
@@ -526,6 +598,14 @@ async function saveProfile(DB, identity, body, request, env = {}) {
     identity.email || "",
     identity.preferredUsername || identity.email || "",
     locale,
+    identity.jobTitle || "",
+    identity.department || "",
+    identity.companyName || "",
+    identity.mobilePhone || "",
+    identity.businessPhone || "",
+    identity.country || "",
+    identity.preferredLanguage || "",
+    identity.photoUrl || "",
     new Date().toISOString()
   ).run();
 

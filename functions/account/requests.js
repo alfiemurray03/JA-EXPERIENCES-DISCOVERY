@@ -20,7 +20,15 @@ function getAccessIdentity(request) {
     givenName: (request.headers.get("x-ja-auth-given-name") || "").trim(),
     familyName: (request.headers.get("x-ja-auth-family-name") || "").trim(),
     preferredUsername: (request.headers.get("x-ja-auth-preferred-username") || "").trim(),
-    locale: (request.headers.get("x-ja-auth-locale") || "").trim()
+    locale: (request.headers.get("x-ja-auth-locale") || "").trim(),
+    jobTitle: (request.headers.get("x-ja-auth-job-title") || "").trim(),
+    department: (request.headers.get("x-ja-auth-department") || "").trim(),
+    companyName: (request.headers.get("x-ja-auth-company-name") || "").trim(),
+    mobilePhone: (request.headers.get("x-ja-auth-mobile-phone") || "").trim(),
+    businessPhone: (request.headers.get("x-ja-auth-business-phone") || "").trim(),
+    country: (request.headers.get("x-ja-auth-country") || "").trim(),
+    preferredLanguage: (request.headers.get("x-ja-auth-preferred-language") || "").trim(),
+    photoUrl: (request.headers.get("x-ja-auth-photo-url") || "").trim()
   };
 }
 

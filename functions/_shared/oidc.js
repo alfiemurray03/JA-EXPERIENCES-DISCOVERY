@@ -53,6 +53,18 @@ function firstClaim(claims, ...keys) {
   return "";
 }
 
+function firstClaimValue(claims, ...keys) {
+  for (const key of keys) {
+    const value = claims?.[key];
+    if (typeof value === "string" && value.trim()) return value.trim();
+    if (Array.isArray(value)) {
+      const first = value.map((entry) => String(entry || "").trim()).find(Boolean);
+      if (first) return first;
+    }
+  }
+  return "";
+}
+
 function boundedNumber(value, fallback, minimum, maximum) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? Math.min(maximum, Math.max(minimum, parsed)) : fallback;
@@ -234,14 +246,25 @@ async function ensureTables(DB) {
       idle_expires_at TEXT NOT NULL, absolute_expires_at TEXT NOT NULL, refresh_after TEXT NOT NULL,
       revoked_at TEXT, ip_hash TEXT, user_agent TEXT,
       microsoft_object_id TEXT, microsoft_given_name TEXT, microsoft_family_name TEXT,
-      microsoft_preferred_username TEXT, microsoft_locale TEXT
+      microsoft_preferred_username TEXT, microsoft_locale TEXT, microsoft_job_title TEXT,
+      microsoft_department TEXT, microsoft_company_name TEXT, microsoft_mobile_phone TEXT,
+      microsoft_business_phone TEXT, microsoft_country TEXT, microsoft_preferred_language TEXT,
+      microsoft_photo_url TEXT
     )`).run();
     for (const column of [
       "microsoft_object_id TEXT",
       "microsoft_given_name TEXT",
       "microsoft_family_name TEXT",
       "microsoft_preferred_username TEXT",
-      "microsoft_locale TEXT"
+      "microsoft_locale TEXT",
+      "microsoft_job_title TEXT",
+      "microsoft_department TEXT",
+      "microsoft_company_name TEXT",
+      "microsoft_mobile_phone TEXT",
+      "microsoft_business_phone TEXT",
+      "microsoft_country TEXT",
+      "microsoft_preferred_language TEXT",
+      "microsoft_photo_url TEXT"
     ]) {
       try {
         await DB.prepare(`ALTER TABLE ${table} ADD COLUMN ${column}`).run();
@@ -301,6 +324,14 @@ async function ensureProfileColumns(DB) {
     "microsoft_email TEXT",
     "microsoft_preferred_username TEXT",
     "microsoft_locale TEXT",
+    "microsoft_job_title TEXT",
+    "microsoft_department TEXT",
+    "microsoft_company_name TEXT",
+    "microsoft_mobile_phone TEXT",
+    "microsoft_business_phone TEXT",
+    "microsoft_country TEXT",
+    "microsoft_preferred_language TEXT",
+    "microsoft_photo_url TEXT",
     "microsoft_updated_at TEXT",
     "stripe_customer_id TEXT",
     "stripe_customer_created_at TEXT",
@@ -380,6 +411,14 @@ async function syncCustomerProfileFromClaims(context, claims, email) {
   const familyName = firstClaim(claims, "family_name");
   const preferredUsername = firstClaim(claims, "preferred_username", "upn", "email");
   const locale = firstClaim(claims, "locale");
+  const jobTitle = firstClaim(claims, "job_title", "jobTitle");
+  const department = firstClaim(claims, "department");
+  const companyName = firstClaim(claims, "company_name", "companyName", "organization", "organisation");
+  const mobilePhone = firstClaimValue(claims, "mobile_phone", "mobilePhone");
+  const businessPhone = firstClaimValue(claims, "businessPhones", "business_phone", "businessPhone");
+  const country = firstClaim(claims, "country", "country_region", "countryRegion");
+  const preferredLanguage = firstClaim(claims, "preferred_language", "preferredLanguage");
+  const photoUrl = firstClaim(claims, "picture", "photo_url", "photoUrl");
 
   await context.env.DB.prepare(`
     INSERT INTO profiles (
@@ -395,10 +434,18 @@ async function syncCustomerProfileFromClaims(context, claims, email) {
       microsoft_email,
       microsoft_preferred_username,
       microsoft_locale,
+      microsoft_job_title,
+      microsoft_department,
+      microsoft_company_name,
+      microsoft_mobile_phone,
+      microsoft_business_phone,
+      microsoft_country,
+      microsoft_preferred_language,
+      microsoft_photo_url,
       microsoft_updated_at,
       updated_at
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
     ON CONFLICT(email) DO UPDATE SET
       verified_name = COALESCE(excluded.verified_name, profiles.verified_name),
       display_name = COALESCE(NULLIF(excluded.display_name, ''), profiles.display_name, excluded.verified_name, profiles.email),
@@ -411,6 +458,14 @@ async function syncCustomerProfileFromClaims(context, claims, email) {
       microsoft_email = COALESCE(NULLIF(excluded.microsoft_email, ''), profiles.microsoft_email),
       microsoft_preferred_username = COALESCE(NULLIF(excluded.microsoft_preferred_username, ''), profiles.microsoft_preferred_username),
       microsoft_locale = COALESCE(NULLIF(excluded.microsoft_locale, ''), profiles.microsoft_locale),
+      microsoft_job_title = COALESCE(NULLIF(excluded.microsoft_job_title, ''), profiles.microsoft_job_title),
+      microsoft_department = COALESCE(NULLIF(excluded.microsoft_department, ''), profiles.microsoft_department),
+      microsoft_company_name = COALESCE(NULLIF(excluded.microsoft_company_name, ''), profiles.microsoft_company_name),
+      microsoft_mobile_phone = COALESCE(NULLIF(excluded.microsoft_mobile_phone, ''), profiles.microsoft_mobile_phone),
+      microsoft_business_phone = COALESCE(NULLIF(excluded.microsoft_business_phone, ''), profiles.microsoft_business_phone),
+      microsoft_country = COALESCE(NULLIF(excluded.microsoft_country, ''), profiles.microsoft_country),
+      microsoft_preferred_language = COALESCE(NULLIF(excluded.microsoft_preferred_language, ''), profiles.microsoft_preferred_language),
+      microsoft_photo_url = COALESCE(NULLIF(excluded.microsoft_photo_url, ''), profiles.microsoft_photo_url),
       microsoft_updated_at = CURRENT_TIMESTAMP,
       updated_at = CURRENT_TIMESTAMP
   `).bind(
@@ -425,7 +480,15 @@ async function syncCustomerProfileFromClaims(context, claims, email) {
     familyName,
     firstClaim(claims, "email"),
     preferredUsername,
-    locale
+    locale,
+    jobTitle,
+    department,
+    companyName,
+    mobilePhone,
+    businessPhone,
+    country,
+    preferredLanguage,
+    photoUrl
   ).run();
 }
 
@@ -590,7 +653,15 @@ export async function completeLogin(context, realm) {
       ["microsoft_given_name", "?", firstClaim(claims, "given_name")],
       ["microsoft_family_name", "?", firstClaim(claims, "family_name")],
       ["microsoft_preferred_username", "?", firstClaim(claims, "preferred_username", "upn", "email")],
-      ["microsoft_locale", "?", firstClaim(claims, "locale")]
+      ["microsoft_locale", "?", firstClaim(claims, "locale")],
+      ["microsoft_job_title", "?", firstClaim(claims, "job_title", "jobTitle")],
+      ["microsoft_department", "?", firstClaim(claims, "department")],
+      ["microsoft_company_name", "?", firstClaim(claims, "company_name", "companyName", "organization", "organisation")],
+      ["microsoft_mobile_phone", "?", firstClaimValue(claims, "mobile_phone", "mobilePhone")],
+      ["microsoft_business_phone", "?", firstClaimValue(claims, "businessPhones", "business_phone", "businessPhone")],
+      ["microsoft_country", "?", firstClaim(claims, "country", "country_region", "countryRegion")],
+      ["microsoft_preferred_language", "?", firstClaim(claims, "preferred_language", "preferredLanguage")],
+      ["microsoft_photo_url", "?", firstClaim(claims, "picture", "photo_url", "photoUrl")]
     ];
     for (const [column, placeholder, value] of optional) {
       if (columns.has(column)) {
@@ -639,6 +710,8 @@ export async function getNativeSession(request, env, realm) {
   const row = await env.DB.prepare(`
     SELECT token_hash, subject, tenant_id, email, name, refresh_token_encrypted, refresh_after,
       microsoft_object_id, microsoft_given_name, microsoft_family_name, microsoft_preferred_username, microsoft_locale,
+      microsoft_job_title, microsoft_department, microsoft_company_name, microsoft_mobile_phone, microsoft_business_phone,
+      microsoft_country, microsoft_preferred_language, microsoft_photo_url,
       datetime(refresh_after) <= datetime('now') AS refresh_due,
       created_at, last_seen_at, idle_expires_at, absolute_expires_at
     FROM ${config.sessionTable}
@@ -704,7 +777,9 @@ export async function getNativeSession(request, env, realm) {
         await env.DB.prepare(`
           UPDATE ${config.sessionTable}
           SET subject = ?, tenant_id = ?, email = ?, name = ?, refresh_token_encrypted = ?, refresh_after = datetime('now', '+50 minutes'),
-            microsoft_object_id = ?, microsoft_given_name = ?, microsoft_family_name = ?, microsoft_preferred_username = ?, microsoft_locale = ?
+            microsoft_object_id = ?, microsoft_given_name = ?, microsoft_family_name = ?, microsoft_preferred_username = ?, microsoft_locale = ?,
+            microsoft_job_title = ?, microsoft_department = ?, microsoft_company_name = ?, microsoft_mobile_phone = ?, microsoft_business_phone = ?,
+            microsoft_country = ?, microsoft_preferred_language = ?, microsoft_photo_url = ?
           WHERE token_hash = ? AND revoked_at IS NULL
         `).bind(
           refreshed.subject,
@@ -717,6 +792,14 @@ export async function getNativeSession(request, env, realm) {
           firstClaim(refreshedClaims || {}, "family_name"),
           firstClaim(refreshedClaims || {}, "preferred_username", "upn", "email"),
           firstClaim(refreshedClaims || {}, "locale"),
+          firstClaim(refreshedClaims || {}, "job_title", "jobTitle"),
+          firstClaim(refreshedClaims || {}, "department"),
+          firstClaim(refreshedClaims || {}, "company_name", "companyName", "organization", "organisation"),
+          firstClaimValue(refreshedClaims || {}, "mobile_phone", "mobilePhone"),
+          firstClaimValue(refreshedClaims || {}, "businessPhones", "business_phone", "businessPhone"),
+          firstClaim(refreshedClaims || {}, "country", "country_region", "countryRegion"),
+          firstClaim(refreshedClaims || {}, "preferred_language", "preferredLanguage"),
+          firstClaim(refreshedClaims || {}, "picture", "photo_url", "photoUrl"),
           tokenHash
         ).run();
         Object.assign(row, {
@@ -753,7 +836,15 @@ export async function getNativeSession(request, env, realm) {
     givenName: row.microsoft_given_name || "",
     familyName: row.microsoft_family_name || "",
     preferredUsername: row.microsoft_preferred_username || "",
-    locale: row.microsoft_locale || ""
+    locale: row.microsoft_locale || "",
+    jobTitle: row.microsoft_job_title || "",
+    department: row.microsoft_department || "",
+    companyName: row.microsoft_company_name || "",
+    mobilePhone: row.microsoft_mobile_phone || "",
+    businessPhone: row.microsoft_business_phone || "",
+    country: row.microsoft_country || "",
+    preferredLanguage: row.microsoft_preferred_language || "",
+    photoUrl: row.microsoft_photo_url || ""
   };
 }
 
@@ -828,6 +919,14 @@ export function withIdentity(request, identity) {
   headers.delete("x-ja-auth-family-name");
   headers.delete("x-ja-auth-preferred-username");
   headers.delete("x-ja-auth-locale");
+  headers.delete("x-ja-auth-job-title");
+  headers.delete("x-ja-auth-department");
+  headers.delete("x-ja-auth-company-name");
+  headers.delete("x-ja-auth-mobile-phone");
+  headers.delete("x-ja-auth-business-phone");
+  headers.delete("x-ja-auth-country");
+  headers.delete("x-ja-auth-preferred-language");
+  headers.delete("x-ja-auth-photo-url");
   headers.delete("x-ja-auth-session");
   if (identity) {
     headers.set("x-ja-auth-email", identity.email);
@@ -840,6 +939,14 @@ export function withIdentity(request, identity) {
     if (identity.familyName) headers.set("x-ja-auth-family-name", identity.familyName);
     if (identity.preferredUsername) headers.set("x-ja-auth-preferred-username", identity.preferredUsername);
     if (identity.locale) headers.set("x-ja-auth-locale", identity.locale);
+    if (identity.jobTitle) headers.set("x-ja-auth-job-title", identity.jobTitle);
+    if (identity.department) headers.set("x-ja-auth-department", identity.department);
+    if (identity.companyName) headers.set("x-ja-auth-company-name", identity.companyName);
+    if (identity.mobilePhone) headers.set("x-ja-auth-mobile-phone", identity.mobilePhone);
+    if (identity.businessPhone) headers.set("x-ja-auth-business-phone", identity.businessPhone);
+    if (identity.country) headers.set("x-ja-auth-country", identity.country);
+    if (identity.preferredLanguage) headers.set("x-ja-auth-preferred-language", identity.preferredLanguage);
+    if (identity.photoUrl) headers.set("x-ja-auth-photo-url", identity.photoUrl);
     if (identity.tokenHash) headers.set("x-ja-auth-session", identity.tokenHash);
   }
   return new Request(request, { headers });
@@ -856,6 +963,14 @@ export function nativeIdentity(request) {
     givenName: String(request.headers.get("x-ja-auth-given-name") || "").trim(),
     familyName: String(request.headers.get("x-ja-auth-family-name") || "").trim(),
     preferredUsername: String(request.headers.get("x-ja-auth-preferred-username") || "").trim(),
-    locale: String(request.headers.get("x-ja-auth-locale") || "").trim()
+    locale: String(request.headers.get("x-ja-auth-locale") || "").trim(),
+    jobTitle: String(request.headers.get("x-ja-auth-job-title") || "").trim(),
+    department: String(request.headers.get("x-ja-auth-department") || "").trim(),
+    companyName: String(request.headers.get("x-ja-auth-company-name") || "").trim(),
+    mobilePhone: String(request.headers.get("x-ja-auth-mobile-phone") || "").trim(),
+    businessPhone: String(request.headers.get("x-ja-auth-business-phone") || "").trim(),
+    country: String(request.headers.get("x-ja-auth-country") || "").trim(),
+    preferredLanguage: String(request.headers.get("x-ja-auth-preferred-language") || "").trim(),
+    photoUrl: String(request.headers.get("x-ja-auth-photo-url") || "").trim()
   };
 }

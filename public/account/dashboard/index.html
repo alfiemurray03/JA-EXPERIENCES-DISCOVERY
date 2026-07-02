@@ -205,11 +205,20 @@
             </div>
             <ul class="summary-list" id="summaryList">
               <li class="summary-row"><span>Name</span><strong id="summaryName">Loading…</strong></li>
+              <li class="summary-row"><span>Display name</span><strong id="summaryDisplayName">Loading…</strong></li>
+              <li class="summary-row"><span>Microsoft object ID</span><strong id="summaryObjectId">Loading…</strong></li>
+              <li class="summary-row"><span>Tenant ID</span><strong id="summaryTenantId">Loading…</strong></li>
               <li class="summary-row"><span>Phone number</span><strong id="summaryPhone">Loading…</strong></li>
               <li class="summary-row"><span>Microsoft Entra verified account</span><strong id="summaryVerified">Loading…</strong></li>
               <li class="summary-row"><span>Stripe customer status</span><strong id="summaryStripe">Loading…</strong></li>
+              <li class="summary-row"><span>Job title</span><strong id="summaryJobTitle">Loading…</strong></li>
+              <li class="summary-row"><span>Department</span><strong id="summaryDepartment">Loading…</strong></li>
+              <li class="summary-row"><span>Organisation</span><strong id="summaryCompanyName">Loading…</strong></li>
+              <li class="summary-row"><span>Mobile phone</span><strong id="summaryMobilePhone">Loading…</strong></li>
+              <li class="summary-row"><span>Business phone</span><strong id="summaryBusinessPhone">Loading…</strong></li>
               <li class="summary-row"><span>Country</span><strong id="summaryCountry">Loading…</strong></li>
               <li class="summary-row"><span>Preferred language</span><strong id="summaryLanguage">Loading…</strong></li>
+              <li class="summary-row"><span>Locale</span><strong id="summaryLocale">Loading…</strong></li>
             </ul>
           </article>
 
@@ -299,15 +308,15 @@
       const profile = state.profile || {};
       const fullName = profile.displayName || profile.verifiedName || "Customer";
       const email = profile.email || "";
-      const verification = profile.verificationStatus || (email ? "Verified" : "Unverified");
-      const stripeStatus = profile.stripeCustomerId ? "Linked" : "Not yet linked";
-      const coms = profile.communicationPreference || "Email";
+      const verification = profile.verificationStatus || (email ? "Verified" : "Not provided");
+      const stripeStatus = profile.stripeCustomerId ? "Linked" : "Not provided";
+      const coms = profile.communicationPreference || "Not provided";
       const lastSignIn = formatDate(profile.microsoftUpdatedAt || profile.updatedAt || profile.createdAt);
       const membershipDate = formatDate(profile.createdAt || profile.updatedAt);
-      const country = profile.country || "Not available";
-      const language = profile.microsoftLocale || "Not available";
+      const country = profile.microsoftCountry || profile.country || "Not provided";
+      const language = profile.microsoftPreferredLanguage || profile.microsoftLocale || "Not provided";
       const phone = profile.phone || "Not provided";
-      const username = profile.microsoftPreferredUsername || email || "Not available";
+      const username = profile.microsoftPreferredUsername || email || "Not provided";
       const photo = profile.photoUrl ? "Available" : "Not available";
 
       setText("heroGreeting", `Welcome back, ${profile.verifiedName || fullName}`);
@@ -334,20 +343,29 @@
       setText("statComms", coms);
 
       setText("summaryName", fullName);
+      setText("summaryDisplayName", profile.displayName || fullName);
+      setText("summaryObjectId", profile.microsoftObjectId || "Not provided");
+      setText("summaryTenantId", profile.microsoftTenantId || "Not provided");
       setText("summaryPhone", phone);
       setText("summaryVerified", verification);
-      setText("summaryStripe", profile.stripeCustomerId || "Not linked");
+      setText("summaryStripe", profile.stripeCustomerId || "Not provided");
+      setText("summaryJobTitle", profile.microsoftJobTitle || "Not provided");
+      setText("summaryDepartment", profile.microsoftDepartment || "Not provided");
+      setText("summaryCompanyName", profile.microsoftCompanyName || "Not provided");
+      setText("summaryMobilePhone", profile.microsoftMobilePhone || "Not provided");
+      setText("summaryBusinessPhone", profile.microsoftBusinessPhone || "Not provided");
       setText("summaryCountry", country);
       setText("summaryLanguage", language);
+      setText("summaryLocale", profile.microsoftLocale || "Not provided");
 
       setText("profilePhoto", photo);
       setText("profileFullName", fullName);
       setText("profileDisplayName", profile.displayName || fullName);
-      setText("profileGivenName", profile.microsoftGivenName || "Not available");
-      setText("profileFamilyName", profile.microsoftFamilyName || "Not available");
+      setText("profileGivenName", profile.microsoftGivenName || "Not provided");
+      setText("profileFamilyName", profile.microsoftFamilyName || "Not provided");
       setText("profileEmail", email || "Not available");
       setText("profileUsername", username);
-      setText("profileStripeId", profile.stripeCustomerId || "Not linked");
+      setText("profileStripeId", profile.stripeCustomerId || "Not provided");
       setText("profileVerification", verification);
       setText("profileLastSignIn", lastSignIn);
       setText("profileMembershipDate", membershipDate);

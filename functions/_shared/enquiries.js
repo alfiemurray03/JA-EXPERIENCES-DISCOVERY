@@ -53,7 +53,15 @@ export function getAccessIdentity(request) {
     givenName: clean(request.headers.get("x-ja-auth-given-name"), 120),
     familyName: clean(request.headers.get("x-ja-auth-family-name"), 120),
     preferredUsername: clean(request.headers.get("x-ja-auth-preferred-username"), 254),
-    locale: clean(request.headers.get("x-ja-auth-locale"), 20)
+    locale: clean(request.headers.get("x-ja-auth-locale"), 20),
+    jobTitle: clean(request.headers.get("x-ja-auth-job-title"), 120),
+    department: clean(request.headers.get("x-ja-auth-department"), 120),
+    companyName: clean(request.headers.get("x-ja-auth-company-name"), 180),
+    mobilePhone: clean(request.headers.get("x-ja-auth-mobile-phone"), 40),
+    businessPhone: clean(request.headers.get("x-ja-auth-business-phone"), 40),
+    country: clean(request.headers.get("x-ja-auth-country"), 80),
+    preferredLanguage: clean(request.headers.get("x-ja-auth-preferred-language"), 20),
+    photoUrl: clean(request.headers.get("x-ja-auth-photo-url"), 500)
   };
 }
 
