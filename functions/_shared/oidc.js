@@ -566,12 +566,28 @@ export async function beginLogin(context, realm) {
   await context.env.DB.prepare(`DELETE FROM oidc_login_transactions WHERE datetime(expires_at) <= datetime('now') OR datetime(created_at) < datetime('now', '-1 day')`).run();
   const metadata = await discover(config);
   const requestUrl = new URL(context.request.url);
+  const requestId = requestCorrelationId(context.request);
   const returnTo = safeReturnPath(requestUrl.searchParams.get("return_to"), realm);
   const state = randomValue(32);
   const nonce = randomValue(32);
   const verifier = randomValue(64);
   const challenge = base64Url(await sha256Bytes(verifier));
   const stateHash = await hashToken(state);
+  logAuthEvent(context.env, {
+    realm,
+    stage: "beginLogin",
+    file: "functions/_shared/oidc.js",
+    function: "beginLogin",
+    requestId,
+    timestamp: new Date().toISOString(),
+    url: requestUrl.toString(),
+    referer: context.request.headers.get("Referer") || "",
+    userAgent: context.request.headers.get("User-Agent") || "",
+    generatedState: state,
+    generatedNonce: nonce,
+    generatedTransactionCookie: state,
+    redirectDestination: `${metadata.authorization_endpoint}?client_id=${encodeURIComponent(config.clientId)}`
+  });
   await context.env.DB.prepare(`
     INSERT INTO oidc_login_transactions (state_hash, realm, nonce, code_verifier, return_to, expires_at)
     VALUES (?, ?, ?, ?, ?, datetime('now', '+10 minutes'))
