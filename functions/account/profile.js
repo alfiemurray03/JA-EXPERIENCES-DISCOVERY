@@ -167,8 +167,7 @@ async function refreshMicrosoftAccessToken(DB, request, env) {
       client_id: clientId,
       client_secret: clientSecret,
       grant_type: "refresh_token",
-      refresh_token: refreshToken,
-      scope: "openid profile email offline_access https://graph.microsoft.com/User.ReadWrite"
+      refresh_token: refreshToken
     }).toString()
   });
   if (!response.ok) return null;
@@ -229,7 +228,25 @@ async function syncMicrosoftGraphProfile(DB, request, env, identity, profile) {
   });
   if (!response.ok) {
     const details = await response.text().catch(() => "");
-    throw new Error(`Microsoft Graph update failed: ${response.status} ${details.slice(0, 240)}`);
+    let code = "";
+    let message = "";
+    try {
+      const parsed = JSON.parse(details || "{}");
+      code = parsed?.error?.code || "";
+      message = parsed?.error?.message || "";
+    } catch {
+      message = details.slice(0, 240);
+    }
+    console.error(JSON.stringify({
+      event: "microsoft_graph_profile_patch_failed",
+      http_status: response.status,
+      error_code: code || "unknown",
+      error_message: message || "Unknown Graph error",
+      request_id: response.headers.get("request-id") || response.headers.get("client-request-id") || response.headers.get("x-ms-request-id") || "",
+      request_body: patchBody,
+      customer_email: identity.email
+    }));
+    throw new Error(`Microsoft Graph update failed: ${response.status} ${code || "unknown"} ${message || details.slice(0, 240)}`);
   }
 
   return { synced: true };
