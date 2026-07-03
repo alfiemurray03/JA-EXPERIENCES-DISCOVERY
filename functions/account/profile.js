@@ -194,6 +194,7 @@ async function logGraphEvent(details) {
     error_message: details.errorMessage || "",
     request_id: details.requestId || "",
     client_request_id: details.clientRequestId || "",
+    content_type: details.contentType || "",
     response_body: details.responseBody,
     customer_email: details.customerEmail || "",
     user_object_id: details.userObjectId || ""
@@ -213,11 +214,14 @@ async function graphRequest({ method, url, accessToken, body, customerEmail = ""
     body: body ? JSON.stringify(body) : undefined
   });
   const responseBody = await response.text().catch(() => "");
+  const contentType = response.headers.get("content-type") || "";
   let parsedJson = null;
-  try {
-    parsedJson = JSON.parse(responseBody || "{}");
-  } catch {
-    parsedJson = null;
+  if (responseBody.trim()) {
+    try {
+      parsedJson = JSON.parse(responseBody);
+    } catch {
+      parsedJson = null;
+    }
   }
   const parsed = response.ok ? null : graphErrorPayload(responseBody);
   const requestId = response.headers.get("request-id") || response.headers.get("x-ms-request-id") || "";
@@ -229,11 +233,12 @@ async function graphRequest({ method, url, accessToken, body, customerEmail = ""
     errorMessage: parsed?.message || "",
     requestId,
     clientRequestId,
-    responseBody: responseBody || "",
+    responseBody: responseBody.slice(0, 500),
+    contentType,
     customerEmail,
     userObjectId
   });
-  return { response, responseBody, parsedJson, parsedError: parsed, requestId, clientRequestId };
+  return { response, responseBody, contentType, parsedJson, parsedError: parsed, requestId, clientRequestId };
 }
 
 async function refreshMicrosoftAccessToken(DB, request, env) {
@@ -310,8 +315,8 @@ async function refreshMicrosoftAccessToken(DB, request, env) {
   return payload.access_token;
 }
 
-async function loadMicrosoftGraphProfile(DB, request, env, identity) {
-  const session = await getCurrentCustomerSession(DB, request);
+async function loadMicrosoftGraphProfile(DB, request, env, identity, session = null, setStage = () => {}) {
+  setStage(4, "decrypt tokens");
   let storedAccessToken = "";
   try {
     storedAccessToken = session?.access_token_encrypted ? await decryptSecret(session.access_token_encrypted, env) : "";
@@ -330,7 +335,8 @@ async function loadMicrosoftGraphProfile(DB, request, env, identity) {
     : await refreshMicrosoftAccessToken(DB, request, env);
   if (!accessToken) return { ok: false, reason: "No Microsoft Graph access token was available.", status: 0, requestId: "", clientRequestId: "" };
 
-  const { response, responseBody, parsedJson, parsedError } = await graphRequest({
+  setStage(5, "call Graph GET /me");
+  const { response, responseBody, contentType, parsedJson, parsedError, requestId, clientRequestId } = await graphRequest({
     method: "GET",
     url: graphUrl("/me", [
       "id",
@@ -354,6 +360,17 @@ async function loadMicrosoftGraphProfile(DB, request, env, identity) {
     userObjectId: identity.objectId || ""
   });
 
+  setStage(6, "parse and compare Graph profile");
+  console.log(JSON.stringify({
+    event: "profile_graph_response",
+    stage_number: 6,
+    http_status: response.status,
+    content_type: contentType,
+    response_preview: responseBody.slice(0, 500),
+    customer_email: identity.email,
+    user_object_id: identity.objectId || ""
+  }));
+
   if (!response.ok) {
     return {
       ok: false,
@@ -366,7 +383,17 @@ async function loadMicrosoftGraphProfile(DB, request, env, identity) {
     };
   }
 
-  const profile = parsedJson || {};
+  if (!parsedJson || typeof parsedJson !== "object") {
+    return {
+      ok: false,
+      status: response.status,
+      reason: responseBody ? "Microsoft Graph returned a non-JSON response." : "Microsoft Graph returned an empty response.",
+      responseBody: responseBody.slice(0, 500),
+      requestId,
+      clientRequestId
+    };
+  }
+  const profile = parsedJson;
   return { ok: true, status: response.status, profile, accessToken, requestId, clientRequestId };
 }
 
@@ -445,7 +472,7 @@ async function patchMicrosoftGraphProfile(DB, request, env, identity, desired) {
     return { ok: true, status: 200, skipped: true, reason: "No Graph-updatable fields were supplied.", requestId: "", clientRequestId: "" };
   }
 
-  const { response, responseBody, parsedError } = await graphRequest({
+  const { response, responseBody, parsedError, requestId, clientRequestId } = await graphRequest({
     method: "PATCH",
     url: graphUrl("/me"),
     accessToken,
@@ -568,6 +595,56 @@ async function safeAlter(DB, sql) {
   } catch {
     // Existing D1 databases may already have this column.
   }
+}
+
+async function tableColumns(DB, tableName) {
+  const result = await DB.prepare(`PRAGMA table_info(${tableName})`).all();
+  return new Set((result.results || []).map((column) => String(column.name || "")));
+}
+
+async function updateGraphProfile(DB, identity, graphSync, graphFields = null) {
+  const columns = await tableColumns(DB, "profiles");
+  const assignments = [];
+  const values = [];
+  const noValue = Symbol("no-value");
+  const add = (column, expression, value = noValue) => {
+    if (!columns.has(column)) return;
+    assignments.push(`${column} = ${expression}`);
+    if (value !== noValue) values.push(value);
+  };
+
+  if (graphFields) {
+    const optionalFields = [
+      ["microsoft_display_name", graphFields.microsoftDisplayName],
+      ["microsoft_given_name", graphFields.microsoftGivenName],
+      ["microsoft_family_name", graphFields.microsoftFamilyName],
+      ["microsoft_email", graphFields.microsoftEmail],
+      ["microsoft_preferred_language", graphFields.microsoftPreferredLanguage],
+      ["microsoft_mobile_phone", graphFields.microsoftMobilePhone],
+      ["microsoft_office_location", graphFields.microsoftOfficeLocation],
+      ["microsoft_city", graphFields.microsoftCity],
+      ["microsoft_state", graphFields.microsoftState],
+      ["microsoft_country", graphFields.microsoftCountry],
+      ["microsoft_postal_code", graphFields.microsoftPostalCode],
+      ["microsoft_street_address", graphFields.microsoftStreetAddress]
+    ];
+    for (const [column, value] of optionalFields) add(column, "COALESCE(NULLIF(?, ''), " + column + ")", value);
+    add("microsoft_updated_at", "CURRENT_TIMESTAMP");
+  }
+
+  add("graph_sync_last_at", "CURRENT_TIMESTAMP");
+  add("graph_sync_success", "?", graphSync.ok ? 1 : 0);
+  if (graphSync.ok) add("graph_sync_failure_reason", "NULL");
+  else add("graph_sync_failure_reason", "?", clean(graphSync.reason || "Microsoft Graph profile refresh failed.", 1000));
+  add("graph_sync_last_http_status", "?", graphSync.status || 0);
+  add("graph_sync_last_request_id", "?", graphSync.requestId || "");
+  add("graph_sync_last_client_request_id", "?", graphSync.clientRequestId || "");
+  add("updated_at", "CURRENT_TIMESTAMP");
+
+  if (!assignments.length) return { skipped: true, reason: "No supported Graph profile columns exist." };
+  values.push(identity.email);
+  await DB.prepare(`UPDATE profiles SET ${assignments.join(", ")} WHERE lower(email) = lower(?)`).bind(...values).run();
+  return { skipped: false };
 }
 
 async function settingMap(DB, keys, defaults = {}) {
@@ -1256,115 +1333,80 @@ async function ensureStripeCustomer(DB, env, identity, profile) {
 
 export async function onRequest(context) {
   const { request, env } = context;
+  let identity = { email: "", objectId: "" };
+  let stage = { number: 1, name: "middleware complete" };
+  const setStage = (number, name) => {
+    stage = { number, name };
+    console.log(JSON.stringify({
+      event: "profile_request_stage",
+      stage_number: number,
+      stage: name,
+      customer_email: identity.email || "",
+      user_object_id: identity.objectId || ""
+    }));
+  };
 
-  if (request.method === "OPTIONS") {
-    return new Response(null, { status: 204 });
-  }
+  try {
+    setStage(1, "middleware complete");
+    if (request.method === "OPTIONS") return new Response(null, { status: 204 });
+    if (!env.DB) throw new Error("Profile database binding DB is missing.");
 
-  if (!env.DB) {
-    return json({ error: "Profile database binding DB is missing." }, 500);
-  }
+    identity = getAccessIdentity(request);
+    if (!identity.email) return json({ success: false, stage: "load session", error: "Not signed in." }, 401);
 
-  const identity = getAccessIdentity(request);
+    if (request.method === "GET") {
+      setStage(2, "load session");
+      const session = await getCurrentCustomerSession(env.DB, request);
 
-  if (!identity.email) {
-    return json({ error: "Not signed in." }, 401);
-  }
+      setStage(3, "read D1 profile");
+      await ensureProfileTable(env.DB);
+      const existing = await getProfile(env.DB, identity, env);
 
-  if (request.method === "GET") {
-    const existing = await getProfile(env.DB, identity, env);
-    const graphSync = await loadMicrosoftGraphProfile(env.DB, request, env, identity);
-    if (graphSync.ok && graphSync.profile) {
-      const graphFields = graphProfileFields(graphSync.profile);
-      if (graphProfileDiffers(existing, graphFields)) {
-        await env.DB.prepare(`
-          UPDATE profiles
-          SET microsoft_display_name = COALESCE(NULLIF(?, ''), microsoft_display_name),
-            microsoft_given_name = COALESCE(NULLIF(?, ''), microsoft_given_name),
-            microsoft_family_name = COALESCE(NULLIF(?, ''), microsoft_family_name),
-            microsoft_email = COALESCE(NULLIF(?, ''), microsoft_email),
-            microsoft_preferred_language = COALESCE(NULLIF(?, ''), microsoft_preferred_language),
-            microsoft_mobile_phone = COALESCE(NULLIF(?, ''), microsoft_mobile_phone),
-            microsoft_office_location = COALESCE(NULLIF(?, ''), microsoft_office_location),
-            microsoft_city = COALESCE(NULLIF(?, ''), microsoft_city),
-            microsoft_state = COALESCE(NULLIF(?, ''), microsoft_state),
-            microsoft_country = COALESCE(NULLIF(?, ''), microsoft_country),
-            microsoft_postal_code = COALESCE(NULLIF(?, ''), microsoft_postal_code),
-            microsoft_street_address = COALESCE(NULLIF(?, ''), microsoft_street_address),
-            microsoft_updated_at = CURRENT_TIMESTAMP,
-            graph_sync_last_at = CURRENT_TIMESTAMP,
-            graph_sync_success = 1,
-            graph_sync_failure_reason = NULL,
-            graph_sync_last_http_status = ?,
-            graph_sync_last_request_id = ?,
-            graph_sync_last_client_request_id = ?,
-            updated_at = CURRENT_TIMESTAMP
-          WHERE lower(email) = lower(?)
-        `).bind(
-          graphFields.microsoftDisplayName,
-          graphFields.microsoftGivenName,
-          graphFields.microsoftFamilyName,
-          graphFields.microsoftEmail,
-          graphFields.microsoftPreferredLanguage,
-          graphFields.microsoftMobilePhone,
-          graphFields.microsoftOfficeLocation,
-          graphFields.microsoftCity,
-          graphFields.microsoftState,
-          graphFields.microsoftCountry,
-          graphFields.microsoftPostalCode,
-          graphFields.microsoftStreetAddress,
-          graphSync.status || 200,
-          graphSync.requestId || "",
-          graphSync.clientRequestId || "",
-          identity.email
-        ).run();
+      const graphSync = await loadMicrosoftGraphProfile(env.DB, request, env, identity, session, setStage);
+      const graphFields = graphSync.ok && graphSync.profile ? graphProfileFields(graphSync.profile) : null;
+      const differs = graphFields ? graphProfileDiffers(existing, graphFields) : false;
+
+      setStage(7, "update D1 profile");
+      await updateGraphProfile(env.DB, identity, graphSync, differs ? graphFields : null);
+
+      const profile = await getProfile(env.DB, identity, env);
+      await ensureStripeCustomer(env.DB, env, identity, profile).catch(() => {});
+      if (!wantsJson(request)) return context.next();
+
+      const consent = await getLatestConsent(env.DB, identity.email);
+      const refreshedProfile = await getProfile(env.DB, identity, env);
+      setStage(8, "return JSON");
+      return json({ success: true, profile: refreshedProfile, consent });
+    }
+
+    if (request.method === "POST") {
+      let body = {};
+      try {
+        body = await request.json();
+      } catch {
+        body = {};
       }
-    } else {
-      await env.DB.prepare(`
-        UPDATE profiles
-        SET graph_sync_last_at = CURRENT_TIMESTAMP,
-          graph_sync_success = 0,
-          graph_sync_failure_reason = ?,
-          graph_sync_last_http_status = ?,
-          graph_sync_last_request_id = ?,
-          graph_sync_last_client_request_id = ?,
-          updated_at = CURRENT_TIMESTAMP
-        WHERE lower(email) = lower(?)
-      `).bind(
-        clean(graphSync.reason || "Microsoft Graph profile refresh failed.", 1000),
-        graphSync.status || 0,
-        graphSync.requestId || "",
-        graphSync.clientRequestId || "",
-        identity.email
-      ).run();
-    }
-    const profile = await getProfile(env.DB, identity, env);
-    await ensureStripeCustomer(env.DB, env, identity, profile).catch(() => {});
-    if (!wantsJson(request)) {
-      return context.next();
-    }
-    const consent = await getLatestConsent(env.DB, identity.email);
-    const refreshedProfile = await getProfile(env.DB, identity, env);
-    return json({ profile: refreshedProfile, consent });
-  }
-
-  if (request.method === "POST") {
-    let body = {};
-
-    try {
-      body = await request.json();
-    } catch {
-      body = {};
-    }
-
-    try {
+      setStage(3, "read and update D1 profile");
       const profile = await saveProfile(env.DB, identity, body, request, env);
       const consent = await getLatestConsent(env.DB, identity.email);
-      return json({ profile, consent, saved: true });
-    } catch (error) {
-      return json({ error: error.message || "Profile could not be saved." }, error.status || 500);
+      setStage(8, "return JSON");
+      return json({ success: true, profile, consent, saved: true });
     }
-  }
 
-  return json({ error: "Method not allowed." }, 405);
+    return json({ success: false, stage: "request method", error: "Method not allowed." }, 405);
+  } catch (error) {
+    const exception = error instanceof Error ? error : new Error(String(error || "Unknown profile error"));
+    console.error(JSON.stringify({
+      event: "profile_request_exception",
+      stage_number: stage.number,
+      stage: stage.name,
+      exception_name: exception.name,
+      exception_message: exception.message,
+      stack_trace: exception.stack || "",
+      line_number: (exception.stack || "").match(/profile\.js:(\d+):\d+/)?.[1] || "",
+      customer_email: identity.email || "",
+      user_object_id: identity.objectId || ""
+    }));
+    return json({ success: false, stage: stage.name, error: exception.message || "Profile request failed." }, exception.status || 500);
+  }
 }
