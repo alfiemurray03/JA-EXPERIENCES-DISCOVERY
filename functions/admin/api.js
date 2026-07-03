@@ -620,24 +620,6 @@ async function ensureTables(DB, env) {
   `).run();
 
   await DB.prepare(`
-    CREATE TABLE IF NOT EXISTS admin_bypass_sessions (
-      token_hash TEXT PRIMARY KEY,
-      admin_email TEXT,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      expires_at TEXT,
-      revoked_at TEXT,
-      last_used_at TEXT,
-      user_agent TEXT,
-      ip_address TEXT,
-      location TEXT
-    )
-  `).run();
-
-  await safeAlter(DB, `ALTER TABLE admin_bypass_sessions ADD COLUMN user_agent TEXT`);
-  await safeAlter(DB, `ALTER TABLE admin_bypass_sessions ADD COLUMN ip_address TEXT`);
-  await safeAlter(DB, `ALTER TABLE admin_bypass_sessions ADD COLUMN location TEXT`);
-
-  await DB.prepare(`
     CREATE TABLE IF NOT EXISTS customer_internal_notes (
       id TEXT PRIMARY KEY,
       email TEXT NOT NULL,
@@ -823,58 +805,6 @@ async function writeAudit(DB, identity, action, entityType, entityId, summary, m
   ).run();
 }
 
-async function sha256(value) {
-  const bytes = new TextEncoder().encode(value);
-  const hash = await crypto.subtle.digest("SHA-256", bytes);
-  return [...new Uint8Array(hash)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
-}
-
-function getSessionContext(request) {
-  const headers = request.headers;
-  const country = headers.get("cf-ipcountry") || "";
-  const city = headers.get("cf-ipcity") || "";
-  const region = headers.get("cf-region") || headers.get("cf-region-code") || "";
-  return {
-    user_agent: headers.get("user-agent") || "",
-    ip_address: headers.get("cf-connecting-ip") || "",
-    location: [city, region, country].filter(Boolean).join(", ")
-  };
-}
-
-async function createBypass(DB, identity, request) {
-  const token = crypto.randomUUID() + crypto.randomUUID();
-  const tokenHash = await sha256(token);
-  const expires = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
-  const sessionContext = request ? getSessionContext(request) : { user_agent: "", ip_address: "", location: "" };
-  await DB.prepare(`
-    INSERT INTO admin_bypass_sessions (token_hash, admin_email, expires_at, user_agent, ip_address, location)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `).bind(tokenHash, identity.email, expires, sessionContext.user_agent, sessionContext.ip_address, sessionContext.location).run();
-  await writeAudit(DB, identity, "admin_bypass_created", "admin_bypass_sessions", tokenHash.slice(0, 12), "Created admin live-site bypass session.", { expires });
-  return {
-    token,
-    expires,
-    cookie: `ja_admin_bypass=${token}; Path=/; Max-Age=7200; HttpOnly; Secure; SameSite=Lax`
-  };
-}
-
-function readBypassToken(request) {
-  const cookie = request.headers.get("Cookie") || "";
-  return cookie.split(";").map((part) => part.trim()).find((part) => part.startsWith("ja_admin_bypass="))?.split("=")[1] || "";
-}
-
-async function revokeBypass(DB, request, identity) {
-  const token = readBypassToken(request);
-  if (token) {
-    await DB.prepare(`UPDATE admin_bypass_sessions SET revoked_at = CURRENT_TIMESTAMP WHERE token_hash = ?`).bind(await sha256(token)).run();
-  }
-  await writeAudit(DB, identity, "admin_bypass_removed", "admin_bypass_sessions", token ? "current" : "none", "Removed admin live-site bypass session.", {});
-  return {
-    removed: true,
-    cookie: "ja_admin_bypass=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax"
-  };
-}
-
 async function seedDefaults(DB) {
   const plans = [
     ["free_discovery_enquiry", "Free Discovery Enquiry", "Free", "£0", 0, "", "", "1 to 3 working days", "Initial review and recommendation", "A no-cost starting point for questions and support route guidance.", "Start a free enquiry", 1, 0, 0],
@@ -959,7 +889,7 @@ async function getOverview(DB) {
     all(DB, `SELECT email, verified_name, display_name, contact_email, updated_at FROM profiles ORDER BY updated_at DESC, created_at DESC LIMIT 6`),
     all(DB, `SELECT id, subject, status, priority, updated_at FROM support_tickets ORDER BY updated_at DESC, created_at DESC LIMIT 6`),
     all(DB, `SELECT id, issue_type AS title, status, updated_at FROM system_reports ORDER BY updated_at DESC, created_at DESC LIMIT 6`),
-    all(DB, `SELECT token_hash, admin_email, created_at, expires_at, revoked_at, last_used_at FROM admin_bypass_sessions ORDER BY COALESCE(last_used_at, created_at) DESC LIMIT 6`),
+    all(DB, `SELECT token_hash, email AS admin_email, created_at, absolute_expires_at AS expires_at, revoked_at, last_seen_at AS last_used_at FROM admin_oidc_sessions ORDER BY COALESCE(last_seen_at, created_at) DESC LIMIT 6`),
     all(DB, `SELECT email, name, role, status, updated_at FROM admin_users WHERE COALESCE(status, 'Active') = 'Active' ORDER BY updated_at DESC LIMIT 12`)
   ]);
 
@@ -1069,7 +999,7 @@ async function getMembership(DB) {
 async function getSecurity(DB) {
   const [pins, sessions, history] = await Promise.all([
     all(DB, `SELECT email, status, expires_at, used_at, revoked_at, last_used_at, updated_at, created_at FROM customer_support_pins ORDER BY updated_at DESC LIMIT 100`),
-    all(DB, `SELECT admin_email, created_at, expires_at, revoked_at, last_used_at FROM admin_bypass_sessions ORDER BY COALESCE(last_used_at, created_at) DESC LIMIT 50`),
+    all(DB, `SELECT email AS admin_email, created_at, absolute_expires_at AS expires_at, revoked_at, last_seen_at AS last_used_at FROM admin_oidc_sessions ORDER BY COALESCE(last_seen_at, created_at) DESC LIMIT 50`),
     all(DB, `SELECT action, entity_type, entity_id, summary, created_at FROM admin_audit_log WHERE action LIKE '%session%' OR action LIKE '%pin%' ORDER BY created_at DESC LIMIT 50`)
   ]);
   return { pins, sessions, history };
@@ -2476,14 +2406,7 @@ async function getAuditLog(DB, filters = {}) {
 }
 
 async function getSessions(DB, request) {
-  const bypassTokenHash = request && readBypassToken(request) ? await sha256(readBypassToken(request)) : "";
   const nativeTokenHash = request?.headers.get("x-ja-auth-session") || "";
-  const bypassSessions = await all(DB, `
-    SELECT token_hash, admin_email, created_at, expires_at, revoked_at, last_used_at, user_agent, ip_address, location
-    FROM admin_bypass_sessions
-    ORDER BY COALESCE(last_used_at, created_at) DESC
-    LIMIT 200
-  `);
   let nativeSessions = [];
   try {
     nativeSessions = await all(DB, `
@@ -2496,12 +2419,12 @@ async function getSessions(DB, request) {
   } catch {
     // The additive native OIDC migration has not been applied while Access remains active.
   }
-  return [...nativeSessions, ...bypassSessions]
+  return nativeSessions
     .sort((left, right) => String(right.last_used_at || right.created_at).localeCompare(String(left.last_used_at || left.created_at)))
     .slice(0, 200)
     .map((session) => ({
       ...session,
-      is_current: session.token_hash === nativeTokenHash || session.token_hash === bypassTokenHash
+      is_current: session.token_hash === nativeTokenHash
     }));
 }
 
@@ -2510,7 +2433,7 @@ async function getLoginHistory(DB, email) {
     SELECT action, entity_type, entity_id, summary, metadata, created_at, actor_email
     FROM admin_audit_log
     WHERE lower(actor_email) = lower(?)
-      AND action IN ('admin_bypass_created', 'admin_bypass_used', 'admin_bypass_removed', 'admin_bypass_expired', 'admin_add', 'admin_remove', 'role_update', 'role_create', 'role_delete', 'role_clone', 'role_rename')
+      AND action IN ('admin_add', 'admin_remove', 'role_update', 'role_create', 'role_delete', 'role_clone', 'role_rename')
     ORDER BY created_at DESC
     LIMIT 50
   `, [email]);
@@ -2869,17 +2792,6 @@ export async function onRequest(context) {
       if (!isSameOriginRequest(request)) return json({ error: "This request could not be verified." }, 403);
       const body = await request.json().catch(() => ({}));
       if (section === "prefs") return json({ preferences: await saveAdminPreferences(env.DB, body, identity), saved: true });
-      if (section === "bypass") {
-        if (!ownerAccess && !(adminContext.permissions.includes("manage_api") || adminContext.permissions.includes("manage_settings"))) {
-          return json({ error: "Forbidden.", section }, 403);
-        }
-        if (body.action === "remove") {
-          const removed = await revokeBypass(env.DB, request, identity);
-          return jsonWithHeaders({ bypass: { active: false }, saved: true }, { "Set-Cookie": removed.cookie });
-        }
-        const bypass = await createBypass(env.DB, identity, request);
-        return jsonWithHeaders({ bypass: { active: true, expires: bypass.expires, redirect: "/" }, saved: true }, { "Set-Cookie": bypass.cookie });
-      }
       if (body.action === "export_customer_data") {
         if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_users", "manage_crm"])) {
           return json({ error: "Forbidden.", section }, 403);
@@ -2927,26 +2839,21 @@ export async function onRequest(context) {
         }
         if (body.action === "revoke") {
           const requestedHash = clean(body.token_hash, 120);
-          await DB.prepare(`UPDATE admin_bypass_sessions SET revoked_at = CURRENT_TIMESTAMP WHERE token_hash = ?`).bind(requestedHash).run();
           try {
             await DB.prepare(`UPDATE admin_oidc_sessions SET revoked_at = CURRENT_TIMESTAMP WHERE token_hash = ?`).bind(requestedHash).run();
           } catch {
             // Native session storage is additive and may not exist before migration.
           }
           await writeAudit(env.DB, identity, "session_revoke", "admin_sessions", requestedHash, "Revoked an admin session.", {});
-          const bypassTokenHash = readBypassToken(request) ? await sha256(readBypassToken(request)) : "";
           const nativeTokenHash = request.headers.get("x-ja-auth-session") || "";
           const headers = requestedHash === nativeTokenHash
             ? { "Set-Cookie": "ja_admin_session=; Path=/admin; Max-Age=0; HttpOnly; Secure; SameSite=Lax" }
-            : requestedHash === bypassTokenHash
-              ? { "Set-Cookie": "ja_admin_bypass=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax" }
-              : {};
+            : {};
           return headers["Set-Cookie"]
             ? jsonWithHeaders({ sessions: await getSessions(env.DB, request), saved: true }, headers)
             : json({ sessions: await getSessions(env.DB, request), saved: true });
         }
         if (body.action === "revoke_all") {
-          await DB.prepare(`UPDATE admin_bypass_sessions SET revoked_at = CURRENT_TIMESTAMP WHERE revoked_at IS NULL`).run();
           try {
             await DB.prepare(`UPDATE admin_oidc_sessions SET revoked_at = CURRENT_TIMESTAMP WHERE revoked_at IS NULL`).run();
           } catch {
@@ -2955,9 +2862,7 @@ export async function onRequest(context) {
           await writeAudit(env.DB, identity, "session_revoke_all", "admin_sessions", "all", "Revoked all admin sessions.", {});
           return jsonWithHeaders(
             { sessions: await getSessions(env.DB, request), saved: true },
-            { "Set-Cookie": request.headers.get("x-ja-auth-session")
-              ? "ja_admin_session=; Path=/admin; Max-Age=0; HttpOnly; Secure; SameSite=Lax"
-              : "ja_admin_bypass=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax" }
+            { "Set-Cookie": "ja_admin_session=; Path=/admin; Max-Age=0; HttpOnly; Secure; SameSite=Lax" }
           );
         }
         throw new Error("Unknown session action.");

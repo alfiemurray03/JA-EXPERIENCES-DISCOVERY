@@ -282,7 +282,7 @@ function bindAdminActions() {
     }
 
     if (type === "revoke-all-sessions") {
-      if (!window.confirm("Revoke all administrator sessions? Every active bypass session will be ended.")) return;
+      if (!window.confirm("Revoke all administrator sessions?")) return;
       await api("sessions", { method: "POST", body: JSON.stringify({ action: "revoke_all" }) });
       await loadSection("sessions");
     }
@@ -341,14 +341,6 @@ function bindAdminActions() {
 
     if (type === "import-affiliate-content") {
       importAffiliateContent();
-    }
-
-    if (type === "create-bypass") {
-      createAdminBypass();
-    }
-
-    if (type === "remove-bypass") {
-      removeAdminBypass();
     }
 
     if (type === "export-records") {
@@ -861,11 +853,9 @@ function renderOverview(overview) {
         </section>
 
         <section class="admin-card">
-          <div class="section-head"><div><h2>Website access</h2><p>Preview or manage secure access to the public website.</p></div></div>
+          <div class="section-head"><div><h2>Website access</h2><p>Preview the public website while your administrator session remains active.</p></div></div>
           <div class="section-actions">
-            <button class="admin-button" type="button" data-action="create-bypass">Enter as Admin</button>
             <a class="admin-button secondary" href="/?preview_public_block=1" target="_blank" rel="noopener noreferrer">Preview Public View</a>
-            <button class="admin-button secondary" type="button" data-action="remove-bypass">Exit Admin Access</button>
           </div>
         </section>
       </div>
@@ -908,7 +898,7 @@ function renderOverview(overview) {
       </div>
       <div class="dashboard-stack">
         <section class="admin-card">
-          <div class="section-head"><div><h2>Active Sessions</h2><p>Current bypass and access sessions.</p></div></div>
+          <div class="section-head"><div><h2>Active Sessions</h2><p>Current administrator access sessions.</p></div></div>
           ${table(["Administrator", "Created", "Last used", "Status"], sessions.map((session) => `
             <tr><td><strong>${escapeHtml(session.admin_email || "")}</strong></td><td>${escapeHtml(formatDate(session.created_at))}</td><td>${escapeHtml(formatDate(session.last_used_at || session.created_at))}</td><td>${session.revoked_at ? "Revoked" : "Active"}</td></tr>
           `).join(""))}
@@ -3305,7 +3295,7 @@ function renderSessions(sessions = []) {
   document.getElementById("adminPanel").innerHTML = `
     <div class="admin-card">
       <div class="section-head">
-        <div><h2>Administrator Sessions</h2><p>View active bypass sessions and revoke them remotely.</p></div>
+        <div><h2>Administrator Sessions</h2><p>Review active administrator sessions and revoke them remotely.</p></div>
         <div class="section-actions">
           <button class="admin-button danger" type="button" data-action="revoke-all-sessions">Revoke All Sessions</button>
         </div>
@@ -3547,30 +3537,6 @@ async function importAffiliateContent() {
   renderAffiliate(data.affiliate);
 }
 
-async function createAdminBypass() {
-  const websiteWindow = window.open("about:blank", "_blank");
-  if (!websiteWindow) {
-    window.alert("Your browser blocked the website tab. Allow pop-ups for this site and try again.");
-    return;
-  }
-  websiteWindow.opener = null;
-  websiteWindow.document.title = "Opening website…";
-  websiteWindow.document.body.textContent = "Authorising administrator website access…";
-
-  try {
-    const data = await api("bypass", { method: "POST", body: JSON.stringify({ action: "create" }) });
-    websiteWindow.location.replace(data.bypass?.redirect || "/");
-  } catch (error) {
-    websiteWindow.close();
-    window.alert(error.message || "Administrator website access could not be created.");
-  }
-}
-
-async function removeAdminBypass() {
-  await api("bypass", { method: "POST", body: JSON.stringify({ action: "remove" }) });
-  window.alert("Admin website access has been removed.");
-}
-
 async function openCustomerStripePortal(email) {
   if (!email) return window.alert("Customer email is missing.");
   const portalWindow = window.open("about:blank", "_blank");
@@ -3713,7 +3679,6 @@ function renderStatusForm(section, settings, labels) {
         <div class="admin-alert" id="${section}ModeHelp">Plain text mode escapes HTML and preserves line breaks.</div>
         <div class="section-actions">
           <button class="admin-button" type="submit">${escapeHtml(labels.saveLabel)}</button>
-          <button class="admin-button secondary" type="button" data-action="create-bypass">Open Website as Admin</button>
           <a class="admin-button secondary" href="/?preview_public_block=1" target="_blank" rel="noopener noreferrer">${escapeHtml(labels.previewLabel)}</a>
         </div>
         <div id="${section}Saved" class="admin-success" hidden></div>

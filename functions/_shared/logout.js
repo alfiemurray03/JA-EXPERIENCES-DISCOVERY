@@ -1,5 +1,4 @@
 const SESSION_TABLES = new Set([
-  "admin_bypass_sessions",
   "customer_sessions"
 ]);
 

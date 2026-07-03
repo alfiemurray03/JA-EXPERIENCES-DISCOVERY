@@ -147,6 +147,48 @@ test("authenticated users bypass the public customer landing page", async () => 
   assert.equal(response.headers.get("location"), "/account/dashboard/");
 });
 
+test("authenticated administrators bypass Launch Gateway and maintenance on public routes", async () => {
+  const DB = new MiddlewareD1();
+  const prepare = DB.prepare.bind(DB);
+  DB.prepare = (sql) => {
+    if (sql.includes("site_settings")) throw new Error("Authenticated admin requests must not evaluate public gating settings.");
+    return prepare(sql);
+  };
+  const response = await onRequest({
+    request: new Request("https://experiences.example.test/", {
+      headers: { Cookie: "ja_admin_session=opaque-session" }
+    }),
+    env: environment(DB),
+    next: async () => new Response("public site", { status: 200 })
+  });
+  assert.equal(response.status, 200);
+  assert.equal(await response.text(), "public site");
+});
+
+test("visitors still see Launch Gateway when public gating is enabled", async () => {
+  const response = await onRequest({
+    request: new Request("https://experiences.example.test/"),
+    env: {
+      ...environment(new MiddlewareD1({ session: false })),
+      DB: {
+        prepare(sql) {
+          if (sql.includes("FROM site_settings")) {
+            return {
+              all: async () => ({ results: [{ key: "launchgateway_enabled", value: "true" }] }),
+              first: async () => null,
+              run: async () => ({ success: true, meta: { changes: 1 } })
+            };
+          }
+          return new MiddlewareD1({ session: false }).prepare(sql);
+        }
+      }
+    },
+    next: async () => new Response("public site", { status: 200 })
+  });
+  assert.equal(response.status, 200);
+  assert.match(await response.text(), /Launch Gateway/);
+});
+
 test("signed-out users can view portal landing pages before authentication", async () => {
   for (const path of ["/account/", "/admin/"]) {
     const response = await onRequest({

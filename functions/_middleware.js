@@ -43,71 +43,6 @@ async function isAdminRequest(request, env) {
   }
 }
 
-async function sha256(value) {
-  const bytes = new TextEncoder().encode(value);
-  const hash = await crypto.subtle.digest("SHA-256", bytes);
-  return [...new Uint8Array(hash)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
-}
-
-async function auditBypass(DB, row, action, summary, path) {
-  try {
-    await DB.prepare(`
-      INSERT INTO admin_audit_log (id, actor_email, action, entity_type, entity_id, summary, metadata)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).bind(
-      crypto.randomUUID(),
-      row.admin_email || "admin-bypass",
-      action,
-      "admin_bypass_sessions",
-      row.token_hash.slice(0, 12),
-      summary,
-      JSON.stringify({ path })
-    ).run();
-  } catch {
-    // Audit failure must not block a valid admin bypass cookie.
-  }
-}
-
-async function hasAdminBypass(request, env) {
-  if (!env.DB) return false;
-  const token = (request.headers.get("Cookie") || "")
-    .split(";")
-    .map((part) => part.trim())
-    .find((part) => part.startsWith("ja_admin_bypass="))
-    ?.split("=")[1] || "";
-  if (!token) return false;
-
-  try {
-    const tokenHash = await sha256(token);
-    const row = await env.DB.prepare(`
-      SELECT token_hash, admin_email, last_used_at FROM admin_bypass_sessions
-      WHERE token_hash = ?
-        AND revoked_at IS NULL
-        AND datetime(expires_at) > datetime('now')
-    `).bind(tokenHash).first();
-    if (!row) {
-      const expired = await env.DB.prepare(`
-        SELECT token_hash, admin_email FROM admin_bypass_sessions
-        WHERE token_hash = ?
-          AND revoked_at IS NULL
-          AND datetime(expires_at) <= datetime('now')
-      `).bind(tokenHash).first();
-      if (expired) {
-        await env.DB.prepare(`UPDATE admin_bypass_sessions SET revoked_at = CURRENT_TIMESTAMP WHERE token_hash = ?`).bind(tokenHash).run();
-        await auditBypass(env.DB, expired, "admin_bypass_expired", "Admin live-site bypass session expired.", new URL(request.url).pathname);
-      }
-      return false;
-    }
-    await env.DB.prepare(`UPDATE admin_bypass_sessions SET last_used_at = CURRENT_TIMESTAMP WHERE token_hash = ?`).bind(tokenHash).run();
-    if (!row.last_used_at) {
-      await auditBypass(env.DB, row, "admin_bypass_used", "Used admin live-site bypass session.", new URL(request.url).pathname);
-    }
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 function pageHtml(settings, page) {
   const prefix = page === "launch-gateway" ? "launchgateway" : "maintenance";
   const mode = settings[`${prefix}_content_mode`] === "html" ? "html" : "plain";
@@ -392,6 +327,22 @@ function requestIdentitySnapshot(request) {
   };
 }
 
+async function getAuthenticatedAdminIdentity(request, env) {
+  try {
+    const identity = await getNativeSession(request, env, "admin");
+    if (!identity) return null;
+    const authenticatedRequest = withIdentity(request, identity);
+    if (!(await isAdminRequest(authenticatedRequest, env))) return null;
+    return identity;
+  } catch (error) {
+    console.error(JSON.stringify({
+      event: "admin_bypass_lookup_error",
+      message: error instanceof Error ? error.message : "Unknown admin bypass error"
+    }));
+    return null;
+  }
+}
+
 export async function onRequest(context) {
   const { env, next } = context;
   let request = withIdentity(context.request, null);
@@ -549,13 +500,12 @@ export async function onRequest(context) {
     return next(request);
   }
 
-  const settings = await getSiteSettings(env.DB);
-  const previewBlocked = url.searchParams.get("preview_public_block") === "1";
-  const adminBypass = !previewBlocked && await hasAdminBypass(request, env);
-
-  if (adminBypass) {
+  const adminIdentity = await getAuthenticatedAdminIdentity(request, env);
+  if (adminIdentity) {
     return next(request);
   }
+
+  const settings = await getSiteSettings(env.DB);
 
   if (settings.maintenance_enabled === "true") {
     return new Response(pageHtml(settings, "maintenance"), {
