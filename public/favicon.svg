@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Premium dark charcoal background -->
+  <rect width="512" height="512" fill="#1a1a1a"/>
+  
+  <!-- Thin elegant gold border -->
+  <circle cx="256" cy="256" r="250" fill="none" stroke="#d4af37" stroke-width="2"/>
+  
+  <!-- Large white JA monogram -->
+  <text x="256" y="300" font-family="Georgia, serif" font-size="340" font-weight="bold" fill="#ffffff" text-anchor="middle" dominant-baseline="middle" letter-spacing="-14">JA</text>
+</svg>
