@@ -14,6 +14,7 @@ const THEME_MODES = ["light", "dark", "system"];
 const ADMIN_SCHEMA_VERSION = "2026-07-03-rc3.1";
 const PERMISSION_SECTIONS = {
   overview: ["view_dashboard"],
+  health: ["view_dashboard", "manage_status", "manage_api", "manage_settings"],
   operations: ["view_dashboard", "manage_status", "manage_analytics", "manage_api", "manage_settings"],
   status: ["manage_status"],
   analytics: ["manage_analytics"],
@@ -44,6 +45,110 @@ const PERMISSION_SECTIONS = {
   launchgateway: ["manage_content"],
   maintenance: ["manage_content"]
 };
+
+async function healthCount(DB, sql, bindings = []) {
+  try {
+    const row = await DB.prepare(sql).bind(...bindings).first();
+    return Number(row?.count || 0);
+  } catch {
+    return null;
+  }
+}
+
+async function healthRows(DB, sql, bindings = []) {
+  try {
+    return await all(DB, sql, bindings);
+  } catch {
+    return [];
+  }
+}
+
+async function checkRemoteService(url, options = {}) {
+  const startedAt = Date.now();
+  try {
+    const response = await fetch(url, { ...options, signal: AbortSignal.timeout(5000) });
+    return {
+      reachable: response.status < 500,
+      status: response.status,
+      latency_ms: Date.now() - startedAt
+    };
+  } catch (error) {
+    return {
+      reachable: false,
+      status: 0,
+      latency_ms: Date.now() - startedAt,
+      message: clean(error?.message || "Connection failed.", 160)
+    };
+  }
+}
+
+async function getStripeHealth(DB, env) {
+  try {
+    return await getStripe(DB, env, true);
+  } catch (error) {
+    const settings = await getStripeSettings(DB, env).catch(() => ({ secretKey: "" }));
+    return {
+      configured: Boolean(settings.secretKey),
+      account: null,
+      mode: settings.secretKey?.startsWith("sk_live_") ? "Live" : settings.secretKey?.startsWith("sk_test_") ? "Test" : "Unknown",
+      message: clean(error?.message || "Stripe health check failed.", 180)
+    };
+  }
+}
+
+async function getProductionHealth(DB, env) {
+  const [settings, email, stripe, entra, graph, customers, activeMemberships, openSupport, pendingGdpr, recentErrors, webhookTotal, webhookFailures, latestWebhook] = await Promise.all([
+    settingMap(DB, ["maintenance_enabled", "launchgateway_enabled"], {}),
+    getEmailSettings(DB, env).catch(() => ({ configured: false, email_provider: "unknown" })),
+    getStripeHealth(DB, env),
+    checkRemoteService(`${String(env.ADMIN_OIDC_ISSUER || "").replace(/\/$/, "")}/.well-known/openid-configuration"),
+    checkRemoteService("https://graph.microsoft.com/v1.0/$metadata", { method: "HEAD" }),
+    healthCount(DB, "SELECT COUNT(*) AS count FROM profiles"),
+    healthCount(DB, "SELECT COUNT(*) AS count FROM stripe_subscriptions WHERE lower(status) IN ('active', 'trialing')"),
+    healthCount(DB, "SELECT COUNT(*) AS count FROM support_tickets WHERE lower(status) NOT IN ('closed', 'resolved')"),
+    healthCount(DB, "SELECT COUNT(*) AS count FROM data_protection_requests WHERE lower(status) NOT IN ('closed', 'sent', 'rejected', 'completed')"),
+    healthRows(DB, "SELECT id, title, severity, status, created_at, updated_at FROM system_events WHERE lower(COALESCE(status, 'open')) NOT IN ('closed', 'resolved') ORDER BY COALESCE(updated_at, created_at) DESC LIMIT 10"),
+    healthCount(DB, "SELECT COUNT(*) AS count FROM stripe_webhook_events"),
+    healthCount(DB, "SELECT COUNT(*) AS count FROM stripe_webhook_events WHERE lower(COALESCE(status, '')) IN ('failed', 'error', 'retrying')"),
+    healthRows(DB, "SELECT event_id, event_type, status, received_at, processed_at FROM stripe_webhook_events ORDER BY COALESCE(processed_at, received_at) DESC LIMIT 1")
+  ]);
+
+  const maintenanceEnabled = String(settings.maintenance_enabled).toLowerCase() === "true";
+  const launchGatewayEnabled = String(settings.launchgateway_enabled).toLowerCase() === "true";
+  const emailConfigured = Boolean(email.configured);
+  const webhookConfigured = Boolean((await getStripeSettings(DB, env)).webhookSecret);
+  const databaseSize = await healthRows(DB, "PRAGMA page_count");
+  const databasePageSize = await healthRows(DB, "PRAGMA page_size");
+  const pageCount = Number(databaseSize[0]?.page_count || 0);
+  const pageSize = Number(databasePageSize[0]?.page_size || 0);
+
+  return {
+    checked_at: new Date().toISOString(),
+    services: {
+      website: { status: maintenanceEnabled ? "maintenance" : launchGatewayEnabled ? "launch-gateway" : "operational", message: maintenanceEnabled ? "Maintenance mode is enabled." : launchGatewayEnabled ? "Launch Gateway is enabled." : "Public mode is enabled." },
+      entra: { status: entra.reachable ? "operational" : "degraded", message: entra.reachable ? `OIDC discovery responded in ${entra.latency_ms} ms.` : entra.message || "OIDC discovery is unavailable." },
+      graph: { status: graph.reachable ? "operational" : "degraded", message: graph.reachable ? `Microsoft Graph responded in ${graph.latency_ms} ms.` : graph.message || "Microsoft Graph is unavailable." },
+      stripe: { status: stripe.account ? "operational" : stripe.configured ? "degraded" : "unavailable", message: stripe.message, mode: stripe.mode },
+      stripe_webhooks: { status: !webhookConfigured || webhookTotal === null ? "unavailable" : Number(webhookFailures || 0) > 0 ? "degraded" : "operational", message: !webhookConfigured ? "Webhook signing secret is not configured." : webhookTotal === null ? "No webhook event table is present, so delivery history cannot be verified." : `${webhookTotal} deliveries recorded; ${webhookFailures || 0} marked failed or retrying.`, latest: latestWebhook[0] || null },
+      workers: { status: "operational", message: "This authenticated Worker health request completed successfully." },
+      database: { status: customers === null ? "degraded" : "operational", message: customers === null ? "The profiles query failed." : "D1 queries completed successfully." },
+      email: { status: emailConfigured ? "configured" : "unavailable", message: emailConfigured ? `Provider ${email.email_provider} is configured; delivery is not tested by this read-only check.` : "Outbound email settings are incomplete." },
+      launch_gateway: { status: launchGatewayEnabled ? "enabled" : "disabled", message: launchGatewayEnabled ? "Launch Gateway is enabled." : "Launch Gateway is disabled." },
+      maintenance: { status: maintenanceEnabled ? "enabled" : "disabled", message: maintenanceEnabled ? "Maintenance mode is enabled." : "Maintenance mode is disabled." }
+    },
+    metrics: {
+      active_customers: customers,
+      active_memberships: activeMemberships,
+      open_support_requests: openSupport,
+      pending_gdpr_requests: pendingGdpr,
+      recent_system_errors: recentErrors.length,
+      worker_error_rate: null,
+      database_bytes: pageCount && pageSize ? pageCount * pageSize : null
+    },
+    recent_errors: recentErrors,
+    limitations: ["Worker error rate requires Cloudflare observability access and is not inferred from application records.", "Email status confirms configuration only; use the Email test action to verify delivery."]
+  };
+}
 const DEFAULT_ROLE_PERMISSIONS = {
   "Platform Owner": ["*"],
   "Senior Administrator": [
@@ -1595,6 +1700,7 @@ async function saveSupport(DB, body) {
   const id = clean(body.id, 120) || crypto.randomUUID();
   const reference = clean(body.reference, 80) || (await nextReference(DB, "support_tickets", "SUP"));
   const auditLog = addAudit(body.audit_log || "[]", { type: body.action === "create" ? "Case created" : "Case updated", actor: body.actor || "admin" });
+  const subject = clean(body.subject, 250) || "Support case";
   await DB.prepare(`
     INSERT INTO support_tickets (id, reference, customer_email, customer_name, category, department, assigned_admin, subject, status, priority, sla_target, notes, customer_replies, attachments, resolution_summary, audit_log, updated_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
@@ -1623,7 +1729,7 @@ async function saveSupport(DB, body) {
     clean(body.category, 80) || "General Enquiry",
     clean(body.department, 80) || "Support",
     clean(body.assigned_admin, 254),
-    clean(body.subject, 250),
+    subject,
     clean(body.status, 80) || "Open",
     clean(body.priority, 80) || "Normal",
     clean(body.sla_target, 80) || "48h",
@@ -1634,7 +1740,10 @@ async function saveSupport(DB, body) {
     auditLog
   ).run();
 
-  return all(DB, `SELECT * FROM support_tickets ORDER BY updated_at DESC, created_at DESC LIMIT 500`);
+  return {
+    records: await all(DB, `SELECT * FROM support_tickets ORDER BY updated_at DESC, created_at DESC LIMIT 500`),
+    saved: { id, reference, subject }
+  };
 }
 
 async function saveSystemEvent(DB, body) {
@@ -2669,6 +2778,7 @@ export async function onRequest(context) {
           audit_filters: Object.fromEntries(url.searchParams.entries())
         });
       }
+      if (section === "health") return json({ admin: adminContext, health: await getProductionHealth(env.DB, env) });
       if (section === "prefs") return json({ admin: adminContext, preferences: adminContext.preferences });
       if (section === "admins") return json({ admin: adminContext, admins: await getAdmins(env.DB, env), roles: await getRoles(env.DB), permission_catalog: PERMISSION_CATALOG });
       if (section === "roles") return json({ admin: adminContext, roles: await getRoles(env.DB), permission_catalog: PERMISSION_CATALOG });
@@ -2877,9 +2987,9 @@ export async function onRequest(context) {
       }
       if (section === "support") {
         if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_support", "manage_crm"])) return json({ error: "Forbidden.", section }, 403);
-        const support = await saveSupport(env.DB, body);
-        await writeAudit(env.DB, identity, "support_update", "support_tickets", clean(body.id, 120), `Updated support ticket ${clean(body.subject, 250)}.`, { status: clean(body.status, 80), priority: clean(body.priority, 80) });
-        return json({ support, saved: true });
+        const result = await saveSupport(env.DB, body);
+        await writeAudit(env.DB, identity, body.action === "create" ? "support_create" : "support_update", "support_tickets", result.saved.id, `${body.action === "create" ? "Created" : "Updated"} support ticket ${result.saved.reference}: ${result.saved.subject}.`, { reference: result.saved.reference, status: clean(body.status, 80), priority: clean(body.priority, 80) });
+        return json({ support: result.records, saved: true });
       }
       if (section === "notifications") {
         if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_email", "manage_support", "manage_crm"])) return json({ error: "Forbidden.", section }, 403);

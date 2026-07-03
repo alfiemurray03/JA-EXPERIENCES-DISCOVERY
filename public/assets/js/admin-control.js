@@ -19,6 +19,7 @@ const state = {
 
 const sectionTitles = {
   overview: "Overview",
+  health: "Production Health",
   operations: "Operations",
   admins: "Admin Users",
   roles: "Roles",
@@ -52,6 +53,7 @@ const sectionTitles = {
 
 const sectionDescriptions = {
   overview: "Executive summary of your customer and platform operations.",
+  health: "Live dependency checks, operational totals and verified platform limitations.",
   operations: "Dedicated operational dashboard for senior oversight.",
   analytics: "Review account, enquiry, request and plan activity.",
   status: "Monitor live service health, incidents and maintenance from Atlassian Statuspage.",
@@ -637,6 +639,7 @@ function setAdmin(admin) {
 function dashboardQuickCards() {
   const widgets = [
     ["customers", "users", "View CRM", "Search and manage customer profiles"],
+    ["health", "pulse", "Production Health", "Review verified platform and integration signals"],
     ["status", "pulse", "Status Centre", "Review live service health and incidents"],
     ["maintenance", "shield", "Maintenance mode", "Manage public maintenance controls"],
     ["launchgateway", "clock", "Publish website", "Review Launch Gateway visibility"],
@@ -733,6 +736,7 @@ async function saveFavourites(favourites) {
 
 function renderSection(section, data) {
   if (section === "overview") renderOverview(data.overview);
+  if (section === "health") renderProductionHealth(data.health);
   if (section === "operations") renderOperations(data.operations);
   if (section === "analytics") renderAnalytics(data.analytics, data.status);
   if (section === "status") renderStatusCentre(data.status);
@@ -847,15 +851,13 @@ function renderOverview(overview) {
 
       <div class="dashboard-stack">
         <section class="admin-card">
-          <div class="section-head"><div><h2>Platform health</h2><p>Current signals from this admin session.</p></div></div>
+          <div class="section-head"><div><h2>Platform health</h2><p>Verified controls available in the overview response.</p></div></div>
           <div class="health-list">
             ${health("Website", websiteLabel, websiteTone)}
-            ${health("API", "Operational", "online")}
-            ${health("Database", "Connected", "online")}
-            ${health("Email", "Check settings", "warning")}
-            ${health("Workers", "Operational", "online")}
-            ${health("Cloudflare edge", "Online", "online")}
+            ${health("Maintenance mode", maintenanceOn ? "Enabled" : "Disabled", maintenanceOn ? "warning" : "online")}
+            ${health("Launch Gateway", launchGatewayOn ? "Enabled" : "Disabled", launchGatewayOn ? "warning" : "online")}
           </div>
+          <div class="section-actions"><button class="admin-button secondary" type="button" data-action="load-section" data-section="health">Open Production Health</button></div>
         </section>
 
         <section class="admin-card">
@@ -926,6 +928,91 @@ function kpi(label, value, meta) {
 
 function health(label, status, tone = "online") {
   return `<div class="health-item"><span class="status-dot is-${escapeAttr(tone)}"></span><strong>${escapeHtml(label)}</strong><span>${escapeHtml(status)}</span></div>`;
+}
+
+function productionHealthTone(status) {
+  if (["operational", "configured", "disabled"].includes(status)) return "online";
+  if (["maintenance", "degraded", "enabled", "launch-gateway"].includes(status)) return "warning";
+  return "critical";
+}
+
+function formatBytes(value) {
+  const bytes = Number(value);
+  if (!Number.isFinite(bytes) || bytes < 0) return "Unavailable";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 ** 2) return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024 ** 3) return `${(bytes / 1024 ** 2).toFixed(1)} MB`;
+  return `${(bytes / 1024 ** 3).toFixed(1)} GB`;
+}
+
+function renderProductionHealth(payload = {}) {
+  const services = payload.services || {};
+  const metrics = payload.metrics || {};
+  const serviceLabels = {
+    website: "Website",
+    entra: "Microsoft Entra",
+    graph: "Microsoft Graph",
+    stripe: "Stripe API",
+    stripe_webhooks: "Stripe Webhooks",
+    workers: "Cloudflare Workers",
+    database: "D1 Database",
+    email: "Email Delivery",
+    launch_gateway: "Launch Gateway",
+    maintenance: "Maintenance Mode"
+  };
+  const metricCards = [
+    ["Active customers", metrics.active_customers, "Customer profiles in D1"],
+    ["Active memberships", metrics.active_memberships, "Active or trialling Stripe subscriptions"],
+    ["Open support requests", metrics.open_support_requests, "Tickets not closed or resolved"],
+    ["Pending GDPR requests", metrics.pending_gdpr_requests, "Open data-protection workflows"],
+    ["Recent system errors", metrics.recent_system_errors, "Open system-event records"],
+    ["Worker error rate", metrics.worker_error_rate === null ? "Unavailable" : `${metrics.worker_error_rate}%`, "Requires Cloudflare observability access"],
+    ["Database size", formatBytes(metrics.database_bytes), "Calculated from D1 page usage"]
+  ];
+  const recentErrors = Array.isArray(payload.recent_errors) ? payload.recent_errors : [];
+  const limitations = Array.isArray(payload.limitations) ? payload.limitations : [];
+
+  document.getElementById("adminPanel").innerHTML = `
+    <header class="dashboard-welcome">
+      <div>
+        <p class="eyebrow">Production operations</p>
+        <h1>Production Health Dashboard</h1>
+        <p>Server-side dependency checks and current D1 operational totals. No status is inferred from placeholder data.</p>
+      </div>
+      <div class="website-state">
+        <span class="status-dot is-${escapeAttr(productionHealthTone(services.website?.status))}"></span>
+        <div><strong>${escapeHtml(services.website?.status || "Unavailable")}</strong><span>Checked ${escapeHtml(formatDate(payload.checked_at))}</span></div>
+      </div>
+    </header>
+
+    <section class="kpi-grid" aria-label="Production health metrics">
+      ${metricCards.map(([label, value, note]) => kpi(label, value ?? "Unavailable", note)).join("")}
+    </section>
+
+    <div class="dashboard-layout">
+      <section class="admin-card">
+        <div class="section-head"><div><h2>Service health</h2><p>Each status is derived from a live dependency check, Worker execution, D1 query or saved production control.</p></div></div>
+        <div class="health-list">
+          ${Object.entries(serviceLabels).map(([key, label]) => {
+            const service = services[key] || { status: "unavailable", message: "No health result was returned." };
+            return `<div class="health-item"><span class="status-dot is-${escapeAttr(productionHealthTone(service.status))}"></span><strong>${escapeHtml(label)}</strong><span><b>${escapeHtml(service.status)}</b><br>${escapeHtml(service.message || "")}</span></div>`;
+          }).join("")}
+        </div>
+      </section>
+
+      <div class="dashboard-stack">
+        <section class="admin-card">
+          <div class="section-head"><div><h2>Recent system errors</h2><p>Open records from the system event register.</p></div></div>
+          ${recentErrors.length ? table(["Issue", "Severity", "Status", "Updated"], recentErrors.map((item) => `<tr><td><strong>${escapeHtml(item.title || item.id || "System event")}</strong></td><td>${badge(item.severity || "Unknown")}</td><td>${escapeHtml(item.status || "Open")}</td><td>${escapeHtml(formatDate(item.updated_at || item.created_at))}</td></tr>`).join("")) : `<div class="activity-empty"><div><strong>No open system errors recorded</strong><p>This reflects the application system-event register, not the Cloudflare telemetry stream.</p></div></div>`}
+        </section>
+        <section class="admin-card">
+          <div class="section-head"><div><h2>Verification boundaries</h2><p>These checks deliberately distinguish configuration from confirmed delivery telemetry.</p></div></div>
+          <ul>${limitations.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
+          <div class="section-actions"><button class="admin-button" type="button" data-action="load-section" data-section="health">Refresh health checks</button><button class="admin-button secondary" type="button" data-action="load-section" data-section="status">Open Status Centre</button></div>
+        </section>
+      </div>
+    </div>
+  `;
 }
 
 function quick(section, icon, title, text) {
@@ -2693,6 +2780,7 @@ function openSupportModal(id) {
       const data = await api("support", {
         method: "POST",
         body: JSON.stringify({
+          action: isNew ? "create" : "update",
           id: supportCase.id || "",
           reference: supportCase.reference || "",
           customer_email: getValue("support_workspace_customer"),
