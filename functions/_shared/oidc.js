@@ -618,9 +618,9 @@ export async function completeLogin(context, realm) {
       grant_type: "authorization_code",
       code,
       redirect_uri: redirectUri,
-      code_verifier: transaction.code_verifier,
-      scope: scopeValue
+      code_verifier: transaction.code_verifier
     });
+    if (scopeValue) body.set("scope", scopeValue);
     const tokenResponse = await stage(context, realm, "token_exchange", async () => {
       return await fetch(metadata.token_endpoint, {
         method: "POST",
@@ -671,7 +671,7 @@ export async function completeLogin(context, realm) {
       error_description: errorDescription || "Token exchange failed with Graph scopes.",
       fallback_scopes: baseScopes.join(" ")
     }));
-    tokens = await tokenExchange(baseScopes.join(" "));
+    tokens = await tokenExchange("");
   }
 
   const claims = await stage(context, realm, "id_token_validation", () => verifyIdToken(tokens.id_token, config, metadata, transaction.nonce), {
