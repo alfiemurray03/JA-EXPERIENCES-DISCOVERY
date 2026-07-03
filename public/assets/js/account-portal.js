@@ -1,4 +1,4 @@
-const portalState = { profile: null, requests: null, pins: null, saved: null };
+const portalState = { profile: null, requests: null, pins: null, saved: null, billing: null };
 
 const navItems = [
   ["/account/dashboard/", "Overview"],
@@ -17,6 +17,9 @@ const navItems = [
 const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[c]));
 const initials = (value) => String(value || "JA").trim().split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase() || "JA";
 const fmt = (value) => value ? new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)) : "Not available";
+const money = (value, currency = "gbp") => Number.isFinite(Number(value))
+  ? new Intl.NumberFormat("en-GB", { style: "currency", currency: String(currency || "gbp").toUpperCase() }).format(Number(value) / 100)
+  : "Not available";
 
 function shell(title, lead) {
   const root = document.getElementById("portalRoot");
@@ -108,6 +111,27 @@ async function loadSaved() {
   return portalState.saved;
 }
 
+async function loadBilling() {
+  if (portalState.billing) return portalState.billing;
+  const response = await fetch("/account/billing", { credentials: "include", cache: "no-store", headers: { Accept: "application/json" } });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload.error || "Billing data unavailable.");
+  portalState.billing = payload;
+  return payload;
+}
+
+async function openStripeBillingPortal() {
+  const response = await fetch("/account/billing", {
+    method: "POST",
+    credentials: "include",
+    headers: { Accept: "application/json", "Content-Type": "application/json" },
+    body: "{}"
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload.url) throw new Error(payload.error || "Stripe Billing Portal could not be opened.");
+  window.location.assign(payload.url);
+}
+
 function updateShared(profile = {}) {
   const name = profile.displayName || profile.verifiedName || profile.name || "Customer";
   const email = profile.email || "";
@@ -154,13 +178,29 @@ function timelineMarkup(items = []) {
   `).join("")}</div>`;
 }
 
-window.JAPortal = { shell, loadProfile, loadRequests, loadPins, loadSaved, updateShared, timelineItems, timelineMarkup, fmt, escapeHtml, initials, state: portalState };
+window.JAPortal = { shell, loadProfile, loadRequests, loadPins, loadSaved, loadBilling, updateShared, timelineItems, timelineMarkup, fmt, escapeHtml, initials, state: portalState };
+
+document.addEventListener("click", async (event) => {
+  const button = event.target.closest('[data-action="manage-stripe-billing"]');
+  if (!button) return;
+  button.disabled = true;
+  const originalText = button.textContent;
+  button.textContent = "Opening Stripe…";
+  try {
+    await openStripeBillingPortal();
+  } catch (error) {
+    button.disabled = false;
+    button.textContent = originalText;
+    window.alert(error.message || "Stripe Billing Portal could not be opened.");
+  }
+});
 
 document.addEventListener("DOMContentLoaded", async () => {
   const page = document.body.dataset.portalPage || "dashboard";
   const needsRequests = new Set(["dashboard", "membership", "support", "messages", "data", "bookings", "saved"]);
   const needsPins = page === "security";
   const needsSaved = new Set(["dashboard", "membership", "bookings", "saved"]);
+  const needsBilling = new Set(["membership", "downloads"]);
   const titleMap = {
     dashboard: ["Overview", "Live overview of your account activity, support and membership."],
     profile: ["Profile", "Your master customer record, identity and preferences."],
@@ -183,6 +223,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (needsRequests.has(page)) bootstrap.push(loadRequests());
     if (needsPins) bootstrap.push(loadPins());
     if (needsSaved.has(page)) bootstrap.push(loadSaved());
+    if (needsBilling.has(page)) bootstrap.push(loadBilling());
     await Promise.all(bootstrap);
     updateShared(portalState.profile || {});
     await renderPage(page);
@@ -214,7 +255,7 @@ async function renderPage(page) {
           <div class="portal-stack">
             <div class="portal-entry"><span class="portal-label">Plan</span><strong>${escapeHtml(profile.currentPlan || "Standard")}</strong></div>
             <div class="portal-entry"><span class="portal-label">Lifetime access</span><strong>${profile.lifetimeAccess ? "Enabled" : "Not enabled"}</strong></div>
-            <div class="portal-entry"><span class="portal-label">Stripe status</span><strong>${profile.stripeCustomerId ? "Linked" : "Not linked"}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Stripe status</span><strong>${profile.stripeLinked ? "Linked" : "Not linked"}</strong></div>
           </div>
         </article>
         <article class="portal-card portal-span-6">
@@ -273,7 +314,7 @@ async function renderPage(page) {
           <h2>Account metadata</h2>
           <div class="portal-stack">
             <div class="portal-entry"><span class="portal-label">Current plan</span><strong>${escapeHtml(profile.currentPlan || "Standard")}</strong></div>
-            <div class="portal-entry"><span class="portal-label">Stripe customer</span><strong>${escapeHtml(profile.stripeCustomerId || "Not provided")}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Stripe billing</span><strong>${profile.stripeLinked ? "Linked" : "Not linked"}</strong></div>
             <div class="portal-entry"><span class="portal-label">Verification</span><strong>${escapeHtml(profile.verificationStatus || "Not provided")}</strong></div>
           </div>
         </article>
@@ -363,7 +404,7 @@ async function renderPage(page) {
           <h2>Connected account</h2>
           <div class="portal-stack">
             <div class="portal-entry"><span class="portal-label">Microsoft Entra</span><strong>${profile.microsoftEmail ? "Connected" : "Not connected"}</strong></div>
-            <div class="portal-entry"><span class="portal-label">Stripe customer</span><strong>${profile.stripeCustomerId ? "Linked" : "Not linked"}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Stripe customer</span><strong>${profile.stripeLinked ? "Linked" : "Not linked"}</strong></div>
             <div class="portal-entry"><span class="portal-label">Accessibility</span><strong>Readable, keyboard-friendly layout</strong></div>
           </div>
         </article>
@@ -472,35 +513,47 @@ async function renderPage(page) {
 
   if (page === "membership") {
     const saved = portalState.saved || { items: [] };
+    const billing = portalState.billing || {};
+    const subscription = billing.subscription;
     const savedDestinations = (saved.items || []).filter((item) => item.item_type === "destination");
     const savedExperiences = (saved.items || []).filter((item) => item.item_type === "experience");
     pageRoot.innerHTML = `
       <section class="portal-grid">
+        <article class="portal-card portal-span-12">
+          <div class="portal-card-heading">
+            <div><h2>Manage Membership</h2><p>Payments, invoices, billing details and subscription controls are securely managed by Stripe.</p></div>
+            <button class="portal-button" type="button" data-action="manage-stripe-billing" ${billing.portalAvailable ? "" : "disabled"}>Manage Billing with Stripe</button>
+          </div>
+          ${billing.portalAvailable ? "" : '<div class="portal-note inline">No Stripe billing account is linked to this customer profile.</div>'}
+        </article>
         <article class="portal-card portal-span-6">
-          <h2>Plan</h2>
+          <h2>Live membership</h2>
           <div class="portal-stack">
-            <div class="portal-entry"><span class="portal-label">Current plan</span><strong>${escapeHtml(profile.currentPlan || "Standard")}</strong></div>
-            <div class="portal-entry"><span class="portal-label">Membership tier</span><strong>${escapeHtml(profile.membershipStatus || profile.customerStatus || "Standard")}</strong></div>
-            <div class="portal-entry"><span class="portal-label">Billing interval</span><strong>${escapeHtml(profile.membershipInterval || "Monthly")}</strong></div>
-            <div class="portal-entry"><span class="portal-label">Status</span><strong>${escapeHtml(profile.subscriptionStatus || (profile.stripeCustomerId ? "Active" : "Not linked"))}</strong></div>
-            <div class="portal-entry"><span class="portal-label">Renewal date</span><strong>${escapeHtml(fmt(profile.membershipRenewalAt || profile.updatedAt))}</strong></div>
-            <div class="portal-entry"><span class="portal-label">Cancellation date</span><strong>${escapeHtml(fmt(profile.membershipCancellationAt))}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Current plan</span><strong>${escapeHtml(subscription?.plan || profile.currentPlan || "Standard")}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Membership status</span><strong>${escapeHtml(subscription?.membershipStatus || profile.customerStatus || "Not active")}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Billing status</span><strong>${escapeHtml(subscription?.billingStatus || "Not available")}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Billing interval</span><strong>${escapeHtml(subscription?.billingInterval || "Not available")}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Renewal date</span><strong>${escapeHtml(fmt(subscription?.renewalDate))}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Next payment date</span><strong>${escapeHtml(fmt(subscription?.nextPaymentDate))}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Subscription start</span><strong>${escapeHtml(fmt(subscription?.subscriptionStartDate))}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Subscription reference</span><strong>${escapeHtml(subscription?.subscriptionReference || "Not available")}</strong></div>
           </div>
         </article>
         <article class="portal-card portal-span-6">
-          <h2>Benefits</h2>
+          <h2>Billing details</h2>
           <div class="portal-stack">
-            <div class="portal-entry"><span class="portal-label">Included services</span><strong>Support, data protection requests, downloads and account management</strong></div>
-            <div class="portal-entry"><span class="portal-label">Latest invoice</span><strong>${profile.stripeCustomerId ? "Available in Stripe-backed records" : "Not linked"}</strong></div>
-            <div class="portal-entry"><span class="portal-label">Payment status</span><strong>${profile.subscriptionStatus || "Not available"}</strong></div>
-            <div class="portal-entry"><span class="portal-label">Payment history</span><strong>${profile.stripeCustomerId ? "Shown from existing Stripe data" : "Not linked"}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Payment method</span><strong>${escapeHtml(subscription?.paymentMethod || "Not available")}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Trial status</span><strong>${escapeHtml(subscription?.trialStatus || "No trial")}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Trial end</span><strong>${escapeHtml(fmt(subscription?.trialEndDate))}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Cancellation</span><strong>${escapeHtml(subscription?.cancellationStatus || "Not scheduled")}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Scheduled cancellation</span><strong>${escapeHtml(fmt(subscription?.scheduledCancellationDate))}</strong></div>
             <div class="portal-entry"><span class="portal-label">Saved destinations</span><strong>${savedDestinations.length}</strong></div>
             <div class="portal-entry"><span class="portal-label">Saved experiences</span><strong>${savedExperiences.length}</strong></div>
           </div>
         </article>
         <article class="portal-card portal-span-12">
-          <h2>Billing history</h2>
-          <div class="portal-note inline">${profile.stripeCustomerId ? "Invoices, receipts and payment confirmations are surfaced from existing Stripe records." : "No Stripe customer is linked yet, so billing history is not available."}</div>
+          <h2>Billing responsibility</h2>
+          <div class="portal-note inline">Stripe securely manages payment methods, invoices, billing details, subscription changes and cancellations. JA Experiences &amp; Discovery displays synchronised status only.</div>
         </article>
       </section>`;
     return;
@@ -663,19 +716,27 @@ async function renderPage(page) {
   }
 
   if (page === "downloads") {
+    const billing = portalState.billing || {};
+    const invoices = Array.isArray(billing.invoices) ? billing.invoices : [];
     pageRoot.innerHTML = `
       <section class="portal-grid">
-        <article class="portal-card portal-span-6">
-          <h2>Downloads</h2>
+        <article class="portal-card portal-span-12">
+          <div class="portal-card-heading">
+            <div><h2>Recent invoices</h2><p>Recent Stripe invoice references cached for your account.</p></div>
+            <button class="portal-button" type="button" data-action="manage-stripe-billing" ${billing.portalAvailable ? "" : "disabled"}>View All Invoices in Stripe</button>
+          </div>
           <div class="portal-stack">
-            <div class="portal-entry"><span class="portal-label">Invoices</span><strong>${profile.stripeCustomerId ? "Available from Stripe records" : "Not linked"}</strong></div>
-            <div class="portal-entry"><span class="portal-label">Receipts</span><strong>${profile.stripeCustomerId ? "Available from Stripe records" : "Not linked"}</strong></div>
-            <div class="portal-entry"><span class="portal-label">Exported data</span><strong>Available on request</strong></div>
+            ${invoices.slice(0, 5).map((invoice) => `
+              <div class="portal-entry">
+                <div><strong>${escapeHtml(invoice.reference)}</strong><small>${escapeHtml(fmt(invoice.date))} · ${escapeHtml(invoice.status)}</small></div>
+                <strong>${escapeHtml(money(invoice.amountPaid ?? invoice.amountDue, invoice.currency))}</strong>
+              </div>
+            `).join("") || '<div class="portal-note inline">No cached Stripe invoices are available.</div>'}
           </div>
         </article>
-        <article class="portal-card portal-span-6">
-          <h2>Documents</h2>
-          <div class="portal-note inline">Invoices, receipts, itineraries, reports and exported data are shown here when available.</div>
+        <article class="portal-card portal-span-12">
+          <h2>Other documents</h2>
+          <div class="portal-note inline">Customer data exports and support documents remain available through their relevant portal sections. Stripe remains the source of truth for invoices and receipts.</div>
         </article>
       </section>`;
     return;

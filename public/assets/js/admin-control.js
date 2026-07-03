@@ -220,6 +220,10 @@ function bindAdminActions() {
       await openCustomerProfile(action.dataset.email);
     }
 
+    if (type === "open-stripe-portal") {
+      openCustomerStripePortal(action.dataset.email);
+    }
+
     if (type === "suspend-admin") {
       await api("admins", { method: "POST", body: JSON.stringify({ action: "suspend", email: action.dataset.email }) });
       await loadSection("admins");
@@ -1771,6 +1775,8 @@ function renderCustomerProfile(customer, plans = []) {
   const notifications = Array.isArray(customer.notifications) ? customer.notifications : [];
   const pins = Array.isArray(customer.pins) ? customer.pins : [];
   const notes = Array.isArray(customer.notes) ? customer.notes : [];
+  const billing = customer.billing || {};
+  const subscription = billing.subscription || null;
   document.getElementById("adminPanel").innerHTML = `
     <section class="admin-card">
       <div class="section-head">
@@ -1781,6 +1787,7 @@ function renderCustomerProfile(customer, plans = []) {
         <div class="section-actions">
           ${badge(customer.admin_customer_status || "Standard")}
           ${Number(customer.admin_lifetime || 0) === 1 ? badge("Lifetime", "amber") : ""}
+          <button class="admin-button" type="button" data-action="open-stripe-portal" data-email="${escapeAttr(customer.email)}" ${billing.portalAvailable ? "" : "disabled"}>Open Stripe Customer Portal</button>
           <button class="admin-button secondary" type="button" data-action="load-section" data-section="customers">Back to CRM</button>
         </div>
       </div>
@@ -1802,6 +1809,12 @@ function renderCustomerProfile(customer, plans = []) {
             <div class="drawer-field"><span>Status</span><strong>${escapeHtml(customer.admin_customer_status || "Standard")}</strong></div>
             <div class="drawer-field"><span>Lifetime</span><strong>${Number(customer.admin_lifetime || 0) === 1 ? "Enabled" : "Disabled"}</strong></div>
             <div class="drawer-field"><span>Lifetime plan</span><strong>${escapeHtml(customer.admin_lifetime_plan_id || "Not assigned")}</strong></div>
+            <div class="drawer-field"><span>Stripe Customer ID</span><strong>${escapeHtml(billing.stripeCustomerId || "Not linked")}</strong></div>
+            <div class="drawer-field"><span>Subscription ID</span><strong>${escapeHtml(subscription?.id || "Not available")}</strong></div>
+            <div class="drawer-field"><span>Current plan</span><strong>${escapeHtml(subscription?.plan || "Not available")}</strong></div>
+            <div class="drawer-field"><span>Billing status</span><strong>${escapeHtml(subscription?.billingStatus || subscription?.status || "Not available")}</strong></div>
+            <div class="drawer-field"><span>Next renewal</span><strong>${escapeHtml(formatDate(subscription?.nextRenewal))}</strong></div>
+            <div class="drawer-field"><span>Portal availability</span><strong>${billing.portalAvailable ? "Available" : "Unavailable"}</strong></div>
             <div class="drawer-field"><span>Updated</span><strong>${escapeHtml(formatDate(customer.updated_at || customer.created_at))}</strong></div>
           </div>
         </section>
@@ -3467,6 +3480,25 @@ async function createAdminBypass() {
 async function removeAdminBypass() {
   await api("bypass", { method: "POST", body: JSON.stringify({ action: "remove" }) });
   window.alert("Admin website access has been removed.");
+}
+
+async function openCustomerStripePortal(email) {
+  if (!email) return window.alert("Customer email is missing.");
+  const portalWindow = window.open("about:blank", "_blank");
+  if (!portalWindow) return window.alert("Allow pop-ups for this site and try again.");
+  portalWindow.opener = null;
+  portalWindow.document.title = "Opening Stripe…";
+  portalWindow.document.body.textContent = "Authorising Stripe customer access…";
+  try {
+    const data = await api("customer", {
+      method: "POST",
+      body: JSON.stringify({ action: "open_stripe_portal", email })
+    });
+    portalWindow.location.replace(data.url);
+  } catch (error) {
+    portalWindow.close();
+    window.alert(error.message || "Stripe Customer Portal could not be opened.");
+  }
 }
 
 async function exportCustomerData(email, format = "json") {

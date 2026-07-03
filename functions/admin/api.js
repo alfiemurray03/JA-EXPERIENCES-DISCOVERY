@@ -2510,6 +2510,45 @@ async function getPlans(DB) {
   `);
 }
 
+async function getCustomerStripeBilling(DB, env, email) {
+  const profile = await DB.prepare(`SELECT stripe_customer_id FROM profiles WHERE lower(email)=lower(?)`).bind(email).first();
+  if (!profile?.stripe_customer_id) return { portalAvailable: false, stripeCustomerId: "", subscription: null };
+  const settings = await getStripeSettings(DB, env);
+  const subscription = await DB.prepare(`
+    SELECT id, plan_code, plan_name, status, billing_status, current_period_end, cancel_at_period_end
+    FROM stripe_subscriptions
+    WHERE customer_id = ?
+    ORDER BY updated_at DESC LIMIT 1
+  `).bind(profile.stripe_customer_id).first().catch(() => null);
+  return {
+    portalAvailable: Boolean(settings.secretKey),
+    stripeCustomerId: profile.stripe_customer_id,
+    subscription: subscription ? {
+      id: subscription.id,
+      plan: subscription.plan_name || subscription.plan_code || "Stripe membership",
+      status: subscription.status || "Not available",
+      billingStatus: subscription.billing_status || "Not available",
+      nextRenewal: subscription.current_period_end || null,
+      cancellationScheduled: Number(subscription.cancel_at_period_end || 0) === 1
+    } : null
+  };
+}
+
+async function createCustomerStripePortal(DB, env, email, origin) {
+  const billing = await getCustomerStripeBilling(DB, env, email);
+  if (!billing.stripeCustomerId) throw new Error("No Stripe customer is linked to this profile.");
+  const settings = await getStripeSettings(DB, env);
+  if (!settings.secretKey) throw new Error("Stripe billing is not configured.");
+  const response = await fetch("https://api.stripe.com/v1/billing_portal/sessions", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${settings.secretKey}`, "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ customer: billing.stripeCustomerId, return_url: `${origin}/admin/dashboard/?section=customers` }).toString()
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload.url) throw new Error(payload?.error?.message || "Stripe Billing Portal could not be opened.");
+  return payload.url;
+}
+
 async function getStripeSettings(DB, env) {
   const stored = await settingMap(DB, [
     "stripe_publishable_key",
@@ -2650,7 +2689,7 @@ export async function onRequest(context) {
       if (section === "customer") {
         const email = clean(url.searchParams.get("email"), 254);
         if (!email) return json({ error: "Customer email is required." }, 400);
-        const [customer, flags, timeline, supportCases, notifications, pins, plans, notes] = await Promise.all([
+        const [customer, flags, timeline, supportCases, notifications, pins, plans, notes, billing] = await Promise.all([
           env.DB.prepare(`
             SELECT
               email,
@@ -2676,9 +2715,10 @@ export async function onRequest(context) {
           all(env.DB, `SELECT * FROM customer_notifications WHERE lower(email) = lower(?) ORDER BY updated_at DESC LIMIT 100`, [email]),
           all(env.DB, `SELECT * FROM customer_support_pins WHERE lower(email) = lower(?) ORDER BY updated_at DESC LIMIT 20`, [email]),
           getPlans(env.DB),
-          all(env.DB, `SELECT * FROM customer_internal_notes WHERE lower(email) = lower(?) ORDER BY pinned DESC, updated_at DESC LIMIT 100`, [email])
+          all(env.DB, `SELECT * FROM customer_internal_notes WHERE lower(email) = lower(?) ORDER BY pinned DESC, updated_at DESC LIMIT 100`, [email]),
+          getCustomerStripeBilling(env.DB, env, email)
         ]);
-        return json({ admin: adminContext, customer: { ...customer, flags, timeline, supportCases, notifications, pins, notes }, plans });
+        return json({ admin: adminContext, customer: { ...customer, flags, timeline, supportCases, notifications, pins, notes, billing }, plans });
       }
       if (section === "plans") {
         return json({
@@ -2919,6 +2959,11 @@ export async function onRequest(context) {
         if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_users", "manage_crm"])) return json({ error: "Forbidden.", section }, 403);
         const email = cleanEmail(body.email);
         if (!email) return json({ error: "Customer email is required." }, 400);
+        if (body.action === "open_stripe_portal") {
+          const portalUrl = await createCustomerStripePortal(env.DB, env, email, new URL(request.url).origin);
+          await writeAudit(env.DB, identity, "stripe_portal_open", "profiles", email, `Opened Stripe Billing Portal for ${email}.`, {});
+          return json({ url: portalUrl });
+        }
         if (body.action === "add_note") {
           const noteId = `note_${Date.now()}`;
           await DB.prepare(`
@@ -2927,7 +2972,7 @@ export async function onRequest(context) {
           `).bind(noteId, email, clean(body.category, 80) || "General", clean(body.body, 4000), body.pinned ? 1 : 0, identity.email, JSON.stringify(Array.isArray(body.attachments) ? body.attachments : [])).run();
           await writeAudit(env.DB, identity, "customer_note_create", "customer_internal_notes", email, `Added customer note for ${email}.`, { category: clean(body.category, 80) || "General" });
         }
-        const [customer, flags, timeline, supportCases, notifications, pins, plans, notes] = await Promise.all([
+        const [customer, flags, timeline, supportCases, notifications, pins, plans, notes, billing] = await Promise.all([
           DB.prepare(`
             SELECT
               email,
@@ -2953,9 +2998,10 @@ export async function onRequest(context) {
           all(env.DB, `SELECT * FROM customer_notifications WHERE lower(email) = lower(?) ORDER BY updated_at DESC LIMIT 100`, [email]),
           all(env.DB, `SELECT * FROM customer_support_pins WHERE lower(email) = lower(?) ORDER BY updated_at DESC LIMIT 20`, [email]),
           getPlans(env.DB),
-          all(env.DB, `SELECT * FROM customer_internal_notes WHERE lower(email) = lower(?) ORDER BY pinned DESC, updated_at DESC LIMIT 100`, [email])
+          all(env.DB, `SELECT * FROM customer_internal_notes WHERE lower(email) = lower(?) ORDER BY pinned DESC, updated_at DESC LIMIT 100`, [email]),
+          getCustomerStripeBilling(env.DB, env, email)
         ]);
-        return json({ customer: { ...customer, flags, timeline, supportCases, notifications, pins, notes }, plans, saved: true });
+        return json({ customer: { ...customer, flags, timeline, supportCases, notifications, pins, notes, billing }, plans, saved: true });
       }
     }
 

@@ -340,6 +340,20 @@ button.portal-button.secondary {
 .portal-panel p,
 .portal-note p { color: var(--portal-muted); }
 
+.portal-card-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+button.portal-button:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+  box-shadow: none;
+}
+
 .portal-span-4 { grid-column: span 4; }
 .portal-span-6 { grid-column: span 6; }
 .portal-span-8 { grid-column: span 8; }
@@ -586,6 +600,8 @@ button.portal-button.secondary {
   .portal-form-grid,
   .portal-mini-grid,
   .portal-metrics { grid-template-columns: 1fr; }
+  .portal-card-heading { flex-direction: column; }
+  .portal-card-heading .portal-button { width: 100%; }
   .portal-grid > * { grid-column: span 12; }
   .thread-summary { grid-template-columns: 1fr; }
 }

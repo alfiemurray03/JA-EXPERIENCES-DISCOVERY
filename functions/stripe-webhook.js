@@ -94,9 +94,11 @@ async function ensureStripeTables(DB) {
       stripe_created_at TEXT, updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     )`),
     DB.prepare(`CREATE TABLE IF NOT EXISTS stripe_subscriptions (
-      id TEXT PRIMARY KEY, customer_id TEXT, customer_email TEXT, plan_code TEXT, price_id TEXT,
-      status TEXT, current_period_start TEXT, current_period_end TEXT, cancel_at_period_end INTEGER DEFAULT 0,
-      latest_invoice_id TEXT, updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+      id TEXT PRIMARY KEY, customer_id TEXT, customer_email TEXT, plan_code TEXT, plan_name TEXT, price_id TEXT,
+      status TEXT, billing_status TEXT, billing_interval TEXT, subscription_start TEXT,
+      current_period_start TEXT, current_period_end TEXT, next_payment_at TEXT, trial_start TEXT, trial_end TEXT,
+      cancel_at_period_end INTEGER DEFAULT 0, cancel_at TEXT, canceled_at TEXT, latest_invoice_id TEXT,
+      payment_method_brand TEXT, payment_method_last4 TEXT, updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     )`),
     DB.prepare(`CREATE TABLE IF NOT EXISTS stripe_invoices (
       id TEXT PRIMARY KEY, customer_id TEXT, customer_email TEXT, subscription_id TEXT, status TEXT,
@@ -108,6 +110,19 @@ async function ensureStripeTables(DB) {
   await safeAlter(DB, `ALTER TABLE profiles ADD COLUMN stripe_customer_synced_at TEXT`);
   await safeAlter(DB, `ALTER TABLE profiles ADD COLUMN membership_status TEXT DEFAULT 'Standard'`);
   await safeAlter(DB, `ALTER TABLE profiles ADD COLUMN membership_renewal_at TEXT`);
+  for (const sql of [
+    `ALTER TABLE stripe_subscriptions ADD COLUMN plan_name TEXT`,
+    `ALTER TABLE stripe_subscriptions ADD COLUMN billing_status TEXT`,
+    `ALTER TABLE stripe_subscriptions ADD COLUMN billing_interval TEXT`,
+    `ALTER TABLE stripe_subscriptions ADD COLUMN subscription_start TEXT`,
+    `ALTER TABLE stripe_subscriptions ADD COLUMN next_payment_at TEXT`,
+    `ALTER TABLE stripe_subscriptions ADD COLUMN trial_start TEXT`,
+    `ALTER TABLE stripe_subscriptions ADD COLUMN trial_end TEXT`,
+    `ALTER TABLE stripe_subscriptions ADD COLUMN cancel_at TEXT`,
+    `ALTER TABLE stripe_subscriptions ADD COLUMN canceled_at TEXT`,
+    `ALTER TABLE stripe_subscriptions ADD COLUMN payment_method_brand TEXT`,
+    `ALTER TABLE stripe_subscriptions ADD COLUMN payment_method_last4 TEXT`
+  ]) await safeAlter(DB, sql);
 }
 
 async function safeAlter(DB, sql) {
@@ -151,22 +166,36 @@ async function saveSubscription(DB, subscription, eventType) {
   const email = subscription.customer_details?.email || subscription.metadata?.customer_email || null;
   const item = subscription.items?.data?.[0] || null;
   const planCode = subscription.metadata?.plan_code || item?.price?.metadata?.plan_code || null;
+  const planName = subscription.metadata?.plan_name || item?.price?.product?.name || item?.price?.nickname || planCode;
+  const paymentMethod = subscription.default_payment_method?.card || null;
+  const latestInvoice = typeof subscription.latest_invoice === "object" ? subscription.latest_invoice : null;
   const status = eventType === "customer.subscription.deleted" ? "canceled" : (subscription.status || null);
   await DB.prepare(`
     INSERT INTO stripe_subscriptions (
-      id, customer_id, customer_email, plan_code, price_id, status, current_period_start,
-      current_period_end, cancel_at_period_end, latest_invoice_id, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+      id, customer_id, customer_email, plan_code, plan_name, price_id, status, billing_status,
+      billing_interval, subscription_start, current_period_start, current_period_end, next_payment_at,
+      trial_start, trial_end, cancel_at_period_end, cancel_at, canceled_at, latest_invoice_id,
+      payment_method_brand, payment_method_last4, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
     ON CONFLICT(id) DO UPDATE SET
       customer_id = excluded.customer_id, customer_email = excluded.customer_email,
-      plan_code = excluded.plan_code, price_id = excluded.price_id, status = excluded.status,
+      plan_code = excluded.plan_code, plan_name = excluded.plan_name, price_id = excluded.price_id,
+      status = excluded.status, billing_status = excluded.billing_status,
+      billing_interval = excluded.billing_interval, subscription_start = excluded.subscription_start,
       current_period_start = excluded.current_period_start, current_period_end = excluded.current_period_end,
-      cancel_at_period_end = excluded.cancel_at_period_end, latest_invoice_id = excluded.latest_invoice_id,
+      next_payment_at = excluded.next_payment_at, trial_start = excluded.trial_start, trial_end = excluded.trial_end,
+      cancel_at_period_end = excluded.cancel_at_period_end, cancel_at = excluded.cancel_at,
+      canceled_at = excluded.canceled_at, latest_invoice_id = excluded.latest_invoice_id,
+      payment_method_brand = excluded.payment_method_brand, payment_method_last4 = excluded.payment_method_last4,
       updated_at = CURRENT_TIMESTAMP
   `).bind(
-    subscription.id, customerId, email, planCode, idValue(item?.price), status,
-    stripeTime(subscription.current_period_start), stripeTime(subscription.current_period_end),
-    subscription.cancel_at_period_end ? 1 : 0, idValue(subscription.latest_invoice)
+    subscription.id, customerId, email, planCode, planName, idValue(item?.price), status,
+    latestInvoice?.status || null, item?.price?.recurring?.interval || null,
+    stripeTime(subscription.start_date || subscription.created), stripeTime(subscription.current_period_start),
+    stripeTime(subscription.current_period_end), stripeTime(subscription.current_period_end),
+    stripeTime(subscription.trial_start), stripeTime(subscription.trial_end), subscription.cancel_at_period_end ? 1 : 0,
+    stripeTime(subscription.cancel_at), stripeTime(subscription.canceled_at), idValue(subscription.latest_invoice),
+    paymentMethod?.brand || null, paymentMethod?.last4 || null
   ).run();
   await updateProfile(DB, customerId, email, status, stripeTime(subscription.current_period_end));
 }
@@ -192,6 +221,15 @@ async function saveInvoice(DB, invoice, eventType) {
     invoice.hosted_invoice_url || null, invoice.invoice_pdf || null,
     stripeTime(invoice.period_start), stripeTime(invoice.period_end)
   ).run();
+  const subscriptionId = idValue(invoice.subscription);
+  if (subscriptionId) {
+    await DB.prepare(`
+      UPDATE stripe_subscriptions
+      SET billing_status = ?, latest_invoice_id = ?,
+        next_payment_at = COALESCE(?, next_payment_at), updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).bind(status, invoice.id, stripeTime(invoice.period_end), subscriptionId).run();
+  }
   if (eventType === "invoice.payment_failed") await updateProfile(DB, customerId, email, "Past due", null);
 }
 
