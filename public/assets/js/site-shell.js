@@ -14,6 +14,36 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.head.appendChild(stylesheet);
   }
 
+  function ensureFaviconLink(rel, attrs = {}) {
+    let link = document.querySelector(`link[rel="${rel}"]`);
+    if (!link) {
+      link = document.createElement("link");
+      link.rel = rel;
+      document.head.appendChild(link);
+    }
+    Object.entries(attrs).forEach(([name, value]) => {
+      if (value) link.setAttribute(name, value);
+    });
+    return link;
+  }
+
+  function applySiteFavicons() {
+    const version = "20260704-1";
+    const base = "/assets/favicons";
+    ensureFaviconLink("icon", { href: `${base}/favicon.svg?v=${version}`, type: "image/svg+xml", sizes: "any" });
+    ensureFaviconLink("shortcut icon", { href: `${base}/favicon.ico?v=${version}`, type: "image/x-icon" });
+    ensureFaviconLink("apple-touch-icon", { href: `${base}/apple-touch-icon.png?v=${version}` });
+    ensureFaviconLink("manifest", { href: `${base}/site.webmanifest?v=${version}` });
+
+    let themeColor = document.querySelector('meta[name="theme-color"]');
+    if (!themeColor) {
+      themeColor = document.createElement("meta");
+      themeColor.name = "theme-color";
+      document.head.appendChild(themeColor);
+    }
+    themeColor.content = "#0f2f57";
+  }
+
   function loadSharedScript(path) {
     if (document.querySelector(`script[src^="${path}"]`)) return;
 
@@ -25,6 +55,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   loadSharedStyles("/assets/includes/header.css?v=20260702-1");
   loadSharedStyles("/assets/includes/footer.css?v=20260702-1");
+  applySiteFavicons();
 
   let siteSettings = { branding: {}, theme: document.documentElement.dataset.siteTheme || "dark" };
 
@@ -69,12 +100,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.title = currentTitle.replaceAll("JA Experiences & Discovery", serviceName);
   }
   if (branding.favicon_url) {
-    let favicon = document.querySelector('link[rel="icon"]');
-    if (!favicon) {
-      favicon = document.createElement("link");
-      favicon.rel = "icon";
-      document.head.appendChild(favicon);
-    }
+    const favicon = ensureFaviconLink("icon", { href: branding.favicon_url, type: "image/svg+xml" });
     favicon.href = branding.favicon_url;
   }
   if (branding.logo_url) {

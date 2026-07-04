@@ -60,6 +60,10 @@ function pageHtml(settings, page) {
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>${title}</title>
   <meta name="robots" content="noindex,nofollow">
+  <link rel="icon" href="/assets/favicons/favicon.svg?v=20260704-1" type="image/svg+xml">
+  <link rel="shortcut icon" href="/assets/favicons/favicon.ico?v=20260704-1" type="image/x-icon">
+  <link rel="apple-touch-icon" href="/assets/favicons/apple-touch-icon.png?v=20260704-1">
+  <link rel="manifest" href="/assets/favicons/site.webmanifest?v=20260704-1">
   <style>
     * { box-sizing: border-box; }
     body {

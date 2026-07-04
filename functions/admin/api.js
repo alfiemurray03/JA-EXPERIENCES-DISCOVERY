@@ -219,6 +219,81 @@ function cleanEmail(value) {
   return clean(value, 254).toLowerCase();
 }
 
+function parseAuditHistory(value) {
+  try {
+    const parsed = JSON.parse(value || "[]");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+async function hashPin(pin) {
+  const bytes = new TextEncoder().encode(pin);
+  const hash = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(hash), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+export async function verifySupportPinRecord(DB, env = {}, email, submittedPin, actorEmail) {
+  const targetEmail = cleanEmail(email);
+  const pin = clean(submittedPin, 12);
+  if (!targetEmail || !pin) return { ok: false, error: "Customer email and PIN are required." };
+
+  const current = await DB.prepare(`SELECT * FROM customer_support_pins WHERE lower(email) = lower(?) ORDER BY created_at DESC LIMIT 1`).bind(targetEmail).first();
+  if (!current) return { ok: false, error: "No support PIN record was found for this customer." };
+
+  const now = new Date().toISOString();
+  const expiresAt = current.expires_at ? new Date(current.expires_at) : null;
+  const expired = expiresAt && expiresAt.getTime() < Date.now();
+  const history = parseAuditHistory(current.audit_history);
+  const baseEvent = {
+    type: expired ? "verification_failed" : "verification_attempt",
+    actor: actorEmail || targetEmail,
+    at: now,
+    outcome: expired ? "expired" : "pending"
+  };
+
+  if (expired) {
+    const updatedHistory = [...history, { ...baseEvent, detail: "Support PIN expired before verification." }];
+    await DB.prepare(`UPDATE customer_support_pins SET status = 'Expired', updated_at = CURRENT_TIMESTAMP, audit_history = ? WHERE id = ?`).bind(JSON.stringify(updatedHistory), current.id).run();
+    await DB.prepare(`INSERT INTO admin_audit_log (id, actor_email, action, entity_type, entity_id, summary, metadata) VALUES (?, ?, ?, 'customer_support_pins', ?, ?, ?)`).bind(
+      crypto.randomUUID(),
+      cleanEmail(actorEmail || targetEmail),
+      "support_pin_verify_failed",
+      current.id,
+      `Support PIN verification failed because the PIN had expired for ${targetEmail}.`,
+      JSON.stringify({ email: targetEmail, reason: "expired" })
+    ).run();
+    return { ok: false, error: "The support PIN has expired." };
+  }
+
+  const expectedHash = await hashPin(pin);
+  const success = expectedHash === current.pin_hash;
+  const nextHistory = [...history, {
+    ...baseEvent,
+    type: success ? "verification_success" : "verification_failed",
+    outcome: success ? "success" : "mismatch",
+    detail: success ? "Support PIN verified by an administrator." : "Support PIN verification failed due to a mismatch."
+  }];
+
+  if (success) {
+    await DB.prepare(`UPDATE customer_support_pins SET status = 'Verified', used_at = ?, last_used_at = ?, updated_at = CURRENT_TIMESTAMP, audit_history = ? WHERE id = ?`).bind(now, now, JSON.stringify(nextHistory), current.id).run();
+  } else {
+    await DB.prepare(`UPDATE customer_support_pins SET updated_at = CURRENT_TIMESTAMP, audit_history = ? WHERE id = ?`).bind(JSON.stringify(nextHistory), current.id).run();
+  }
+
+  await DB.prepare(`INSERT INTO admin_audit_log (id, actor_email, action, entity_type, entity_id, summary, metadata) VALUES (?, ?, ?, 'customer_support_pins', ?, ?, ?)`).bind(
+    crypto.randomUUID(),
+    cleanEmail(actorEmail || targetEmail),
+    success ? "support_pin_verified" : "support_pin_verify_failed",
+    current.id,
+    success ? `Verified support PIN for ${targetEmail}.` : `Failed support PIN verification for ${targetEmail}.`,
+    JSON.stringify({ email: targetEmail, success, pinLast4: clean(current.pin_last4 || "", 4) })
+  ).run();
+
+  return success ? { ok: true, recordId: current.id, message: "Support PIN verified." } : { ok: false, error: "The support PIN does not match the stored record." };
+}
+
 function cleanSlug(value) {
   return clean(value, 120)
     .toLowerCase()
@@ -1757,54 +1832,74 @@ async function getNotificationsAdmin(DB) {
   `);
 }
 
-async function saveNotification(DB, body, identity) {
-  const id = clean(body.id, 120) || crypto.randomUUID();
-  const current = await DB.prepare(`SELECT * FROM customer_notifications WHERE id = ?`).bind(id).first();
-  const status = clean(body.status, 40) || "Draft";
-  const deliveryStatus = clean(body.delivery_status, 40) || (status === "Scheduled" ? "Scheduled" : status === "Sent" ? "Sent" : "Draft");
-  const sendHistory = addAudit(current?.send_history || "[]", { type: body.action || "save", actor: auditActor(identity), status, deliveryStatus });
-  await DB.prepare(`
-    INSERT INTO customer_notifications (
-      id, email, category, priority, title, body, status, archived_at, reference_type, reference_id,
-      template_key, scheduled_for, sent_at, delivery_status, read_at, acknowledged_at, send_history, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-    ON CONFLICT(id) DO UPDATE SET
-      email = excluded.email,
-      category = excluded.category,
-      priority = excluded.priority,
-      title = excluded.title,
-      body = excluded.body,
-      status = excluded.status,
-      archived_at = excluded.archived_at,
-      reference_type = excluded.reference_type,
-      reference_id = excluded.reference_id,
-      template_key = excluded.template_key,
-      scheduled_for = excluded.scheduled_for,
-      sent_at = excluded.sent_at,
-      delivery_status = excluded.delivery_status,
-      read_at = excluded.read_at,
-      acknowledged_at = excluded.acknowledged_at,
-      send_history = excluded.send_history,
-      updated_at = CURRENT_TIMESTAMP
-  `).bind(
-    id,
-    cleanEmail(body.email),
-    clean(body.category, 80) || "General",
-    clean(body.priority, 40) || "Normal",
-    clean(body.title, 180),
-    clean(body.body, 4000),
-    status,
-    body.archived_at || null,
-    clean(body.reference_type, 80),
-    clean(body.reference_id, 120),
-    clean(body.template_key, 80),
-    clean(body.scheduled_for, 40),
-    clean(body.sent_at, 40),
-    deliveryStatus,
-    clean(body.read_at, 40),
-    clean(body.acknowledged_at, 40),
-    sendHistory
-  ).run();
+export async function saveNotification(DB, body, identity) {
+  const mode = clean(body.recipient_mode, 20) || "single";
+  const recipients = [];
+  if (mode === "all") {
+    const rows = await all(DB, `SELECT lower(email) AS email FROM profiles WHERE email IS NOT NULL AND trim(email) != ''`);
+    recipients.push(...rows.map((row) => cleanEmail(row.email)).filter(Boolean));
+  } else if (mode === "multiple") {
+    recipients.push(...String(body.recipient_emails || body.email || "").split(/[,;\n]+/).map((value) => cleanEmail(value)).filter(Boolean));
+  } else {
+    recipients.push(cleanEmail(body.email));
+  }
+
+  const recipientsToSave = [...new Set(recipients.filter(Boolean))];
+  if (!recipientsToSave.length) {
+    throw new Error("At least one customer recipient is required.");
+  }
+
+  const created = [];
+  for (const email of recipientsToSave) {
+    const id = clean(body.id, 120) || crypto.randomUUID();
+    const current = await DB.prepare(`SELECT * FROM customer_notifications WHERE id = ?`).bind(id).first();
+    const status = clean(body.status, 40) || "Draft";
+    const deliveryStatus = clean(body.delivery_status, 40) || (status === "Scheduled" ? "Scheduled" : status === "Sent" ? "Sent" : "Draft");
+    const sendHistory = addAudit(current?.send_history || "[]", { type: body.action || "save", actor: auditActor(identity), status, deliveryStatus, recipient: email });
+    await DB.prepare(`
+      INSERT INTO customer_notifications (
+        id, email, category, priority, title, body, status, archived_at, reference_type, reference_id,
+        template_key, scheduled_for, sent_at, delivery_status, read_at, acknowledged_at, send_history, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+      ON CONFLICT(id) DO UPDATE SET
+        email = excluded.email,
+        category = excluded.category,
+        priority = excluded.priority,
+        title = excluded.title,
+        body = excluded.body,
+        status = excluded.status,
+        archived_at = excluded.archived_at,
+        reference_type = excluded.reference_type,
+        reference_id = excluded.reference_id,
+        template_key = excluded.template_key,
+        scheduled_for = excluded.scheduled_for,
+        sent_at = excluded.sent_at,
+        delivery_status = excluded.delivery_status,
+        read_at = excluded.read_at,
+        acknowledged_at = excluded.acknowledged_at,
+        send_history = excluded.send_history,
+        updated_at = CURRENT_TIMESTAMP
+    `).bind(
+      `${id}-${email}`,
+      email,
+      clean(body.category, 80) || "General",
+      clean(body.priority, 40) || "Normal",
+      clean(body.title, 180),
+      clean(body.body, 4000),
+      status,
+      body.archived_at || null,
+      clean(body.reference_type, 80),
+      clean(body.reference_id, 120),
+      clean(body.template_key, 80),
+      clean(body.scheduled_for, 40),
+      clean(body.sent_at, 40),
+      deliveryStatus,
+      clean(body.read_at, 40),
+      clean(body.acknowledged_at, 40),
+      sendHistory
+    ).run();
+    created.push(email);
+  }
   return getNotificationsAdmin(DB);
 }
 
@@ -2989,6 +3084,56 @@ export async function onRequest(context) {
             VALUES (?, ?, ?, ?, ?, ?, ?, '[]', CURRENT_TIMESTAMP)
           `).bind(noteId, email, clean(body.category, 80) || "General", clean(body.body, 4000), body.pinned ? 1 : 0, identity.email, JSON.stringify(Array.isArray(body.attachments) ? body.attachments : [])).run();
           await writeAudit(env.DB, identity, "customer_note_create", "customer_internal_notes", email, `Added customer note for ${email}.`, { category: clean(body.category, 80) || "General" });
+        }
+        if (body.action === "send_notification") {
+          const notificationPayload = {
+            ...body,
+            id: "",
+            email,
+            title: clean(body.title, 180) || "Customer update",
+            body: clean(body.body, 4000) || "A new update is available for your account.",
+            category: clean(body.category, 80) || "General",
+            priority: clean(body.priority, 40) || "Normal",
+            status: clean(body.status, 40) || "Sent",
+            delivery_status: clean(body.delivery_status, 40) || "Sent",
+            archived_at: null
+          };
+          const notifications = await saveNotification(env.DB, notificationPayload, identity);
+          await writeAudit(env.DB, identity, "customer_notification_send", "customer_notifications", email, `Sent customer notification to ${email}.`, { title: notificationPayload.title, category: notificationPayload.category });
+          return json({ notifications, saved: true, notification: { email } });
+        }
+        if (body.action === "verify_pin") {
+          const verification = await verifySupportPinRecord(env.DB, env, email, body.pin, identity.email);
+          const [customer, flags, timeline, supportCases, notifications, pins, plans, notes, billing] = await Promise.all([
+            DB.prepare(`
+              SELECT
+                email,
+                verified_name,
+                display_name,
+                contact_email,
+                phone,
+                communication_preference,
+                support_notes,
+                admin_notes,
+                admin_lifetime,
+                admin_lifetime_plan_id,
+                admin_customer_status,
+                created_at,
+                updated_at,
+                admin_updated_at
+              FROM profiles
+              WHERE lower(email) = lower(?)
+            `).bind(email).first(),
+            all(env.DB, `SELECT * FROM customer_account_flags WHERE lower(email) = lower(?) ORDER BY updated_at DESC`, [email]),
+            all(env.DB, `SELECT * FROM customer_timeline_events WHERE lower(email) = lower(?) ORDER BY created_at DESC LIMIT 200`, [email]),
+            all(env.DB, `SELECT * FROM customer_support_cases WHERE lower(email) = lower(?) ORDER BY updated_at DESC LIMIT 100`, [email]),
+            all(env.DB, `SELECT * FROM customer_notifications WHERE lower(email) = lower(?) ORDER BY updated_at DESC LIMIT 100`, [email]),
+            all(env.DB, `SELECT * FROM customer_support_pins WHERE lower(email) = lower(?) ORDER BY updated_at DESC LIMIT 20`, [email]),
+            getPlans(env.DB),
+            all(env.DB, `SELECT * FROM customer_internal_notes WHERE lower(email) = lower(?) ORDER BY pinned DESC, updated_at DESC LIMIT 100`, [email]),
+            getCustomerStripeBilling(env.DB, env, email)
+          ]);
+          return json({ customer: { ...customer, flags, timeline, supportCases, notifications, pins, notes, billing }, plans, saved: true, verification });
         }
         const [customer, flags, timeline, supportCases, notifications, pins, plans, notes, billing] = await Promise.all([
           DB.prepare(`
