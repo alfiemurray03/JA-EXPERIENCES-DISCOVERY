@@ -37,16 +37,38 @@ async function ensureTables(DB) {
       // Existing databases may already include the encrypted PIN columns.
     }
   }
+  await DB.prepare(`
+    CREATE TABLE IF NOT EXISTS customer_security_questions (
+      id TEXT PRIMARY KEY,
+      email TEXT NOT NULL,
+      question_label TEXT NOT NULL,
+      answer_hash TEXT NOT NULL,
+      status TEXT DEFAULT 'Active',
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
 }
 
 async function hashPin(pin) {
-  const bytes = new TextEncoder().encode(pin);
-  const hash = await crypto.subtle.digest("SHA-256", bytes);
-  return Array.from(new Uint8Array(hash), (byte) => byte.toString(16).padStart(2, "0")).join("");
+  return hashSecret(pin);
+}
+
+async function hashSecret(value) {
+  const salt = crypto.randomUUID();
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(String(value || "")), "PBKDF2", false, ["deriveBits"]);
+  const bits = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", salt: new TextEncoder().encode(salt), iterations: 210000, hash: "SHA-256" },
+    key,
+    256
+  );
+  const hash = Array.from(new Uint8Array(bits), (byte) => byte.toString(16).padStart(2, "0")).join("");
+  return `pbkdf2_sha256$210000$${salt}$${hash}`;
 }
 
 function generatePin() {
-  return String(Math.floor(100000 + Math.random() * 900000));
+  const value = crypto.getRandomValues(new Uint32Array(1))[0] % 900000;
+  return String(100000 + value);
 }
 
 function bytesToBase64(bytes) {
@@ -96,6 +118,7 @@ async function createSupportPinRecord(DB, env, email, actorEmail, pin = null) {
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
   const payload = JSON.stringify([{ event: "generated", at: new Date().toISOString(), actor: actorEmail }]);
   const encrypted = await encryptPin(env, supportPin);
+  await DB.prepare(`UPDATE customer_support_pins SET status = 'Revoked', revoked_at = CURRENT_TIMESTAMP, revoked_by = ?, updated_at = CURRENT_TIMESTAMP WHERE lower(email) = lower(?) AND status = 'Active' AND revoked_at IS NULL`).bind(actorEmail, email).run();
   await DB.prepare(`INSERT INTO customer_support_pins (id, email, pin_hash, pin_ciphertext, pin_iv, pin_last4, status, expires_at, audit_history) VALUES (?, ?, ?, ?, ?, ?, 'Active', ?, ?)`).bind(
     id,
     email,
@@ -135,7 +158,7 @@ export async function onRequest(context) {
   if (request.method === "GET") {
     const result = await env.DB.prepare(`SELECT id, pin_hash, pin_ciphertext, pin_iv, pin_last4, status, expires_at, used_at, revoked_at, revoked_by, last_used_at, created_at, updated_at FROM customer_support_pins WHERE lower(email) = lower(?) ORDER BY created_at DESC LIMIT 50`).bind(identity.email).all();
     const pins = result.results || [];
-    let active = pins.find((pin) => pin.status === "Active" && !pin.revoked_at) || pins[0] || null;
+    let active = pins.find((pin) => pin.status === "Active" && !pin.revoked_at && new Date(pin.expires_at).getTime() > Date.now()) || null;
     let activePin = "";
 
     if (active) {
@@ -165,8 +188,10 @@ export async function onRequest(context) {
       return json({ pins: [active] });
     }
 
+    const questions = await env.DB.prepare(`SELECT id, question_label, status, created_at, updated_at FROM customer_security_questions WHERE lower(email) = lower(?) AND COALESCE(status, 'Active') = 'Active' ORDER BY created_at ASC`).bind(identity.email).all();
     return json({
-      pins: [serializePinRow({ ...active, active_pin: activePin })]
+      pins: [serializePinRow({ ...active, active_pin: activePin })],
+      security_questions: questions.results || []
     });
   }
 
@@ -177,6 +202,22 @@ export async function onRequest(context) {
     if (action === "generate") {
       const { id, pin, expiresAt } = await createSupportPinRecord(env.DB, env, identity.email, identity.email);
       return json({ id, pin, expiresAt });
+    }
+    if (action === "save_questions") {
+      const questions = (Array.isArray(body.questions) ? body.questions.slice(0, 5) : [])
+        .map((question) => ({ question: clean(question.question, 180), answer: clean(question.answer, 500) }))
+        .filter((question) => question.question && question.answer);
+      if (!questions.length) return json({ error: "At least one security question is required." }, 400);
+      await env.DB.prepare(`UPDATE customer_security_questions SET status = 'Replaced', updated_at = CURRENT_TIMESTAMP WHERE lower(email) = lower(?) AND COALESCE(status, 'Active') = 'Active'`).bind(identity.email).run();
+      for (const question of questions) {
+        await env.DB.prepare(`INSERT INTO customer_security_questions (id, email, question_label, answer_hash) VALUES (?, ?, ?, ?)`).bind(
+          crypto.randomUUID(),
+          identity.email,
+          question.question,
+          await hashSecret(question.answer.toLowerCase())
+        ).run();
+      }
+      return json({ saved: true });
     }
     const current = await env.DB.prepare(`SELECT * FROM customer_support_pins WHERE id = ? AND lower(email) = lower(?)`).bind(id, identity.email).first();
     if (!current) return json({ error: "PIN not found." }, 404);

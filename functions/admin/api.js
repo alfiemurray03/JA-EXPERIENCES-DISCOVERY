@@ -11,7 +11,7 @@ const CLOSURE_STATUSES = ["Open", "In Progress", "Approved", "Rejected", "Comple
 const DPR_STATUSES = ["Received", "Verifying Identity", "In Progress", "Ready to Send", "Sent", "Closed", "Rejected"];
 const SYSTEM_REPORT_STATUSES = ["Open", "In Progress", "Resolved", "Rejected"];
 const THEME_MODES = ["light", "dark", "system"];
-const ADMIN_SCHEMA_VERSION = "2026-07-03-rc3.1";
+const ADMIN_SCHEMA_VERSION = "2026-07-04-rc4.7-complete";
 const PERMISSION_SECTIONS = {
   overview: ["view_dashboard"],
   health: ["view_dashboard", "manage_status", "manage_api", "manage_settings"],
@@ -234,6 +234,50 @@ async function hashPin(pin) {
   return Array.from(new Uint8Array(hash), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
+async function deriveVerificationHash(value, salt) {
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(String(value || "")), "PBKDF2", false, ["deriveBits"]);
+  const bits = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", salt: new TextEncoder().encode(salt), iterations: 210000, hash: "SHA-256" },
+    key,
+    256
+  );
+  return Array.from(new Uint8Array(bits), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+export async function verifySecretHash(value, storedHash) {
+  const hash = clean(storedHash, 500);
+  if (!hash) return false;
+  if (hash.startsWith("pbkdf2_sha256$")) {
+    const [, iterations, salt, expected] = hash.split("$");
+    if (!iterations || !salt || !expected) return false;
+    const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(String(value || "")), "PBKDF2", false, ["deriveBits"]);
+    const bits = await crypto.subtle.deriveBits(
+      { name: "PBKDF2", salt: new TextEncoder().encode(salt), iterations: Number(iterations), hash: "SHA-256" },
+      key,
+      256
+    );
+    const actual = Array.from(new Uint8Array(bits), (byte) => byte.toString(16).padStart(2, "0")).join("");
+    return timingSafeEqual(actual, expected);
+  }
+  return timingSafeEqual(await hashPin(value), hash);
+}
+
+function timingSafeEqual(left, right) {
+  const a = new TextEncoder().encode(String(left || ""));
+  const b = new TextEncoder().encode(String(right || ""));
+  let diff = a.length ^ b.length;
+  const length = Math.max(a.length, b.length);
+  for (let index = 0; index < length; index += 1) {
+    diff |= (a[index] || 0) ^ (b[index] || 0);
+  }
+  return diff === 0;
+}
+
+export function isSupervisorContext(adminContext = {}) {
+  const role = canonicalRoleName(adminContext.role || "");
+  return role === "Supervisor" || role === "System Administrator" || role === "Platform Owner";
+}
+
 export async function verifySupportPinRecord(DB, env = {}, email, submittedPin, actorEmail) {
   const targetEmail = cleanEmail(email);
   const pin = clean(submittedPin, 12);
@@ -241,6 +285,8 @@ export async function verifySupportPinRecord(DB, env = {}, email, submittedPin, 
 
   const current = await DB.prepare(`SELECT * FROM customer_support_pins WHERE lower(email) = lower(?) ORDER BY created_at DESC LIMIT 1`).bind(targetEmail).first();
   if (!current) return { ok: false, error: "No support PIN record was found for this customer." };
+  if (current.revoked_at || current.status === "Revoked") return { ok: false, error: "The support PIN has been revoked." };
+  if (current.used_at || current.status === "Verified" || current.status === "Used") return { ok: false, error: "The support PIN has already been used." };
 
   const now = new Date().toISOString();
   const expiresAt = current.expires_at ? new Date(current.expires_at) : null;
@@ -267,8 +313,7 @@ export async function verifySupportPinRecord(DB, env = {}, email, submittedPin, 
     return { ok: false, error: "The support PIN has expired." };
   }
 
-  const expectedHash = await hashPin(pin);
-  const success = expectedHash === current.pin_hash;
+  const success = await verifySecretHash(pin, current.pin_hash);
   const nextHistory = [...history, {
     ...baseEvent,
     type: success ? "verification_success" : "verification_failed",
@@ -708,6 +753,7 @@ async function ensureTables(DB, env) {
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
   `).run();
+
 }
 
 async function ensureNotificationTable(DB) {
@@ -746,6 +792,54 @@ async function ensureNotificationTable(DB) {
   await safeAlter(DB, `ALTER TABLE customer_notifications ADD COLUMN send_history TEXT DEFAULT '[]'`);
 }
 
+async function ensureCustomerIdentityVerificationTables(DB) {
+  await DB.prepare(`
+    CREATE TABLE IF NOT EXISTS customer_identity_verification_sessions (
+      id TEXT PRIMARY KEY,
+      customer_email TEXT NOT NULL,
+      admin_email TEXT NOT NULL,
+      method TEXT NOT NULL,
+      verified_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      expires_at TEXT NOT NULL,
+      ended_at TEXT
+    )
+  `).run();
+
+  await DB.prepare(`
+    CREATE TABLE IF NOT EXISTS customer_identity_verification_locks (
+      customer_email TEXT PRIMARY KEY,
+      locked_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      locked_until TEXT NOT NULL,
+      is_locked INTEGER DEFAULT 0,
+      failed_pin_attempts INTEGER DEFAULT 0,
+      failed_security_attempts INTEGER DEFAULT 0,
+      reason TEXT,
+      cleared_at TEXT,
+      cleared_by TEXT,
+      override_reason TEXT
+    )
+  `).run();
+
+  await DB.prepare(`
+    CREATE TABLE IF NOT EXISTS customer_security_questions (
+      id TEXT PRIMARY KEY,
+      email TEXT NOT NULL,
+      question_label TEXT NOT NULL,
+      answer_hash TEXT NOT NULL,
+      status TEXT DEFAULT 'Active',
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
+
+  await safeAlter(DB, `ALTER TABLE customer_identity_verification_locks ADD COLUMN failed_pin_attempts INTEGER DEFAULT 0`);
+  await safeAlter(DB, `ALTER TABLE customer_identity_verification_locks ADD COLUMN failed_security_attempts INTEGER DEFAULT 0`);
+  await safeAlter(DB, `ALTER TABLE customer_identity_verification_locks ADD COLUMN cleared_at TEXT`);
+  await safeAlter(DB, `ALTER TABLE customer_identity_verification_locks ADD COLUMN cleared_by TEXT`);
+  await safeAlter(DB, `ALTER TABLE customer_identity_verification_locks ADD COLUMN override_reason TEXT`);
+  await safeAlter(DB, `ALTER TABLE customer_identity_verification_locks ADD COLUMN is_locked INTEGER DEFAULT 0`);
+}
+
 async function initialiseAdminSchema(DB, env) {
   const version = await DB.prepare(`SELECT value FROM site_settings WHERE key = 'admin_schema_version'`).first().catch(() => null);
   if (version?.value === ADMIN_SCHEMA_VERSION) return;
@@ -758,6 +852,7 @@ async function initialiseAdminSchema(DB, env) {
   }
 
   await ensureNotificationTable(DB);
+  await ensureCustomerIdentityVerificationTables(DB);
   await DB.prepare(`
     INSERT INTO site_settings (key, value, updated_at)
     VALUES ('admin_schema_version', ?, CURRENT_TIMESTAMP)
@@ -878,6 +973,156 @@ async function writeAudit(DB, identity, action, entityType, entityId, summary, m
     clean(summary, 1000),
     JSON.stringify(metadata)
   ).run();
+}
+
+export async function getIdentityVerificationState(DB, customerEmail, adminEmail, adminContext = {}) {
+  const email = cleanEmail(customerEmail);
+  const actor = cleanEmail(adminEmail);
+  const lock = await DB.prepare(`
+    SELECT * FROM customer_identity_verification_locks
+    WHERE lower(customer_email) = lower(?) AND cleared_at IS NULL AND COALESCE(is_locked, 0) = 1
+  `).bind(email).first().catch(() => null);
+  const session = await DB.prepare(`
+    SELECT * FROM customer_identity_verification_sessions
+    WHERE lower(customer_email) = lower(?) AND lower(admin_email) = lower(?) AND ended_at IS NULL AND datetime(expires_at) > datetime('now')
+    ORDER BY verified_at DESC LIMIT 1
+  `).bind(email, actor).first().catch(() => null);
+  const questions = await all(DB, `
+    SELECT id, question_label FROM customer_security_questions
+    WHERE lower(email) = lower(?) AND COALESCE(status, 'Active') = 'Active'
+    ORDER BY created_at ASC LIMIT 5
+  `, [email]).catch(() => []);
+
+  return {
+    verified: Boolean(session) && !lock,
+    method: session?.method || "",
+    expires_at: session?.expires_at || null,
+    locked: Boolean(lock),
+    locked_until: lock?.locked_until || null,
+    failed_pin_attempts: Number(lock?.failed_pin_attempts || 0),
+    failed_security_attempts: Number(lock?.failed_security_attempts || 0),
+    supervisor_override_available: Boolean(lock) && isSupervisorContext(adminContext),
+    questions
+  };
+}
+
+function protectCustomerPayload(customer, verification) {
+  if (!customer) return customer;
+  if (verification?.verified) return { ...customer, verification };
+  return {
+    ...customer,
+    contact_email: "",
+    phone: "",
+    communication_preference: "",
+    support_notes: "",
+    admin_notes: "",
+    admin_lifetime: 0,
+    admin_lifetime_plan_id: "",
+    flags: [],
+    timeline: [],
+    supportCases: [],
+    notifications: [],
+    pins: [],
+    notes: [],
+    billing: {},
+    verification
+  };
+}
+
+export async function createCustomerVerificationSession(DB, identity, customerEmail, method) {
+  await DB.prepare(`
+    UPDATE customer_identity_verification_sessions
+    SET ended_at = CURRENT_TIMESTAMP
+    WHERE lower(customer_email) = lower(?) AND lower(admin_email) = lower(?) AND ended_at IS NULL
+  `).bind(cleanEmail(customerEmail), cleanEmail(identity.email)).run();
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+  await DB.prepare(`
+    INSERT INTO customer_identity_verification_sessions (id, customer_email, admin_email, method, expires_at)
+    VALUES (?, ?, ?, ?, ?)
+  `).bind(crypto.randomUUID(), cleanEmail(customerEmail), cleanEmail(identity.email), clean(method, 80), expiresAt).run();
+  return expiresAt;
+}
+
+export async function clearCustomerVerificationSession(DB, identity, customerEmail) {
+  await DB.prepare(`
+    UPDATE customer_identity_verification_sessions
+    SET ended_at = CURRENT_TIMESTAMP
+    WHERE lower(customer_email) = lower(?) AND lower(admin_email) = lower(?) AND ended_at IS NULL
+  `).bind(cleanEmail(customerEmail), cleanEmail(identity.email)).run();
+}
+
+export async function recordIdentityFailure(DB, identity, customerEmail, method, reason) {
+  const email = cleanEmail(customerEmail);
+  const current = await DB.prepare(`
+    SELECT * FROM customer_identity_verification_locks
+    WHERE lower(customer_email) = lower(?) AND cleared_at IS NULL
+  `).bind(email).first().catch(() => null);
+  const pinAttempts = Number(current?.failed_pin_attempts || 0) + (method === "Support PIN" ? 1 : 0);
+  const securityAttempts = Number(current?.failed_security_attempts || 0) + (method === "Security Questions" ? 1 : 0);
+  const shouldLock = pinAttempts >= 3 || method === "Security Questions";
+  const lockedUntil = shouldLock ? "9999-12-31T23:59:59.999Z" : "1970-01-01T00:00:00.000Z";
+  await DB.prepare(`
+    INSERT INTO customer_identity_verification_locks (customer_email, locked_until, is_locked, failed_pin_attempts, failed_security_attempts, reason)
+    VALUES (?, ?, ?, ?, ?, ?)
+    ON CONFLICT(customer_email) DO UPDATE SET
+      locked_at = CASE WHEN excluded.is_locked = 1 THEN CURRENT_TIMESTAMP ELSE locked_at END,
+      locked_until = excluded.locked_until,
+      is_locked = excluded.is_locked,
+      failed_pin_attempts = excluded.failed_pin_attempts,
+      failed_security_attempts = excluded.failed_security_attempts,
+      reason = excluded.reason,
+      cleared_at = NULL,
+      cleared_by = NULL,
+      override_reason = NULL
+  `).bind(email, lockedUntil, shouldLock ? 1 : 0, pinAttempts, securityAttempts, clean(reason, 300)).run();
+
+  await writeAudit(DB, identity, "customer_identity_verification_failed", "profiles", email, `Customer identity verification failed for ${email}.`, {
+    method,
+    reason,
+    failed_pin_attempts: pinAttempts,
+    failed_security_attempts: securityAttempts,
+    lock_created: shouldLock
+  });
+
+  return { failed_pin_attempts: pinAttempts, failed_security_attempts: securityAttempts, locked: shouldLock, locked_until: shouldLock ? lockedUntil : null };
+}
+
+async function clearIdentityFailures(DB, customerEmail) {
+  await DB.prepare(`
+    UPDATE customer_identity_verification_locks
+    SET cleared_at = CURRENT_TIMESTAMP, is_locked = 0
+    WHERE lower(customer_email) = lower(?) AND cleared_at IS NULL
+  `).bind(cleanEmail(customerEmail)).run();
+}
+
+export async function verifyCustomerSecurityQuestions(DB, body) {
+  const email = cleanEmail(body.email);
+  const answers = Array.isArray(body.answers) ? body.answers : [];
+  if (!email || !answers.length) return { ok: false, error: "Security question answers are required." };
+  const rows = await all(DB, `
+    SELECT id, question_label, answer_hash FROM customer_security_questions
+    WHERE lower(email) = lower(?) AND COALESCE(status, 'Active') = 'Active'
+    ORDER BY created_at ASC LIMIT 5
+  `, [email]);
+  if (!rows.length) return { ok: false, error: "No security questions are configured for this customer." };
+
+  for (const row of rows) {
+    const supplied = answers.find((answer) => clean(answer.id, 120) === row.id);
+    if (!supplied || !(await verifySecretHash(clean(supplied.answer, 500).toLowerCase(), row.answer_hash))) {
+      return { ok: false, error: "Security question verification failed.", questions_used: rows.map((item) => item.question_label) };
+    }
+  }
+  return { ok: true, questions_used: rows.map((item) => item.question_label) };
+}
+
+export async function clearCustomerIdentityLock(DB, identity, customerEmail, reason) {
+  const email = cleanEmail(customerEmail);
+  await DB.prepare(`
+    UPDATE customer_identity_verification_locks
+    SET cleared_at = CURRENT_TIMESTAMP, cleared_by = ?, override_reason = ?
+    WHERE lower(customer_email) = lower(?) AND cleared_at IS NULL
+  `).bind(cleanEmail(identity.email), clean(reason, 500), email).run();
+  await writeAudit(DB, identity, "customer_identity_lock_override", "profiles", email, `Cleared customer identity verification lock for ${email}.`, { reason: clean(reason, 500) });
 }
 
 async function seedDefaults(DB) {
@@ -1511,17 +1756,17 @@ function defaultLandingPageForRole(role, permissions) {
   return "overview";
 }
 
-async function savePlan(DB, body) {
+function preparePlanSave(DB, body) {
   const id = clean(body.id, 120) || crypto.randomUUID();
   const planName = clean(body.plan_name, 180);
   if (!planName) throw new Error("Plan name is required.");
 
-  await DB.prepare(`
+  return DB.prepare(`
     INSERT INTO service_plans (
       id, plan_name, plan_type, price_label, price_pence, stripe_product_id, stripe_price_id,
-      delivery_time, revisions, description, button_label, is_featured, sort_order, updated_at
+      delivery_time, revisions, description, button_label, is_active, is_featured, sort_order, updated_at
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
     ON CONFLICT(id) DO UPDATE SET
       plan_name = excluded.plan_name,
       plan_type = excluded.plan_type,
@@ -1533,6 +1778,7 @@ async function savePlan(DB, body) {
       revisions = excluded.revisions,
       description = excluded.description,
       button_label = excluded.button_label,
+      is_active = excluded.is_active,
       is_featured = excluded.is_featured,
       sort_order = excluded.sort_order,
       updated_at = CURRENT_TIMESTAMP
@@ -1548,78 +1794,30 @@ async function savePlan(DB, body) {
     clean(body.revisions, 120),
     clean(body.description, 1000),
     clean(body.button_label, 80) || "Buy now securely",
+    body.is_active === undefined ? 1 : (body.is_active ? 1 : 0),
     body.is_featured ? 1 : 0,
     Number(body.sort_order || 100)
-  ).run();
+  );
+}
 
+export async function savePlan(DB, body) {
+  await preparePlanSave(DB, body).run();
   return all(DB, `SELECT * FROM service_plans ORDER BY sort_order ASC, plan_name ASC`);
 }
 
-async function savePlanVisibility(DB, body) {
-  const incoming = Array.isArray(body.plans) ? body.plans : [];
-  if (!incoming.length) throw new Error("No plan changes were supplied.");
+export async function savePlans(DB, incoming) {
+  const plans = Array.isArray(incoming) ? incoming : [];
+  if (!plans.length) throw new Error("No plan changes were supplied.");
 
-  const ids = incoming.map((plan) => clean(plan.id, 120)).filter(Boolean);
-  if (ids.length !== incoming.length) throw new Error("One or more plan IDs are invalid.");
-
-  const current = await all(DB, `SELECT id, is_active FROM service_plans ORDER BY sort_order ASC, plan_name ASC`);
-  const currentMap = new Map(current.map((plan) => [plan.id, Number(plan.is_active || 0)]));
-
-  for (const plan of incoming) {
-    if (!currentMap.has(clean(plan.id, 120))) throw new Error(`Unknown plan: ${clean(plan.id, 120)}`);
-    const active = Number(plan.is_active || 0);
-    if (active !== 0 && active !== 1) throw new Error(`Invalid active state for plan: ${clean(plan.id, 120)}`);
+  for (const plan of plans) {
+    if (!clean(plan.id, 120)) throw new Error("Every plan requires an ID.");
+    if (!clean(plan.plan_name, 180)) throw new Error("Every plan requires a name.");
   }
 
-  const expected = new Map(incoming.map((plan) => [clean(plan.id, 120), Number(plan.is_active || 0)]));
-
-  const databaseAfterSave = [];
-  for (const plan of incoming) {
-    const id = clean(plan.id, 120);
-    try {
-      await DB.prepare(`UPDATE service_plans SET is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
-        .bind(expected.get(id), id)
-        .run();
-    } catch (error) {
-      throw new Error(`Failed to update plan ${id}: ${error.message || error}`);
-    }
-
-    const persisted = await DB.prepare(`SELECT id, is_active FROM service_plans WHERE id = ?`)
-      .bind(id)
-      .first();
-    if (!persisted) {
-      throw new Error(`Plan ${id} was not found after saving.`);
-    }
-    databaseAfterSave.push({
-      id: persisted.id,
-      is_active: Number(persisted.is_active || 0)
-    });
-  }
-
-  const savedPlans = await all(DB, `SELECT * FROM service_plans ORDER BY sort_order ASC, plan_name ASC`);
-  const savedMap = new Map(savedPlans.map((plan) => [plan.id, Number(plan.is_active || 0)]));
-
-  for (const [id, value] of expected.entries()) {
-    if (!savedMap.has(id)) {
-      throw new Error(`Plan ${id} was not found after saving.`);
-    }
-    if (Number(savedMap.get(id)) !== value) {
-      throw new Error(`Plan ${id} was not persisted. Expected ${value}, found ${savedMap.get(id)}.`);
-    }
-  }
-
-  const plans = savedPlans.map((plan) => ({
-    ...plan,
-    is_active: Number(plan.is_active || 0),
-    is_featured: Number(plan.is_featured || 0)
-  }));
-
-  return {
-    success: true,
-    rows_updated: incoming.length,
-    database_after_save: databaseAfterSave,
-    plans
-  };
+  const statements = plans.map((plan) => preparePlanSave(DB, plan));
+  if (typeof DB.batch === "function") await DB.batch(statements);
+  else for (const statement of statements) await statement.run();
+  return all(DB, `SELECT * FROM service_plans ORDER BY sort_order ASC, plan_name ASC`);
 }
 
 async function savePolicy(DB, body) {
@@ -2848,7 +3046,9 @@ export async function onRequest(context) {
           all(env.DB, `SELECT * FROM customer_internal_notes WHERE lower(email) = lower(?) ORDER BY pinned DESC, updated_at DESC LIMIT 100`, [email]),
           getCustomerStripeBilling(env.DB, env, email)
         ]);
-        return json({ admin: adminContext, customer: { ...customer, flags, timeline, supportCases, notifications, pins, notes, billing }, plans });
+        const verification = await getIdentityVerificationState(env.DB, email, identity.email, adminContext);
+        const customerPayload = protectCustomerPayload({ ...customer, flags, timeline, supportCases, notifications, pins, notes, billing }, verification);
+        return json({ admin: adminContext, customer: customerPayload, plans, verification });
       }
       if (section === "plans") {
         return json({
@@ -2966,10 +3166,10 @@ export async function onRequest(context) {
         if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_plans", "manage_pricing"])) {
           return json({ error: "Forbidden.", section }, 403);
         }
-        if (body.action === "save_visibility") {
-          const result = await savePlanVisibility(env.DB, body);
-          await writeAudit(env.DB, identity, "plan_visibility_save", "service_plans", "bulk", "Saved plan visibility changes.", {});
-          return json(result);
+        if (body.action === "save_all") {
+          const plans = await savePlans(env.DB, body.plans);
+          await writeAudit(env.DB, identity, "plans_save", "service_plans", "all", `Saved ${plans.length} complete plans.`, { count: plans.length });
+          return json({ plans, saved: true });
         }
         const plans = await savePlan(env.DB, body);
         await writeAudit(env.DB, identity, "plan_save", "service_plans", clean(body.id, 120), `Saved plan ${clean(body.plan_name, 180)}.`, {});
@@ -3072,6 +3272,62 @@ export async function onRequest(context) {
         if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_users", "manage_crm"])) return json({ error: "Forbidden.", section }, 403);
         const email = cleanEmail(body.email);
         if (!email) return json({ error: "Customer email is required." }, 400);
+        const verificationAction = ["verify_identity", "verify_pin", "clear_identity_verification", "override_identity_lock"].includes(clean(body.action, 80));
+        if (!verificationAction) {
+          const verification = await getIdentityVerificationState(env.DB, email, identity.email, adminContext);
+          if (!verification.verified) {
+            await writeAudit(env.DB, identity, "customer_action_blocked_identity_required", "profiles", email, `Blocked customer action until identity verification for ${email}.`, { action: clean(body.action, 120), locked: verification.locked });
+            return json({ error: "Identity Verification Required", verification }, 403);
+          }
+        }
+        if (body.action === "clear_identity_verification") {
+          await clearCustomerVerificationSession(env.DB, identity, email);
+          await writeAudit(env.DB, identity, "customer_identity_verification_session_closed", "profiles", email, `Closed customer identity verification session for ${email}.`, {});
+          return json({ saved: true, verification: await getIdentityVerificationState(env.DB, email, identity.email, adminContext) });
+        }
+        if (body.action === "override_identity_lock") {
+          if (!isSupervisorContext(adminContext)) return json({ error: "Supervisor override is required." }, 403);
+          const reason = clean(body.reason, 500);
+          if (!reason) return json({ error: "A reason is required for supervisor override." }, 400);
+          await clearCustomerIdentityLock(env.DB, identity, email, reason);
+          const expiresAt = await createCustomerVerificationSession(env.DB, identity, email, "Supervisor Override");
+          await writeAudit(env.DB, identity, "customer_identity_verification_override", "profiles", email, `Supervisor override verified customer identity for ${email}.`, { reason, expires_at: expiresAt });
+          return json({ saved: true, verification: await getIdentityVerificationState(env.DB, email, identity.email, adminContext) });
+        }
+        if (body.action === "verify_identity" || body.action === "verify_pin") {
+          const method = clean(body.method, 80) || (body.action === "verify_pin" ? "Support PIN" : "Support PIN");
+          const lockedState = await getIdentityVerificationState(env.DB, email, identity.email, adminContext);
+          if (lockedState.locked) {
+            await writeAudit(env.DB, identity, "customer_identity_verification_blocked_locked", "profiles", email, `Blocked identity verification because ${email} is temporarily locked.`, { method });
+            return json({ verification: lockedState, error: "Identity verification has failed. For security, this customer profile has been temporarily locked." }, 423);
+          }
+
+          const verificationResult = method === "Security Questions"
+            ? await verifyCustomerSecurityQuestions(env.DB, { ...body, email })
+            : await verifySupportPinRecord(env.DB, env, email, body.pin, identity.email);
+
+          if (verificationResult.ok) {
+            await clearIdentityFailures(env.DB, email);
+            const expiresAt = await createCustomerVerificationSession(env.DB, identity, email, method);
+            await writeAudit(env.DB, identity, "customer_identity_verified", "profiles", email, `Verified customer identity for ${email}.`, {
+              method,
+              questions_used: verificationResult.questions_used || [],
+              success: true,
+              expires_at: expiresAt
+            });
+          } else {
+            const failure = await recordIdentityFailure(env.DB, identity, email, method, verificationResult.error || "Verification failed.");
+            if (failure.locked) {
+              return json({
+                verification: await getIdentityVerificationState(env.DB, email, identity.email, adminContext),
+                error: "Identity verification has failed. For security, this customer profile has been temporarily locked."
+              }, 423);
+            }
+          }
+
+          const verification = await getIdentityVerificationState(env.DB, email, identity.email, adminContext);
+          return json({ saved: Boolean(verificationResult.ok), verification, error: verificationResult.ok ? "" : "The Support PIN could not be verified." });
+        }
         if (body.action === "open_stripe_portal") {
           const portalUrl = await createCustomerStripePortal(env.DB, env, email, new URL(request.url).origin);
           await writeAudit(env.DB, identity, "stripe_portal_open", "profiles", email, `Opened Stripe Billing Portal for ${email}.`, {});
@@ -3101,39 +3357,6 @@ export async function onRequest(context) {
           const notifications = await saveNotification(env.DB, notificationPayload, identity);
           await writeAudit(env.DB, identity, "customer_notification_send", "customer_notifications", email, `Sent customer notification to ${email}.`, { title: notificationPayload.title, category: notificationPayload.category });
           return json({ notifications, saved: true, notification: { email } });
-        }
-        if (body.action === "verify_pin") {
-          const verification = await verifySupportPinRecord(env.DB, env, email, body.pin, identity.email);
-          const [customer, flags, timeline, supportCases, notifications, pins, plans, notes, billing] = await Promise.all([
-            DB.prepare(`
-              SELECT
-                email,
-                verified_name,
-                display_name,
-                contact_email,
-                phone,
-                communication_preference,
-                support_notes,
-                admin_notes,
-                admin_lifetime,
-                admin_lifetime_plan_id,
-                admin_customer_status,
-                created_at,
-                updated_at,
-                admin_updated_at
-              FROM profiles
-              WHERE lower(email) = lower(?)
-            `).bind(email).first(),
-            all(env.DB, `SELECT * FROM customer_account_flags WHERE lower(email) = lower(?) ORDER BY updated_at DESC`, [email]),
-            all(env.DB, `SELECT * FROM customer_timeline_events WHERE lower(email) = lower(?) ORDER BY created_at DESC LIMIT 200`, [email]),
-            all(env.DB, `SELECT * FROM customer_support_cases WHERE lower(email) = lower(?) ORDER BY updated_at DESC LIMIT 100`, [email]),
-            all(env.DB, `SELECT * FROM customer_notifications WHERE lower(email) = lower(?) ORDER BY updated_at DESC LIMIT 100`, [email]),
-            all(env.DB, `SELECT * FROM customer_support_pins WHERE lower(email) = lower(?) ORDER BY updated_at DESC LIMIT 20`, [email]),
-            getPlans(env.DB),
-            all(env.DB, `SELECT * FROM customer_internal_notes WHERE lower(email) = lower(?) ORDER BY pinned DESC, updated_at DESC LIMIT 100`, [email]),
-            getCustomerStripeBilling(env.DB, env, email)
-          ]);
-          return json({ customer: { ...customer, flags, timeline, supportCases, notifications, pins, notes, billing }, plans, saved: true, verification });
         }
         const [customer, flags, timeline, supportCases, notifications, pins, plans, notes, billing] = await Promise.all([
           DB.prepare(`

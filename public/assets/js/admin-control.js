@@ -120,6 +120,12 @@ document.addEventListener("DOMContentLoaded", () => {
   loadSection(sectionTitles[requestedSection] ? requestedSection : "overview");
 });
 
+window.addEventListener("beforeunload", (event) => {
+  if (!state.planDirty || state.planSaving) return;
+  event.preventDefault();
+  event.returnValue = "";
+});
+
 function iconSvg(name) {
   const paths = iconPaths[name] || iconPaths.dashboard;
   return `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">${paths}</svg>`;
@@ -218,15 +224,7 @@ function bindAdminActions() {
     }
 
     if (type === "verify-customer-pin") {
-      const email = action.dataset.email || "";
-      const pin = window.prompt("Enter the support PIN to verify", "");
-      if (!email || !pin) return;
-      const data = await api("customer", {
-        method: "POST",
-        body: JSON.stringify({ action: "verify_pin", email, pin })
-      });
-      state.data.customer = data;
-      renderCustomerProfile(data.customer, data.plans || []);
+      document.getElementById("customerIdentityPin")?.focus();
       return;
     }
 
@@ -439,6 +437,14 @@ async function api(section, options = {}) {
 }
 
 async function loadSection(section) {
+  if (!confirmPlanNavigation(section)) return;
+  if (state.currentSection === "customer" && section !== "customer" && state.data.customer?.customer?.email) {
+    api("customer", {
+      method: "POST",
+      body: JSON.stringify({ action: "clear_identity_verification", email: state.data.customer.customer.email })
+    }).catch(() => {});
+  }
+
   state.currentSection = section;
   setTopbar(section);
 
@@ -1872,6 +1878,11 @@ function renderCustomerProfile(customer, plans = []) {
   const notes = Array.isArray(customer.notes) ? customer.notes : [];
   const billing = customer.billing || {};
   const subscription = billing.subscription || null;
+  const verification = customer.verification || {};
+  const identityVerified = Boolean(verification.verified);
+  const identityLocked = Boolean(verification.locked);
+  const protectedDisabled = identityVerified ? "" : "disabled";
+  const securityQuestions = Array.isArray(verification.questions) ? verification.questions : [];
   document.getElementById("adminPanel").innerHTML = `
     <section class="admin-card">
       <div class="section-head">
@@ -1882,12 +1893,14 @@ function renderCustomerProfile(customer, plans = []) {
         <div class="section-actions">
           ${badge(customer.admin_customer_status || "Standard")}
           ${Number(customer.admin_lifetime || 0) === 1 ? badge("Lifetime", "amber") : ""}
-          <button class="admin-button" type="button" data-action="send-customer-notification" data-email="${escapeAttr(customer.email)}">Send notification</button>
-          <button class="admin-button secondary" type="button" data-action="verify-customer-pin" data-email="${escapeAttr(customer.email)}">Verify support PIN</button>
-          <button class="admin-button" type="button" data-action="open-stripe-portal" data-email="${escapeAttr(customer.email)}" ${billing.portalAvailable ? "" : "disabled"}>Open Stripe Customer Portal</button>
+          ${identityVerified ? badge("Identity Verified", "green") : badge("Identity Required", "amber")}
+          <button class="admin-button" type="button" data-action="send-customer-notification" data-email="${escapeAttr(customer.email)}" ${protectedDisabled}>Send notification</button>
+          <button class="admin-button secondary" type="button" data-action="verify-customer-pin" data-email="${escapeAttr(customer.email)}">Verify Customer Identity</button>
+          <button class="admin-button" type="button" data-action="open-stripe-portal" data-email="${escapeAttr(customer.email)}" ${billing.portalAvailable && identityVerified ? "" : "disabled"}>Open Stripe Customer Portal</button>
           <button class="admin-button secondary" type="button" data-action="load-section" data-section="customers">Back to CRM</button>
         </div>
       </div>
+      ${renderCustomerIdentityVerification(customer, verification, securityQuestions)}
       <div class="admin-grid">
         ${stat("Contact email", customer.contact_email || "Not added")}
         ${stat("Phone", customer.phone || "Not added")}
@@ -1918,8 +1931,8 @@ function renderCustomerProfile(customer, plans = []) {
         <section class="admin-card">
           <div class="section-head"><div><h2>Editable support fields</h2><p>Use the existing customer record editor for lifetime access, notes and flags.</p></div></div>
           <div class="section-actions">
-            <button class="admin-button" type="button" data-action="open-customer" data-email="${escapeAttr(customer.email)}">Open support drawer</button>
-            <button class="admin-button secondary" type="button" data-action="load-section" data-section="notifications">View notifications</button>
+            <button class="admin-button" type="button" data-action="open-customer" data-email="${escapeAttr(customer.email)}" ${protectedDisabled}>Open support drawer</button>
+            <button class="admin-button secondary" type="button" data-action="load-section" data-section="notifications" ${protectedDisabled}>View notifications</button>
           </div>
         </section>
       </div>
@@ -1944,13 +1957,14 @@ function renderCustomerProfile(customer, plans = []) {
             ${input("Note category", "customer_note_category")}
             ${textarea("Internal note", "customer_note_body")}
             <label class=\"check\"><input id=\"customer_note_pinned\" type=\"checkbox\"> Pin note</label>
-            <button class=\"admin-button\" type=\"submit\">Add internal note</button>
+            <button class=\"admin-button\" type=\"submit\" ${protectedDisabled}>Add internal note</button>
           </form>
         </section>
       </div>
     </div>
   `;
   setValue("customer_note_category", "General");
+  bindCustomerIdentityForms(customer, plans);
   document.getElementById("customerNoteForm")?.addEventListener("submit", async (event) => {
     event.preventDefault();
     const data = await api("customer", {
@@ -1965,6 +1979,121 @@ function renderCustomerProfile(customer, plans = []) {
     });
     state.data.customer = data;
     renderCustomerProfile(data.customer, data.plans || plans);
+  });
+}
+
+function renderCustomerIdentityVerification(customer, verification = {}, questions = []) {
+  if (verification.verified) {
+    return `
+      <div class="admin-success" role="status">
+        Identity Verified by ${escapeHtml(verification.method || "Customer Identity Verification")}. Verification expires ${escapeHtml(formatDate(verification.expires_at))}.
+      </div>
+    `;
+  }
+
+  const lockedMessage = verification.locked
+    ? `<div class="admin-alert">Identity verification has failed. For security, this customer profile is locked. A Supervisor or System Administrator must provide a reason and override the lock before work can continue.</div>`
+    : "";
+  const questionFields = questions.map((question) => `
+    <label class="admin-label">
+      ${escapeHtml(question.question_label)}
+      <input type="password" data-security-answer="${escapeAttr(question.id)}" autocomplete="off">
+    </label>
+  `).join("");
+
+  return `
+    <section class="admin-card" style="margin-top:1rem;">
+      <div class="section-head">
+        <div><h2>Verify Customer Identity</h2><p>Identity Verification Required before sensitive customer actions are available.</p></div>
+      </div>
+      ${lockedMessage}
+      <form class="admin-form" id="customerIdentityPinForm">
+        <label class="admin-label">Support PIN<input id="customerIdentityPin" type="password" inputmode="numeric" autocomplete="off" ${verification.locked ? "disabled" : ""}></label>
+        <button class="admin-button" type="submit" ${verification.locked ? "disabled" : ""}>Verify PIN</button>
+      </form>
+      <div id="customerIdentityStatus" class="admin-alert" hidden></div>
+      <details style="margin-top:1rem;" ${verification.locked ? "" : ""}>
+        <summary>Use Security Questions</summary>
+        <form class="admin-form" id="customerSecurityQuestionsForm" style="margin-top:1rem;">
+          ${questionFields || "<p>No security questions are configured for this customer.</p>"}
+          <button class="admin-button secondary" type="submit" ${questions.length && !verification.locked ? "" : "disabled"}>Verify by Security Questions</button>
+        </form>
+      </details>
+      ${verification.supervisor_override_available ? `
+        <form class="admin-form" id="customerIdentityOverrideForm" style="margin-top:1rem;">
+          ${textarea("Reason for Override", "customer_identity_override_reason")}
+          <button class="admin-button" type="submit">Supervisor Override</button>
+        </form>
+      ` : ""}
+    </section>
+  `;
+}
+
+function bindCustomerIdentityForms(customer, plans = []) {
+  const status = document.getElementById("customerIdentityStatus");
+  const showIdentityStatus = (message, isError = true) => {
+    if (!status) return;
+    status.hidden = false;
+    status.className = isError ? "admin-alert" : "admin-success";
+    status.textContent = message;
+  };
+
+  document.getElementById("customerIdentityPinForm")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const pin = getValue("customerIdentityPin");
+    if (!pin) {
+      showIdentityStatus("Enter the customer's Support PIN.");
+      return;
+    }
+    try {
+      const data = await api("customer", {
+        method: "POST",
+        body: JSON.stringify({ action: "verify_identity", method: "Support PIN", email: customer.email, pin })
+      });
+      if (!data.saved) {
+        showIdentityStatus(data.error || "The Support PIN could not be verified.");
+        return;
+      }
+      await openCustomerProfile(customer.email);
+    } catch (error) {
+      showIdentityStatus(error.message || "The Support PIN could not be verified.");
+    }
+  });
+
+  document.getElementById("customerSecurityQuestionsForm")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const answers = [...document.querySelectorAll("[data-security-answer]")].map((input) => ({ id: input.dataset.securityAnswer, answer: input.value }));
+    try {
+      const data = await api("customer", {
+        method: "POST",
+        body: JSON.stringify({ action: "verify_identity", method: "Security Questions", email: customer.email, answers })
+      });
+      if (!data.saved) {
+        showIdentityStatus(data.error || "Customer identity could not be verified.");
+        return;
+      }
+      await openCustomerProfile(customer.email);
+    } catch (error) {
+      showIdentityStatus(error.message || "Customer identity could not be verified.");
+    }
+  });
+
+  document.getElementById("customerIdentityOverrideForm")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const reason = getValue("customer_identity_override_reason");
+    if (!reason) {
+      showIdentityStatus("A reason is required for supervisor override.");
+      return;
+    }
+    try {
+      await api("customer", {
+        method: "POST",
+        body: JSON.stringify({ action: "override_identity_lock", email: customer.email, reason })
+      });
+      await openCustomerProfile(customer.email);
+    } catch (error) {
+      showIdentityStatus(error.message || "Supervisor override failed.");
+    }
   });
 }
 
@@ -2153,10 +2282,20 @@ function renderPlans(plans = []) {
       </div>
     </div>
     <div class="admin-alert ${state.planDirty ? "" : "hidden"}" data-plan-unsaved>${state.planDirty ? "You have unsaved changes." : ""}</div>
+    <div id="plansSaved" class="admin-success" hidden></div>
     <div class="admin-note" data-plan-save-proof hidden></div>
     <div class="plan-grid">${cards || emptyCard("No plans yet.")}</div>
   `;
   syncPlanControls();
+}
+
+function confirmPlanNavigation(section) {
+  if (state.currentSection !== "plans" || section === "plans" || !state.planDirty || state.planSaving) return true;
+  const confirmed = window.confirm("You have unsaved plan changes. Leave without saving them?");
+  if (!confirmed) return false;
+  state.planDraft = null;
+  state.planDirty = false;
+  return true;
 }
 
 async function togglePlan(id, isActive) {
@@ -2173,7 +2312,8 @@ async function togglePlan(id, isActive) {
 
 
 function openPlanModal(id = "") {
-  const plan = (state.data.plans?.plans || []).find((item) => item.id === id) || {};
+  const draft = ensurePlanDraft();
+  const plan = draft.find((item) => item.id === id) || {};
   openModal(`
     <div class="modal-head">
       <div><h2>${id ? "Edit plan" : "New plan"}</h2><p>Changes are published to the website after saving.</p></div>
@@ -2194,7 +2334,7 @@ function openPlanModal(id = "") {
       ${textarea("Description", "description")}
       <label class="check"><input id="is_active" type="checkbox"> Active</label>
       <label class="check"><input id="is_featured" type="checkbox"> Featured</label>
-      <button class="admin-button" type="submit">Save plan</button>
+      <button class="admin-button" type="submit">Apply plan changes</button>
     </form>
   `);
 
@@ -2207,9 +2347,8 @@ function openPlanModal(id = "") {
   document.getElementById("is_active").checked = Number(plan.is_active ?? 1) === 1;
   document.getElementById("is_featured").checked = Number(plan.is_featured || 0) === 1;
 
-  document.getElementById("planForm").addEventListener("submit", async (event) => {
-    event.preventDefault();
-    await savePlan({
+  const stagePlanFromForm = () => {
+    stagePlanDraft({
       id: getValue("plan_id") || derivedId,
       plan_name: getValue("plan_name"),
       plan_type: getValue("plan_type"),
@@ -2222,17 +2361,39 @@ function openPlanModal(id = "") {
       button_label: getValue("button_label"),
       sort_order: Number(getValue("sort_order") || 100),
       description: getValue("description"),
-      is_active: document.getElementById("is_active").checked,
-      is_featured: document.getElementById("is_featured").checked
+      is_active: document.getElementById("is_active").checked ? 1 : 0,
+      is_featured: document.getElementById("is_featured").checked ? 1 : 0
     });
+  };
+
+  document.getElementById("planForm").addEventListener("input", stagePlanFromForm);
+  document.getElementById("planForm").addEventListener("change", stagePlanFromForm);
+  document.getElementById("planForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    stagePlanFromForm();
     closeModal();
+    renderPlans(state.planDraft || []);
   });
 }
 
-async function savePlan(plan) {
-  const data = await api("plans", { method: "POST", body: JSON.stringify(plan) });
-  state.data.plans = data;
-  renderPlans(data.plans);
+function stagePlanDraft(plan) {
+  const draft = ensurePlanDraft();
+  const index = draft.findIndex((item) => item.id === plan.id);
+  const nextPlan = {
+    ...(index >= 0 ? draft[index] : {}),
+    ...plan,
+    is_active: Number(plan.is_active || 0),
+    is_featured: Number(plan.is_featured || 0)
+  };
+
+  if (index >= 0) draft[index] = nextPlan;
+  else draft.push(nextPlan);
+
+  state.planDraft = draft;
+  state.planDirty = true;
+  updatePlanCardFromState(nextPlan.id);
+  syncPlanControls();
+  setSaved("plansSaved", "You have unsaved changes.");
 }
 
 function setPlanSaving(card, checkbox, saving) {
@@ -2287,7 +2448,11 @@ function syncPlanControls() {
     saveButton.textContent = state.planSaving ? "Saving…" : "Save Changes";
   }
   if (cancelButton) cancelButton.disabled = !state.planDirty || state.planSaving;
-  if (notice) notice.hidden = !state.planDirty;
+  if (notice) {
+    notice.hidden = !state.planDirty;
+    notice.classList.toggle("hidden", !state.planDirty);
+    notice.textContent = state.planDirty ? "You have unsaved changes." : "";
+  }
 }
 
 async function savePlanChanges() {
@@ -2298,11 +2463,11 @@ async function savePlanChanges() {
 
   try {
     const plans = state.planDraft || [];
-
-    for (const plan of plans) {
-      const response = await api("plans", {
-        method: "POST",
-        body: JSON.stringify({
+    const response = await api("plans", {
+      method: "POST",
+      body: JSON.stringify({
+        action: "save_all",
+        plans: plans.map((plan) => ({
           id: plan.id,
           plan_name: plan.plan_name,
           plan_type: plan.plan_type,
@@ -2317,16 +2482,15 @@ async function savePlanChanges() {
           sort_order: Number(plan.sort_order || 100),
           is_active: Number(plan.is_active || 0),
           is_featured: Number(plan.is_featured || 0)
-        })
-      });
+        }))
+      })
+    });
 
-      if (!response || response.success !== true) {
-        throw new Error(`Failed to save plan "${plan.plan_name}".`);
-      }
-
-      state.data.plans = response;
+    if (!response || response.saved !== true || !Array.isArray(response.plans)) {
+      throw new Error("The server did not confirm the complete plan save.");
     }
 
+    state.data.plans = response;
     state.planDraft = null;
     state.planDirty = false;
 
@@ -2351,18 +2515,6 @@ async function savePlanChanges() {
     syncPlanControls();
 
   }
-}
-
-function showPlanSaveProof(rows) {
-  const proof = document.querySelector("[data-plan-save-proof]");
-  if (!proof) return;
-  if (!Array.isArray(rows) || !rows.length) {
-    proof.hidden = true;
-    proof.textContent = "";
-    return;
-  }
-  proof.hidden = false;
-  proof.innerHTML = rows.map((row) => `<div>${escapeHtml(row.id)}: ${escapeHtml(String(row.is_active))}</div>`).join("");
 }
 
 async function cancelPlanChanges() {
@@ -3804,13 +3956,8 @@ async function openCustomerDrawer(email) {
   document.body.appendChild(drawer);
 
   try {
-    const response = await fetch(`/admin/customer?email=${encodeURIComponent(email)}`, {
-      credentials: "include",
-      cache: "no-store",
-      headers: { "Accept": "application/json" }
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "Unable to load customer.");
+    const data = await api("customer", { query: { email } });
+    if (!data.customer?.verification?.verified) throw new Error("Identity Verification Required");
     renderCustomerDrawer(data.customer, data.plans || []);
   } catch (error) {
     drawer.querySelector(".drawer-body").innerHTML = `<div class="admin-alert">${escapeHtml(error.message)}</div>`;

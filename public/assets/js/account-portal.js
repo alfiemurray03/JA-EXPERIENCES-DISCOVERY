@@ -417,6 +417,7 @@ async function renderPage(page) {
     const activePinRecord = (pins.pins || []).find((pin) => pin.active_pin) || (pins.pins || [])[0] || null;
     let activePinValue = activePinRecord?.active_pin || "";
     let activePinList = pins.pins || [];
+    const securityQuestions = pins.security_questions || [];
 
     if (!activePinValue) {
       const generated = await fetch("/account/pins", {
@@ -475,6 +476,19 @@ async function renderPage(page) {
           </div>
         </article>
         <article class="portal-card portal-span-12">
+          <h2>Security Questions</h2>
+          <div class="portal-note inline">Configure recovery questions for support identity verification. Stored answers are hashed and are never displayed.</div>
+          <form class="portal-stack" id="securityQuestionsForm">
+            ${[0, 1, 2].map((index) => `
+              <div class="portal-entry">
+                <label>Question ${index + 1}<input id="security_question_${index}" type="text" value="${escapeHtml(securityQuestions[index]?.question_label || "")}" autocomplete="off"></label>
+                <label>Answer ${index + 1}<input id="security_answer_${index}" type="password" autocomplete="off"></label>
+              </div>
+            `).join("")}
+            <button class="portal-button" type="submit">Save Security Questions</button>
+          </form>
+        </article>
+        <article class="portal-card portal-span-12">
           <h2>Security history</h2>
           ${timelineMarkup(timelineItems(profile, requests).slice(0, 6))}
         </article>
@@ -507,6 +521,27 @@ async function renderPage(page) {
         portalState.pins = null;
         await renderPage("security");
       });
+    });
+    document.getElementById("securityQuestionsForm")?.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const questions = [0, 1, 2].map((index) => ({
+        question: document.getElementById(`security_question_${index}`)?.value || "",
+        answer: document.getElementById(`security_answer_${index}`)?.value || ""
+      })).filter((item) => item.question.trim() && item.answer.trim());
+      const response = await fetch("/account/pins", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Accept": "application/json", "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "save_questions", questions })
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        alert(data.error || "Security questions could not be saved.");
+        return;
+      }
+      portalState.pins = null;
+      alert("Security questions saved.");
+      await renderPage("security");
     });
     return;
   }

@@ -108,3 +108,26 @@ test("support PIN verification updates the active record and records an audit en
   assert.equal(db.auditEntries.length, 1);
   assert.equal(db.updated[3], "pin-1");
 });
+
+test("support PIN verification rejects an invalid or already-used PIN", async () => {
+  const row = {
+    id: "pin-1",
+    email: "customer@example.com",
+    pin_hash: await hashPin("456789"),
+    pin_last4: "6789",
+    status: "Active",
+    expires_at: new Date(Date.now() + 60_000).toISOString(),
+    used_at: null,
+    revoked_at: null,
+    audit_history: "[]"
+  };
+  const invalidDB = new MockPinDB(row);
+  const invalid = await verifySupportPinRecord(invalidDB, {}, row.email, "111111", "admin@example.com");
+  assert.equal(invalid.ok, false);
+  assert.equal(invalidDB.auditEntries.length, 1);
+
+  const usedDB = new MockPinDB({ ...row, status: "Verified", used_at: new Date().toISOString() });
+  const reused = await verifySupportPinRecord(usedDB, {}, row.email, "456789", "admin@example.com");
+  assert.equal(reused.ok, false);
+  assert.match(reused.error, /already been used/i);
+});
