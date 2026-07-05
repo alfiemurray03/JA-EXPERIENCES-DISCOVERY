@@ -141,7 +141,121 @@ document.addEventListener("DOMContentLoaded", async () => {
   } else {
     loadSharedScript("/assets/js/free-plan-visibility.js?v=20260629-3");
   }
+
+  initCookieConsent();
 });
+
+function initCookieConsent() {
+  const CONSENT_KEY = "ja-cookie-consent";
+  const GA_MEASUREMENT_ID = "G-XXXXXXXXXX"; // To be replaced with actual ID
+
+  const getConsent = () => {
+    try {
+      return JSON.parse(localStorage.getItem(CONSENT_KEY));
+    } catch {
+      return null;
+    }
+  };
+
+  const setConsent = (consent) => {
+    localStorage.setItem(CONSENT_KEY, JSON.stringify(consent));
+    applyConsent(consent);
+  };
+
+  const applyConsent = (consent) => {
+    if (consent?.analytics) {
+      loadGoogleAnalytics();
+    } else {
+      disableGoogleAnalytics();
+    }
+  };
+
+  const loadGoogleAnalytics = () => {
+    if (window.ga_loaded) return;
+    const script = document.createElement("script");
+    script.async = true;
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`;
+    document.head.appendChild(script);
+
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag("js", new Date());
+    gtag("config", GA_MEASUREMENT_ID, { 'anonymize_ip': true });
+    window.ga_loaded = true;
+  };
+
+  const disableGoogleAnalytics = () => {
+    window[`ga-disable-${GA_MEASUREMENT_ID}`] = true;
+  };
+
+  const renderBanner = () => {
+    if (getConsent()) {
+      applyConsent(getConsent());
+      return;
+    }
+
+    const banner = document.createElement("div");
+    banner.id = "cookieConsentBanner";
+    banner.className = "cookie-banner";
+    banner.innerHTML = `
+      <div class="container">
+        <div class="cookie-content">
+          <h3>Cookie Consent</h3>
+          <p>We use cookies to enhance your browsing experience and analyze our traffic. Essential cookies are always enabled.</p>
+          <div class="cookie-actions">
+            <button id="acceptAllCookies" class="clean-button primary">Accept All</button>
+            <button id="rejectNonEssentialCookies" class="clean-button secondary">Reject Non-Essential</button>
+            <button id="manageCookiePrefs" class="clean-button secondary">Manage Preferences</button>
+          </div>
+        </div>
+        <div id="cookiePrefs" class="cookie-prefs" hidden>
+          <label><input type="checkbox" checked disabled> Essential (Always On)</label>
+          <label><input type="checkbox" id="analyticsConsent"> Analytics</label>
+          <button id="saveCookiePrefs" class="clean-button primary">Save Preferences</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(banner);
+
+    document.getElementById("acceptAllCookies").onclick = () => {
+      setConsent({ essential: true, analytics: true });
+      banner.remove();
+    };
+
+    document.getElementById("rejectNonEssentialCookies").onclick = () => {
+      setConsent({ essential: true, analytics: false });
+      banner.remove();
+    };
+
+    document.getElementById("manageCookiePrefs").onclick = () => {
+      document.getElementById("cookiePrefs").hidden = false;
+    };
+
+    document.getElementById("saveCookiePrefs").onclick = () => {
+      setConsent({
+        essential: true,
+        analytics: document.getElementById("analyticsConsent").checked
+      });
+      banner.remove();
+    };
+  };
+
+  renderBanner();
+
+  // Add "Manage Cookies" to footer if possible
+  const footer = document.querySelector("#site-footer, #siteShellFooter");
+  if (footer) {
+    const manageBtn = document.createElement("button");
+    manageBtn.textContent = "Manage Cookie Preferences";
+    manageBtn.className = "manage-cookies-link";
+    manageBtn.style.cssText = "background:none;border:none;color:inherit;font:inherit;cursor:pointer;text-decoration:underline;padding:0;margin-top:1rem;display:block;";
+    manageBtn.onclick = () => {
+      localStorage.removeItem(CONSENT_KEY);
+      renderBanner();
+    };
+    footer.appendChild(manageBtn);
+  }
+}
 
 
 

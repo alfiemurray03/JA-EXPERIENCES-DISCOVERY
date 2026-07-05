@@ -1,2 +1,28 @@
-public/admin/index.backup.html
+# Cloudflare Wrangler
+.wrangler
+.dev.vars
+dist
+.mf
+.vite
+
+# Node.js
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Logs
+*.log
+server.log
+
+# OS & IDE
+.DS_Store
+.vscode
+.idea
 .aider*
+
+# Backup & Temp
+*.backup.*
+*.tmp
+public/admin/index.backup.html

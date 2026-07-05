@@ -654,6 +654,7 @@ async function ensureTables(DB, env) {
       completed_at TEXT,
       assigned_admin_id TEXT,
       internal_notes TEXT,
+      admin_response TEXT,
       attachments TEXT,
       audit_log TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
@@ -662,6 +663,7 @@ async function ensureTables(DB, env) {
   `).run();
   await safeAlter(DB, `ALTER TABLE data_protection_requests ADD COLUMN request_type TEXT`);
   await safeAlter(DB, `ALTER TABLE data_protection_requests ADD COLUMN statutory_deadline TEXT`);
+  await safeAlter(DB, `ALTER TABLE data_protection_requests ADD COLUMN admin_response TEXT`);
 
   await DB.prepare(`
     CREATE TABLE IF NOT EXISTS system_reports (
@@ -680,12 +682,14 @@ async function ensureTables(DB, env) {
       resolved_at TEXT,
       assigned_admin_id TEXT,
       internal_notes TEXT,
+      admin_response TEXT,
       attachments TEXT,
       audit_log TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
   `).run();
+  await safeAlter(DB, `ALTER TABLE system_reports ADD COLUMN admin_response TEXT`);
 
   await DB.prepare(`
     CREATE TABLE IF NOT EXISTS closure_requests (
@@ -735,9 +739,11 @@ async function ensureTables(DB, env) {
       entity_id TEXT,
       summary TEXT,
       metadata TEXT,
+      ip_address TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
   `).run();
+  await safeAlter(DB, `ALTER TABLE admin_audit_log ADD COLUMN ip_address TEXT`);
 
   await DB.prepare(`
     CREATE TABLE IF NOT EXISTS customer_internal_notes (
@@ -960,10 +966,10 @@ async function saveSettings(DB, settings) {
   }
 }
 
-async function writeAudit(DB, identity, action, entityType, entityId, summary, metadata = {}) {
+async function writeAudit(DB, identity, action, entityType, entityId, summary, metadata = {}, ipAddress = "unknown") {
   await DB.prepare(`
-    INSERT INTO admin_audit_log (id, actor_email, action, entity_type, entity_id, summary, metadata)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO admin_audit_log (id, actor_email, action, entity_type, entity_id, summary, metadata, ip_address)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `).bind(
     crypto.randomUUID(),
     auditActor(identity),
@@ -971,7 +977,8 @@ async function writeAudit(DB, identity, action, entityType, entityId, summary, m
     clean(entityType, 120),
     clean(entityId, 180),
     clean(summary, 1000),
-    JSON.stringify(metadata)
+    JSON.stringify(metadata),
+    clean(ipAddress, 50)
   ).run();
 }
 
@@ -980,7 +987,7 @@ export async function getIdentityVerificationState(DB, customerEmail, adminEmail
   const actor = cleanEmail(adminEmail);
   const lock = await DB.prepare(`
     SELECT * FROM customer_identity_verification_locks
-    WHERE lower(customer_email) = lower(?) AND cleared_at IS NULL AND COALESCE(is_locked, 0) = 1
+    WHERE lower(customer_email) = lower(?) AND cleared_at IS NULL AND COALESCE(is_locked, 0) = 1 AND datetime(locked_until) > datetime('now')
   `).bind(email).first().catch(() => null);
   const session = await DB.prepare(`
     SELECT * FROM customer_identity_verification_sessions
@@ -1011,6 +1018,8 @@ function protectCustomerPayload(customer, verification) {
   if (verification?.verified) return { ...customer, verification };
   return {
     ...customer,
+    verified_name: "",
+    display_name: "Verification Required",
     contact_email: "",
     phone: "",
     communication_preference: "",
@@ -1051,7 +1060,7 @@ export async function clearCustomerVerificationSession(DB, identity, customerEma
   `).bind(cleanEmail(customerEmail), cleanEmail(identity.email)).run();
 }
 
-export async function recordIdentityFailure(DB, identity, customerEmail, method, reason) {
+export async function recordIdentityFailure(DB, identity, customerEmail, method, reason, ipAddress = "unknown") {
   const email = cleanEmail(customerEmail);
   const current = await DB.prepare(`
     SELECT * FROM customer_identity_verification_locks
@@ -1059,8 +1068,9 @@ export async function recordIdentityFailure(DB, identity, customerEmail, method,
   `).bind(email).first().catch(() => null);
   const pinAttempts = Number(current?.failed_pin_attempts || 0) + (method === "Support PIN" ? 1 : 0);
   const securityAttempts = Number(current?.failed_security_attempts || 0) + (method === "Security Questions" ? 1 : 0);
-  const shouldLock = pinAttempts >= 3 || method === "Security Questions";
-  const lockedUntil = shouldLock ? "9999-12-31T23:59:59.999Z" : "1970-01-01T00:00:00.000Z";
+  const shouldLock = pinAttempts >= 3 || securityAttempts >= 3;
+  const lockoutDuration = 30 * 60 * 1000; // 30 minutes
+  const lockedUntil = shouldLock ? new Date(Date.now() + lockoutDuration).toISOString() : "1970-01-01T00:00:00.000Z";
   await DB.prepare(`
     INSERT INTO customer_identity_verification_locks (customer_email, locked_until, is_locked, failed_pin_attempts, failed_security_attempts, reason)
     VALUES (?, ?, ?, ?, ?, ?)
@@ -1082,7 +1092,7 @@ export async function recordIdentityFailure(DB, identity, customerEmail, method,
     failed_pin_attempts: pinAttempts,
     failed_security_attempts: securityAttempts,
     lock_created: shouldLock
-  });
+  }, ipAddress);
 
   return { failed_pin_attempts: pinAttempts, failed_security_attempts: securityAttempts, locked: shouldLock, locked_until: shouldLock ? lockedUntil : null };
 }
@@ -1115,14 +1125,14 @@ export async function verifyCustomerSecurityQuestions(DB, body) {
   return { ok: true, questions_used: rows.map((item) => item.question_label) };
 }
 
-export async function clearCustomerIdentityLock(DB, identity, customerEmail, reason) {
+export async function clearCustomerIdentityLock(DB, identity, customerEmail, reason, ipAddress = "unknown") {
   const email = cleanEmail(customerEmail);
   await DB.prepare(`
     UPDATE customer_identity_verification_locks
     SET cleared_at = CURRENT_TIMESTAMP, cleared_by = ?, override_reason = ?
     WHERE lower(customer_email) = lower(?) AND cleared_at IS NULL
   `).bind(cleanEmail(identity.email), clean(reason, 500), email).run();
-  await writeAudit(DB, identity, "customer_identity_lock_override", "profiles", email, `Cleared customer identity verification lock for ${email}.`, { reason: clean(reason, 500) });
+  await writeAudit(DB, identity, "customer_identity_lock_override", "profiles", email, `Cleared customer identity verification lock for ${email}.`, { reason: clean(reason, 500) }, ipAddress);
 }
 
 async function seedDefaults(DB) {
@@ -1205,12 +1215,12 @@ async function getOverview(DB) {
   const launchgateway = await getLaunchGateway(DB);
   const maintenance = await getMaintenance(DB);
   const [recentAudit, latestCustomers, latestSupport, latestReports, sessions, activeAdmins] = await Promise.all([
-    all(DB, `SELECT action, actor_email, entity_type, entity_id, summary, metadata, created_at FROM admin_audit_log ORDER BY created_at DESC LIMIT 8`),
-    all(DB, `SELECT email, verified_name, display_name, contact_email, updated_at FROM profiles ORDER BY updated_at DESC, created_at DESC LIMIT 6`),
-    all(DB, `SELECT id, subject, status, priority, updated_at FROM support_tickets ORDER BY updated_at DESC, created_at DESC LIMIT 6`),
-    all(DB, `SELECT id, issue_type AS title, status, updated_at FROM system_reports ORDER BY updated_at DESC, created_at DESC LIMIT 6`),
-    all(DB, `SELECT token_hash, email AS admin_email, created_at, absolute_expires_at AS expires_at, revoked_at, last_seen_at AS last_used_at FROM admin_oidc_sessions ORDER BY COALESCE(last_seen_at, created_at) DESC LIMIT 6`),
-    all(DB, `SELECT email, name, role, status, updated_at FROM admin_users WHERE COALESCE(status, 'Active') = 'Active' ORDER BY updated_at DESC LIMIT 12`)
+    await all(DB, `SELECT action, actor_email, entity_type, entity_id, summary, metadata, created_at FROM admin_audit_log ORDER BY created_at DESC LIMIT 8`),
+    await all(DB, `SELECT email, verified_name, display_name, contact_email, updated_at FROM profiles ORDER BY updated_at DESC, created_at DESC LIMIT 6`),
+    await all(DB, `SELECT id, subject, status, priority, updated_at FROM support_tickets ORDER BY updated_at DESC, created_at DESC LIMIT 6`),
+    await all(DB, `SELECT id, issue_type AS title, status, updated_at FROM system_reports ORDER BY updated_at DESC, created_at DESC LIMIT 6`),
+    await all(DB, `SELECT token_hash, email AS admin_email, created_at, absolute_expires_at AS expires_at, revoked_at, last_seen_at AS last_used_at FROM admin_oidc_sessions ORDER BY COALESCE(last_seen_at, created_at) DESC LIMIT 6`),
+    await all(DB, `SELECT email, name, role, status, updated_at FROM admin_users WHERE COALESCE(status, 'Active') = 'Active' ORDER BY updated_at DESC LIMIT 12`)
   ]);
 
   return {
@@ -1285,23 +1295,23 @@ async function getAnalytics(DB) {
 
 async function getNotifications(DB) {
   const [notifications, unread, archived, categories] = await Promise.all([
-    all(DB, `SELECT * FROM customer_notifications ORDER BY updated_at DESC, created_at DESC LIMIT 200`),
+    await all(DB, `SELECT * FROM customer_notifications ORDER BY updated_at DESC, created_at DESC LIMIT 200`),
     DB.prepare(`SELECT COUNT(*) AS count FROM customer_notifications WHERE lower(status) = 'unread'`).first().catch(() => ({ count: 0 })),
     DB.prepare(`SELECT COUNT(*) AS count FROM customer_notifications WHERE archived_at IS NOT NULL`).first().catch(() => ({ count: 0 })),
-    all(DB, `SELECT category, COUNT(*) AS count FROM customer_notifications GROUP BY category ORDER BY count DESC`)
+    await all(DB, `SELECT category, COUNT(*) AS count FROM customer_notifications GROUP BY category ORDER BY count DESC`)
   ]);
   return { notifications, unread: unread?.count || 0, archived: archived?.count || 0, categories };
 }
 
 async function getMembership(DB) {
   const [members, lifetime, suspended, cancelled, trial, complimentary, history] = await Promise.all([
-    all(DB, `SELECT email, display_name, contact_email, admin_customer_status, admin_lifetime, admin_lifetime_plan_id, updated_at FROM profiles ORDER BY updated_at DESC LIMIT 200`),
+    await all(DB, `SELECT email, display_name, contact_email, admin_customer_status, admin_lifetime, admin_lifetime_plan_id, updated_at FROM profiles ORDER BY updated_at DESC LIMIT 200`),
     DB.prepare(`SELECT COUNT(*) AS count FROM profiles WHERE admin_lifetime = 1`).first().catch(() => ({ count: 0 })),
     DB.prepare(`SELECT COUNT(*) AS count FROM profiles WHERE lower(admin_customer_status) = 'suspended'`).first().catch(() => ({ count: 0 })),
     DB.prepare(`SELECT COUNT(*) AS count FROM profiles WHERE lower(admin_customer_status) = 'cancelled'`).first().catch(() => ({ count: 0 })),
     DB.prepare(`SELECT COUNT(*) AS count FROM profiles WHERE lower(admin_customer_status) = 'trial'`).first().catch(() => ({ count: 0 })),
     DB.prepare(`SELECT COUNT(*) AS count FROM profiles WHERE lower(admin_customer_status) = 'complimentary'`).first().catch(() => ({ count: 0 })),
-    all(DB, `SELECT action, entity_id, summary, created_at FROM admin_audit_log WHERE action LIKE '%plan%' OR action LIKE '%lifetime%' ORDER BY created_at DESC LIMIT 50`)
+    await all(DB, `SELECT action, entity_id, summary, created_at FROM admin_audit_log WHERE action LIKE '%plan%' OR action LIKE '%lifetime%' ORDER BY created_at DESC LIMIT 50`)
   ]);
   return {
     members,
@@ -1318,9 +1328,9 @@ async function getMembership(DB) {
 
 async function getSecurity(DB) {
   const [pins, sessions, history] = await Promise.all([
-    all(DB, `SELECT email, status, expires_at, used_at, revoked_at, last_used_at, updated_at, created_at FROM customer_support_pins ORDER BY updated_at DESC LIMIT 100`),
-    all(DB, `SELECT email AS admin_email, created_at, absolute_expires_at AS expires_at, revoked_at, last_seen_at AS last_used_at FROM admin_oidc_sessions ORDER BY COALESCE(last_seen_at, created_at) DESC LIMIT 50`),
-    all(DB, `SELECT action, entity_type, entity_id, summary, created_at FROM admin_audit_log WHERE action LIKE '%session%' OR action LIKE '%pin%' ORDER BY created_at DESC LIMIT 50`)
+    await all(DB, `SELECT email, status, expires_at, used_at, revoked_at, last_used_at, updated_at, created_at FROM customer_support_pins ORDER BY updated_at DESC LIMIT 100`),
+    await all(DB, `SELECT email AS admin_email, created_at, absolute_expires_at AS expires_at, revoked_at, last_seen_at AS last_used_at FROM admin_oidc_sessions ORDER BY COALESCE(last_seen_at, created_at) DESC LIMIT 50`),
+    await all(DB, `SELECT action, entity_type, entity_id, summary, created_at FROM admin_audit_log WHERE action LIKE '%session%' OR action LIKE '%pin%' ORDER BY created_at DESC LIMIT 50`)
   ]);
   return { pins, sessions, history };
 }
@@ -1328,9 +1338,9 @@ async function getSecurity(DB) {
 async function getCms(DB) {
   const [branding, policies, affiliate, settings] = await Promise.all([
     DB.prepare(`SELECT * FROM company_branding WHERE id = 'main'`).first(),
-    all(DB, `SELECT slug, title, status, is_published, updated_at FROM policy_pages ORDER BY updated_at DESC`),
-    all(DB, `SELECT id, title, block_type, is_enabled, is_published, sort_order, updated_at FROM affiliate_content_blocks ORDER BY sort_order ASC, updated_at DESC`),
-    all(DB, `SELECT key, value, updated_at FROM site_settings ORDER BY key ASC`)
+    await all(DB, `SELECT slug, title, status, is_published, updated_at FROM policy_pages ORDER BY updated_at DESC`),
+    await all(DB, `SELECT id, title, block_type, is_enabled, is_published, sort_order, updated_at FROM affiliate_content_blocks ORDER BY sort_order ASC, updated_at DESC`),
+    await all(DB, `SELECT key, value, updated_at FROM site_settings ORDER BY key ASC`)
   ]);
   return { branding, policies, affiliate, settings };
 }
@@ -1403,7 +1413,7 @@ function normalisePermissionList(permissions) {
   return [...new Set(permissions.map((permission) => clean(permission, 80)).filter(Boolean))];
 }
 
-async function createRole(DB, body, identity) {
+async function createRole(DB, body, identity, ipAddress = "unknown") {
   const name = clean(body.name, 80);
   if (!name) throw new Error("Role name is required.");
   const description = clean(body.description, 240) || `${name} role`;
@@ -1431,11 +1441,11 @@ async function createRole(DB, body, identity) {
     `).bind(name, permission).run();
   }
 
-  await writeAudit(DB, identity, "role_create", "admin_roles", name, `Created role ${name}.`, { permissions });
+  await writeAudit(DB, identity, "role_create", "admin_roles", name, `Created role ${name}.`, { permissions }, ipAddress);
   return getRoles(DB);
 }
 
-async function updateRole(DB, body, identity) {
+async function updateRole(DB, body, identity, ipAddress = "unknown") {
   const name = clean(body.name, 80);
   if (!name) throw new Error("Role name is required.");
   const role = await ensureRoleWritable(DB, name);
@@ -1464,11 +1474,11 @@ async function updateRole(DB, body, identity) {
     `).bind(name, permission).run();
   }
 
-  await writeAudit(DB, identity, "role_update", "admin_roles", name, `Updated role ${name}.`, { permissions });
+  await writeAudit(DB, identity, "role_update", "admin_roles", name, `Updated role ${name}.`, { permissions }, ipAddress);
   return getRoles(DB);
 }
 
-async function renameRole(DB, body, identity) {
+async function renameRole(DB, body, identity, ipAddress = "unknown") {
   const from = clean(body.from, 80);
   const to = clean(body.to, 80);
   if (!from || !to) throw new Error("Both the current and new role names are required.");
@@ -1482,11 +1492,11 @@ async function renameRole(DB, body, identity) {
   await DB.prepare(`UPDATE admin_roles SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE name = ?`).bind(to, from).run();
   await DB.prepare(`UPDATE role_permissions SET role_name = ? WHERE role_name = ?`).bind(to, from).run();
   await DB.prepare(`UPDATE admin_users SET role = ? WHERE role = ?`).bind(to, from).run();
-  await writeAudit(DB, identity, "role_rename", "admin_roles", from, `Renamed role ${from} to ${to}.`, { from, to });
+  await writeAudit(DB, identity, "role_rename", "admin_roles", from, `Renamed role ${from} to ${to}.`, { from, to }, ipAddress);
   return getRoles(DB);
 }
 
-async function cloneRole(DB, body, identity) {
+async function cloneRole(DB, body, identity, ipAddress = "unknown") {
   const source = clean(body.source, 80);
   const name = clean(body.name, 80);
   if (!source || !name) throw new Error("Source and new role names are required.");
@@ -1507,11 +1517,11 @@ async function cloneRole(DB, body, identity) {
       ON CONFLICT(role_name, permission_code) DO NOTHING
     `).bind(name, row.permission_code).run();
   }
-  await writeAudit(DB, identity, "role_clone", "admin_roles", name, `Cloned role ${source} to ${name}.`, { source, name });
+  await writeAudit(DB, identity, "role_clone", "admin_roles", name, `Cloned role ${source} to ${name}.`, { source, name }, ipAddress);
   return getRoles(DB);
 }
 
-async function deleteRole(DB, body, identity) {
+async function deleteRole(DB, body, identity, ipAddress = "unknown") {
   const name = clean(body.name, 80);
   if (!name) throw new Error("Role name is required.");
   const role = await ensureRoleWritable(DB, name);
@@ -1520,7 +1530,7 @@ async function deleteRole(DB, body, identity) {
   if (Number(assigned?.count || 0) > 0) throw new Error("This role is still assigned to administrators.");
   await DB.prepare(`DELETE FROM role_permissions WHERE role_name = ?`).bind(name).run();
   await DB.prepare(`DELETE FROM admin_roles WHERE name = ?`).bind(name).run();
-  await writeAudit(DB, identity, "role_delete", "admin_roles", name, `Deleted role ${name}.`, {});
+  await writeAudit(DB, identity, "role_delete", "admin_roles", name, `Deleted role ${name}.`, {}, ipAddress);
   return getRoles(DB);
 }
 
@@ -1584,7 +1594,7 @@ function widgetSetForRole(role, permissions) {
   return available.filter((widget) => allowed.has(widget.id));
 }
 
-async function addAdmin(DB, body, identity) {
+async function addAdmin(DB, body, identity, ipAddress = "unknown") {
   const email = cleanEmail(body.email);
   if (!isEmail(email)) throw new Error("Enter a valid admin email address.");
   const existing = await DB.prepare(`SELECT role FROM admin_users WHERE lower(email) = lower(?)`).bind(email).first();
@@ -1616,7 +1626,7 @@ async function addAdmin(DB, body, identity) {
   ).run();
 }
 
-async function updateAdmin(DB, body, identity, env) {
+async function updateAdmin(DB, body, identity, env, ipAddress = "unknown") {
   const originalEmail = cleanEmail(body.original_email || body.email);
   const nextEmail = cleanEmail(body.email);
   if (!isEmail(originalEmail)) throw new Error("Admin email is required.");
@@ -1664,7 +1674,7 @@ async function updateAdmin(DB, body, identity, env) {
   return getAdmins(DB, env);
 }
 
-async function removeAdmin(DB, body, identity, env) {
+async function removeAdmin(DB, body, identity, env, ipAddress = "unknown") {
   const email = cleanEmail(body.email);
   if (!isEmail(email)) throw new Error("Admin email is required.");
   const current = await DB.prepare(`SELECT role FROM admin_users WHERE lower(email) = lower(?)`).bind(email).first();
@@ -1802,7 +1812,7 @@ function preparePlanSave(DB, body) {
 
 export async function savePlan(DB, body) {
   await preparePlanSave(DB, body).run();
-  return all(DB, `SELECT * FROM service_plans ORDER BY sort_order ASC, plan_name ASC`);
+  return await all(DB, `SELECT * FROM service_plans ORDER BY sort_order ASC, plan_name ASC`);
 }
 
 export async function savePlans(DB, incoming) {
@@ -1817,7 +1827,7 @@ export async function savePlans(DB, incoming) {
   const statements = plans.map((plan) => preparePlanSave(DB, plan));
   if (typeof DB.batch === "function") await DB.batch(statements);
   else for (const statement of statements) await statement.run();
-  return all(DB, `SELECT * FROM service_plans ORDER BY sort_order ASC, plan_name ASC`);
+  return await all(DB, `SELECT * FROM service_plans ORDER BY sort_order ASC, plan_name ASC`);
 }
 
 async function savePolicy(DB, body) {
@@ -1859,7 +1869,7 @@ async function savePolicy(DB, body) {
     await DB.prepare(`DELETE FROM policy_pages WHERE slug = ?`).bind(originalSlug).run();
   }
 
-  return all(DB, `SELECT * FROM policy_pages ORDER BY title ASC`);
+  return await all(DB, `SELECT * FROM policy_pages ORDER BY title ASC`);
 }
 
 async function saveBranding(DB, body) {
@@ -1972,7 +1982,7 @@ async function saveSystemEvent(DB, body) {
     clean(body.status, 80) || "Open"
   ).run();
 
-  return all(DB, `SELECT * FROM system_events ORDER BY updated_at DESC, created_at DESC LIMIT 500`);
+  return await all(DB, `SELECT * FROM system_events ORDER BY updated_at DESC, created_at DESC LIMIT 500`);
 }
 
 function parseAuditLog(value) {
@@ -1999,9 +2009,9 @@ function auditActor(identity) {
 }
 
 async function getDataProtectionRequests(DB) {
-  return all(DB, `
+  return await all(DB, `
     SELECT id, reference, user_id, customer_name, customer_email, request_type, customer_message,
-      status, submitted_at, due_at, completed_at, assigned_admin_id, internal_notes,
+      status, submitted_at, due_at, completed_at, assigned_admin_id, internal_notes, admin_response,
       attachments, audit_log, created_at, updated_at
     FROM data_protection_requests
     ORDER BY submitted_at DESC, created_at DESC
@@ -2010,10 +2020,10 @@ async function getDataProtectionRequests(DB) {
 }
 
 async function getSystemReports(DB) {
-  return all(DB, `
+  return await all(DB, `
     SELECT id, reference, user_id, customer_name, customer_email, issue_type, affected_url,
       device_browser, description, status, priority, submitted_at, resolved_at, assigned_admin_id,
-      internal_notes, attachments, audit_log, created_at, updated_at
+      internal_notes, admin_response, attachments, audit_log, created_at, updated_at
     FROM system_reports
     ORDER BY submitted_at DESC, created_at DESC
     LIMIT 500
@@ -2021,7 +2031,7 @@ async function getSystemReports(DB) {
 }
 
 async function getNotificationsAdmin(DB) {
-  return all(DB, `
+  return await all(DB, `
     SELECT id, email, category, priority, title, body, status, archived_at, reference_type, reference_id,
       template_key, scheduled_for, sent_at, delivery_status, read_at, acknowledged_at, send_history, created_at, updated_at
     FROM customer_notifications
@@ -2101,12 +2111,13 @@ export async function saveNotification(DB, body, identity) {
   return getNotificationsAdmin(DB);
 }
 
-async function saveDataProtectionRequest(DB, body, identity, env = {}) {
+async function saveDataProtectionRequest(DB, body, identity, env = {}, ipAddress = "unknown") {
   const current = await DB.prepare(`SELECT * FROM data_protection_requests WHERE id = ? OR reference = ?`).bind(clean(body.id, 120), clean(body.reference, 120)).first();
   if (!current) throw new Error("Data protection request not found.");
 
   const nextStatus = clean(body.status, 80) || current.status || "New";
   const nextNotes = clean(body.internal_notes, 6000);
+  const nextResponse = clean(body.admin_response, 6000);
   const nextAssigned = clean(body.assigned_admin_id, 254);
   const events = [];
 
@@ -2124,6 +2135,9 @@ async function saveDataProtectionRequest(DB, body, identity, env = {}) {
   }
   if (nextNotes && nextNotes !== (current.internal_notes || "")) {
     events.push({ type: "Admin note added", actor: auditActor(identity) });
+  }
+  if (nextResponse && nextResponse !== (current.admin_response || "")) {
+    events.push({ type: "Admin response updated", actor: auditActor(identity) });
   }
   if (nextStatus === "Completed" && current.status !== "Completed") {
     events.push({ type: "Marked completed", actor: auditActor(identity) });
@@ -2159,30 +2173,32 @@ async function saveDataProtectionRequest(DB, body, identity, env = {}) {
       status = ?,
       assigned_admin_id = ?,
       internal_notes = ?,
+      admin_response = ?,
       completed_at = ?,
       audit_log = ?,
       updated_at = CURRENT_TIMESTAMP
     WHERE id = ?
-  `).bind(nextStatus, nextAssigned, nextNotes, completedAt, auditLog, current.id).run();
+  `).bind(nextStatus, nextAssigned, nextNotes, nextResponse, completedAt, auditLog, current.id).run();
 
   if (body.action === "export_customer_data") {
-    await writeAudit(DB, identity, "data_request_export", "data_protection_requests", current.id, `Exported customer data for ${current.reference}.`, { reference: current.reference, format: clean(body.format, 20) || "json" });
+    await writeAudit(DB, identity, "data_request_export", "data_protection_requests", current.id, `Exported customer data for ${current.reference}.`, { reference: current.reference, format: clean(body.format, 20) || "json" }, ipAddress);
   } else if (body.action === "mark_sent") {
-    await writeAudit(DB, identity, "data_request_sent", "data_protection_requests", current.id, `Marked ${current.reference} as sent to data subject.`, { reference: current.reference });
+    await writeAudit(DB, identity, "data_request_sent", "data_protection_requests", current.id, `Marked ${current.reference} as sent to data subject.`, { reference: current.reference }, ipAddress);
   } else if (events.length) {
-    await writeAudit(DB, identity, "data_request_update", "data_protection_requests", current.id, `Updated ${current.reference}.`, { reference: current.reference, status: nextStatus });
+    await writeAudit(DB, identity, "data_request_update", "data_protection_requests", current.id, `Updated ${current.reference}.`, { reference: current.reference, status: nextStatus }, ipAddress);
   }
 
   return getDataProtectionRequests(DB);
 }
 
-async function saveSystemReport(DB, body, identity) {
+async function saveSystemReport(DB, body, identity, ipAddress = "unknown") {
   const current = await DB.prepare(`SELECT * FROM system_reports WHERE id = ? OR reference = ?`).bind(clean(body.id, 120), clean(body.reference, 120)).first();
   if (!current) throw new Error("System report not found.");
 
   const nextStatus = clean(body.status, 80) || current.status || "New";
   const nextPriority = clean(body.priority, 40) || current.priority || "Normal";
   const nextNotes = clean(body.internal_notes, 6000);
+  const nextResponse = clean(body.admin_response, 6000);
   const nextAssigned = clean(body.assigned_admin_id, 254);
   const events = [];
 
@@ -2197,6 +2213,9 @@ async function saveSystemReport(DB, body, identity) {
   }
   if (nextNotes && nextNotes !== (current.internal_notes || "")) {
     events.push({ type: "Admin note added", actor: auditActor(identity) });
+  }
+  if (nextResponse && nextResponse !== (current.admin_response || "")) {
+    events.push({ type: "Admin response updated", actor: auditActor(identity) });
   }
   if (nextStatus === "Fixed" && current.status !== "Fixed") {
     events.push({ type: "Marked fixed", actor: auditActor(identity) });
@@ -2218,21 +2237,22 @@ async function saveSystemReport(DB, body, identity) {
       priority = ?,
       assigned_admin_id = ?,
       internal_notes = ?,
+      admin_response = ?,
       resolved_at = ?,
       audit_log = ?,
       updated_at = CURRENT_TIMESTAMP
     WHERE id = ?
-  `).bind(nextStatus, nextPriority, nextAssigned, nextNotes, resolvedAt, auditLog, current.id).run();
+  `).bind(nextStatus, nextPriority, nextAssigned, nextNotes, nextResponse, resolvedAt, auditLog, current.id).run();
 
   if (events.length) {
-    await writeAudit(DB, identity, "system_report_update", "system_reports", current.id, `Updated ${current.reference}.`, { reference: current.reference, status: nextStatus, priority: nextPriority });
+    await writeAudit(DB, identity, "system_report_update", "system_reports", current.id, `Updated ${current.reference}.`, { reference: current.reference, status: nextStatus, priority: nextPriority }, ipAddress);
   }
 
   return getSystemReports(DB);
 }
 
 async function getClosureRequests(DB) {
-  return all(DB, `
+  return await all(DB, `
     SELECT id, reference, customer_email, customer_name, requested_by, reason, status,
       assigned_admin_id, internal_notes, audit_log, created_at, updated_at, completed_at
     FROM closure_requests
@@ -2246,7 +2266,7 @@ async function nextReference(DB, table, prefix) {
   return `${prefix}-${String(Number(row?.count || 0) + 1).padStart(5, "0")}`;
 }
 
-async function saveClosureRequest(DB, body, identity) {
+async function saveClosureRequest(DB, body, identity, ipAddress = "unknown") {
   const id = clean(body.id, 120);
   const status = CLOSURE_STATUSES.includes(clean(body.status, 80)) ? clean(body.status, 80) : "Open";
   const customerEmail = cleanEmail(body.customer_email);
@@ -2272,7 +2292,7 @@ async function saveClosureRequest(DB, body, identity) {
       clean(body.internal_notes, 6000),
       auditLog
     ).run();
-    await writeAudit(DB, identity, "closure_request_create", "closure_requests", reference, `Created closure request ${reference}.`, { customerEmail, status });
+    await writeAudit(DB, identity, "closure_request_create", "closure_requests", reference, `Created closure request ${reference}.`, { customerEmail, status }, ipAddress);
     return getClosureRequests(DB);
   }
 
@@ -2302,12 +2322,12 @@ async function saveClosureRequest(DB, body, identity) {
     id
   ).run();
 
-  await writeAudit(DB, identity, "closure_request_update", "closure_requests", id, `Updated closure request ${current.reference}.`, { reference: current.reference, status });
+  await writeAudit(DB, identity, "closure_request_update", "closure_requests", id, `Updated closure request ${current.reference}.`, { reference: current.reference, status }, ipAddress);
   return getClosureRequests(DB);
 }
 
 async function getAffiliateContent(DB) {
-  return all(DB, `SELECT * FROM affiliate_content_blocks ORDER BY sort_order ASC, updated_at DESC LIMIT 500`);
+  return await all(DB, `SELECT * FROM affiliate_content_blocks ORDER BY sort_order ASC, updated_at DESC LIMIT 500`);
 }
 
 function existingAffiliateBlocks() {
@@ -2432,7 +2452,7 @@ function existingAffiliateBlocks() {
   ];
 }
 
-async function importAffiliateContent(DB, identity) {
+async function importAffiliateContent(DB, identity, ipAddress = "unknown") {
   let imported = 0;
   for (const block of existingAffiliateBlocks()) {
     const existing = await DB.prepare(`SELECT id FROM affiliate_content_blocks WHERE source_key = ?`).bind(block.source_key).first();
@@ -2457,7 +2477,7 @@ async function importAffiliateContent(DB, identity) {
     imported += 1;
   }
 
-  await writeAudit(DB, identity, "affiliate_content_import", "affiliate_content_blocks", "existing-content", `Imported ${imported} existing affiliate content records.`, { imported });
+  await writeAudit(DB, identity, "affiliate_content_import", "affiliate_content_blocks", "existing-content", `Imported ${imported} existing affiliate content records.`, { imported }, ipAddress);
   return { imported, records: await getAffiliateContent(DB) };
 }
 
@@ -2471,7 +2491,7 @@ function sanitiseWidgetCode(value) {
   return code;
 }
 
-async function saveAffiliateContent(DB, body, identity) {
+async function saveAffiliateContent(DB, body, identity, ipAddress = "unknown") {
   const id = clean(body.id, 120) || crypto.randomUUID();
   if (body.action === "import_existing") {
     const imported = await importAffiliateContent(DB, identity);
@@ -2480,7 +2500,7 @@ async function saveAffiliateContent(DB, body, identity) {
 
   if (body.action === "delete") {
     await DB.prepare(`DELETE FROM affiliate_content_blocks WHERE id = ?`).bind(id).run();
-    await writeAudit(DB, identity, "affiliate_content_delete", "affiliate_content_blocks", id, "Deleted affiliate content block.", {});
+    await writeAudit(DB, identity, "affiliate_content_delete", "affiliate_content_blocks", id, "Deleted affiliate content block.", {}, ipAddress);
     return getAffiliateContent(DB);
   }
 
@@ -2520,7 +2540,7 @@ async function saveAffiliateContent(DB, body, identity) {
     Number(body.sort_order || 100)
   ).run();
 
-  await writeAudit(DB, identity, "affiliate_content_save", "affiliate_content_blocks", id, `Saved affiliate content block ${title}.`, { published: Boolean(body.is_published), enabled: Boolean(body.is_enabled) });
+  await writeAudit(DB, identity, "affiliate_content_save", "affiliate_content_blocks", id, `Saved affiliate content block ${title}.`, { published: Boolean(body.is_published), enabled: Boolean(body.is_enabled) }, ipAddress);
   return getAffiliateContent(DB);
 }
 
@@ -2528,10 +2548,10 @@ async function getAppearance(DB) {
   return settingMap(DB, ["site_theme_mode"], { site_theme_mode: "dark" });
 }
 
-async function saveAppearance(DB, body, identity) {
+async function saveAppearance(DB, body, identity, ipAddress = "unknown") {
   const mode = THEME_MODES.includes(clean(body.site_theme_mode, 20)) ? clean(body.site_theme_mode, 20) : "dark";
   await saveSettings(DB, { site_theme_mode: mode });
-  await writeAudit(DB, identity, "appearance_update", "site_settings", "site_theme_mode", `Set site theme mode to ${mode}.`, { mode });
+  await writeAudit(DB, identity, "appearance_update", "site_settings", "site_theme_mode", `Set site theme mode to ${mode}.`, { mode }, ipAddress);
   return getAppearance(DB);
 }
 
@@ -2565,7 +2585,7 @@ async function getEmailSettings(DB, env) {
   };
 }
 
-async function saveEmailSettings(DB, body, env, identity) {
+async function saveEmailSettings(DB, body, env, identity, ipAddress = "unknown") {
   const current = await settingMap(DB, ["smtp_password", "email_api_key"], {});
   await saveSettings(DB, {
     smtp_host: clean(body.smtp_host, 250) || "smtp.jagroupservices.co.uk",
@@ -2580,7 +2600,7 @@ async function saveEmailSettings(DB, body, env, identity) {
     email_api_key: clean(body.email_api_key, 800) || current.email_api_key || env.EMAIL_API_TOKEN || "",
     admin_notification_email: cleanEmail(body.admin_notification_email) || env.ADMIN_NOTIFICATION_EMAIL || ""
   });
-  await writeAudit(DB, identity, "smtp_settings_update", "site_settings", "email", "Updated Email (SMTP) and provider settings.", { host: clean(body.smtp_host, 250), username: clean(body.smtp_username, 254), provider: clean(body.email_provider, 40) });
+  await writeAudit(DB, identity, "smtp_settings_update", "site_settings", "email", "Updated Email (SMTP) and provider settings.", { host: clean(body.smtp_host, 250), username: clean(body.smtp_username, 254), provider: clean(body.email_provider, 40) }, ipAddress);
   return getEmailSettings(DB, env);
 }
 
@@ -2636,7 +2656,7 @@ async function sendProviderEmail(DB, env, message) {
   return { provider: settings.provider, to, status: response.status };
 }
 
-async function testNotification(DB, body, env, identity) {
+async function testNotification(DB, body, env, identity, ipAddress = "unknown") {
   const notificationType = clean(body.notification_type, 80) || "New Signup";
   let result;
   try {
@@ -2659,7 +2679,7 @@ async function testNotification(DB, body, env, identity) {
     };
   }
 
-  await writeAudit(DB, identity, "test_notification", "email", notificationType, result.message, { sent: result.sent, to: result.to, notificationType });
+  await writeAudit(DB, identity, "test_notification", "email", notificationType, result.message, { sent: result.sent, to: result.to, notificationType }, ipAddress);
   return result;
 }
 
@@ -2695,7 +2715,7 @@ async function getAuditLog(DB, filters = {}) {
     bindings.push(clean(filters.outcome, 40));
   }
   const sql = `SELECT * FROM admin_audit_log${where.length ? ` WHERE ${where.join(" AND ")}` : ""} ORDER BY created_at DESC LIMIT 500`;
-  return all(DB, sql, bindings);
+  return await all(DB, sql, bindings);
 }
 
 async function getSessions(DB, request) {
@@ -2722,7 +2742,7 @@ async function getSessions(DB, request) {
 }
 
 async function getLoginHistory(DB, email) {
-  return all(DB, `
+  return await all(DB, `
     SELECT action, entity_type, entity_id, summary, metadata, created_at, actor_email
     FROM admin_audit_log
     WHERE lower(actor_email) = lower(?)
@@ -2733,7 +2753,7 @@ async function getLoginHistory(DB, email) {
 }
 
 async function getAdminActivity(DB, email) {
-  return all(DB, `
+  return await all(DB, `
     SELECT action, entity_type, entity_id, summary, metadata, created_at, actor_email
     FROM admin_audit_log
     WHERE lower(actor_email) = lower(?)
@@ -2780,9 +2800,9 @@ async function exportCustomerData(DB, customerEmail, format = "json") {
   if (!email) throw new Error("Customer email is required.");
   const [profile, dataRequests, systemReports, closures] = await Promise.all([
     DB.prepare(`SELECT * FROM profiles WHERE lower(email) = lower(?)`).bind(email).first(),
-    all(DB, `SELECT * FROM data_protection_requests WHERE lower(customer_email) = lower(?) OR lower(user_id) = lower(?)`, [email, email]),
-    all(DB, `SELECT * FROM system_reports WHERE lower(customer_email) = lower(?) OR lower(user_id) = lower(?)`, [email, email]),
-    all(DB, `SELECT * FROM closure_requests WHERE lower(customer_email) = lower(?)`, [email])
+    await all(DB, `SELECT * FROM data_protection_requests WHERE lower(customer_email) = lower(?) OR lower(user_id) = lower(?)`, [email, email]),
+    await all(DB, `SELECT * FROM system_reports WHERE lower(customer_email) = lower(?) OR lower(user_id) = lower(?)`, [email, email]),
+    await all(DB, `SELECT * FROM closure_requests WHERE lower(customer_email) = lower(?)`, [email])
   ]);
   const payload = { profile, dataRequests, systemReports, closureRequests: closures };
   if (format === "csv") {
@@ -2830,7 +2850,7 @@ function saveLaunchGateway(DB, body) {
 }
 
 async function getPlans(DB) {
-  return all(DB, `
+  return await all(DB, `
     SELECT id, plan_name, plan_type, is_active, sort_order
     FROM service_plans
     ORDER BY sort_order ASC, plan_name ASC
@@ -2978,6 +2998,7 @@ export async function onRequest(context) {
       return json({ error: "Forbidden.", signedInAs: identity.email }, 403);
     }
     const adminContext = await adminPayload(env.DB, identity, env);
+    const ipAddress = request.headers.get("CF-Connecting-IP") || request.headers.get("x-forwarded-for") || "unknown";
 
     const url = new URL(request.url);
     const section = url.searchParams.get("section") || "overview";
@@ -3017,6 +3038,9 @@ export async function onRequest(context) {
       if (section === "customer") {
         const email = clean(url.searchParams.get("email"), 254);
         if (!email) return json({ error: "Customer email is required." }, 400);
+
+        await writeAudit(env.DB, identity, "customer_profile_access", "profiles", email, `Accessed customer profile for ${email}.`, { section }, ipAddress);
+
         const [customer, flags, timeline, supportCases, notifications, pins, plans, notes, billing] = await Promise.all([
           env.DB.prepare(`
             SELECT
@@ -3037,13 +3061,13 @@ export async function onRequest(context) {
             FROM profiles
             WHERE lower(email) = lower(?)
           `).bind(email).first(),
-          all(env.DB, `SELECT * FROM customer_account_flags WHERE lower(email) = lower(?) ORDER BY updated_at DESC`, [email]),
-          all(env.DB, `SELECT * FROM customer_timeline_events WHERE lower(email) = lower(?) ORDER BY created_at DESC LIMIT 200`, [email]),
-          all(env.DB, `SELECT * FROM customer_support_cases WHERE lower(email) = lower(?) ORDER BY updated_at DESC LIMIT 100`, [email]),
-          all(env.DB, `SELECT * FROM customer_notifications WHERE lower(email) = lower(?) ORDER BY updated_at DESC LIMIT 100`, [email]),
-          all(env.DB, `SELECT * FROM customer_support_pins WHERE lower(email) = lower(?) ORDER BY updated_at DESC LIMIT 20`, [email]),
+          await all(env.DB, `SELECT * FROM customer_account_flags WHERE lower(email) = lower(?) ORDER BY updated_at DESC`, [email]),
+          await all(env.DB, `SELECT * FROM customer_timeline_events WHERE lower(email) = lower(?) ORDER BY created_at DESC LIMIT 200`, [email]),
+          await all(env.DB, `SELECT * FROM customer_support_cases WHERE lower(email) = lower(?) ORDER BY updated_at DESC LIMIT 100`, [email]),
+          await all(env.DB, `SELECT * FROM customer_notifications WHERE lower(email) = lower(?) ORDER BY updated_at DESC LIMIT 100`, [email]),
+          await all(env.DB, `SELECT * FROM customer_support_pins WHERE lower(email) = lower(?) ORDER BY updated_at DESC LIMIT 20`, [email]),
           getPlans(env.DB),
-          all(env.DB, `SELECT * FROM customer_internal_notes WHERE lower(email) = lower(?) ORDER BY pinned DESC, updated_at DESC LIMIT 100`, [email]),
+          await all(env.DB, `SELECT * FROM customer_internal_notes WHERE lower(email) = lower(?) ORDER BY pinned DESC, updated_at DESC LIMIT 100`, [email]),
           getCustomerStripeBilling(env.DB, env, email)
         ]);
         const verification = await getIdentityVerificationState(env.DB, email, identity.email, adminContext);
@@ -3092,7 +3116,7 @@ export async function onRequest(context) {
           return json({ error: "Forbidden.", section }, 403);
         }
         const exported = await exportCustomerData(env.DB, body.customer_email || body.user_id, clean(body.format, 20) || "json");
-        await writeAudit(env.DB, identity, "customer_data_export", "profiles", cleanEmail(body.customer_email || body.user_id), "Exported customer CRM data.", { format: exported.format });
+        await writeAudit(env.DB, identity, "customer_data_export", "profiles", cleanEmail(body.customer_email || body.user_id), "Exported customer CRM data.", { format: exported.format }, ipAddress);
         return json({ export: exported, saved: true });
       }
       if (section === "admins") {
@@ -3100,20 +3124,20 @@ export async function onRequest(context) {
           return json({ error: "Forbidden.", section }, 403);
         }
         if (body.action === "remove") {
-          await removeAdmin(env.DB, body, identity, env);
-          await writeAudit(env.DB, identity, "admin_remove", "admin_users", cleanEmail(body.email), `Removed admin access for ${cleanEmail(body.email)}.`, {});
+          await removeAdmin(env.DB, body, identity, env, ipAddress);
+          await writeAudit(env.DB, identity, "admin_remove", "admin_users", cleanEmail(body.email), `Removed admin access for ${cleanEmail(body.email)}.`, {}, ipAddress);
         } else if (body.action === "suspend") {
-          await updateAdmin(env.DB, { ...body, status: "Suspended" }, identity, env);
-          await writeAudit(env.DB, identity, "admin_suspend", "admin_users", cleanEmail(body.email), `Suspended admin ${cleanEmail(body.email)}.`, {});
+          await updateAdmin(env.DB, { ...body, status: "Suspended" }, identity, env, ipAddress);
+          await writeAudit(env.DB, identity, "admin_suspend", "admin_users", cleanEmail(body.email), `Suspended admin ${cleanEmail(body.email)}.`, {}, ipAddress);
         } else if (body.action === "reactivate") {
-          await updateAdmin(env.DB, { ...body, status: "Active" }, identity, env);
-          await writeAudit(env.DB, identity, "admin_reactivate", "admin_users", cleanEmail(body.email), `Reactivated admin ${cleanEmail(body.email)}.`, {});
+          await updateAdmin(env.DB, { ...body, status: "Active" }, identity, env, ipAddress);
+          await writeAudit(env.DB, identity, "admin_reactivate", "admin_users", cleanEmail(body.email), `Reactivated admin ${cleanEmail(body.email)}.`, {}, ipAddress);
         } else if (body.action === "update") {
-          await updateAdmin(env.DB, body, identity, env);
-          await writeAudit(env.DB, identity, "admin_update", "admin_users", cleanEmail(body.email), `Updated admin ${cleanEmail(body.email)}.`, {});
+          await updateAdmin(env.DB, body, identity, env, ipAddress);
+          await writeAudit(env.DB, identity, "admin_update", "admin_users", cleanEmail(body.email), `Updated admin ${cleanEmail(body.email)}.`, {}, ipAddress);
         } else {
-          await addAdmin(env.DB, body, identity);
-          await writeAudit(env.DB, identity, "admin_add", "admin_users", cleanEmail(body.email), `Added admin ${cleanEmail(body.email)}.`, {});
+          await addAdmin(env.DB, body, identity, ipAddress);
+          await writeAudit(env.DB, identity, "admin_add", "admin_users", cleanEmail(body.email), `Added admin ${cleanEmail(body.email)}.`, {}, ipAddress);
         }
         return json({ admins: await getAdmins(env.DB, env), saved: true });
       }
@@ -3121,11 +3145,11 @@ export async function onRequest(context) {
         if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_roles", "manage_permissions"])) {
           return json({ error: "Forbidden.", section }, 403);
         }
-        if (body.action === "create") return json({ roles: await createRole(env.DB, body, identity), saved: true });
-        if (body.action === "update") return json({ roles: await updateRole(env.DB, body, identity), saved: true });
-        if (body.action === "rename") return json({ roles: await renameRole(env.DB, body, identity), saved: true });
-        if (body.action === "clone") return json({ roles: await cloneRole(env.DB, body, identity), saved: true });
-        if (body.action === "delete") return json({ roles: await deleteRole(env.DB, body, identity), saved: true });
+        if (body.action === "create") return json({ roles: await createRole(env.DB, body, identity, ipAddress), saved: true });
+        if (body.action === "update") return json({ roles: await updateRole(env.DB, body, identity, ipAddress), saved: true });
+        if (body.action === "rename") return json({ roles: await renameRole(env.DB, body, identity, ipAddress), saved: true });
+        if (body.action === "clone") return json({ roles: await cloneRole(env.DB, body, identity, ipAddress), saved: true });
+        if (body.action === "delete") return json({ roles: await deleteRole(env.DB, body, identity, ipAddress), saved: true });
         throw new Error("Unknown role action.");
       }
       if (section === "sessions") {
@@ -3139,7 +3163,7 @@ export async function onRequest(context) {
           } catch {
             // Native session storage is additive and may not exist before migration.
           }
-          await writeAudit(env.DB, identity, "session_revoke", "admin_sessions", requestedHash, "Revoked an admin session.", {});
+          await writeAudit(env.DB, identity, "session_revoke", "admin_sessions", requestedHash, "Revoked an admin session.", {}, ipAddress);
           const nativeTokenHash = request.headers.get("x-ja-auth-session") || "";
           const headers = requestedHash === nativeTokenHash
             ? { "Set-Cookie": "ja_admin_session=; Path=/admin; Max-Age=0; HttpOnly; Secure; SameSite=Lax" }
@@ -3154,7 +3178,7 @@ export async function onRequest(context) {
           } catch {
             // Native session storage is additive and may not exist before migration.
           }
-          await writeAudit(env.DB, identity, "session_revoke_all", "admin_sessions", "all", "Revoked all admin sessions.", {});
+          await writeAudit(env.DB, identity, "session_revoke_all", "admin_sessions", "all", "Revoked all admin sessions.", {}, ipAddress);
           return jsonWithHeaders(
             { sessions: await getSessions(env.DB, request), saved: true },
             { "Set-Cookie": "ja_admin_session=; Path=/admin; Max-Age=0; HttpOnly; Secure; SameSite=Lax" }
@@ -3168,79 +3192,79 @@ export async function onRequest(context) {
         }
         if (body.action === "save_all") {
           const plans = await savePlans(env.DB, body.plans);
-          await writeAudit(env.DB, identity, "plans_save", "service_plans", "all", `Saved ${plans.length} complete plans.`, { count: plans.length });
+          await writeAudit(env.DB, identity, "plans_save", "service_plans", "all", `Saved ${plans.length} complete plans.`, { count: plans.length }, ipAddress);
           return json({ plans, saved: true });
         }
         const plans = await savePlan(env.DB, body);
-        await writeAudit(env.DB, identity, "plan_save", "service_plans", clean(body.id, 120), `Saved plan ${clean(body.plan_name, 180)}.`, {});
+        await writeAudit(env.DB, identity, "plan_save", "service_plans", clean(body.id, 120), `Saved plan ${clean(body.plan_name, 180)}.`, {}, ipAddress);
         return json({ plans, saved: true });
       }
       if (section === "policies") {
         if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_policies", "manage_content"])) return json({ error: "Forbidden.", section }, 403);
         const policies = await savePolicy(env.DB, body);
-        await writeAudit(env.DB, identity, "policy_save", "policy_pages", cleanSlug(body.slug), `Saved policy ${clean(body.title, 180)}.`, { status: clean(body.status, 80) });
+        await writeAudit(env.DB, identity, "policy_save", "policy_pages", cleanSlug(body.slug), `Saved policy ${clean(body.title, 180)}.`, { status: clean(body.status, 80) }, ipAddress);
         return json({ policies, saved: true });
       }
       if (section === "branding") {
         if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_branding", "manage_content"])) return json({ error: "Forbidden.", section }, 403);
         const branding = await saveBranding(env.DB, body);
-        await writeAudit(env.DB, identity, "branding_update", "company_branding", "main", "Updated company branding.", { serviceName: clean(body.service_name, 180) });
+        await writeAudit(env.DB, identity, "branding_update", "company_branding", "main", "Updated company branding.", { serviceName: clean(body.service_name, 180) }, ipAddress);
         return json({ branding, saved: true });
       }
       if (section === "support") {
         if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_support", "manage_crm"])) return json({ error: "Forbidden.", section }, 403);
         const result = await saveSupport(env.DB, body);
         const auditSummary = (body.action === "create" ? "Created" : "Updated") + " support ticket " + result.saved.reference + ": " + result.saved.subject + ".";
-        await writeAudit(env.DB, identity, body.action === "create" ? "support_create" : "support_update", "support_tickets", result.saved.id, auditSummary, { reference: result.saved.reference, status: clean(body.status, 80), priority: clean(body.priority, 80) });
+        await writeAudit(env.DB, identity, body.action === "create" ? "support_create" : "support_update", "support_tickets", result.saved.id, auditSummary, { reference: result.saved.reference, status: clean(body.status, 80), priority: clean(body.priority, 80) }, ipAddress);
         return json({ support: result.records, saved: true });
       }
       if (section === "notifications") {
         if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_email", "manage_support", "manage_crm"])) return json({ error: "Forbidden.", section }, 403);
         if (body.action === "delete") {
           await env.DB.prepare(`DELETE FROM customer_notifications WHERE id = ?`).bind(clean(body.id, 120)).run();
-          await writeAudit(env.DB, identity, "notification_delete", "customer_notifications", clean(body.id, 120), "Deleted notification.", {});
+          await writeAudit(env.DB, identity, "notification_delete", "customer_notifications", clean(body.id, 120), "Deleted notification.", {}, ipAddress);
           return json({ notifications: await getNotificationsAdmin(env.DB), saved: true });
         }
         const notifications = await saveNotification(env.DB, body, identity);
-        await writeAudit(env.DB, identity, "notification_update", "customer_notifications", clean(body.id, 120), `Updated notification ${clean(body.title, 180)}.`, { status: clean(body.status, 80), category: clean(body.category, 80) });
+        await writeAudit(env.DB, identity, "notification_update", "customer_notifications", clean(body.id, 120), `Updated notification ${clean(body.title, 180)}.`, { status: clean(body.status, 80), category: clean(body.category, 80) }, ipAddress);
         return json({ notifications, saved: true });
       }
       if (section === "enquiries") {
         if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_support", "manage_crm"])) return json({ error: "Forbidden.", section }, 403);
         const thread = await updateEnquiryAsAdmin(env.DB, env, body, identity);
-        await writeAudit(env.DB, identity, "enquiry_update", "enquiries", clean(body.reference, 40), `Updated enquiry ${clean(body.reference, 40)}.`, { status: clean(body.status, 80), priority: clean(body.priority, 80), replied: Boolean(clean(body.reply, 10)), internal_note: Boolean(clean(body.internalNote, 10)) });
+        await writeAudit(env.DB, identity, "enquiry_update", "enquiries", clean(body.reference, 40), `Updated enquiry ${clean(body.reference, 40)}.`, { status: clean(body.status, 80), priority: clean(body.priority, 80), replied: Boolean(clean(body.reply, 10)), internal_note: Boolean(clean(body.internalNote, 10)) }, ipAddress);
         return json({ enquiries: await listAdminEnquiries(env.DB), thread, saved: true });
       }
       if (section === "system") {
         if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_settings"])) return json({ error: "Forbidden.", section }, 403);
         const system = await saveSystemEvent(env.DB, body);
-        await writeAudit(env.DB, identity, "system_issue_update", "system_events", clean(body.id, 120), `Updated system issue ${clean(body.title, 250)}.`, { status: clean(body.status, 80), severity: clean(body.severity, 80) });
+        await writeAudit(env.DB, identity, "system_issue_update", "system_events", clean(body.id, 120), `Updated system issue ${clean(body.title, 250)}.`, { status: clean(body.status, 80), severity: clean(body.severity, 80) }, ipAddress);
         return json({ system, saved: true });
       }
       if (section === "datarequests") {
         if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_data_requests"])) return json({ error: "Forbidden.", section }, 403);
-        return json({ datarequests: await saveDataProtectionRequest(env.DB, body, identity, env), saved: true });
+        return json({ datarequests: await saveDataProtectionRequest(env.DB, body, identity, env, ipAddress), saved: true });
       }
       if (section === "systemreports") {
         if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_system_reports", "manage_audit"])) return json({ error: "Forbidden.", section }, 403);
-        return json({ systemreports: await saveSystemReport(env.DB, body, identity), saved: true });
+        return json({ systemreports: await saveSystemReport(env.DB, body, identity, ipAddress), saved: true });
       }
       if (section === "closures") {
         if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_closure_requests"])) return json({ error: "Forbidden.", section }, 403);
-        return json({ closures: await saveClosureRequest(env.DB, body, identity), saved: true });
+        return json({ closures: await saveClosureRequest(env.DB, body, identity, ipAddress), saved: true });
       }
       if (section === "affiliate") {
         if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_content"])) return json({ error: "Forbidden.", section }, 403);
-        return json({ affiliate: await saveAffiliateContent(env.DB, body, identity), saved: true });
+        return json({ affiliate: await saveAffiliateContent(env.DB, body, identity, ipAddress), saved: true });
       }
       if (section === "appearance") {
         if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_settings"])) return json({ error: "Forbidden.", section }, 403);
-        return json({ appearance: await saveAppearance(env.DB, body, identity), saved: true });
+        return json({ appearance: await saveAppearance(env.DB, body, identity, ipAddress), saved: true });
       }
       if (section === "email") {
         if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_email"])) return json({ error: "Forbidden.", section }, 403);
-        if (body.action === "test") return json({ email: await getEmailSettings(env.DB, env), test: await testNotification(env.DB, body, env, identity), saved: true });
-        return json({ email: await saveEmailSettings(env.DB, body, env, identity), saved: true });
+        if (body.action === "test") return json({ email: await getEmailSettings(env.DB, env), test: await testNotification(env.DB, body, env, identity, ipAddress), saved: true });
+        return json({ email: await saveEmailSettings(env.DB, body, env, identity, ipAddress), saved: true });
       }
       if (section === "maintenance") {
         if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_content"])) return json({ error: "Forbidden.", section }, 403);
@@ -3249,7 +3273,7 @@ export async function onRequest(context) {
         await writeAudit(env.DB, identity, "maintenance_update", "site_settings", "maintenance", `Maintenance mode ${body.maintenance_enabled ? "enabled" : "disabled"}.`, {
           previousValue: previous,
           newValue: maintenance
-        });
+        }, ipAddress);
         return json({ maintenance, saved: true });
       }
       if (section === "launchgateway") {
@@ -3259,13 +3283,13 @@ export async function onRequest(context) {
         await writeAudit(env.DB, identity, "launchgateway_update", "site_settings", "launchgateway", `Launch Gateway page ${body.launchgateway_enabled ? "enabled" : "disabled"}.`, {
           previousValue: previous,
           newValue: launchgateway
-        });
+        }, ipAddress);
         return json({ launchgateway, saved: true });
       }
       if (section === "stripe") {
         if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_stripe"])) return json({ error: "Forbidden.", section }, 403);
         const stripe = await saveStripe(env.DB, body, env);
-        await writeAudit(env.DB, identity, "stripe_settings_update", "site_settings", "stripe", "Updated Stripe API controls.", { tested: Boolean(body.test_connection), mode: stripe.mode });
+        await writeAudit(env.DB, identity, "stripe_settings_update", "site_settings", "stripe", "Updated Stripe API controls.", { tested: Boolean(body.test_connection), mode: stripe.mode }, ipAddress);
         return json({ stripe, saved: true });
       }
       if (section === "customer") {
@@ -3276,29 +3300,29 @@ export async function onRequest(context) {
         if (!verificationAction) {
           const verification = await getIdentityVerificationState(env.DB, email, identity.email, adminContext);
           if (!verification.verified) {
-            await writeAudit(env.DB, identity, "customer_action_blocked_identity_required", "profiles", email, `Blocked customer action until identity verification for ${email}.`, { action: clean(body.action, 120), locked: verification.locked });
+            await writeAudit(env.DB, identity, "customer_action_blocked_identity_required", "profiles", email, `Blocked customer action until identity verification for ${email}.`, { action: clean(body.action, 120), locked: verification.locked }, ipAddress);
             return json({ error: "Identity Verification Required", verification }, 403);
           }
         }
         if (body.action === "clear_identity_verification") {
           await clearCustomerVerificationSession(env.DB, identity, email);
-          await writeAudit(env.DB, identity, "customer_identity_verification_session_closed", "profiles", email, `Closed customer identity verification session for ${email}.`, {});
+          await writeAudit(env.DB, identity, "customer_identity_verification_session_closed", "profiles", email, `Closed customer identity verification session for ${email}.`, {}, ipAddress);
           return json({ saved: true, verification: await getIdentityVerificationState(env.DB, email, identity.email, adminContext) });
         }
         if (body.action === "override_identity_lock") {
           if (!isSupervisorContext(adminContext)) return json({ error: "Supervisor override is required." }, 403);
           const reason = clean(body.reason, 500);
           if (!reason) return json({ error: "A reason is required for supervisor override." }, 400);
-          await clearCustomerIdentityLock(env.DB, identity, email, reason);
+          await clearCustomerIdentityLock(env.DB, identity, email, reason, ipAddress);
           const expiresAt = await createCustomerVerificationSession(env.DB, identity, email, "Supervisor Override");
-          await writeAudit(env.DB, identity, "customer_identity_verification_override", "profiles", email, `Supervisor override verified customer identity for ${email}.`, { reason, expires_at: expiresAt });
+          await writeAudit(env.DB, identity, "customer_identity_verification_override", "profiles", email, `Supervisor override verified customer identity for ${email}.`, { reason, expires_at: expiresAt }, ipAddress);
           return json({ saved: true, verification: await getIdentityVerificationState(env.DB, email, identity.email, adminContext) });
         }
         if (body.action === "verify_identity" || body.action === "verify_pin") {
           const method = clean(body.method, 80) || (body.action === "verify_pin" ? "Support PIN" : "Support PIN");
           const lockedState = await getIdentityVerificationState(env.DB, email, identity.email, adminContext);
           if (lockedState.locked) {
-            await writeAudit(env.DB, identity, "customer_identity_verification_blocked_locked", "profiles", email, `Blocked identity verification because ${email} is temporarily locked.`, { method });
+            await writeAudit(env.DB, identity, "customer_identity_verification_blocked_locked", "profiles", email, `Blocked identity verification because ${email} is temporarily locked.`, { method }, ipAddress);
             return json({ verification: lockedState, error: "Identity verification has failed. For security, this customer profile has been temporarily locked." }, 423);
           }
 
@@ -3314,9 +3338,9 @@ export async function onRequest(context) {
               questions_used: verificationResult.questions_used || [],
               success: true,
               expires_at: expiresAt
-            });
+            }, ipAddress);
           } else {
-            const failure = await recordIdentityFailure(env.DB, identity, email, method, verificationResult.error || "Verification failed.");
+            const failure = await recordIdentityFailure(env.DB, identity, email, method, verificationResult.error || "Verification failed.", ipAddress);
             if (failure.locked) {
               return json({
                 verification: await getIdentityVerificationState(env.DB, email, identity.email, adminContext),
@@ -3330,7 +3354,7 @@ export async function onRequest(context) {
         }
         if (body.action === "open_stripe_portal") {
           const portalUrl = await createCustomerStripePortal(env.DB, env, email, new URL(request.url).origin);
-          await writeAudit(env.DB, identity, "stripe_portal_open", "profiles", email, `Opened Stripe Billing Portal for ${email}.`, {});
+          await writeAudit(env.DB, identity, "stripe_portal_open", "profiles", email, `Opened Stripe Billing Portal for ${email}.`, {}, ipAddress);
           return json({ url: portalUrl });
         }
         if (body.action === "add_note") {
@@ -3339,7 +3363,7 @@ export async function onRequest(context) {
             INSERT INTO customer_internal_notes (id, email, category, body, pinned, author_email, attachments, edit_history, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, '[]', CURRENT_TIMESTAMP)
           `).bind(noteId, email, clean(body.category, 80) || "General", clean(body.body, 4000), body.pinned ? 1 : 0, identity.email, JSON.stringify(Array.isArray(body.attachments) ? body.attachments : [])).run();
-          await writeAudit(env.DB, identity, "customer_note_create", "customer_internal_notes", email, `Added customer note for ${email}.`, { category: clean(body.category, 80) || "General" });
+          await writeAudit(env.DB, identity, "customer_note_create", "customer_internal_notes", email, `Added customer note for ${email}.`, { category: clean(body.category, 80) || "General" }, ipAddress);
         }
         if (body.action === "send_notification") {
           const notificationPayload = {
@@ -3355,11 +3379,59 @@ export async function onRequest(context) {
             archived_at: null
           };
           const notifications = await saveNotification(env.DB, notificationPayload, identity);
-          await writeAudit(env.DB, identity, "customer_notification_send", "customer_notifications", email, `Sent customer notification to ${email}.`, { title: notificationPayload.title, category: notificationPayload.category });
+          await writeAudit(env.DB, identity, "customer_notification_send", "customer_notifications", email, `Sent customer notification to ${email}.`, { title: notificationPayload.title, category: notificationPayload.category }, ipAddress);
           return json({ notifications, saved: true, notification: { email } });
         }
+
+        if (body.action === "log_password_reset_intent") {
+          await writeAudit(env.DB, identity, "customer_password_reset_intent", "profiles", email, `Administrator intent to reset password for ${email} via Microsoft Entra.`, {}, ipAddress);
+          return json({ saved: true });
+        }
+
+        if (body.action === "update_profile") {
+          const makeLifetime = Boolean(body.admin_lifetime);
+          const notes = String(body.admin_notes || "").trim().slice(0, 4000);
+          const lifetimePlanId = makeLifetime ? String(body.admin_lifetime_plan_id || "").trim().slice(0, 120) : "";
+          const status = makeLifetime ? "Lifetime" : "Standard";
+          const flags = String(body.customer_flags || "").split(",").map((item) => item.trim()).filter(Boolean).slice(0, 12);
+
+          const currentProfile = await env.DB.prepare(`SELECT contact_email, admin_lifetime, admin_lifetime_plan_id, admin_customer_status, admin_notes FROM profiles WHERE lower(email) = lower(?)`).bind(email).first();
+
+          await env.DB.prepare(`
+            UPDATE profiles SET
+              admin_lifetime = ?,
+              admin_lifetime_plan_id = ?,
+              admin_customer_status = ?,
+              admin_notes = ?,
+              admin_updated_at = CURRENT_TIMESTAMP,
+              updated_at = CURRENT_TIMESTAMP
+            WHERE lower(email) = lower(?)
+          `).bind(
+            makeLifetime ? 1 : 0,
+            lifetimePlanId || null,
+            status,
+            notes,
+            email
+          ).run();
+
+          if (currentProfile && currentProfile.contact_email !== (body.contact_email || email)) {
+            await writeAudit(env.DB, identity, "customer_email_change", "profiles", email, `Changed customer contact email from ${currentProfile.contact_email} to ${body.contact_email || email}.`, { from: currentProfile.contact_email, to: body.contact_email || email }, ipAddress);
+          }
+
+          await env.DB.prepare(`DELETE FROM customer_account_flags WHERE lower(email) = lower(?) AND source = 'admin'`).bind(email).run();
+          for (const flag of flags) {
+            await env.DB.prepare(`
+              INSERT INTO customer_account_flags (id, email, flag, note, source, updated_at)
+              VALUES (?, ?, ?, ?, 'admin', CURRENT_TIMESTAMP)
+            `).bind(crypto.randomUUID(), email, flag, notes || null).run();
+          }
+
+          await writeAudit(env.DB, identity, makeLifetime ? "lifetime_access_grant" : "lifetime_access_revoke", "profiles", email, makeLifetime ? `Granted lifetime access to ${email}.` : `Revoked lifetime access for ${email}.`, { lifetimePlanId, status }, ipAddress);
+          await writeAudit(env.DB, identity, "customer_profile_update", "profiles", email, `Updated profile for ${email}.`, { flags }, ipAddress);
+        }
+
         const [customer, flags, timeline, supportCases, notifications, pins, plans, notes, billing] = await Promise.all([
-          DB.prepare(`
+          env.DB.prepare(`
             SELECT
               email,
               verified_name,
@@ -3378,16 +3450,16 @@ export async function onRequest(context) {
             FROM profiles
             WHERE lower(email) = lower(?)
           `).bind(email).first(),
-          all(env.DB, `SELECT * FROM customer_account_flags WHERE lower(email) = lower(?) ORDER BY updated_at DESC`, [email]),
-          all(env.DB, `SELECT * FROM customer_timeline_events WHERE lower(email) = lower(?) ORDER BY created_at DESC LIMIT 200`, [email]),
-          all(env.DB, `SELECT * FROM customer_support_cases WHERE lower(email) = lower(?) ORDER BY updated_at DESC LIMIT 100`, [email]),
-          all(env.DB, `SELECT * FROM customer_notifications WHERE lower(email) = lower(?) ORDER BY updated_at DESC LIMIT 100`, [email]),
-          all(env.DB, `SELECT * FROM customer_support_pins WHERE lower(email) = lower(?) ORDER BY updated_at DESC LIMIT 20`, [email]),
+          await all(env.DB, `SELECT * FROM customer_account_flags WHERE lower(email) = lower(?) ORDER BY updated_at DESC`, [email]),
+          await all(env.DB, `SELECT * FROM customer_timeline_events WHERE lower(email) = lower(?) ORDER BY created_at DESC LIMIT 200`, [email]),
+          await all(env.DB, `SELECT * FROM customer_support_cases WHERE lower(email) = lower(?) ORDER BY updated_at DESC LIMIT 100`, [email]),
+          await all(env.DB, `SELECT * FROM customer_notifications WHERE lower(email) = lower(?) ORDER BY updated_at DESC LIMIT 100`, [email]),
+          await all(env.DB, `SELECT id, pin_last4, status, expires_at, used_at, revoked_at, revoked_by, last_used_at, created_at, updated_at FROM customer_support_pins WHERE lower(email) = lower(?) ORDER BY created_at DESC LIMIT 20`, [email]),
           getPlans(env.DB),
-          all(env.DB, `SELECT * FROM customer_internal_notes WHERE lower(email) = lower(?) ORDER BY pinned DESC, updated_at DESC LIMIT 100`, [email]),
+          await all(env.DB, `SELECT * FROM customer_internal_notes WHERE lower(email) = lower(?) ORDER BY pinned DESC, updated_at DESC LIMIT 100`, [email]),
           getCustomerStripeBilling(env.DB, env, email)
         ]);
-        return json({ customer: { ...customer, flags, timeline, supportCases, notifications, pins, notes, billing }, plans, saved: true });
+        return json({ customer: { ...customer, flags, timeline, supportCases, notifications, pins: pins.results || pins, notes, billing }, plans, saved: true });
       }
     }
 
