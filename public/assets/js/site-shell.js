@@ -151,7 +151,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
 
-/* JA Secure Access header account label loader */
+/* JA Group Services ID header account label loader */
 (function () {
   function loadAccessHeaderScript() {
     if (document.querySelector('script[src*="/assets/js/access-header.js"]')) {

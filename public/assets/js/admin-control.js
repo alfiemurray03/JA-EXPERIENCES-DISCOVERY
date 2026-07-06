@@ -365,10 +365,6 @@ function bindAdminActions() {
     if (type === "reset-microsoft-password") {
       const email = action.dataset.email || "";
       if (!window.confirm(`Open the Microsoft Entra admin centre for ${email || "this customer"} in a new tab? This will not reset the password directly.`)) return;
-      api("customer", {
-        method: "POST",
-        body: JSON.stringify({ action: "log_password_reset_intent", email })
-      }).catch(() => {});
       window.open("https://entra.microsoft.com/", "_blank", "noopener,noreferrer");
     }
 
@@ -3587,7 +3583,6 @@ function openAdminRecordModal(section, id) {
       ${isDpr ? "" : `<label class="admin-label">Priority<select id="record_priority">${priorities.map((priority) => `<option value="${escapeAttr(priority)}" ${priority === item.priority ? "selected" : ""}>${escapeHtml(priority)}</option>`).join("")}</select></label>`}
       <label class="admin-label">Assigned admin<input id="record_assigned" type="email" value="${escapeAttr(item.assigned_admin_id || "")}"></label>
       ${textarea("Internal admin notes", "record_notes")}
-      ${textarea("Decision / Customer-facing response", "record_response")}
       <button class="admin-button" type="submit">Save record</button>
       ${isDpr ? `<button class="admin-button secondary" type="button" id="sendToDataSubjectButton">Send to Data Subject</button>` : ""}
       <div id="recordSaved" class="admin-success" hidden></div>
@@ -3599,7 +3594,6 @@ function openAdminRecordModal(section, id) {
   `);
 
   setValue("record_notes", item.internal_notes || "");
-  setValue("record_response", item.admin_response || "");
   document.getElementById("adminRecordForm").addEventListener("submit", async (event) => {
     event.preventDefault();
     const body = {
@@ -3607,8 +3601,7 @@ function openAdminRecordModal(section, id) {
       reference: item.reference,
       status: getValue("record_status"),
       assigned_admin_id: getValue("record_assigned"),
-      internal_notes: getValue("record_notes"),
-      admin_response: getValue("record_response")
+      internal_notes: getValue("record_notes")
     };
     if (!isDpr) body.priority = getValue("record_priority");
     const data = await api(section, { method: "POST", body: JSON.stringify(body) });
@@ -3626,8 +3619,7 @@ function openAdminRecordModal(section, id) {
         action: "mark_sent",
         status: "Sent",
         assigned_admin_id: getValue("record_assigned"),
-        internal_notes: getValue("record_notes"),
-        admin_response: getValue("record_response")
+        internal_notes: getValue("record_notes")
       };
       const data = await api(section, { method: "POST", body: JSON.stringify(body) });
       state.data[section] = data;
@@ -4090,24 +4082,25 @@ function renderCustomerDrawer(customer, plans = []) {
   document.getElementById("customerAdminForm").addEventListener("submit", async (event) => {
     event.preventDefault();
     const lifetimeChecked = document.getElementById("customer_lifetime").checked;
-    try {
-      const data = await api("customer", {
-        method: "POST",
-        body: JSON.stringify({
-          action: "update_profile",
-          email: customer.email,
-          admin_lifetime: lifetimeChecked,
-          admin_lifetime_plan_id: lifetimeChecked ? getValue("customer_lifetime_plan") : "",
-          admin_notes: getValue("customer_admin_notes"),
-          customer_flags: getValue("customer_flags")
-        })
-      });
-      renderCustomerDrawer(data.customer, data.plans || plans);
-      if (state.currentSection === "customers") loadSection("customers");
-      setSaved("customerSaved", "Customer profile updated.");
-    } catch (error) {
-      setSaved("customerSaved", error.message || "Unable to save customer.", true);
+    const response = await fetch(`/admin/customer?email=${encodeURIComponent(customer.email)}`, {
+      method: "POST",
+      credentials: "include",
+      cache: "no-store",
+      headers: { "Accept": "application/json", "Content-Type": "application/json" },
+      body: JSON.stringify({
+        admin_lifetime: lifetimeChecked,
+        admin_lifetime_plan_id: lifetimeChecked ? getValue("customer_lifetime_plan") : "",
+        admin_notes: getValue("customer_admin_notes"),
+        customer_flags: getValue("customer_flags")
+      })
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      setSaved("customerSaved", data.error || "Unable to save customer.", true);
+      return;
     }
+    renderCustomerDrawer(data.customer, data.plans || plans);
+    if (state.currentSection === "customers") loadSection("customers");
   });
 
   document.getElementById("customerClosureButton")?.addEventListener("click", () => {

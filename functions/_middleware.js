@@ -498,7 +498,10 @@ export async function onRequest(context) {
     path === "/admin" ||
     path === "/admin/" ||
     path.startsWith("/admin/") ||
-    path.startsWith("/account") ||
+    path === "/account/logout" ||
+    path === "/account/logout/" ||
+    path === "/account" ||
+    path === "/account/" ||
     path === "/status" ||
     path.startsWith("/status/") ||
     path === "/api/status" ||

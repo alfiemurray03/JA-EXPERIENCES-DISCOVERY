@@ -45,7 +45,7 @@ function hasEligibleAccess(profile = {}) {
   return Boolean(
     Number(profile.admin_lifetime || 0) === 1 ||
     profile.admin_lifetime_plan_id ||
-    (status && ["active", "standard", "free", "secure", "secure account"].includes(status))
+    (status && !["standard", "free", "secure", "secure account"].includes(status))
   );
 }
 

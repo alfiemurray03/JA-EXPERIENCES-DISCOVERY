@@ -103,9 +103,7 @@ function realmConfig(realm, env) {
     issuer,
     clientId,
     clientSecret,
-    scopes: realm === "customer"
-      ? `${baseScopes} https://graph.microsoft.com/User.Read https://graph.microsoft.com/User.ReadWrite`
-      : baseScopes,
+    scopes: baseScopes,
     prompt: value("PROMPT"),
     idleMinutes: boundedNumber(value("IDLE_MINUTES"), realm === "admin" ? 30 : 60, 5, 1440),
     absoluteMinutes: boundedNumber(value("ABSOLUTE_MINUTES"), realm === "admin" ? 480 : 1440, 15, 43200)
@@ -592,9 +590,9 @@ export async function completeLogin(context, realm) {
   const state = url.searchParams.get("state") || "";
   const cookieState = readCookie(context.request, config.transactionCookie);
   if (!state || !cookieState || state !== cookieState) throw new Error("Authentication state validation failed.");
-  if (url.searchParams.get("error")) throw new Error(`Microsoft authentication failed: ${url.searchParams.get("error")}.`);
+  if (url.searchParams.get("error")) throw new Error(`${realm === "customer" ? "JA Group Services ID" : "Microsoft"} authentication failed: ${url.searchParams.get("error")}.`);
   const code = url.searchParams.get("code") || "";
-  if (!code) throw new Error("Microsoft did not return an authorisation code.");
+  if (!code) throw new Error(`${realm === "customer" ? "JA Group Services ID" : "Microsoft"} did not return an authorisation code.`);
   await stage(context, realm, "table_initialisation", async () => {
     await ensureTables(context.env.DB);
   }, { requestId });
@@ -636,7 +634,7 @@ export async function completeLogin(context, realm) {
     const tokens = await stage(context, realm, "token_exchange_response", async () => {
       const payload = await tokenResponse.json();
       if (!tokenResponse.ok || !payload.id_token) {
-        const error = new Error("Microsoft token exchange failed.");
+        const error = new Error(`${realm === "customer" ? "JA Group Services ID" : "Microsoft"} token exchange failed.`);
         error.details = {
           status: tokenResponse.status,
           response_ok: tokenResponse.ok,
@@ -685,7 +683,7 @@ export async function completeLogin(context, realm) {
   });
   const email = await stage(context, realm, "email_extraction", () => {
     const value = emailFromClaims(claims);
-    if (!value) throw new Error("Microsoft did not provide an email identity.");
+    if (!value) throw new Error(`${realm === "customer" ? "JA Group Services ID" : "Microsoft"} did not provide an email identity.`);
     return value;
   }, { requestId, redirectUri });
 
@@ -764,7 +762,9 @@ export async function completeLogin(context, realm) {
     }
     const insertColumns = insertSpec.map(([column]) => column);
     const placeholders = insertSpec.map(([, placeholder]) => placeholder);
-    const bindValues = insertSpec.map(([, , value]) => value);
+    const bindValues = insertSpec
+      .filter(([, , value]) => value !== null)
+      .map(([, , value]) => value);
     await context.env.DB.prepare(`
       INSERT INTO ${config.sessionTable} (${insertColumns.join(", ")})
       VALUES (${placeholders.join(", ")})
@@ -850,7 +850,7 @@ export async function nativeLogout(context, realm, additionalCookies = []) {
   let destination = signedOut;
   try {
     const metadata = await discover(config);
-    if (!metadata.end_session_endpoint) throw new Error("Microsoft did not publish an end-session endpoint.");
+    if (!metadata.end_session_endpoint) throw new Error(`${realm === "customer" ? "JA Group Services ID" : "Microsoft"} did not publish an end-session endpoint.`);
     const logout = new URL(metadata.end_session_endpoint);
     logout.searchParams.set("post_logout_redirect_uri", signedOut);
     destination = logout.toString();

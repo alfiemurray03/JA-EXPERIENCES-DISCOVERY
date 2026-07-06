@@ -85,15 +85,11 @@ test("three failed PIN attempts persist and lock the customer profile", async ()
   assert.equal(DB.audits.length, 3);
 });
 
-test("three failed security-question attempts persist and lock the customer profile", async () => {
+test("one failed security-question verification locks immediately", async () => {
   const DB = new IdentityDB();
-  const identity = { email: "admin@example.test" };
-  const first = await recordIdentityFailure(DB, identity, "customer@example.test", "Security Questions", "Mismatch");
-  const second = await recordIdentityFailure(DB, identity, "customer@example.test", "Security Questions", "Mismatch");
-  const third = await recordIdentityFailure(DB, identity, "customer@example.test", "Security Questions", "Mismatch");
-  assert.deepEqual([first.locked, second.locked, third.locked], [false, false, true]);
-  assert.equal(DB.lock.failed_security_attempts, 3);
-  assert.equal(DB.lock.is_locked, 1);
+  const result = await recordIdentityFailure(DB, { email: "admin@example.test" }, "customer@example.test", "Security Questions", "Mismatch");
+  assert.equal(result.locked, true);
+  assert.equal(DB.lock.failed_security_attempts, 1);
 });
 
 test("security questions compare all answers against hashes without returning stored answers", async () => {

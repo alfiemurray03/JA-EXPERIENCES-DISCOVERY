@@ -47,7 +47,7 @@ text-transform: uppercase;
 .clean-hero h1,
 .pricing-page-hero h1 {
 margin: 0 0 1.2rem;
-font-family: "Segoe UI", Inter, sans-serif;
+font-family: "Playfair Display", serif;
 font-size: clamp(3.2rem, 7vw, 6.8rem);
 line-height: 0.92;
 letter-spacing: -0.06em;
@@ -176,7 +176,7 @@ text-transform: uppercase;
 .clean-final h2 {
 max-width: 860px;
 margin: 0.9rem auto 1.8rem;
-font-family: "Segoe UI", Inter, sans-serif;
+font-family: "Playfair Display", serif;
 font-size: clamp(2.2rem, 4.5vw, 4.3rem);
 line-height: 1;
 letter-spacing: -0.045em;
@@ -309,7 +309,7 @@ letter-spacing: 0.06em;
 .pricing-card-v2 h3 {
 margin: 0;
 color: var(--ja-navy);
-font-family: "Segoe UI", Inter, sans-serif;
+font-family: "Playfair Display", serif;
 font-size: clamp(1.75rem, 2.05vw, 2.25rem);
 line-height: 1;
 letter-spacing: -0.04em;
