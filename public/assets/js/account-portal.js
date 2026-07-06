@@ -596,66 +596,188 @@ async function renderPage(page) {
 
   if (page === "support" || page === "messages") {
     const supportCases = requests.supportCases || [];
+    const systemReports = requests.systemReports || [];
+    const sysTypes = [
+      "Website not loading",
+      "Page not responding",
+      "Booking widget not working",
+      "Broken link",
+      "Login or account issue",
+      "Access or membership issue",
+      "Incorrect destination, activity or tour information",
+      "Mobile display issue",
+      "Payment or checkout issue",
+      "Other technical issue"
+    ];
+
     pageRoot.innerHTML = `
       <section class="portal-grid">
         <article class="portal-card portal-span-6">
-          <h2>Search knowledge base</h2>
-          <div class="portal-note inline">Search support articles, travel help, payments, memberships, refunds, accessibility and account guidance.</div>
-          <div class="portal-actions">
-            <a class="portal-action" href="/enquiry/"><strong>Create request</strong><span>Open a new support case</span></a>
-            <a class="portal-action" href="/account/data-protection/"><strong>GDPR request</strong><span>Use the privacy centre</span></a>
-          </div>
+          <h2>Report Website or Account Issue</h2>
+          <div class="portal-note inline">Report technical faults, incorrect information or accessibility concerns.</div>
+          <form class="portal-stack" id="sysReportForm">
+            <label class="portal-field">
+              <span class="portal-label">Issue Type</span>
+              <select id="sysType" required>
+                <option value="" disabled selected>Select an issue type</option>
+                ${sysTypes.map(type => `<option value="${escapeHtml(type)}">${escapeHtml(type)}</option>`).join("")}
+              </select>
+            </label>
+            <label class="portal-field">
+              <span class="portal-label">Affected URL (optional)</span>
+              <input type="url" id="sysUrl" placeholder="https://experiences.jagroupservices.co.uk/...">
+            </label>
+            <label class="portal-field">
+              <span class="portal-label">Description</span>
+              <textarea id="sysDescription" placeholder="Describe the issue you encountered..." required></textarea>
+            </label>
+            <button class="portal-button" type="submit">Submit Report</button>
+            <div id="sysStatus" class="portal-note inline" hidden></div>
+          </form>
         </article>
         <article class="portal-card portal-span-6">
-          <h2>Tickets</h2>
+          <h2>Recent Support Activity</h2>
           <div class="portal-stack">
-            ${supportCases.slice(0, 3).map((request) => `
-              <div class="portal-entry"><strong>${escapeHtml(request.reference)}</strong><small>Status: ${escapeHtml(request.status || "New")} · Team: ${escapeHtml(request.assigned_department || "Support")} · Updated ${escapeHtml(fmt(request.updated_at || request.created_at))}</small></div>
-            `).join("") || '<div class="portal-note inline">No support tickets yet. Create a request and the team will respond here.</div>'}
-          </div>
-        </article>
-        <article class="portal-card portal-span-6">
-          <h2>Categories</h2>
-          <div class="portal-stack">
-            <div class="portal-entry"><span class="portal-label">Membership</span><strong>Plan help and entitlement questions</strong></div>
-            <div class="portal-entry"><span class="portal-label">Billing</span><strong>Stripe payments, invoices and receipts</strong></div>
-            <div class="portal-entry"><span class="portal-label">Technical</span><strong>Website errors and account issues</strong></div>
-            <div class="portal-entry"><span class="portal-label">Data Protection</span><strong>Privacy and rights requests</strong></div>
+            ${[...supportCases, ...systemReports].sort((a, b) => new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at)).slice(0, 5).map((item) => `
+              <div class="portal-entry">
+                <strong>${escapeHtml(item.reference)}</strong>
+                <small>${escapeHtml(item.subject || item.issue_type || "Support request")} · ${escapeHtml(item.status || "New")}</small>
+                <small>Updated ${escapeHtml(fmt(item.updated_at || item.created_at))}</small>
+              </div>
+            `).join("") || '<div class="portal-note inline">No recent support activity.</div>'}
           </div>
         </article>
         <article class="portal-card portal-span-12">
-          <h2>Conversation history</h2>
-          <div class="portal-stack">${timelineMarkup((requests.timeline || []).slice(0, 6))}</div>
+          <h2>Support History</h2>
+          <div class="portal-stack">${timelineMarkup((requests.timeline || []).slice(0, 8))}</div>
         </article>
       </section>`;
+
+    document.getElementById("sysReportForm").onsubmit = async (e) => {
+      e.preventDefault();
+      const status = document.getElementById("sysStatus");
+      const btn = e.target.querySelector("button");
+      btn.disabled = true;
+      status.hidden = false;
+      status.textContent = "Submitting...";
+
+      try {
+        const response = await fetch("/account/requests", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json", "Accept": "application/json" },
+          body: JSON.stringify({
+            type: "system_report",
+            issue_type: document.getElementById("sysType").value,
+            affected_url: document.getElementById("sysUrl").value,
+            description: document.getElementById("sysDescription").value,
+            device_browser: navigator.userAgent
+          })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Submission failed");
+        status.textContent = "Report submitted successfully. Reference: " + data.record.reference;
+        portalState.requests = null;
+        await renderPage("support");
+      } catch (err) {
+        status.textContent = err.message;
+        btn.disabled = false;
+      }
+    };
     return;
   }
 
   if (page === "data") {
+    const dprTypes = [
+      "Access my personal data / Subject Access Request",
+      "Correct my personal data",
+      "Delete my personal data",
+      "Restrict the use of my personal data",
+      "Object to processing",
+      "Data portability",
+      "Withdraw consent",
+      "Other data protection request"
+    ];
+
     pageRoot.innerHTML = `
       <section class="portal-grid">
         <article class="portal-card portal-span-6">
-          <h2>Information</h2>
-          <div class="portal-note inline">The Data Protection Act 2018 and UK GDPR give you rights over your personal information. JA Group Services Ltd and its trading names are registered with the ICO.</div>
+          <h2>Submit Data Protection Request</h2>
+          <div class="portal-note inline">Use this form to exercise your rights under the UK GDPR. We will respond within one month.</div>
+          <form class="portal-stack" id="dprForm">
+            <label class="portal-field">
+              <span class="portal-label">Request Type</span>
+              <select id="dprType" required>
+                <option value="" disabled selected>Select a request type</option>
+                ${dprTypes.map(type => `<option value="${escapeHtml(type)}">${escapeHtml(type)}</option>`).join("")}
+              </select>
+            </label>
+            <label class="portal-field">
+              <span class="portal-label">Details</span>
+              <textarea id="dprMessage" placeholder="Provide details about your request..." required></textarea>
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" id="dprConfirm" required>
+              <span>I confirm I am the account holder and this request is for my personal data.</span>
+            </label>
+            <button class="portal-button" type="submit">Submit Request</button>
+            <div id="dprStatus" class="portal-note inline" hidden></div>
+          </form>
         </article>
         <article class="portal-card portal-span-6">
-          <h2>Rights</h2>
+          <h2>Your Rights</h2>
           <div class="portal-stack">
             <div class="portal-entry"><span class="portal-label">Access</span><strong>Subject Access Request</strong></div>
             <div class="portal-entry"><span class="portal-label">Rectification</span><strong>Request corrections to your details</strong></div>
             <div class="portal-entry"><span class="portal-label">Erasure</span><strong>Request deletion where lawful</strong></div>
             <div class="portal-entry"><span class="portal-label">Portability</span><strong>Request a portable copy of your data</strong></div>
           </div>
+          <div class="portal-note inline" style="margin-top:1rem;">JA Group Services Ltd is registered with the ICO (ZA761614).</div>
         </article>
         <article class="portal-card portal-span-12">
-          <h2>Request history</h2>
+          <h2>Request History</h2>
           <div class="portal-stack">
             ${(requests.dataProtectionRequests || []).map((request) => `
-              <div class="portal-entry"><strong>${escapeHtml(request.reference)}</strong><small>${escapeHtml(request.request_type || "Request")} · ${escapeHtml(request.status || "New")} · Due ${escapeHtml(fmt(request.due_at || request.updated_at))}</small></div>
-            `).join("") || '<div class="portal-note inline">No privacy requests yet. Submit one through the support team when needed.</div>'}
+              <div class="portal-entry">
+                <strong>${escapeHtml(request.reference)}</strong>
+                <small>${escapeHtml(request.request_type || "Request")} · ${escapeHtml(request.status || "New")} · Due ${escapeHtml(fmt(request.due_at || request.updated_at))}</small>
+                ${request.completed_at ? `<small>Completed: ${escapeHtml(fmt(request.completed_at))}</small>` : ""}
+              </div>
+            `).join("") || '<div class="portal-note inline">No privacy requests yet.</div>'}
           </div>
         </article>
       </section>`;
+
+    document.getElementById("dprForm").onsubmit = async (e) => {
+      e.preventDefault();
+      const status = document.getElementById("dprStatus");
+      const btn = e.target.querySelector("button");
+      btn.disabled = true;
+      status.hidden = false;
+      status.textContent = "Submitting...";
+
+      try {
+        const response = await fetch("/account/requests", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json", "Accept": "application/json" },
+          body: JSON.stringify({
+            type: "data_protection",
+            request_type: document.getElementById("dprType").value,
+            customer_message: document.getElementById("dprMessage").value,
+            confirmed: document.getElementById("dprConfirm").checked
+          })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Submission failed");
+        status.textContent = "Request submitted successfully.";
+        portalState.requests = null;
+        await renderPage("data");
+      } catch (err) {
+        status.textContent = err.message;
+        btn.disabled = false;
+      }
+    };
     return;
   }
 

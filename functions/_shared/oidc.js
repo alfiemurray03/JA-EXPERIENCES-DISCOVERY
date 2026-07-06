@@ -764,9 +764,7 @@ export async function completeLogin(context, realm) {
     }
     const insertColumns = insertSpec.map(([column]) => column);
     const placeholders = insertSpec.map(([, placeholder]) => placeholder);
-    const bindValues = insertSpec
-      .filter(([, , value]) => value !== null)
-      .map(([, , value]) => value);
+    const bindValues = insertSpec.map(([, , value]) => value);
     await context.env.DB.prepare(`
       INSERT INTO ${config.sessionTable} (${insertColumns.join(", ")})
       VALUES (${placeholders.join(", ")})
