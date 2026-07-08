@@ -1,50 +1,56 @@
-<footer class="site-footer">
-  <div class="footer-inner">
-    <div class="footer-brand">
-      <a class="footer-service-brand" href="/" aria-label="JA Experiences and Discovery home">
-        <span class="footer-service-brand-text">
-          <strong>JA Experiences &amp; Discovery</strong>
-        </span>
-      </a>
+<footer class="bg-primary text-primary-foreground section-padding border-t">
+  <div class="container">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+      <div class="space-y-6">
+        <a class="flex items-center gap-2" href="/">
+          <span class="font-heading text-xl font-bold tracking-tight text-white">
+            JA Experiences &amp; Discovery
+          </span>
+        </a>
+        <p class="text-sm opacity-70 leading-relaxed">
+          Curated destination discovery, experience ideas and practical planning guidance from JA Group Services.
+        </p>
+      </div>
 
-      <p>Destination discovery, experience guidance and practical planning support.</p>
+      <div>
+        <h3 class="text-white font-bold mb-6">Explore</h3>
+        <nav class="flex flex-col gap-4 text-sm opacity-70">
+          <a href="/" class="hover:opacity-100 transition-opacity">Home</a>
+          <a href="/destinations/" class="hover:opacity-100 transition-opacity">Destinations</a>
+          <a href="/experiences/" class="hover:opacity-100 transition-opacity">Experiences</a>
+          <a href="/pricing/" class="hover:opacity-100 transition-opacity">Plans & Pricing</a>
+        </nav>
+      </div>
+
+      <div>
+        <h3 class="text-white font-bold mb-6">Support</h3>
+        <nav class="flex flex-col gap-4 text-sm opacity-70">
+          <a href="/contact/" class="hover:opacity-100 transition-opacity">Contact Us</a>
+          <a href="/status/" class="hover:opacity-100 transition-opacity">System Status</a>
+          <a href="/accessibility-support/" class="hover:opacity-100 transition-opacity">Accessibility</a>
+          <a href="/account/" class="hover:opacity-100 transition-opacity">Customer Portal</a>
+        </nav>
+      </div>
+
+      <div>
+        <h3 class="text-white font-bold mb-6">Legal</h3>
+        <nav class="flex flex-col gap-4 text-sm opacity-70">
+          <a href="/legal/terms/" class="hover:opacity-100 transition-opacity">Terms of Service</a>
+          <a href="/legal/privacy/" class="hover:opacity-100 transition-opacity">Privacy Notice</a>
+          <a href="/legal/cookies/" class="hover:opacity-100 transition-opacity">Cookie Policy</a>
+        </nav>
+      </div>
     </div>
 
-    <div class="footer-links">
-      <div>
-        <h2>Explore</h2>
-        <a href="/">Home</a>
-        <a href="/destinations/">Destinations</a>
-        <a href="/experiences/">Experiences</a>
-        <a href="/pricing/">Plans</a>
-      </div>
-
-      <div>
-        <h2>Help</h2>
-        <a href="/contact/">Contact</a>
-        <a href="/status/">Status</a>
-        <a href="/accessibility-support/">Accessibility</a>
-      </div>
-
-      <div>
-        <h2>Accounts</h2>
-        <a href="/account/">Customer portal</a>
-        <a href="/account/login/?return_to=%2Faccount%2Fdashboard%2F">Customer sign in</a>
-        <a href="/admin/">Administrator Centre</a>
-        <a href="/admin/login/?return_to=%2Fadmin%2Fdashboard%2F">Administrator sign in</a>
-      </div>
-
-      <div>
-        <h2>Legal</h2>
-        <a href="/legal/terms/">Terms</a>
-        <a href="/legal/privacy/">Privacy Notice</a>
-        <a href="/legal/cookies/">Cookies</a>
-      </div>
-    </div>
-
-    <div class="footer-bottom">
-      <p>&copy; 2026 JA Group Services Ltd. All rights reserved.</p>
-      <p>JA Experiences &amp; Discovery is a trading name of JA Group Services Ltd.</p>
+    <div class="mt-16 pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] uppercase tracking-widest font-bold opacity-50">
+      <p>&copy; 2026 JA Group Services Ltd.</p>
+      <p>Company No. 14227845 � Registered in England & Wales</p>
     </div>
   </div>
 </footer>
+
+<style>
+  .tracking-widest { letter-spacing: 0.1em; }
+  .leading-relaxed { line-height: 1.625; }
+  .opacity-70 { opacity: 0.7; }
+</style>

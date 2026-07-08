@@ -1,45 +1,167 @@
 <!doctype html>
 <html lang="en-GB">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Contact Us | JA Experiences & Discovery</title>
   <meta name="description" content="Contact JA Experiences & Discovery for customer support, general enquiries, complaints and service information.">
-  <link rel="preconnect" href="https://challenges.cloudflare.com"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="/assets/css/ja-travel-rebuild.css?v=20260701-1">
+  <link rel="preconnect" href="https://challenges.cloudflare.com">
 </head>
-<body data-page="contact"><div id="siteShellHeader"></div><main id="main">
-  <section class="page-hero"><div class="container"><span class="eyebrow">Contact Us</span><h1>How can we help?</h1><p>Use this form for general enquiries, customer support, plans and pricing, social tariff questions, website issues, data protection or complaints.</p></div></section>
-  <section class="section"><div class="container enquiry-layout">
-    <aside class="enquiry-sidebar">
-      <span class="kicker">Contact information</span><h2>JA Group Services Ltd</h2>
-      <p><strong>Email</strong><br><a href="mailto:hello@jagroupservices.co.uk">hello@jagroupservices.co.uk</a></p>
-      <p><strong>Telephone</strong><br><a href="tel:+442038342790">020 3834 2790</a></p>
-      <p><strong>Registered Office</strong><br>167–169 Great Portland Street<br>5th Floor<br>London<br>W1W 5PF<br>United Kingdom</p>
-      <div class="privacy-note" data-free-plan-public>For a new destination or activity guidance request, please use the dedicated <a href="/enquiry/">Free Discovery Enquiry</a>.</div>
-    </aside>
-    <div class="form-card">
-      <h2>Send a message</h2><p>Fields marked * are required.</p>
-      <form id="customerForm" data-form-type="contact">
-        <input type="hidden" name="startedAt" value=""><input type="hidden" name="formType" value="Contact Us">
-        <div class="honeypot" aria-hidden="true"><label>Website<input name="website" type="text" tabindex="-1" autocomplete="off"></label></div>
-        <div class="form-grid">
-          <label>Full name *<input name="name" type="text" autocomplete="name" maxlength="100" required></label>
-          <label>Email address *<input name="email" type="email" autocomplete="email" maxlength="160" required></label>
-          <label>Telephone number optional<input name="telephone" type="tel" autocomplete="tel" maxlength="40"></label>
-          <label>Category *<select name="category" required><option value="">Please select</option><option>General Enquiry</option><option>Sales</option><option>Billing</option><option>Technical Support</option><option>Partnerships</option><option>Accessibility</option><option>Data Protection</option><option>Safeguarding</option><option>Complaints</option><option>Feedback</option><option>Other</option></select></label>
-          <label>Subject *<input name="subject" type="text" maxlength="180" required></label>
-          <label>Booking reference optional<input name="bookingReference" type="text" maxlength="80" autocomplete="off"></label>
-          <label>Order reference optional<input name="orderReference" type="text" maxlength="80" autocomplete="off"></label>
+<body data-page="contact">
+  <div id="siteShellHeader"></div>
+
+  <main id="main">
+    <!-- Hero -->
+    <section class="section-padding bg-primary text-primary-foreground">
+      <div class="container">
+        <div class="max-w-3xl">
+          <span class="badge badge-blue mb-4" style="background: rgba(255,255,255,0.1); color: white;">Contact Us</span>
+          <h1 class="text-4xl md:text-5xl font-bold mb-6">How can we help?</h1>
+          <p class="text-lg opacity-90">Use this form for general enquiries, customer support, plans and pricing, social tariff questions, website issues, data protection or complaints.</p>
         </div>
-        <label>Message *<textarea name="message" rows="8" maxlength="4000" required></textarea></label>
-        <label class="checkbox-label"><input name="termsAccepted" type="checkbox" required> I accept the <a href="/policies/terms-of-service" target="_blank" rel="noopener">Terms of Service</a>. *</label>
-        <label class="checkbox-label"><input name="privacyAccepted" type="checkbox" required> I acknowledge the <a href="/policies/privacy-notice" target="_blank" rel="noopener">Privacy Notice</a> and understand that JA Group Services Ltd may use this information to respond to my enquiry. *</label>
-        <label class="checkbox-label"><input name="marketingConsent" type="checkbox"> I would like to receive occasional JA Experiences &amp; Discovery service updates and understand I can withdraw consent at any time.</label>
-        <div id="turnstileStatus" class="form-status" role="status" aria-live="polite" tabindex="-1"></div>
-        <div id="turnstileContainer" class="turnstile-container" aria-label="Security verification"></div>
-        <button class="button accent" type="submit">Send Message</button>
-      </form>
-      <div id="formStatus" class="form-status" role="status" aria-live="polite"></div>
-    </div>
-  </div></section>
-</main><div id="siteShellFooter"></div><script src="/assets/js/site-shell.js?v=20260702-1"></script><script src="/assets/js/enquiry-form.js?v=20260701-1"></script></body></html>
+      </div>
+    </section>
+
+    <!-- Main Content -->
+    <section class="section-padding">
+      <div class="container">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
+          
+          <!-- Sidebar -->
+          <aside class="space-y-8">
+            <div>
+              <h2 class="text-xl font-bold mb-4">Direct Contact</h2>
+              <div class="space-y-4">
+                <div class="card">
+                  <p class="text-xs font-bold text-muted uppercase tracking-wider mb-1">Email</p>
+                  <a href="mailto:hello@jagroupservices.co.uk" class="font-semibold text-accent">hello@jagroupservices.co.uk</a>
+                </div>
+                <div class="card">
+                  <p class="text-xs font-bold text-muted uppercase tracking-wider mb-1">Telephone</p>
+                  <a href="tel:+442038342790" class="font-semibold">020 3834 2790</a>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h2 class="text-xl font-bold mb-4">Registered Office</h2>
+              <div class="card">
+                <p class="text-muted leading-relaxed">
+                  <strong>JA Group Services Ltd</strong><br>
+                  167169 Great Portland Street<br>
+                  5th Floor<br>
+                  London, W1W 5PF<br>
+                  United Kingdom
+                </p>
+              </div>
+            </div>
+
+            <div class="glass p-6 rounded-xl border-accent/20">
+              <p class="text-sm">For a new destination or activity guidance request, please use the dedicated <a href="/enquiry/" class="text-accent font-bold">Free Discovery Enquiry</a>.</p>
+            </div>
+          </aside>
+
+          <!-- Form Area -->
+          <div class="lg:col-span-2">
+            <div class="card p-8 md:p-12">
+              <h2 class="text-2xl font-bold mb-2">Send a message</h2>
+              <p class="text-muted mb-8">Fields marked * are required.</p>
+
+              <form id="customerForm" data-form-type="contact" class="space-y-6">
+                <input type="hidden" name="startedAt" value="">
+                <input type="hidden" name="formType" value="Contact Us">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div class="space-y-2">
+                    <label class="text-sm font-bold">Full name *</label>
+                    <input name="name" type="text" class="w-full px-4 py-3 rounded-lg border bg-background focus:ring-2 focus:ring-accent outline-none transition-all" required>
+                  </div>
+                  <div class="space-y-2">
+                    <label class="text-sm font-bold">Email address *</label>
+                    <input name="email" type="email" class="w-full px-4 py-3 rounded-lg border bg-background focus:ring-2 focus:ring-accent outline-none transition-all" required>
+                  </div>
+                  <div class="space-y-2">
+                    <label class="text-sm font-bold">Telephone number</label>
+                    <input name="telephone" type="tel" class="w-full px-4 py-3 rounded-lg border bg-background focus:ring-2 focus:ring-accent outline-none transition-all">
+                  </div>
+                  <div class="space-y-2">
+                    <label class="text-sm font-bold">Category *</label>
+                    <select name="category" class="w-full px-4 py-3 rounded-lg border bg-background focus:ring-2 focus:ring-accent outline-none transition-all" required>
+                      <option value="">Please select</option>
+                      <option>General Enquiry</option>
+                      <option>Sales</option>
+                      <option>Billing</option>
+                      <option>Technical Support</option>
+                      <option>Partnerships</option>
+                      <option>Accessibility</option>
+                      <option>Data Protection</option>
+                      <option>Safeguarding</option>
+                      <option>Complaints</option>
+                      <option>Feedback</option>
+                      <option>Other</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="space-y-2">
+                  <label class="text-sm font-bold">Subject *</label>
+                  <input name="subject" type="text" class="w-full px-4 py-3 rounded-lg border bg-background focus:ring-2 focus:ring-accent outline-none transition-all" required>
+                </div>
+
+                <div class="space-y-2">
+                  <label class="text-sm font-bold">Message *</label>
+                  <textarea name="message" rows="6" class="w-full px-4 py-3 rounded-lg border bg-background focus:ring-2 focus:ring-accent outline-none transition-all" required></textarea>
+                </div>
+
+                <div class="space-y-4 pt-4 border-t">
+                  <label class="flex items-start gap-3 cursor-pointer group">
+                    <input name="termsAccepted" type="checkbox" class="mt-1 w-4 h-4 rounded border-gray-300 text-accent focus:ring-accent" required>
+                    <span class="text-sm text-muted group-hover:text-foreground transition-colors">I accept the <a href="/legal/terms/" target="_blank" class="text-accent underline">Terms of Service</a>. *</span>
+                  </label>
+                  <label class="flex items-start gap-3 cursor-pointer group">
+                    <input name="privacyAccepted" type="checkbox" class="mt-1 w-4 h-4 rounded border-gray-300 text-accent focus:ring-accent" required>
+                    <span class="text-sm text-muted group-hover:text-foreground transition-colors">I acknowledge the <a href="/legal/privacy/" target="_blank" class="text-accent underline">Privacy Notice</a> and understand that JA Group Services Ltd may use this information to respond to my enquiry. *</span>
+                  </label>
+                </div>
+
+                <div id="turnstileStatus" class="text-xs text-muted" role="status" aria-live="polite"></div>
+                <div id="turnstileContainer" class="mt-4"></div>
+
+                <button class="btn btn-primary w-full py-4 text-lg shadow-lg hover:shadow-xl" type="submit">Send Message</button>
+              </form>
+              <div id="formStatus" class="mt-6 p-4 rounded-lg hidden" role="status" aria-live="polite"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="siteShellFooter"></div>
+  
+  <style>
+    .max-w-3xl { max-width: 48rem; }
+    .max-w-4xl { max-width: 56rem; }
+    .w-full { width: 100%; }
+    .p-12 { padding: 3rem; }
+    .space-y-2 > * + * { margin-top: 0.5rem; }
+    .space-y-4 > * + * { margin-top: 1rem; }
+    .space-y-6 > * + * { margin-top: 1.5rem; }
+    .space-y-8 > * + * { margin-top: 2rem; }
+    .leading-relaxed { line-height: 1.625; }
+    .opacity-90 { opacity: 0.9; }
+    .text-4xl { font-size: 2.25rem; }
+    .text-5xl { font-size: 3rem; }
+    .lg\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .lg\:col-span-2 { grid-column: span 2 / span 2; }
+    @media (max-width: 1024px) {
+      .lg\:grid-cols-3 { grid-template-columns: 1fr; }
+      .lg\:col-span-2 { grid-column: span 1 / span 1; }
+    }
+  </style>
+
+  <script src="/assets/js/site-shell.js?v=20260707-1"></script>
+  <script src="/assets/js/enquiry-form.js?v=20260707-1"></script>
+</body>
+</html>

@@ -1,36 +1,46 @@
 <a class="skip-link" href="#main">Skip to main content</a>
 
-<header class="site-header">
-  <div class="header-inner">
-    <a class="service-brand" href="/" aria-label="JA Experiences and Discovery home">
-      <span class="service-brand-text">
-        <strong>JA Experiences &amp; Discovery</strong>
+<header class="site-header glass sticky top-0 z-50 border-b">
+  <div class="container flex items-center justify-between h-20">
+    <a class="flex items-center gap-2" href="/" aria-label="JA Experiences and Discovery home">
+      <span class="font-heading text-xl font-bold tracking-tight">
+        <span class="text-foreground">JA</span>
+        <span class="text-primary">Experiences &amp; Discovery</span>
       </span>
     </a>
 
-    <nav class="site-nav" id="siteNav" aria-label="Main navigation">
-      <a href="/" data-nav-page="home">Home</a>
-      <a href="/destinations/" data-nav-page="destinations">Destinations</a>
-      <a href="/experiences/" data-nav-page="experiences">Experiences</a>
-      <a href="/pricing/" data-nav-page="pricing">Plans</a>
-      <a href="/headout/" data-nav-page="headout">Headout</a>
-      <a href="/getyourguide/" data-nav-page="getyourguide">GetYourGuide</a>
-      <a href="/status/" data-nav-page="status">Status</a>
-      <a href="/contact/" data-nav-page="contact">Contact</a>
-      <a class="mobile-nav-action" href="/travel-documentation-support/">Travel Documentation Support</a>
-      <a class="mobile-nav-action" href="/social-tariff/">Social Tariff</a>
-      <a class="mobile-nav-action" href="/account/">Account access</a>
-      <a class="mobile-nav-action primary" href="/enquiry/" data-free-plan-public>Start free enquiry</a>
+    <nav class="hidden lg:flex items-center gap-8" id="siteNav" aria-label="Main navigation">
+      <a href="/" data-nav-page="home" class="text-sm font-medium hover:text-accent transition-colors">Home</a>
+      <a href="/destinations/" data-nav-page="destinations" class="text-sm font-medium hover:text-accent transition-colors">Destinations</a>
+      <a href="/experiences/" data-nav-page="experiences" class="text-sm font-medium hover:text-accent transition-colors">Experiences</a>
+      <a href="/pricing/" data-nav-page="pricing" class="text-sm font-medium hover:text-accent transition-colors">Plans</a>
+      <a href="/contact/" data-nav-page="contact" class="text-sm font-medium hover:text-accent transition-colors">Contact</a>
     </nav>
 
-    <div class="header-actions">
-      <a class="header-login" href="/account/">Account</a>
-      <a class="header-start" href="/enquiry/" data-free-plan-public>Start free enquiry</a>
+    <div class="flex items-center gap-4">
+      <button id="themeToggle" class="p-2 rounded-full hover:bg-muted transition-colors" aria-label="Toggle theme">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="block dark:hidden"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden dark:block"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      </button>
+      <a class="btn btn-outline hidden sm:flex" href="/account/">Sign In</a>
+      <a class="btn btn-primary hidden sm:flex" href="/enquiry/" data-free-plan-public>Get Started</a>
+      
+      <button class="menu-toggle lg:hidden p-2" type="button" aria-expanded="false" aria-controls="siteNav">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+      </button>
     </div>
-
-    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="siteNav">
-      <span>Menu</span>
-      <i aria-hidden="true"></i>
-    </button>
   </div>
 </header>
+
+<style>
+  .h-20 { height: 5rem; }
+  .z-50 { z-index: 50; }
+  .sticky { position: sticky; }
+  .top-0 { top: 0; }
+  .font-heading { font-family: 'Plus Jakarta Sans', sans-serif; }
+  .font-medium { font-weight: 500; }
+  .dark\:hidden { display: block; }
+  [data-site-theme="dark"] .dark\:hidden { display: none; }
+  .hidden.dark\:block { display: none; }
+  [data-site-theme="dark"] .hidden.dark\:block { display: block; }
+</style>

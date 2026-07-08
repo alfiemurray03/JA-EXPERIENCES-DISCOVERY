@@ -4,15 +4,44 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
-  <title>Customer Signed Out | JA Experiences &amp; Discovery</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <title>Signed Out | JA Experiences &amp; Discovery</title>
   <link rel="icon" href="/assets/favicons/favicon.svg?v=20260704-1" type="image/svg+xml">
   <link rel="shortcut icon" href="/assets/favicons/favicon.ico?v=20260704-1" type="image/x-icon">
   <link rel="apple-touch-icon" href="/assets/favicons/apple-touch-icon.png?v=20260704-1">
   <link rel="manifest" href="/assets/favicons/site.webmanifest?v=20260704-1">
-  <style>body{margin:0;min-height:100vh;display:grid;place-items:center;padding:2rem;background:#f5f7fb;color:#0f172a;font-family:Inter,Arial,sans-serif}main{width:min(720px,100%);background:#fff;border:1px solid rgba(148,163,184,.26);border-radius:24px;padding:clamp(1.5rem,5vw,3rem);box-shadow:0 20px 60px rgba(15,23,42,.12)}h1{font-family:"DM Sans",Inter,Arial,sans-serif;font-size:clamp(2rem,4vw,2.7rem);margin:1rem 0 .75rem}p{color:#52607a;line-height:1.65}.button{display:inline-flex;align-items:center;justify-content:center;min-height:3.2rem;padding:.9rem 1.2rem;border-radius:999px;background:linear-gradient(135deg,#0f172a,#1e293b);color:#fff;text-decoration:none;font-weight:800}</style>
+  <link rel="stylesheet" href="/assets/css/theme.css?v=20260707-1">
 </head>
-<body><main><span class="eyebrow">Customer portal</span><h1>You have signed out</h1><p>Your customer session has ended successfully. Please sign in again to continue.</p><a class="button" href="/account/login/">Sign in to customer portal</a></main></body>
+<body class="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+  <main class="w-full max-w-md">
+    <div class="glass-strong bg-card p-8 shadow-sm text-center">
+      <div class="w-16 h-16 bg-muted rounded-2xl flex items-center justify-center text-muted-foreground mx-auto mb-6">
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </div>
+      <h1 class="text-2xl font-bold mb-2">You have signed out</h1>
+      <p class="text-sm text-muted-foreground mb-8">
+        Your customer session has ended successfully. Please sign in again to continue.
+      </p>
+      <a href="/account/login/" class="w-full inline-flex items-center justify-center rounded-lg bg-primary px-6 py-3 text-base font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90">
+        Sign in to customer portal
+      </a>
+    </div>
+    
+    <div class="mt-8 text-center">
+      <a href="/" class="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Return to website
+      </a>
+    </div>
+  </main>
+  
+  <style>
+    .min-h-screen { min-height: 100vh; }
+    .flex-col { flex-direction: column; }
+    .justify-center { justify-content: center; }
+    .max-w-md { max-width: 28rem; }
+    .mx-auto { margin-left: auto; margin-right: auto; }
+    .w-full { width: 100%; }
+    .text-2xl { font-size: 1.5rem; }
+  </style>
+</body>
 </html>
