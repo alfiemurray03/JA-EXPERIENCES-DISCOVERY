@@ -56,7 +56,7 @@ svg {
 
 .container {
   width: 100%;
-  max-width: 80rem;
+  max-width: 1240px;
   margin-left: auto;
   margin-right: auto;
   padding-left: 1rem;
@@ -75,7 +75,7 @@ main {
 
 .section-lg,
 .platform-hero {
-  padding: clamp(5rem, 10vw, 8rem) 0;
+  padding: clamp(4rem, 7vw, 6rem) 0 clamp(4rem, 7vw, 5.5rem);
 }
 
 .soft-band,
@@ -170,8 +170,8 @@ main {
 
 .max-w-xl { max-width: 36rem; }
 .max-w-2xl { max-width: 42rem; }
-.max-w-5xl { max-width: 64rem; }
-.max-w-6xl { max-width: 72rem; }
+.max-w-5xl { max-width: 72rem; }
+.max-w-6xl { max-width: 76rem; }
 
 .space-y-3 > * + * {
   margin-top: 0.75rem;
@@ -406,9 +406,9 @@ main {
 
 .btn-lg,
 .button.large {
-  min-height: 3.1rem;
-  padding: 0.95rem 1.45rem;
-  font-size: 1rem;
+  min-height: 3.15rem;
+  padding: 1rem 1.5rem;
+  font-size: 1.02rem;
 }
 
 .btn-primary,
@@ -1004,8 +1004,8 @@ main {
 .site-header-inner {
   display: flex;
   width: 100%;
-  max-width: 80rem;
-  height: 4.25rem;
+  max-width: 1240px;
+  height: 4.35rem;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
@@ -1020,7 +1020,7 @@ main {
   gap: 0.25rem;
   color: var(--ja-ink);
   font-family: "Plus Jakarta Sans", Inter, system-ui, sans-serif;
-  font-size: 1.05rem;
+  font-size: 1.1rem;
   font-weight: 800;
   letter-spacing: 0;
   text-decoration: none;
@@ -1041,14 +1041,14 @@ main {
 .site-login-link,
 .site-create-link {
   display: inline-flex;
-  min-height: 2.4rem;
+  min-height: 2.5rem;
   align-items: center;
   justify-content: center;
   border-radius: 0.75rem;
-  font-size: 0.9rem;
+  font-size: 0.94rem;
   font-weight: 800;
   line-height: 1;
-  padding: 0.7rem 0.95rem;
+  padding: 0.72rem 1rem;
   text-decoration: none;
   transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
 }
@@ -1104,7 +1104,7 @@ main {
 
 .site-mobile-menu-inner {
   display: flex;
-  max-width: 80rem;
+  max-width: 1240px;
   flex-direction: column;
   gap: 0.45rem;
   margin: 0 auto;
@@ -1133,7 +1133,7 @@ main {
 }
 
 .site-footer-inner {
-  max-width: 80rem;
+  max-width: 1240px;
   margin: 0 auto;
   padding: 3.5rem 1rem;
 }
@@ -1283,7 +1283,7 @@ main {
 .site-nav a,
 .nav-dropdown-toggle {
   display: inline-flex;
-  min-height: 2.25rem;
+  min-height: 2.35rem;
   align-items: center;
   gap: 0.35rem;
   border: 0;
@@ -1292,10 +1292,10 @@ main {
   color: var(--ja-muted);
   cursor: pointer;
   font: inherit;
-  font-size: 0.875rem;
+  font-size: 0.94rem;
   font-weight: 700;
   line-height: 1;
-  padding: 0.5rem 0.875rem;
+  padding: 0.55rem 0.95rem;
   text-decoration: none;
   transition: background 0.15s ease, color 0.15s ease;
 }
@@ -1446,7 +1446,20 @@ main {
   .lg\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .lg\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .lg\:grid-cols-6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
-  .lg\:text-6xl { font-size: 3.75rem; }
+  .lg\:text-6xl { font-size: 4rem; }
+
+  main > .section-lg:first-child {
+    padding-top: clamp(3.4rem, 5vw, 4.8rem);
+  }
+
+  main > .section-lg:first-child .lg\:grid-cols-2 {
+    grid-template-columns: minmax(0, 1fr) minmax(370px, 0.92fr);
+    gap: clamp(3rem, 4.8vw, 4.5rem);
+  }
+
+  main > .section-lg:first-child .glass {
+    padding: 1.65rem;
+  }
 }
 
 @media (max-width: 920px) {
