@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const publicThemeLink = document.querySelector('link[href^="/assets/css/public-saas.css"]') || document.createElement("link");
   if (!publicThemeLink.parentNode) {
     publicThemeLink.rel = "stylesheet";
-    publicThemeLink.href = "/assets/css/public-saas.css?v=20260709-saas-1";
+    publicThemeLink.href = "/assets/css/public-saas.css?v=20260710-partners-1";
     document.head.appendChild(publicThemeLink);
   }
 
@@ -89,32 +89,77 @@ document.addEventListener("DOMContentLoaded", async () => {
     const nav = document.querySelector("#siteMobileMenu") || document.querySelector("#siteNav");
     if (!toggle || !nav) return;
 
+    const closeMobileMenu = () => {
+      nav.classList.remove("open", "is-open");
+      toggle.setAttribute("aria-expanded", "false");
+      toggle.setAttribute("aria-label", "Open navigation");
+    };
+
     toggle.addEventListener("click", () => {
-      const isOpen = nav.classList.toggle("open");
+      const isOpen = !nav.classList.contains("is-open");
+      nav.classList.toggle("open", isOpen);
+      nav.classList.toggle("is-open", isOpen);
       toggle.setAttribute("aria-expanded", String(isOpen));
       toggle.setAttribute("aria-label", isOpen ? "Close navigation" : "Open navigation");
     });
 
     nav.querySelectorAll("a").forEach((link) => {
-      link.addEventListener("click", () => {
-        nav.classList.remove("open");
-        toggle.setAttribute("aria-expanded", "false");
-        toggle.setAttribute("aria-label", "Open navigation");
-      });
+      link.addEventListener("click", closeMobileMenu);
     });
 
     document.addEventListener("keydown", (event) => {
       if (event.key !== "Escape") return;
-      nav.classList.remove("open");
-      toggle.setAttribute("aria-expanded", "false");
-      toggle.setAttribute("aria-label", "Open navigation");
+      closeMobileMenu();
     });
 
     document.addEventListener("click", (event) => {
       if (event.target.closest(".site-header")) return;
-      nav.classList.remove("open");
-      toggle.setAttribute("aria-expanded", "false");
-      toggle.setAttribute("aria-label", "Open navigation");
+      closeMobileMenu();
+    });
+  }
+
+  function setupNavDropdowns() {
+    const dropdowns = Array.from(document.querySelectorAll(".nav-dropdown"));
+    if (!dropdowns.length) return;
+
+    const closeDropdown = (dropdown) => {
+      const button = dropdown.querySelector(".nav-dropdown-toggle");
+      dropdown.classList.remove("open");
+      button?.setAttribute("aria-expanded", "false");
+    };
+
+    const closeAllDropdowns = (except = null) => {
+      dropdowns.forEach((dropdown) => {
+        if (dropdown !== except) closeDropdown(dropdown);
+      });
+    };
+
+    dropdowns.forEach((dropdown) => {
+      const button = dropdown.querySelector(".nav-dropdown-toggle");
+      const menu = dropdown.querySelector(".nav-dropdown-menu");
+      if (!button || !menu) return;
+
+      button.addEventListener("click", (event) => {
+        event.preventDefault();
+        const shouldOpen = !dropdown.classList.contains("open");
+        closeAllDropdowns(dropdown);
+        dropdown.classList.toggle("open", shouldOpen);
+        button.setAttribute("aria-expanded", String(shouldOpen));
+      });
+
+      menu.querySelectorAll("a").forEach((link) => {
+        link.addEventListener("click", () => closeDropdown(dropdown));
+      });
+    });
+
+    document.addEventListener("click", (event) => {
+      if (event.target.closest(".nav-dropdown")) return;
+      closeAllDropdowns();
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape") return;
+      closeAllDropdowns();
     });
   }
 
@@ -170,12 +215,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   await Promise.all([
-    loadPartial(headerTarget, "/assets/includes/header.html?v=20260709-shell-1"),
+    loadPartial(headerTarget, "/assets/includes/header.html?v=20260710-partners-1"),
     loadPartial(footerTarget, "/assets/includes/footer.html?v=20260709-shell-1")
   ]);
 
   setupThemeToggle();
   setupMobileMenu();
+  setupNavDropdowns();
   setupAccountDropdown();
   updateActiveLinks();
 

@@ -602,6 +602,126 @@ body {
   color: var(--ja-blue-700);
 }
 
+.site-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.site-nav a,
+.nav-dropdown-toggle {
+  display: inline-flex;
+  min-height: 2.25rem;
+  align-items: center;
+  gap: 0.35rem;
+  border: 0;
+  border-radius: 0.65rem;
+  background: transparent;
+  color: var(--ja-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0.5rem 0.875rem;
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.site-nav a:hover,
+.site-nav a:focus-visible,
+.site-nav a.active,
+.nav-dropdown-toggle:hover,
+.nav-dropdown-toggle:focus-visible,
+.nav-dropdown.open .nav-dropdown-toggle {
+  background: var(--ja-blue-50);
+  color: var(--ja-ink);
+  outline: none;
+}
+
+.nav-dropdown {
+  position: relative;
+}
+
+.chevron {
+  display: inline-flex;
+  color: currentColor;
+  font-size: 0.65rem;
+  line-height: 1;
+  transition: transform 0.15s ease;
+}
+
+.nav-dropdown.open .chevron {
+  transform: rotate(180deg);
+}
+
+.nav-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 0.6rem);
+  left: 0;
+  z-index: 1000;
+  display: none;
+  min-width: 12rem;
+  gap: 0.25rem;
+  border: 1px solid var(--ja-line);
+  border-radius: 0.95rem;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.12);
+  padding: 0.45rem;
+  backdrop-filter: blur(18px);
+}
+
+.nav-dropdown.open .nav-dropdown-menu {
+  display: grid;
+}
+
+.nav-dropdown-menu a {
+  display: block;
+  border-radius: 0.7rem;
+  color: var(--ja-muted);
+  font-weight: 700;
+  padding: 0.7rem 0.8rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.nav-dropdown-menu a:hover,
+.nav-dropdown-menu a:focus-visible {
+  background: var(--ja-blue-50);
+  color: var(--ja-blue-700);
+  outline: none;
+}
+
+.site-mobile-menu {
+  display: none;
+}
+
+.site-mobile-menu.is-open {
+  display: block;
+}
+
+.site-mobile-menu .nav-dropdown {
+  width: 100%;
+}
+
+.site-mobile-menu .nav-dropdown-toggle {
+  width: 100%;
+  justify-content: space-between;
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+}
+
+.site-mobile-menu .nav-dropdown-menu {
+  position: static;
+  min-width: 0;
+  margin: 0.15rem 0 0.35rem;
+  box-shadow: none;
+}
+
+.site-mobile-menu .nav-dropdown-menu a {
+  padding-left: 1rem;
+}
+
 @media (min-width: 1180px) {
   .destination-gallery-grid,
   .partner-browser-grid {
