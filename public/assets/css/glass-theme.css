@@ -112,6 +112,7 @@ body {
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
 [data-theme="dark"] body {
@@ -556,6 +557,13 @@ label {
 .card-hover:hover {
   transform: translateY(-4px);
   box-shadow: 0 12px 40px rgba(31, 38, 135, 0.2);
+}
+
+.card,
+.glass,
+.glass-light,
+.glass-dark {
+  min-width: 0;
 }
 
 /* Badge */

@@ -10,6 +10,7 @@ const navItems = [
   ["/account/bookings/", "Bookings"],
   ["/account/subscription/", "Membership"],
   ["/account/messages/", "Messages"],
+  ["/account/enquiries/", "Enquiries"],
   ["/account/support/", "Support"],
   ["/account/security/", "Security"],
   ["/account/settings/", "Settings"],
@@ -80,6 +81,7 @@ function shell(title, lead, options = {}) {
         <div class="portal-entry"><span class="portal-label">Notifications</span><strong id="heroNotifications">Loading…</strong></div>
       </div>`}
     </section>
+    <div id="portalTrialBanner"></div>
     <section id="portalPage"></section>`;
 }
 
@@ -159,6 +161,45 @@ function updateShared(profile = {}) {
   if (heroStatus) heroStatus.textContent = profile.lifetimeAccess ? "Lifetime access" : (profile.customerStatus || "Active session");
   if (heroSync) heroSync.textContent = fmt(profile.microsoftUpdatedAt || profile.updatedAt || profile.createdAt);
   if (heroNotifications) heroNotifications.textContent = `${(portalState.requests?.notifications || []).filter((n) => n.status !== "Read" && n.status !== "Archived").length} unread`;
+}
+
+function daysRemaining(value) {
+  if (!value) return 0;
+  const diff = new Date(value).getTime() - Date.now();
+  return Math.max(0, Math.ceil(diff / 86400000));
+}
+
+function renderTrialBanner(page) {
+  const mount = document.getElementById("portalTrialBanner");
+  if (!mount) return;
+  const visiblePages = new Set(["dashboard", "profile", "tokens", "builders", "saved", "membership"]);
+  const summary = portalState.builders?.token_summary || {};
+  const trial = summary.trial;
+  const hasPaidPlan = Boolean(summary.subscription_active);
+  if (!visiblePages.has(page) || !trial || hasPaidPlan) {
+    mount.innerHTML = "";
+    return;
+  }
+  const remaining = daysRemaining(trial.expires_at);
+  if (summary.trial_active) {
+    mount.innerHTML = `
+      <section class="portal-trial-banner">
+        <div>
+          <strong>Free trial active — ${remaining} ${remaining === 1 ? "day" : "days"} remaining</strong>
+          <span>30 Builder Usage Tokens included once only. Trial ends ${escapeHtml(fmt(trial.expires_at))}. ${escapeHtml(String(summary.remaining_tokens ?? 0))} Builder Usage Tokens remaining.</span>
+        </div>
+        <a class="portal-button-secondary" href="/pricing/">View Plans / Upgrade</a>
+      </section>`;
+    return;
+  }
+  mount.innerHTML = `
+    <section class="portal-trial-banner expired">
+      <div>
+        <strong>Free trial expired</strong>
+        <span>Choose a paid plan to continue using saved builder outputs and Builder Usage Tokens.</span>
+      </div>
+      <a class="portal-button-secondary" href="/pricing/">View Plans / Upgrade</a>
+    </section>`;
 }
 
 function timelineItems(profile = {}, requests = {}) {
@@ -262,7 +303,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const needsRequests = new Set(["dashboard", "membership", "support", "messages", "data", "bookings", "saved"]);
   const needsPins = page === "security";
   const needsSaved = new Set(["dashboard", "membership", "bookings", "saved", "builders"]);
-  const needsBuilders = new Set(["dashboard", "profile", "tokens", "builders", "membership"]);
+  const needsBuilders = new Set(["dashboard", "profile", "tokens", "builders", "membership", "saved"]);
   const needsBilling = new Set(["membership", "downloads"]);
   const titleMap = {
     dashboard: ["Overview", "Live overview of your account activity, support and membership."],
@@ -292,6 +333,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (needsBilling.has(page)) bootstrap.push(loadBilling());
     await Promise.all(bootstrap);
     updateShared(portalState.profile || {});
+    renderTrialBanner(page);
     await renderPage(page);
   } catch (error) {
     document.getElementById("portalPage").innerHTML = `<div class="portal-note inline">${escapeHtml(error.message || "Unable to load account data.")}</div>`;
@@ -406,7 +448,7 @@ async function renderPage(page) {
           <div class="portal-grid mini">
             <div class="portal-entry"><span class="portal-label">Remaining tokens</span><strong>${escapeHtml(String(tokenSummary.remaining_tokens ?? 0))}</strong></div>
             <div class="portal-entry"><span class="portal-label">Used tokens</span><strong>${escapeHtml(String(tokenSummary.used_tokens ?? 0))}</strong></div>
-            <div class="portal-entry"><span class="portal-label">Trial tokens</span><strong>${escapeHtml(String(tokenSummary.trial_tokens ?? 0))}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Trial Builder Usage Tokens</span><strong>${escapeHtml(String(tokenSummary.trial_tokens ?? 0))}</strong></div>
             <div class="portal-entry"><span class="portal-label">Purchased tokens</span><strong>${escapeHtml(String(tokenSummary.purchased_addon_tokens ?? 0))}</strong></div>
             <div class="portal-entry"><span class="portal-label">Trial status</span><strong>${tokenSummary.trial_active ? "Active" : tokenSummary.trial ? "Used/expired" : "Not activated"}</strong></div>
             <div class="portal-entry"><span class="portal-label">Saved outputs</span><strong>${escapeHtml(String(builderOutputs.length))}</strong></div>

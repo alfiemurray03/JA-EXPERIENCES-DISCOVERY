@@ -119,7 +119,7 @@ function renderBuilders() {
       </div>
       <div class="builder-card-badges">
         <span class="builder-badge">${esc(builder.category || categoryGroup(builder))}</span>
-        <span class="builder-badge builder-badge-primary">${esc(String(builder.token_cost ?? 0))} tokens</span>
+        <span class="builder-badge builder-badge-primary">${esc(String(builder.token_cost ?? 0))} Builder Usage Tokens</span>
         <span class="builder-badge">${esc(builder.status || "Active")}</span>
       </div>
       <button class="builder-card-action" type="button" data-builder="${esc(builder.id)}">${builderState.signedIn ? "Open builder" : "Sign in to use"}</button>
@@ -145,7 +145,7 @@ async function loadAuthenticatedBuilders() {
       builderState.builders = PUBLIC_BUILDERS;
       builderState.outputs = [];
       builderState.summary = null;
-      showStatusHtml('You can browse the builder catalogue while signed out. Sign in or create an account to claim the 14-day trial and save finished outputs.', "info");
+      showStatusHtml('You can browse the builder catalogue while signed out. Sign in or create an account to claim the once-only 14-day trial and save finished outputs.', "info");
       return;
     }
     if (!response.ok) throw new Error(data.error || "Builder account data could not be loaded.");
@@ -156,7 +156,7 @@ async function loadAuthenticatedBuilders() {
     builderState.summary = data.token_summary || {};
     showStatus("", "info");
     if (builderState.summary?.trial && !builderState.summary?.trial_active) {
-      showStatusHtml('A trial has already been activated for this customer account. If it has expired, view membership and upgrade options in <a href="/account/membership/">Membership</a>.', "info");
+      showStatusHtml('A free trial has already been used on this customer account. Your free trial has expired. <a href="/pricing/">View Plans</a> or <a href="/account/subscription/">Upgrade Membership</a>.', "info");
     }
     if (new URLSearchParams(window.location.search).get("claim_trial") === "1" && !builderState.summary?.trial) {
       $("claimIntentNotice").hidden = false;
@@ -254,7 +254,7 @@ async function activateTrial() {
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-      showStatus(data.error || "Trial could not be activated.", response.status === 409 ? "info" : "error");
+      showStatus(response.status === 409 ? "A free trial has already been used on this customer account." : (data.error || "Trial could not be activated."), response.status === 409 ? "info" : "error");
       if (data.trial) builderState.summary = { ...(builderState.summary || {}), trial: data.trial, trial_active: false };
       return;
     }

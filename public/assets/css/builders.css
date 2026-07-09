@@ -23,6 +23,270 @@
   padding: 2.5rem 1.5rem 4rem;
 }
 
+.builder-public-hero {
+  background:
+    radial-gradient(circle at 85% 15%, hsl(221 83% 53% / 0.16), transparent 32rem),
+    linear-gradient(180deg, hsl(0 0% 100% / 0.82), hsl(214 32% 96% / 0.72));
+  border-bottom: 1px solid var(--builder-border);
+}
+
+.builder-public-hero-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 2rem;
+  align-items: center;
+  padding-top: 4.5rem;
+  padding-bottom: 4.5rem;
+}
+
+.builder-public-hero h1 {
+  max-width: 780px;
+  margin: 0;
+  font-family: var(--font-heading, "Plus Jakarta Sans", sans-serif);
+  font-size: clamp(2.4rem, 5vw, 4.5rem);
+  line-height: 1.05;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.builder-public-hero p {
+  max-width: 760px;
+  margin: 1rem 0 1.6rem;
+  color: var(--builder-muted);
+  font-size: 1.08rem;
+  line-height: 1.7;
+}
+
+.builder-hero-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding: 1.5rem;
+  border: 1px solid hsl(221 83% 53% / 0.22);
+  border-radius: 1.15rem;
+  background: #fff;
+  box-shadow: 0 18px 44px hsl(221 83% 53% / 0.13);
+}
+
+.builder-hero-card strong {
+  font-family: var(--font-heading, "Plus Jakarta Sans", sans-serif);
+  font-size: 1.45rem;
+  line-height: 1.25;
+}
+
+.builder-hero-card p {
+  margin: 0;
+  font-size: 0.94rem;
+}
+
+.builder-section {
+  margin-top: 2rem;
+}
+
+.builder-section-head {
+  max-width: 780px;
+  margin-bottom: 1.2rem;
+}
+
+.builder-section-head h2,
+.builder-token-note h2,
+.builder-service-boundary h2 {
+  margin: 0;
+  font-family: var(--font-heading, "Plus Jakarta Sans", sans-serif);
+  font-size: clamp(1.55rem, 3vw, 2.2rem);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.builder-section-head p,
+.builder-token-note p,
+.builder-service-boundary p {
+  margin: 0.55rem 0 0;
+  color: var(--builder-muted);
+  line-height: 1.65;
+}
+
+.builder-example-grid,
+.builder-plan-grid,
+.builder-step-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.builder-example-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.builder-example-grid article,
+.builder-plan-grid article,
+.builder-step-grid article,
+.builder-token-note,
+.builder-service-boundary,
+.builder-faq details {
+  background: #fff;
+  border: 1px solid var(--builder-border);
+  border-radius: 1rem;
+  box-shadow: 0 4px 16px hsl(0 0% 0% / 0.04);
+}
+
+.builder-example-grid article {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  min-height: 15rem;
+  padding: 1.15rem;
+}
+
+.builder-example-grid span,
+.builder-plan-grid span {
+  width: fit-content;
+  padding: 0.28rem 0.55rem;
+  border: 1px solid hsl(221 83% 53% / 0.2);
+  border-radius: 999px;
+  background: hsl(221 83% 53% / 0.08);
+  color: var(--builder-primary);
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.builder-example-grid h3,
+.builder-plan-grid h3,
+.builder-step-grid h3 {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.3;
+  font-weight: 800;
+}
+
+.builder-example-grid p,
+.builder-plan-grid p,
+.builder-step-grid p {
+  margin: 0;
+  color: var(--builder-muted);
+  font-size: 0.88rem;
+  line-height: 1.58;
+}
+
+.builder-example-grid strong {
+  margin-top: auto;
+  color: var(--builder-text);
+  font-size: 0.88rem;
+}
+
+.builder-example-grid em {
+  color: var(--builder-muted);
+  font-size: 0.78rem;
+  font-style: normal;
+}
+
+.builder-step-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.builder-step-grid article {
+  padding: 1.15rem;
+}
+
+.builder-step-grid article > strong {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  margin-bottom: 0.85rem;
+  border-radius: 0.7rem;
+  background: hsl(221 83% 53% / 0.1);
+  color: var(--builder-primary);
+}
+
+.builder-token-note,
+.builder-service-boundary {
+  padding: 1.5rem;
+}
+
+.builder-token-note {
+  border-color: hsl(142 76% 36% / 0.22);
+  background: hsl(142 100% 98%);
+}
+
+.builder-plan-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.builder-plan-grid article {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 1.35rem;
+}
+
+.builder-plan-grid article.is-featured {
+  border-color: hsl(221 83% 53% / 0.55);
+  box-shadow: 0 18px 44px hsl(221 83% 53% / 0.13);
+}
+
+.builder-plan-grid article > strong {
+  font-size: 1.8rem;
+  line-height: 1.15;
+  font-weight: 800;
+}
+
+.builder-plan-grid .builder-button {
+  width: 100%;
+  margin-top: auto;
+}
+
+.builder-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--builder-border);
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 4px 16px hsl(0 0% 0% / 0.04);
+}
+
+.builder-comparison-table {
+  width: 100%;
+  min-width: 820px;
+  border-collapse: collapse;
+}
+
+.builder-comparison-table th,
+.builder-comparison-table td {
+  padding: 0.8rem 0.95rem;
+  border-bottom: 1px solid var(--builder-border);
+  text-align: left;
+  vertical-align: top;
+  font-size: 0.9rem;
+}
+
+.builder-comparison-table th {
+  background: hsl(210 40% 97%);
+  color: hsl(215 25% 28%);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.builder-comparison-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.builder-faq details {
+  padding: 1rem 1.15rem;
+  margin-bottom: 0.75rem;
+}
+
+.builder-faq summary {
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.builder-faq p {
+  margin: 0.7rem 0 0;
+  color: var(--builder-muted);
+  line-height: 1.6;
+}
+
 .builder-page-head {
   display: flex;
   align-items: flex-start;
@@ -589,6 +853,21 @@
 }
 
 @media (max-width: 1024px) {
+  .builder-public-hero-inner,
+  .builder-example-grid,
+  .builder-step-grid,
+  .builder-plan-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .builder-public-hero-inner > div:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .builder-hero-card {
+    grid-column: 1 / -1;
+  }
+
   .builder-page-head,
   .builder-toolbar {
     align-items: stretch;
@@ -611,6 +890,18 @@
 @media (max-width: 640px) {
   .builder-page {
     padding: 1.5rem 1rem 3rem;
+  }
+
+  .builder-public-hero-inner,
+  .builder-example-grid,
+  .builder-step-grid,
+  .builder-plan-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .builder-public-hero-inner {
+    padding-top: 3rem;
+    padding-bottom: 3rem;
   }
 
   .builder-stats,

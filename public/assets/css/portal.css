@@ -201,6 +201,36 @@ a { color: inherit; }
   letter-spacing: 0;
 }
 
+.portal-trial-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 0 20px;
+  padding: 16px 18px;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  background: #eff6ff;
+  color: #0f172a;
+}
+
+.portal-trial-banner.expired {
+  border-color: #fed7aa;
+  background: #fff7ed;
+}
+
+.portal-trial-banner strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.98rem;
+}
+
+.portal-trial-banner span {
+  display: block;
+  color: #475569;
+  line-height: 1.5;
+}
+
 .portal-hero-panel {
   display: grid;
   grid-template-columns: repeat(2, minmax(130px, 1fr));
