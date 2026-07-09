@@ -4,66 +4,177 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
-  <title>Member Account Access | JA Experiences &amp; Discovery</title>
-  <meta name="description" content="Secure member account access for JA Experiences & Discovery customers using JA Group Services ID.">
+  <title>Sign In — JA Smart Profile</title>
   <link rel="icon" href="/assets/favicons/favicon.svg?v=20260704-1" type="image/svg+xml">
   <link rel="stylesheet" href="/assets/css/glass-theme.css?v=20260709-glass-2">
-  <link rel="stylesheet" href="/assets/css/portal.css?v=20260709-builders-portal-1">
   <script id="Cookiebot" src="https://consent.cookiebot.com/uc.js" data-cbid="762d90c4-b030-45b0-9e70-c21806c665e3" data-blockingmode="auto" type="text/javascript"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif !important;
+      background: #080d16 !important;
+      color: #f8fafc !important;
+      min-height: 100vh;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .header-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 64px;
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .header-logo {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: -0.02em;
+    }
+    .gateway-wrapper {
+      width: 100%;
+      max-width: 460px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      z-index: 10;
+    }
+    .shield-container {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 64px;
+      height: 64px;
+      border-radius: 16px;
+      background: rgba(30, 41, 59, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      margin-bottom: 1.5rem;
+    }
+    .shield-icon {
+      width: 32px;
+      height: 32px;
+      color: #3b82f6;
+    }
+    .gateway-title {
+      font-family: 'Segoe UI', system-ui, sans-serif !important;
+      font-size: 2.25rem;
+      font-weight: 700;
+      margin: 0 0 0.5rem 0;
+      color: #ffffff;
+      letter-spacing: -0.02em;
+    }
+    .gateway-subtitle {
+      font-size: 0.95rem;
+      color: #94a3b8;
+      margin: 0 0 2rem 0;
+      font-weight: 400;
+    }
+    .gateway-card {
+      width: 100%;
+      background: rgba(15, 23, 42, 0.3);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 2.25rem 2rem;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      margin-bottom: 1.5rem;
+    }
+    .btn-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      width: 100%;
+      padding: 1rem 1.5rem;
+      background: #1d4ed8;
+      color: #ffffff;
+      font-weight: 600;
+      border-radius: 10px;
+      text-decoration: none;
+      font-size: 1rem;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(29, 78, 216, 0.2);
+      margin-bottom: 1.75rem;
+    }
+    .btn-action:hover {
+      background: #2563eb;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
+    }
+    .btn-action svg {
+      width: 20px;
+      height: 20px;
+    }
+    .terms-text {
+      font-size: 0.8125rem;
+      color: #94a3b8;
+      line-height: 1.6;
+      text-align: center;
+      margin: 0;
+    }
+    .gateway-footer {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 0.5rem;
+      font-size: 0.875rem;
+    }
+    .footer-link {
+      color: #94a3b8;
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+    .footer-link:hover {
+      color: #ffffff;
+    }
+  </style>
 </head>
 <body data-page="account">
-  <div id="siteShellHeader"></div>
-  <main class="min-h-screen flex items-center justify-center p-8 mt-12">
-    <div class="glass p-8 rounded-3xl max-w-4xl w-full">
-      <div class="grid md:grid-cols-2 gap-8 items-center">
-        <section>
-          <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/20 text-blue-600 text-xs font-semibold mb-4">
-            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-            Secure member account
-          </div>
-          <h1 class="text-3xl md:text-4xl font-extrabold mb-4" style="font-family: 'Plus Jakarta Sans', sans-serif;">JA Group Services ID</h1>
-          <p class="text-secondary mb-6">JA Group Services ID is the secure Single Sign-On system for JA Experiences &amp; Discovery, provided through Microsoft Entra External ID.</p>
-          <div class="flex flex-col gap-3">
-            <a class="btn btn-primary" href="/account/login/?return_to=%2Faccount%2Fdashboard%2F">Continue with JA Group Services ID</a>
-            <a class="btn btn-secondary" href="/">Return to website</a>
-            <a class="btn btn-ghost" href="/contact/">Need help signing in?</a>
-          </div>
-        </section>
-        <aside class="glass-dark p-6 rounded-2xl">
-          <div class="flex items-center justify-between mb-4">
-            <div>
-              <strong class="block font-semibold">Member benefits</strong>
-              <span class="text-sm text-muted">Account-only platform tools</span>
-            </div>
-            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 text-blue-400 text-xs font-semibold">
-              <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-              Secure
-            </span>
-          </div>
-          <div class="space-y-3">
-            <div class="flex items-center justify-between py-3 border-b border-white/10">
-              <span class="text-sm">Experience Builders</span>
-              <span class="text-sm font-semibold text-purple-400">Guided outputs</span>
-            </div>
-            <div class="flex items-center justify-between py-3 border-b border-white/10">
-              <span class="text-sm">Builder Usage Tokens</span>
-              <span class="text-sm font-semibold text-purple-400">Usage allowance</span>
-            </div>
-            <div class="flex items-center justify-between py-3 border-b border-white/10">
-              <span class="text-sm">Saved Plans</span>
-              <span class="text-sm font-semibold text-purple-400">Member workspace</span>
-            </div>
-            <div class="flex items-center justify-between py-3">
-              <span class="text-sm">Support Requests</span>
-              <span class="text-sm font-semibold text-purple-400">Auditable help</span>
-            </div>
-          </div>
-        </aside>
-      </div>
+  <header class="header-bar">
+    <div class="header-logo">JA Smart Profile</div>
+  </header>
+
+  <main class="gateway-wrapper">
+    <div class="shield-container">
+      <svg class="shield-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+      </svg>
     </div>
+
+    <h1 class="gateway-title">JA Group Services ID</h1>
+    <p class="gateway-subtitle">Secured by JA Group Services ID</p>
+
+    <div class="gateway-card">
+      <a class="btn-action" href="/account/login/?return_to=%2Faccount%2Fdashboard%2F">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+        </svg>
+        Continue with JA Group Services ID
+        <svg class="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+        </svg>
+      </a>
+
+      <p class="terms-text">
+        Access is provided through JA Group Services ID. This does not grant access to internal company systems, email, Teams or SharePoint.
+      </p>
+    </div>
+
+    <footer class="gateway-footer">
+      <a class="footer-link" href="/">← Back to home</a>
+      <a class="footer-link" href="/admin/">Staff portal</a>
+    </footer>
   </main>
-  <div id="siteShellFooter"></div>
-  <script src="/assets/js/site-shell.js?v=20260709-auth-1"></script>
-  <script src="/assets/js/account-portal.js?v=20260709-builders-portal-1"></script>
 </body>
 </html>
