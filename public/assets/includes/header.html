@@ -1,214 +1,67 @@
-<header class="site-header">
+<header class="sticky top-0 z-50 py-4">
   <div class="container">
-    <div class="site-header-card">
-      <a class="site-brand" href="/" aria-label="JA Experiences & Discovery home">
-        <span class="site-brand-mark" aria-hidden="true">JA</span>
-        <span class="site-brand-copy">
-          <strong>JA Experiences &amp; Discovery</strong>
-          <small>Experience planning platform</small>
-        </span>
+    <div class="glass px-6 py-4 rounded-2xl flex items-center justify-between gap-4">
+      <a class="flex items-center gap-3" href="/" aria-label="JA Experiences & Discovery home">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm" style="background: linear-gradient(135deg, var(--primary), var(--accent));">
+          JA
+        </div>
+        <div class="hidden sm:block">
+          <strong class="font-bold text-sm block leading-tight">JA Experiences & Discovery</strong>
+          <small class="text-xs text-muted">Experience planning platform</small>
+        </div>
       </a>
 
-      <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="siteNav">
-        <span></span><span></span><span></span>
+      <button class="lg:hidden p-2 rounded-lg hover:bg-white/50 transition" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="siteNav" id="menuToggle">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
       </button>
 
-      <nav class="site-nav" id="siteNav" aria-label="Primary navigation">
-        <div class="site-nav-links">
-          <a href="/" data-nav-page="home">Home</a>
-          <a href="/builders/" data-nav-page="builders">Builders</a>
-          <a href="/pricing/" data-nav-page="pricing">Pricing</a>
-          <a href="/about/" data-nav-page="about">About</a>
-          <a href="/contact/" data-nav-page="contact">Contact</a>
-        </div>
-        <div class="site-nav-actions">
-          <a class="site-button ghost" href="/account/login/?return_to=%2Faccount%2Fdashboard%2F">Sign in</a>
-          <a class="site-button primary" href="/account/login/?return_to=%2Faccount%2Fdashboard%2F">Start Free Trial</a>
-        </div>
+      <nav class="hidden lg:flex items-center gap-1" id="siteNav" aria-label="Primary navigation">
+        <a href="/" class="px-4 py-2 rounded-lg text-sm font-medium text-secondary hover:text-primary hover:bg-white/50 transition" data-nav-page="home">Home</a>
+        <a href="/builders/" class="px-4 py-2 rounded-lg text-sm font-medium text-secondary hover:text-primary hover:bg-white/50 transition" data-nav-page="builders">Builders</a>
+        <a href="/pricing/" class="px-4 py-2 rounded-lg text-sm font-medium text-secondary hover:text-primary hover:bg-white/50 transition" data-nav-page="pricing">Pricing</a>
+        <a href="/about/" class="px-4 py-2 rounded-lg text-sm font-medium text-secondary hover:text-primary hover:bg-white/50 transition" data-nav-page="about">About</a>
+        <a href="/contact/" class="px-4 py-2 rounded-lg text-sm font-medium text-secondary hover:text-primary hover:bg-white/50 transition" data-nav-page="contact">Contact</a>
       </nav>
+
+      <div class="hidden lg:flex items-center gap-3">
+        <a class="btn btn-ghost text-sm" href="/account/login/?return_to=%2Faccount%2Fdashboard%2F">Sign in</a>
+        <a class="btn btn-primary text-sm" href="/account/login/?return_to=%2Faccount%2Fdashboard%2F">Start Free Trial</a>
+      </div>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div class="lg:hidden glass mt-2 p-4 rounded-2xl hidden" id="mobileMenu">
+      <nav class="flex flex-col gap-2">
+        <a href="/" class="px-4 py-3 rounded-lg text-sm font-medium hover:bg-white/50 transition">Home</a>
+        <a href="/builders/" class="px-4 py-3 rounded-lg text-sm font-medium hover:bg-white/50 transition">Builders</a>
+        <a href="/pricing/" class="px-4 py-3 rounded-lg text-sm font-medium hover:bg-white/50 transition">Pricing</a>
+        <a href="/about/" class="px-4 py-3 rounded-lg text-sm font-medium hover:bg-white/50 transition">About</a>
+        <a href="/contact/" class="px-4 py-3 rounded-lg text-sm font-medium hover:bg-white/50 transition">Contact</a>
+      </nav>
+      <div class="divider my-4"></div>
+      <div class="flex flex-col gap-2">
+        <a class="btn btn-secondary w-full" href="/account/login/?return_to=%2Faccount%2Fdashboard%2F">Sign in</a>
+        <a class="btn btn-primary w-full" href="/account/login/?return_to=%2Faccount%2Fdashboard%2F">Start Free Trial</a>
+      </div>
     </div>
   </div>
 </header>
 
 <style>
-  .site-header {
-    position: sticky;
-    top: 0;
-    z-index: 50;
-    padding: .75rem 0;
-    background: linear-gradient(180deg, hsl(var(--background) / .95), hsl(var(--background) / .85));
-    backdrop-filter: blur(20px) saturate(1.4);
-    -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  .lg\:flex { display: none; }
+  @media (min-width: 1024px) {
+    .lg\:flex { display: flex; }
+    .lg\:hidden { display: none; }
   }
-  .site-header-card {
-    min-height: 4.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    border: 1px solid hsl(var(--glass-border));
-    border-radius: 1.25rem;
-    background: hsl(var(--card) / .90);
-    box-shadow: 0 20px 60px hsl(var(--glass-shadow));
-    padding: .65rem .75rem .65rem 1rem;
-  }
-  .site-brand {
-    display: inline-flex;
-    align-items: center;
-    gap: .85rem;
-    min-width: 13rem;
-    color: hsl(var(--foreground));
-  }
-  .site-brand-mark {
-    width: 2.65rem;
-    height: 2.65rem;
-    border-radius: .85rem;
-    display: grid;
-    place-items: center;
-    background: var(--gradient-primary);
-    color: hsl(var(--primary-foreground));
-    font-family: var(--font-heading);
-    font-weight: 800;
-    font-size: .95rem;
-    box-shadow: 0 8px 20px hsl(var(--primary) / .25);
-  }
-  .site-brand-copy { display: grid; line-height: 1.15; min-width: 0; }
-  .site-brand-copy strong { font-family: var(--font-heading); font-size: .95rem; white-space: nowrap; }
-  .site-brand-copy small { color: hsl(var(--muted-foreground)); font-size: .7rem; font-weight: 600; }
-  .site-nav {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: .75rem;
-    flex: 1;
-    min-width: 0;
-  }
-  .site-nav-links, .site-nav-actions { display: flex; align-items: center; gap: .15rem; }
-  .site-nav a {
-    border-radius: .7rem;
-    color: hsl(var(--muted-foreground));
-    font-size: .88rem;
-    font-weight: 600;
-    line-height: 1;
-    padding: .7rem .75rem;
-    white-space: nowrap;
-    transition: background .2s ease, color .2s ease;
-  }
-  .site-nav a:hover, .site-nav a.active {
-    background: hsl(var(--muted) / .50);
-    color: hsl(var(--foreground));
-  }
-  .site-button {
-    border: 1px solid hsl(var(--border));
-    min-height: 2.65rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: .65rem 1.1rem !important;
-    font-weight: 700;
-    font-size: .9rem;
-  }
-  .site-button.ghost {
-    background: hsl(var(--card));
-    color: hsl(var(--foreground));
-  }
-  .site-button.ghost:hover {
-    background: hsl(var(--muted));
-    border-color: hsl(var(--border));
-    color: hsl(var(--foreground));
-  }
-  .site-button.primary {
-    border-color: transparent;
-    background: var(--gradient-primary);
-    color: hsl(var(--primary-foreground));
-    box-shadow: 0 6px 20px hsl(var(--primary) / .20);
-  }
-  .site-button.primary:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 8px 24px hsl(var(--primary) / .25);
-  }
-  .site-account-menu { position: relative; }
-  .site-account-dropdown {
-    position: absolute;
-    right: 0;
-    top: calc(100% + .45rem);
-    z-index: 60;
-    min-width: 14rem;
-    border: 1px solid hsl(var(--border));
-    border-radius: .9rem;
-    background: hsl(var(--card));
-    box-shadow: var(--shadow-xl);
-    padding: .45rem;
-  }
-  .site-account-dropdown a {
-    display: block;
-    width: 100%;
-    border-radius: .65rem;
-    padding: .72rem .85rem;
-    font-weight: 600;
-  }
-  .site-account-dropdown a:hover {
-    background: hsl(var(--muted) / .50);
-  }
-  .menu-toggle {
-    display: none;
-    width: 2.85rem;
-    height: 2.85rem;
-    border: 1px solid hsl(var(--border));
-    border-radius: .85rem;
-    background: hsl(var(--card));
-    padding: .65rem;
-    cursor: pointer;
-    transition: background .2s ease, border-color .2s ease;
-  }
-  .menu-toggle:hover {
-    background: hsl(var(--muted) / .50);
-  }
-  .menu-toggle span {
-    display: block;
-    height: 2px;
-    background: hsl(var(--foreground));
-    margin: 5px 0;
-    border-radius: 999px;
-    transition: transform .2s ease, opacity .2s ease;
-  }
-  .menu-toggle[aria-expanded="true"] span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
-  .menu-toggle[aria-expanded="true"] span:nth-child(2) { opacity: 0; }
-  .menu-toggle[aria-expanded="true"] span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
-
-  @media (max-width: 1100px) {
-    .site-brand { min-width: 10rem; }
-    .site-brand-copy strong { max-width: 10rem; overflow: hidden; text-overflow: ellipsis; }
-    .site-nav a { font-size: .82rem; padding-inline: .55rem; }
-    .site-button { padding-inline: .85rem !important; }
-  }
-  @media (max-width: 960px) {
-    .site-header-card { position: relative; }
-    .menu-toggle { display: block; }
-    .site-nav {
-      display: none;
-      position: absolute;
-      left: .5rem;
-      right: .5rem;
-      top: calc(100% + .5rem);
-      flex-direction: column;
-      align-items: stretch;
-      border: 1px solid hsl(var(--border));
-      border-radius: 1rem;
-      background: hsl(var(--card));
-      box-shadow: var(--shadow-xl);
-      padding: .6rem;
-    }
-    .site-nav.open { display: flex; }
-    .site-nav-links, .site-nav-actions { display: grid; gap: .3rem; }
-    .site-nav a { width: 100%; padding: .85rem .9rem; border-radius: .6rem; }
-    .site-nav-actions { border-top: 1px solid hsl(var(--border)); margin-top: .3rem; padding-top: .6rem; }
-    .site-button { min-height: 2.75rem; border-radius: .6rem; }
-    .site-account-dropdown { position: static; margin-top: .35rem; box-shadow: none; border-radius: .6rem; }
-  }
-  @media (max-width: 480px) {
-    .site-brand { min-width: 0; }
-    .site-brand-copy strong { max-width: 9rem; }
-    .site-brand-copy small { display: none; }
-  }
+  #mobileMenu.open { display: block; }
 </style>
+
+<script>
+  document.getElementById('menuToggle')?.addEventListener('click', function() {
+    const menu = document.getElementById('mobileMenu');
+    const isOpen = menu.classList.toggle('open');
+    this.setAttribute('aria-expanded', isOpen);
+  });
+</script>

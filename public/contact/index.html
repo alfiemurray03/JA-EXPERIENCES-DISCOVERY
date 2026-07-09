@@ -6,57 +6,136 @@
   <title>Support and Contact | JA Experiences &amp; Discovery</title>
   <meta name="description" content="Contact JA Experiences & Discovery for account, platform, billing, accessibility and support enquiries.">
   <link rel="preconnect" href="https://challenges.cloudflare.com">
-  <link rel="stylesheet" href="/assets/css/theme.css?v=20260709-airo-1">
+  <link rel="stylesheet" href="/assets/css/glass-theme.css?v=20260709-glass-1">
 </head>
-<body data-page="contact">
+<body>
   <div id="siteShellHeader"></div>
-  <main id="main" class="platform-main">
-    <section class="platform-hero">
-      <div class="container">
-        <span class="platform-eyebrow">Support</span>
-        <h1>Get help with your account, platform tools or service boundaries.</h1>
-        <p>Use this page for member support, billing questions, website issues, accessibility planning questions, data protection requests, complaints and general enquiries.</p>
+
+  <main class="section relative overflow-hidden">
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+      <div class="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-blue-400/20 to-purple-500/20 rounded-full blur-3xl"></div>
+      <div class="absolute bottom-20 -left-20 w-72 h-72 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-full blur-3xl"></div>
+    </div>
+
+    <div class="container relative z-10">
+      <!-- Hero -->
+      <div class="max-w-3xl mx-auto mb-16">
+        <span class="badge mb-6">Support</span>
+        <h1 class="text-4xl md:text-5xl font-extrabold mb-6">Get help with your account</h1>
+        <p class="text-lg text-secondary">Use this page for member support, billing questions, website issues, accessibility planning questions, data protection requests, complaints and general enquiries.</p>
       </div>
-    </section>
-    <section class="platform-section soft-band">
-      <div class="container grid grid-3">
-        <article class="platform-card"><h3>Member support</h3><p>Questions about account access, plans, Builder Credits, saved plans or trial access.</p></article>
-        <article class="platform-card"><h3>Service boundaries</h3><p>JA Group Services Ltd does not arrange travel, flights, package holidays, visas, refunds or cancellations.</p></article>
-        <article class="platform-card"><h3>Accessibility planning</h3><p>General planning support only. Not medical advice, aviation safety advice, insurance advice or a formal risk assessment.</p></article>
+
+      <!-- Quick Links -->
+      <div class="grid md:grid-cols-3 gap-4 mb-12">
+        <div class="card text-center">
+          <h3 class="font-bold mb-2">Member support</h3>
+          <p class="text-sm text-secondary">Questions about account access, plans, Builder Credits, saved plans or trial access.</p>
+        </div>
+        <div class="card text-center">
+          <h3 class="font-bold mb-2">Service boundaries</h3>
+          <p class="text-sm text-secondary">JA Group Services Ltd does not arrange travel, flights, package holidays, visas, refunds or cancellations.</p>
+        </div>
+        <div class="card text-center">
+          <h3 class="font-bold mb-2">Accessibility</h3>
+          <p class="text-sm text-secondary">General planning support only. Not medical advice, aviation safety advice, or insurance advice.</p>
+        </div>
       </div>
-    </section>
-    <section class="platform-section">
-      <div class="container grid grid-2">
-        <aside class="platform-card">
-          <h2>Contact details</h2>
-          <p><strong>Email:</strong> <a href="mailto:hello@jagroupservices.co.uk">hello@jagroupservices.co.uk</a></p>
-          <p><strong>Telephone:</strong> <a href="tel:+442038342790">020 3834 2790</a></p>
-          <p><strong>Registered office:</strong><br>JA Group Services Ltd, 167-169 Great Portland Street, 5th Floor, London, W1W 5PF, United Kingdom.</p>
-          <div class="platform-actions"><a class="btn btn-secondary" href="/account/">Account access</a><a class="btn btn-secondary" href="/pricing/">Pricing</a></div>
-        </aside>
-        <section class="platform-card">
-          <h2>Send a message</h2>
-          <form id="customerForm" data-form-type="contact">
+
+      <!-- Contact Grid -->
+      <div class="grid md:grid-cols-2 gap-8">
+        <!-- Contact Details -->
+        <div class="card">
+          <h2 class="font-bold text-xl mb-6">Contact details</h2>
+
+          <div class="space-y-4 mb-6">
+            <div>
+              <span class="text-sm text-muted">Email</span>
+              <p class="font-medium"><a href="mailto:hello@jagroupservices.co.uk" class="hover:text-primary transition">hello@jagroupservices.co.uk</a></p>
+            </div>
+            <div>
+              <span class="text-sm text-muted">Telephone</span>
+              <p class="font-medium"><a href="tel:+442038342790" class="hover:text-primary transition">020 3834 2790</a></p>
+            </div>
+            <div>
+              <span class="text-sm text-muted">Registered office</span>
+              <p class="font-medium">JA Group Services Ltd<br>167-169 Great Portland Street, 5th Floor<br>London, W1W 5PF, United Kingdom</p>
+            </div>
+          </div>
+
+          <div class="flex gap-3">
+            <a href="/account/" class="btn btn-secondary btn-sm">Account access</a>
+            <a href="/pricing/" class="btn btn-ghost btn-sm">Pricing</a>
+          </div>
+        </div>
+
+        <!-- Contact Form -->
+        <div class="card">
+          <h2 class="font-bold text-xl mb-6">Send a message</h2>
+
+          <form id="customerForm" data-form-type="contact" class="space-y-4">
             <input type="hidden" name="startedAt" value="">
             <input type="hidden" name="formType" value="Contact Us">
-            <div class="form-grid">
-              <p><label>Full name *<input name="name" type="text" required></label></p>
-              <p><label>Email address *<input name="email" type="email" required></label></p>
-              <p><label>Telephone number<input name="telephone" type="tel"></label></p>
-              <p><label>Category *<select name="category" required><option value="">Please select</option><option>Account Support</option><option>Billing</option><option>Builder Credits</option><option>Technical Support</option><option>Accessibility</option><option>Data Protection</option><option>Complaints</option><option>Other</option></select></label></p>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label>Full name *</label>
+                <input name="name" type="text" required placeholder="Your full name">
+              </div>
+              <div>
+                <label>Email address *</label>
+                <input name="email" type="email" required placeholder="your@email.com">
+              </div>
+              <div>
+                <label>Telephone number</label>
+                <input name="telephone" type="tel" placeholder="Optional">
+              </div>
+              <div>
+                <label>Category *</label>
+                <select name="category" required>
+                  <option value="">Please select</option>
+                  <option>Account Support</option>
+                  <option>Billing</option>
+                  <option>Builder Credits</option>
+                  <option>Technical Support</option>
+                  <option>Accessibility</option>
+                  <option>Data Protection</option>
+                  <option>Complaints</option>
+                  <option>Other</option>
+                </select>
+              </div>
             </div>
-            <p><label>Subject *<input name="subject" type="text" required></label></p>
-            <p><label>Message *<textarea name="message" rows="6" required></textarea></label></p>
-            <p><label><input name="termsAccepted" type="checkbox" required style="width:auto"> I accept the <a href="/legal/terms/">Terms of Service</a>. *</label></p>
-            <p><label><input name="privacyAccepted" type="checkbox" required style="width:auto"> I acknowledge the <a href="/legal/privacy/">Privacy Notice</a>. *</label></p>
-            <div id="turnstileStatus" class="muted" role="status" aria-live="polite"></div>
+
+            <div>
+              <label>Subject *</label>
+              <input name="subject" type="text" required placeholder="Brief summary of your enquiry">
+            </div>
+
+            <div>
+              <label>Message *</label>
+              <textarea name="message" rows="5" required placeholder="Please describe your enquiry in detail..."></textarea>
+            </div>
+
+            <div class="space-y-3">
+              <label class="flex items-center gap-3">
+                <input name="termsAccepted" type="checkbox" required style="width: auto;">
+                <span class="text-sm">I accept the <a href="/legal/terms/" class="text-primary hover:underline">Terms of Service</a></span>
+              </label>
+              <label class="flex items-center gap-3">
+                <input name="privacyAccepted" type="checkbox" required style="width: auto;">
+                <span class="text-sm">I acknowledge the <a href="/legal/privacy/" class="text-primary hover:underline">Privacy Notice</a></span>
+              </label>
+            </div>
+
+            <div id="turnstileStatus" class="text-sm text-muted" role="status" aria-live="polite"></div>
             <div id="turnstileContainer"></div>
-            <button class="btn btn-primary" type="submit">Send message</button>
+
+            <button class="btn btn-primary w-full" type="submit">Send message</button>
           </form>
-          <div id="formStatus" class="hidden" role="status" aria-live="polite"></div>
-        </section>
+
+          <div id="formStatus" class="hidden mt-4 p-4 rounded-lg text-sm" role="status" aria-live="polite"></div>
+        </div>
       </div>
-    </section>
+    </div>
   </main>
   <div id="siteShellFooter"></div>
   <script src="/assets/js/site-shell.js?v=20260709-auth-1"></script>

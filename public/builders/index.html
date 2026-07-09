@@ -5,132 +5,217 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Experience Builders | JA Experiences &amp; Discovery</title>
   <meta name="description" content="Choose guided Experience Builders, preview outputs, and spend Builder Credits only when you save a finished plan.">
-  <link rel="stylesheet" href="/assets/css/theme.css?v=20260709-saas-2">
-  <link rel="stylesheet" href="/assets/css/builders.css?v=20260709-saas-2">
+  <link rel="stylesheet" href="/assets/css/glass-theme.css?v=20260709-glass-1">
+  <style>
+    .builder-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; }
+    .builder-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.5rem; }
+    .builder-workspace { display: grid; grid-template-columns: minmax(360px, 480px) minmax(0, 1fr); gap: 1.5rem; }
+    @media (max-width: 1024px) {
+      .builder-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .builder-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .builder-workspace { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      .builder-stats, .builder-grid { grid-template-columns: 1fr; }
+    }
+    .skeleton { animation: pulse 2s ease-in-out infinite; background: linear-gradient(90deg, rgba(255,255,255,0.1), rgba(255,255,255,0.3), rgba(255,255,255,0.1)); background-size: 200% 100%; border-radius: 1rem; height: 200px; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+  </style>
 </head>
-<body data-page="builders">
+<body>
   <div id="siteShellHeader"></div>
-  <main id="main" class="builder-app-shell" aria-live="polite">
-    <section class="builder-page">
-      <div class="builder-page-head">
+
+  <main class="section relative overflow-hidden">
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+      <div class="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-blue-400/20 to-purple-500/20 rounded-full blur-3xl"></div>
+      <div class="absolute bottom-20 -left-20 w-72 h-72 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-full blur-3xl"></div>
+    </div>
+
+    <div class="container relative z-10">
+      <!-- Header -->
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
         <div>
-          <span class="builder-kicker">Self-service planning tools</span>
-          <h1>Experience Builders</h1>
-          <p>Choose a guided builder, preview your output, and only spend Builder Credits when you save a finished plan. Previewing is always free.</p>
+          <span class="badge mb-3">Self-service planning tools</span>
+          <h1 class="text-3xl md:text-4xl font-extrabold mb-2">Experience Builders</h1>
+          <p class="text-secondary max-w-xl">Choose a guided builder, preview your output, and only spend Builder Credits when you save a finished plan. Previewing is always free.</p>
         </div>
-        <div class="builder-head-actions">
-          <a class="builder-button builder-button-outline" href="/account/tokens/">View tokens</a>
-          <a class="builder-button builder-button-outline" id="createAccountTrialLink" href="/account/login/?return_to=%2Fbuilders%2F%3Fclaim_trial%3D1">Create account</a>
-          <button class="builder-button" type="button" id="claimTrialButton">Claim 14-Day Free Trial</button>
+        <div class="flex flex-wrap gap-3">
+          <a href="/account/tokens/" class="btn btn-secondary btn-sm">View tokens</a>
+          <button class="btn btn-primary btn-sm" type="button" id="claimTrialBtn">Claim 14-Day Free Trial</button>
         </div>
       </div>
 
-      <div id="claimIntentNotice" class="builder-alert builder-alert-info" hidden>
-        You're signed in. Claim your 14-day free trial to start building.
+      <!-- Stats -->
+      <div class="builder-stats mb-8">
+        <div class="card text-center">
+          <span class="text-xs text-muted uppercase tracking-wider">Available Builders</span>
+          <div class="text-2xl font-extrabold mt-2" id="builderCount">5+</div>
+        </div>
+        <div class="card text-center">
+          <span class="text-xs text-muted uppercase tracking-wider">Remaining Tokens</span>
+          <div class="text-2xl font-extrabold mt-2 text-gradient" id="tokensRemaining">Sign in</div>
+        </div>
+        <div class="card text-center">
+          <span class="text-xs text-muted uppercase tracking-wider">Trial Status</span>
+          <div class="text-2xl font-extrabold mt-2" id="trialStatus">Not signed in</div>
+        </div>
+        <div class="card text-center">
+          <span class="text-xs text-muted uppercase tracking-wider">Saved Outputs</span>
+          <div class="text-2xl font-extrabold mt-2" id="savedCount">Sign in</div>
+        </div>
       </div>
 
-      <section class="builder-stats" aria-label="Builder summary">
-        <article class="builder-stat-card">
-          <span>Available builders</span>
-          <strong id="availableBuilderCount">0</strong>
-        </article>
-        <article class="builder-stat-card">
-          <span>Remaining tokens</span>
-          <strong id="tokensRemaining">Sign in</strong>
-        </article>
-        <article class="builder-stat-card">
-          <span>Trial status</span>
-          <strong id="trialStatus">Not signed in</strong>
-        </article>
-        <article class="builder-stat-card">
-          <span>Saved outputs</span>
-          <strong id="savedOutputCount">Sign in</strong>
-        </article>
-      </section>
-
-      <div id="builderStatus" class="builder-alert" hidden></div>
-
-      <section class="builder-toolbar" aria-label="Builder filters">
+      <!-- Filters -->
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-          <span class="builder-kicker">Catalogue</span>
-          <h2>Choose a builder</h2>
+          <span class="text-xs text-muted uppercase tracking-wider">Catalogue</span>
+          <h2 class="text-xl font-bold">Choose a builder</h2>
         </div>
-        <div class="builder-tabs" id="builderTabs" role="tablist" aria-label="Builder categories">
-          <button class="builder-tab is-active" type="button" data-filter="all">All</button>
-          <button class="builder-tab" type="button" data-filter="Everyday">Everyday</button>
-          <button class="builder-tab" type="button" data-filter="Travel">Travel</button>
-          <button class="builder-tab" type="button" data-filter="Accessibility/support">Accessibility</button>
-          <button class="builder-tab" type="button" data-filter="Organisation">Organisation</button>
+        <div class="glass p-1 rounded-xl flex gap-1">
+          <button class="px-4 py-2 rounded-lg text-sm font-medium transition bg-white/50 text-primary" data-filter="all">All</button>
+          <button class="px-4 py-2 rounded-lg text-sm font-medium transition hover:bg-white/30" data-filter="Everyday">Everyday</button>
+          <button class="px-4 py-2 rounded-lg text-sm font-medium transition hover:bg-white/30" data-filter="Travel">Travel</button>
+          <button class="px-4 py-2 rounded-lg text-sm font-medium transition hover:bg-white/30" data-filter="Accessibility">Accessibility</button>
         </div>
-      </section>
-
-      <div id="builderSkeleton" class="builder-grid">
-        <div class="builder-skeleton-card"></div>
-        <div class="builder-skeleton-card"></div>
-        <div class="builder-skeleton-card"></div>
       </div>
-      <section id="builderGrid" class="builder-grid" aria-label="Available Experience Builders"></section>
 
-      <section id="builderEditor" class="builder-workspace" aria-label="Builder editor">
-        <aside class="builder-editor-panel">
-          <div class="builder-editor-head">
-            <button class="builder-button builder-button-ghost" type="button" id="backToBuildersButton">← Back to builders</button>
-            <span class="builder-badge builder-badge-primary" id="selectedBuilderCost">No builder selected</span>
-          </div>
-          <div class="builder-selected-card">
-            <div class="builder-icon" id="selectedBuilderIcon">EB</div>
+      <!-- Builder Grid -->
+      <div class="builder-grid mb-12" id="builderGrid">
+        <!-- Day Trip Builder -->
+        <article class="card card-hover cursor-pointer" data-builder="day-trip" data-category="Everyday">
+          <div class="flex items-start gap-4 mb-4">
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center flex-shrink-0">
+              <span class="font-bold text-primary">EB</span>
+            </div>
             <div>
-              <h2 id="selectedBuilderName">Select a builder</h2>
-              <p id="selectedBuilderDescription">Opening a builder does not deduct tokens. Preview and save when ready.</p>
+              <h3 class="font-bold">Day Trip Builder</h3>
+              <p class="text-sm text-secondary mt-1">Build a practical day trip outline with timings, budget prompts and checklist notes.</p>
             </div>
           </div>
-          <form id="builderForm" class="builder-form">
-            <input type="hidden" id="selectedBuilderId">
-            <label>Plan title
-              <input id="builderTitle" autocomplete="off" placeholder="Example: Saturday family day out">
-            </label>
-            <label>Main idea or destination
-              <input id="builderIdea" autocomplete="off" placeholder="Where, what or who is this for?">
-            </label>
-            <label>Dates or timings
-              <input id="builderTiming" autocomplete="off" placeholder="Dates, time window, duration">
-            </label>
-            <label>Budget range
-              <input id="builderBudget" autocomplete="off" placeholder="Budget, priorities or limits">
-            </label>
-            <label>Accessibility or support notes
-              <textarea id="builderSupport" rows="3" placeholder="Optional support, access or suitability notes"></textarea>
-            </label>
-            <label>Extra notes
-              <textarea id="builderNotes" rows="3" placeholder="Anything else the finished output should consider"></textarea>
-            </label>
-            <div class="builder-form-actions">
-              <button class="builder-button builder-button-outline" type="button" id="previewBuilderButton">Preview output</button>
-              <button class="builder-button" type="submit" id="saveBuilderButton">Save finished output</button>
-            </div>
-            <p class="builder-form-status" id="builderFormStatus">Previewing does not deduct tokens. Only saving uses your Builder Credits.</p>
-          </form>
-        </aside>
-        <article class="builder-preview-panel">
-          <div class="builder-preview-topline">
-            <div>
-              <span class="builder-kicker">Finished output preview</span>
-              <h2>Preview</h2>
-            </div>
-            <span class="builder-badge builder-badge-primary">No token deduction</span>
-          </div>
-          <div id="builderPreview" class="builder-preview-document">
-            <div class="builder-empty-state">
-              <strong>Select a builder to begin</strong>
-              <span>Complete the form and preview your finished output before saving.</span>
-            </div>
+          <div class="flex flex-wrap gap-2">
+            <span class="badge text-xs">Everyday</span>
+            <span class="badge badge-success text-xs">10 tokens</span>
           </div>
         </article>
-      </section>
-    </section>
+
+        <!-- Family Day Out Builder -->
+        <article class="card card-hover cursor-pointer" data-builder="family-day-out" data-category="Everyday">
+          <div class="flex items-start gap-4 mb-4">
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center flex-shrink-0">
+              <span class="font-bold text-success">EB</span>
+            </div>
+            <div>
+              <h3 class="font-bold">Family Day Out Builder</h3>
+              <p class="text-sm text-secondary mt-1">Plan a family day out with pace, facilities, accessibility and weather alternatives.</p>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <span class="badge text-xs">Everyday</span>
+            <span class="badge badge-success text-xs">15 tokens</span>
+          </div>
+        </article>
+
+        <!-- Travel Itinerary Builder -->
+        <article class="card card-hover cursor-pointer" data-builder="travel-itinerary" data-category="Travel">
+          <div class="flex items-start gap-4 mb-4">
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center flex-shrink-0">
+              <span class="font-bold text-accent">TR</span>
+            </div>
+            <div>
+              <h3 class="font-bold">Travel Itinerary Builder</h3>
+              <p class="text-sm text-secondary mt-1">Create a self-service travel itinerary outline and checklist.</p>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <span class="badge text-xs">Travel</span>
+            <span class="badge badge-success text-xs">35 tokens</span>
+          </div>
+        </article>
+
+        <!-- Accessible Travel Checklist -->
+        <article class="card card-hover cursor-pointer" data-builder="accessible-travel" data-category="Accessibility">
+          <div class="flex items-start gap-4 mb-4">
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500/20 to-red-500/20 flex items-center justify-center flex-shrink-0">
+              <span class="font-bold text-warning">AS</span>
+            </div>
+            <div>
+              <h3 class="font-bold">Accessible Travel Checklist</h3>
+              <p class="text-sm text-secondary mt-1">Build a general accessible travel planning checklist.</p>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <span class="badge text-xs">Accessibility</span>
+            <span class="badge badge-success text-xs">35 tokens</span>
+          </div>
+        </article>
+
+        <!-- Budget Experience Builder -->
+        <article class="card card-hover cursor-pointer" data-builder="budget-experience" data-category="Everyday">
+          <div class="flex items-start gap-4 mb-4">
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center flex-shrink-0">
+              <span class="font-bold text-primary">EB</span>
+            </div>
+            <div>
+              <h3 class="font-bold">Budget Experience Builder</h3>
+              <p class="text-sm text-secondary mt-1">Shape ideas around a realistic budget and priority list.</p>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <span class="badge text-xs">Everyday</span>
+            <span class="badge badge-success text-xs">10 tokens</span>
+          </div>
+        </article>
+
+        <!-- Travel Checklist Builder -->
+        <article class="card card-hover cursor-pointer" data-builder="travel-checklist" data-category="Travel">
+          <div class="flex items-start gap-4 mb-4">
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center flex-shrink-0">
+              <span class="font-bold text-accent">TR</span>
+            </div>
+            <div>
+              <h3 class="font-bold">Travel Checklist Builder</h3>
+              <p class="text-sm text-secondary mt-1">Build a travel checklist for documents, packing, operator checks.</p>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <span class="badge text-xs">Travel</span>
+            <span class="badge badge-success text-xs">35 tokens</span>
+          </div>
+        </article>
+      </div>
+
+      <!-- CTA -->
+      <div class="glass-dark p-8 rounded-2xl text-center">
+        <h3 class="text-xl font-bold text-white mb-2">Sign in to start building</h3>
+        <p class="text-white/70 mb-6">Create an account to access all builders and start your free trial.</p>
+        <a href="/account/login/?return_to=%2Fbuilders%2F" class="btn btn-lg" style="background: white; color: var(--primary);">Sign In / Start Free Trial</a>
+      </div>
+    </div>
   </main>
+
   <div id="siteShellFooter"></div>
   <script src="/assets/js/site-shell.js?v=20260709-auth-1"></script>
-  <script src="/assets/js/builders.js?v=20260709-saas-2"></script>
+  <script>
+    // Filter tabs
+    document.querySelectorAll('[data-filter]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-filter]').forEach(b => {
+          b.classList.remove('bg-white/50', 'text-primary');
+          b.classList.add('hover:bg-white/30');
+        });
+        btn.classList.add('bg-white/50', 'text-primary');
+        btn.classList.remove('hover:bg-white/30');
+
+        const filter = btn.dataset.filter;
+        document.querySelectorAll('#builderGrid article').forEach(card => {
+          if (filter === 'all' || card.dataset.category === filter) {
+            card.style.display = '';
+          } else {
+            card.style.display = 'none';
+          }
+        });
+      });
+    });
+  </script>
 </body>
 </html>

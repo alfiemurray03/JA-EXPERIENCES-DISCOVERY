@@ -1,179 +1,69 @@
-<footer class="site-footer">
+<footer class="py-12 mt-12">
   <div class="container">
-    <div class="site-footer-card">
-      <div class="site-footer-grid">
-        <section class="site-footer-brand-block">
-          <a class="site-footer-brand" href="/">JA Experiences &amp; Discovery</a>
-          <p>A subscription-based platform for building, saving, and managing everyday and travel experience plans with guided tools.</p>
-          <div class="site-footer-cta">
-            <a class="btn btn-secondary" href="/account/login/?return_to=%2Faccount%2Fdashboard%2F">Start Free Trial</a>
-          </div>
-        </section>
+    <div class="glass p-8 rounded-3xl">
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 mb-8">
+        <div class="col-span-2">
+          <a class="flex items-center gap-3 mb-4" href="/">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm" style="background: linear-gradient(135deg, var(--primary), var(--accent));">
+              JA
+            </div>
+            <span class="font-extrabold" style="font-family: 'Plus Jakarta Sans', sans-serif;">JA Experiences & Discovery</span>
+          </a>
+          <p class="text-sm text-secondary mb-6 max-w-xs">A subscription-based platform for building, saving, and managing everyday and travel experience plans.</p>
+          <a href="/account/login/?return_to=%2Faccount%2Fdashboard%2F" class="btn btn-primary btn-sm">Start Free Trial</a>
+        </div>
 
-        <section>
-          <h2>Platform</h2>
-          <nav>
-            <a href="/builders/">Experience Builders</a>
-            <a href="/pricing/">Pricing</a>
-            <a href="/about/">About</a>
-            <a href="/destinations/">Destinations</a>
+        <div>
+          <h3 class="font-bold text-sm mb-4">Platform</h3>
+          <nav class="flex flex-col gap-2">
+            <a href="/builders/" class="text-sm text-secondary hover:text-primary transition">Experience Builders</a>
+            <a href="/pricing/" class="text-sm text-secondary hover:text-primary transition">Pricing</a>
+            <a href="/about/" class="text-sm text-secondary hover:text-primary transition">About</a>
+            <a href="/destinations/" class="text-sm text-secondary hover:text-primary transition">Destinations</a>
           </nav>
-        </section>
+        </div>
 
-        <section>
-          <h2>Account</h2>
-          <nav>
-            <a href="/account/login/?return_to=%2Faccount%2Fdashboard%2F">Sign in</a>
-            <a href="/account/login/?return_to=%2Faccount%2Fdashboard%2F">Create account</a>
-            <a href="/ja-group-services-id/">JA Group Services ID</a>
-            <a href="/account/">Customer portal</a>
+        <div>
+          <h3 class="font-bold text-sm mb-4">Account</h3>
+          <nav class="flex flex-col gap-2">
+            <a href="/account/login/?return_to=%2Faccount%2Fdashboard%2F" class="text-sm text-secondary hover:text-primary transition">Sign in</a>
+            <a href="/account/login/?return_to=%2Faccount%2Fdashboard%2F" class="text-sm text-secondary hover:text-primary transition">Create account</a>
+            <a href="/ja-group-services-id/" class="text-sm text-secondary hover:text-primary transition">JA Group Services ID</a>
           </nav>
-        </section>
+        </div>
 
-        <section>
-          <h2>Support</h2>
-          <nav>
-            <a href="/contact/">Contact us</a>
-            <a href="/accessibility-support/">Accessibility</a>
-            <a href="/complaints/">Complaints</a>
+        <div>
+          <h3 class="font-bold text-sm mb-4">Support</h3>
+          <nav class="flex flex-col gap-2">
+            <a href="/contact/" class="text-sm text-secondary hover:text-primary transition">Contact us</a>
+            <a href="/accessibility-support/" class="text-sm text-secondary hover:text-primary transition">Accessibility</a>
+            <a href="/complaints/" class="text-sm text-secondary hover:text-primary transition">Complaints</a>
           </nav>
-        </section>
+        </div>
 
-        <section>
-          <h2>Legal</h2>
-          <nav>
-            <a href="/legal/terms/">Terms of Service</a>
-            <a href="/legal/privacy/">Privacy Notice</a>
-            <a href="/legal/cookies/">Cookie Policy</a>
-            <button type="button" onclick="Cookiebot.renew()">Cookie Preferences</button>
+        <div>
+          <h3 class="font-bold text-sm mb-4">Legal</h3>
+          <nav class="flex flex-col gap-2">
+            <a href="/legal/terms/" class="text-sm text-secondary hover:text-primary transition">Terms of Service</a>
+            <a href="/legal/privacy/" class="text-sm text-secondary hover:text-primary transition">Privacy Notice</a>
+            <a href="/legal/cookies/" class="text-sm text-secondary hover:text-primary transition">Cookie Policy</a>
           </nav>
-        </section>
+        </div>
       </div>
 
-      <div class="site-footer-bottom">
-        <div class="footer-legal">
-          <p>&copy; 2026 JA Group Services Ltd.</p>
-          <p>Company No. 14227845</p>
-          <p>Registered in England &amp; Wales</p>
+      <div class="divider"></div>
+
+      <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+        <div class="flex flex-wrap gap-4 text-xs text-muted">
+          <span>&copy; 2026 JA Group Services Ltd.</span>
+          <span>Company No. 14227845</span>
+          <span>Registered in England & Wales</span>
         </div>
-        <div class="footer-badges">
-          <span class="footer-badge">Secure payments</span>
-          <span class="footer-badge">GDPR compliant</span>
+        <div class="flex items-center gap-3">
+          <span class="badge text-xs">Secure payments</span>
+          <span class="badge text-xs">GDPR compliant</span>
         </div>
       </div>
     </div>
   </div>
 </footer>
-
-<style>
-  .site-footer {
-    background:
-      radial-gradient(circle at top left, hsl(var(--primary) / .06), transparent 35rem),
-      hsl(var(--background));
-    color: hsl(var(--foreground));
-    padding: clamp(3.5rem, 7vw, 5.5rem) 0 2rem;
-    border-top: 1px solid hsl(var(--border));
-  }
-  .site-footer-card {
-    border: 1px solid hsl(var(--glass-border));
-    border-radius: 1.5rem;
-    background: hsl(var(--card) / .85);
-    box-shadow: 0 24px 70px hsl(var(--glass-shadow));
-    padding: clamp(1.5rem, 4vw, 2.5rem);
-  }
-  .site-footer-grid {
-    display: grid;
-    grid-template-columns: 1.4fr repeat(4, 1fr);
-    gap: clamp(1.5rem, 4vw, 2.5rem);
-  }
-  .site-footer-brand {
-    display: inline-flex;
-    margin-bottom: 1rem;
-    font-family: var(--font-heading);
-    font-size: 1.15rem;
-    font-weight: 800;
-    color: hsl(var(--foreground));
-  }
-  .site-footer-brand-block p {
-    max-width: 24rem;
-    line-height: 1.7;
-  }
-  .site-footer-cta {
-    margin-top: 1.5rem;
-  }
-  .site-footer-cta .btn {
-    font-size: .9rem;
-    padding: .7rem 1.25rem;
-    min-height: 2.5rem;
-  }
-  .site-footer h2 {
-    margin: 0 0 1rem;
-    font-size: .75rem;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    color: hsl(var(--foreground));
-    font-weight: 700;
-  }
-  .site-footer p { margin: 0; font-size: .95rem; line-height: 1.65; }
-  .site-footer nav { display: grid; gap: .65rem; }
-  .site-footer a, .site-footer button {
-    width: fit-content;
-    border: 0;
-    background: transparent;
-    color: hsl(var(--muted-foreground));
-    cursor: pointer;
-    font: 600 .92rem/1.3 var(--font-sans);
-    padding: 0;
-    text-align: left;
-    transition: color .2s ease;
-  }
-  .site-footer a:hover, .site-footer button:hover { color: hsl(var(--primary)); }
-  .site-footer-bottom {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    align-items: center;
-    gap: 1rem 1.5rem;
-    border-top: 1px solid hsl(var(--border));
-    margin-top: 2.5rem;
-    padding-top: 1.5rem;
-  }
-  .footer-legal {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem 1.5rem;
-  }
-  .footer-legal p { font-size: .78rem !important; font-weight: 600; }
-  .footer-badges {
-    display: flex;
-    gap: .75rem;
-  }
-  .footer-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: .35rem;
-    border: 1px solid hsl(var(--border));
-    border-radius: 999px;
-    background: hsl(var(--muted) / .40);
-    color: hsl(var(--muted-foreground));
-    font-size: .72rem;
-    font-weight: 600;
-    padding: .4rem .75rem;
-  }
-
-  @media (max-width: 1000px) {
-    .site-footer-grid { grid-template-columns: 1fr 1fr 1fr; }
-    .site-footer-brand-block { grid-column: 1 / -1; }
-  }
-  @media (max-width: 700px) {
-    .site-footer-grid { grid-template-columns: 1fr 1fr; }
-    .site-footer-brand-block { grid-column: 1 / -1; }
-    .site-footer-bottom { flex-direction: column; align-items: flex-start; gap: 1.25rem; }
-    .footer-badges { flex-wrap: wrap; }
-  }
-  @media (max-width: 480px) {
-    .site-footer-grid { grid-template-columns: 1fr; }
-    .site-footer nav { gap: .5rem; }
-    .footer-legal { flex-direction: column; gap: .5rem; }
-  }
-</style>

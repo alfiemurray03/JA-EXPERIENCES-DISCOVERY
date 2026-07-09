@@ -7,29 +7,56 @@
   <title>Administrator Control Centre | JA Experiences &amp; Discovery</title>
   <meta name="description" content="Secure Administrator Control Centre for authorised JA Group Services staff.">
   <link rel="icon" href="/assets/favicons/favicon.svg?v=20260704-1" type="image/svg+xml">
-  <link rel="stylesheet" href="/assets/css/theme.css?v=20260709-airo-1">
+  <link rel="stylesheet" href="/assets/css/glass-theme.css">
+  <link rel="stylesheet" href="/admin/assets/admin-saas-v2.css?v=20260709-glass">
 </head>
 <body>
-  <main class="platform-hero">
-    <div class="container platform-hero-grid">
-      <section>
-        <span class="platform-eyebrow">Restricted admin access</span>
-        <h1>Administrator Control Centre</h1>
-        <p>Access is limited to authorised staff. Use Microsoft Entra ID to continue to the protected JA Experiences &amp; Discovery administration workspace.</p>
-        <div class="platform-actions">
-          <a class="btn btn-primary" href="/admin/login/?return_to=%2Fadmin%2Fdashboard%2F">Sign in with Microsoft Entra ID</a>
-          <a class="btn btn-secondary" href="/signed-out/admin/">Signed-out view</a>
-        </div>
-      </section>
-      <aside class="glass-strong dashboard-preview">
-        <div class="dashboard-topline"><div><strong>Admin portal</strong><p class="muted">Protected operations workspace</p></div><span class="platform-eyebrow status-ok">Entra ID</span></div>
-        <div class="dashboard-list">
-          <div class="dashboard-row"><span>Platform controls</span><b>Protected</b></div>
-          <div class="dashboard-row"><span>Customer operations</span><b>Audited</b></div>
-          <div class="dashboard-row"><span>Builder configuration</span><b>Scaffolded</b></div>
-          <div class="dashboard-row"><span>Access model</span><b>Staff only</b></div>
-        </div>
-      </aside>
+  <main class="min-h-screen flex items-center justify-center p-8">
+    <div class="glass p-8 rounded-3xl max-w-4xl w-full">
+      <div class="grid md:grid-cols-2 gap-8 items-center">
+        <section>
+          <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/20 text-blue-600 text-xs font-semibold mb-4">
+            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+            Restricted admin access
+          </div>
+          <h1 class="text-3xl md:text-4xl font-extrabold mb-4" style="font-family: 'Plus Jakarta Sans', sans-serif;">Administrator Control Centre</h1>
+          <p class="text-secondary mb-6">Access is limited to authorised staff. Use Microsoft Entra ID to continue to the protected JA Experiences &amp; Discovery administration workspace.</p>
+          <div class="flex flex-col sm:flex-row gap-3">
+            <a class="btn btn-primary" href="/admin/login/?return_to=%2Fadmin%2Fdashboard%2F">Sign in with Microsoft Entra ID</a>
+            <a class="btn btn-secondary" href="/signed-out/admin/">Signed-out view</a>
+          </div>
+        </section>
+        <aside class="glass-dark p-6 rounded-2xl">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <strong class="block font-semibold">Admin portal</strong>
+              <span class="text-sm text-muted">Protected operations workspace</span>
+            </div>
+            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/20 text-green-400 text-xs font-semibold">
+              <span class="w-2 h-2 rounded-full bg-green-500"></span>
+              Entra ID
+            </span>
+          </div>
+          <div class="space-y-3">
+            <div class="flex items-center justify-between py-3 border-b border-white/10">
+              <span class="text-sm">Platform controls</span>
+              <span class="text-sm font-semibold text-green-400">Protected</span>
+            </div>
+            <div class="flex items-center justify-between py-3 border-b border-white/10">
+              <span class="text-sm">Customer operations</span>
+              <span class="text-sm font-semibold text-green-400">Audited</span>
+            </div>
+            <div class="flex items-center justify-between py-3 border-b border-white/10">
+              <span class="text-sm">Builder configuration</span>
+              <span class="text-sm font-semibold text-green-400">Scaffolded</span>
+            </div>
+            <div class="flex items-center justify-between py-3">
+              <span class="text-sm">Access model</span>
+              <span class="text-sm font-semibold text-green-400">Staff only</span>
+            </div>
+          </div>
+        </aside>
+      </div>
     </div>
   </main>
 </body>
