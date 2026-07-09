@@ -2,6 +2,17 @@ function json(data, status = 200) {
   return new Response(JSON.stringify(data, null, 2), { status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" } });
 }
 
+function wantsPortalHtml(request, pathname) {
+  return request.method === "GET" && !pathname.startsWith("/account/api/");
+}
+
+function portalAssetRequest(request, pathname) {
+  const url = new URL(request.url);
+  url.pathname = pathname;
+  url.search = "";
+  return new Request(url.toString(), request);
+}
+
 function clean(value, max = 400) { return String(value || "").trim().slice(0, max); }
 function cleanEmail(value) { return clean(value, 254).toLowerCase(); }
 
@@ -30,6 +41,11 @@ async function ensureTables(DB) {
 
 export async function onRequest(context) {
   const { request, env } = context;
+  const url = new URL(request.url);
+  if (wantsPortalHtml(request, url.pathname)) {
+    if (env.ASSETS?.fetch) return env.ASSETS.fetch(portalAssetRequest(request, "/account/saved/index.html"));
+    return Response.redirect(new URL("/account/saved/", request.url), 302);
+  }
   if (!env.DB) return json({ error: "Database unavailable." }, 500);
   const identity = getAccessIdentity(request);
   if (!identity.email) return json({ error: "Not signed in." }, 401);

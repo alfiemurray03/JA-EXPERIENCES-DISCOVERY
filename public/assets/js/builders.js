@@ -133,7 +133,7 @@ function renderBuilders() {
 
 async function loadAuthenticatedBuilders() {
   try {
-    const response = await fetch("/account/builders", {
+    const response = await fetch("/account/api/builders", {
       credentials: "include",
       headers: { Accept: "application/json" },
       cache: "no-store"
@@ -246,7 +246,7 @@ async function activateTrial() {
   button.disabled = true;
   button.textContent = "Activating...";
   try {
-    const response = await fetch("/account/builders", {
+    const response = await fetch("/account/api/builders", {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
@@ -287,7 +287,7 @@ async function saveOutput(event) {
   $("saveBuilderButton").disabled = true;
   $("builderFormStatus").textContent = "Saving finished output...";
   try {
-    const response = await fetch("/account/builders", {
+    const response = await fetch("/account/api/builders", {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json", Accept: "application/json" },

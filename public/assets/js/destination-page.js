@@ -255,7 +255,7 @@ document.getElementById("saveDestinationBtn")?.addEventListener("click", async (
   const root = document.querySelector("#destinationGuide");
   const slug = root?.dataset.slug || "";
   const name = root?.dataset.name || titleCase(slug);
-  const response = await fetch("/account/saved", {
+  const response = await fetch("/account/api/saved", {
     method: "POST",
     credentials: "include",
     headers: { "Accept": "application/json", "Content-Type": "application/json" },
