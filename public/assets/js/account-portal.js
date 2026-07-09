@@ -3,11 +3,10 @@ const portalState = { profile: null, requests: null, pins: null, saved: null, bi
 const navItems = [
   ["/account/dashboard/", "Overview"],
   ["/account/profile/", "My Account"],
-  ["/account/profile/", "My Profile"],
   ["/account/tokens/", "Builder Usage Tokens"],
   ["/account/builders/", "My Builders"],
   ["/account/saved/", "Saved Plans"],
-  ["/account/saved/", "Saved Experiences"],
+  ["/account/saved/?view=experiences", "Saved Experiences"],
   ["/account/bookings/", "Bookings"],
   ["/account/subscription/", "Membership"],
   ["/account/messages/", "Messages"],
@@ -26,10 +25,12 @@ const money = (value, currency = "gbp") => Number.isFinite(Number(value))
   ? new Intl.NumberFormat("en-GB", { style: "currency", currency: String(currency || "gbp").toUpperCase() }).format(Number(value) / 100)
   : "Not available";
 
-function shell(title, lead) {
+function shell(title, lead, options = {}) {
   const root = document.getElementById("portalRoot");
   if (!root) return;
-  const active = (href) => href === window.location.pathname ? "active" : "";
+  const currentPath = window.location.pathname;
+  const currentRoute = `${window.location.pathname}${window.location.search}`;
+  const active = (href) => href.includes("?") ? (href === currentRoute ? "active" : "") : (href === currentPath ? "active" : "");
   root.innerHTML = `
     <div class="portal-shell">
       <aside class="portal-sidebar">
@@ -55,12 +56,12 @@ function shell(title, lead) {
         </nav>
         <div class="portal-sidebar-footer">
           <a class="portal-button-secondary" href="/">Back to JA Experiences &amp; Discovery</a>
-          <a class="portal-button-primary" href="/account/profile/">View profile</a>
+          <a class="portal-button-primary" href="/account/profile/">My Account</a>
           <a class="portal-button-secondary" href="/account/logout">Sign out</a>
         </div>
       </aside>
       <main class="portal-main">
-        <div class="portal-wrap" id="portalContent"></div>
+        <div class="portal-wrap ${options.centered ? "portal-wrap-centered" : ""}" id="portalContent"></div>
       </main>
     </div>`;
 
@@ -72,12 +73,12 @@ function shell(title, lead) {
         <h1>${escapeHtml(title)}</h1>
         <p class="portal-lead">${escapeHtml(lead)}</p>
       </div>
-      <div class="portal-hero-panel">
+      ${options.showStats === false ? "" : `<div class="portal-hero-panel">
         <div class="portal-entry"><span class="portal-label">Account</span><strong id="heroAccount">Loading…</strong></div>
         <div class="portal-entry"><span class="portal-label">Status</span><strong id="heroStatus">Loading…</strong></div>
         <div class="portal-entry"><span class="portal-label">Last sync</span><strong id="heroSync">Loading…</strong></div>
         <div class="portal-entry"><span class="portal-label">Notifications</span><strong id="heroNotifications">Loading…</strong></div>
-      </div>
+      </div>`}
     </section>
     <section id="portalPage"></section>`;
 }
@@ -150,10 +151,14 @@ function updateShared(profile = {}) {
   document.getElementById("sidebarName").textContent = name;
   document.getElementById("sidebarEmail").textContent = email || "Signed in securely";
   document.getElementById("sidebarAvatar").textContent = initials(name);
-  document.getElementById("heroAccount").textContent = name;
-  document.getElementById("heroStatus").textContent = profile.lifetimeAccess ? "Lifetime access" : (profile.customerStatus || "Active session");
-  document.getElementById("heroSync").textContent = fmt(profile.microsoftUpdatedAt || profile.updatedAt || profile.createdAt);
-  document.getElementById("heroNotifications").textContent = `${(portalState.requests?.notifications || []).filter((n) => n.status !== "Read" && n.status !== "Archived").length} unread`;
+  const heroAccount = document.getElementById("heroAccount");
+  const heroStatus = document.getElementById("heroStatus");
+  const heroSync = document.getElementById("heroSync");
+  const heroNotifications = document.getElementById("heroNotifications");
+  if (heroAccount) heroAccount.textContent = name;
+  if (heroStatus) heroStatus.textContent = profile.lifetimeAccess ? "Lifetime access" : (profile.customerStatus || "Active session");
+  if (heroSync) heroSync.textContent = fmt(profile.microsoftUpdatedAt || profile.updatedAt || profile.createdAt);
+  if (heroNotifications) heroNotifications.textContent = `${(portalState.requests?.notifications || []).filter((n) => n.status !== "Read" && n.status !== "Archived").length} unread`;
 }
 
 function timelineItems(profile = {}, requests = {}) {
@@ -231,6 +236,12 @@ document.addEventListener("click", async (event) => {
   }
 
   const button = event.target.closest('[data-action="manage-stripe-billing"]');
+  const cookiePreferences = event.target.closest('[data-action="cookie-preferences"]');
+  if (cookiePreferences) {
+    if (window.Cookiebot?.renew) window.Cookiebot.renew();
+    return;
+  }
+
   if (!button) return;
   button.disabled = true;
   const originalText = button.textContent;
@@ -255,7 +266,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const needsBilling = new Set(["membership", "downloads"]);
   const titleMap = {
     dashboard: ["Overview", "Live overview of your account activity, support and membership."],
-    profile: ["Profile", "Your master customer record, identity and preferences."],
+    profile: ["My Account", "Your account details and membership information"],
     tokens: ["Builder Usage Tokens", "View your token balance, allowance, usage ledger and blocked attempts."],
     builders: ["My Builders", "Saved builder outputs, plans and self-service planning history."],
     settings: ["Settings", "Control preferences, accessibility and session behaviour."],
@@ -270,7 +281,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     notifications: ["Notifications", "System, support and membership notifications."]
   };
 
-  shell(...(titleMap[page] || ["Customer portal", "Secure customer account centre."]));
+  shell(...(titleMap[page] || ["Customer portal", "Secure customer account centre."]), { centered: page === "profile", showStats: page !== "profile" });
 
   try {
     const bootstrap = [loadProfile()];
@@ -340,50 +351,57 @@ async function renderPage(page) {
     const builderData = portalState.builders || {};
     const tokenSummary = builderData.token_summary || {};
     const builderOutputs = Array.isArray(builderData.outputs) ? builderData.outputs : [];
+    const displayName = profile.displayName || profile.verifiedName || profile.microsoftDisplayName || profile.name || "Customer";
+    const email = profile.email || profile.microsoftEmail || profile.microsoftPreferredUsername || "Email not available";
+    const currentPlan = tokenSummary.plan_name || profile.currentPlan || "No active plan detected";
+    const membershipStatus = profile.customerStatus || (tokenSummary.plan_active ? "Active" : "Not active");
     pageRoot.innerHTML = `
-      <section class="portal-grid">
-        <article class="portal-card portal-span-12">
-          <details open>
-            <summary><strong>Personal details</strong></summary>
-            <div class="portal-form-grid">
-              <label class="portal-field"><span class="portal-label">Display name</span><input id="profileDisplayName" value="${escapeHtml(profile.displayName || "")}"></label>
-              <label class="portal-field"><span class="portal-label">Given name</span><input id="profileGivenName" value="${escapeHtml(profile.microsoftGivenName || "")}"></label>
-              <label class="portal-field"><span class="portal-label">Surname</span><input id="profileFamilyName" value="${escapeHtml(profile.microsoftFamilyName || "")}"></label>
-              <label class="portal-field"><span class="portal-label">Phone</span><input id="profilePhone" value="${escapeHtml(profile.phone || "")}"></label>
-              <label class="portal-field"><span class="portal-label">Communication preference</span><select id="profileComms"><option>Email</option><option>Phone</option><option>Email first, phone if urgent</option></select></label>
-              <label class="portal-field"><span class="portal-label">Preferred language</span><input id="profilePreferredLanguage" value="${escapeHtml(profile.microsoftPreferredLanguage || "")}"></label>
-              <label class="portal-field"><span class="portal-label">Mobile phone</span><input id="profileMobilePhone" value="${escapeHtml(profile.microsoftMobilePhone || "")}"></label>
-              <label class="portal-field"><span class="portal-label">Office location</span><input id="profileOfficeLocation" value="${escapeHtml(profile.microsoftOfficeLocation || "")}"></label>
-              <label class="portal-field"><span class="portal-label">City</span><input id="profileCity" value="${escapeHtml(profile.microsoftCity || "")}"></label>
-              <label class="portal-field"><span class="portal-label">State</span><input id="profileState" value="${escapeHtml(profile.microsoftState || "")}"></label>
-              <label class="portal-field"><span class="portal-label">Country</span><input id="profileCountry" value="${escapeHtml(profile.microsoftCountry || "")}"></label>
-              <label class="portal-field"><span class="portal-label">Postal code</span><input id="profilePostalCode" value="${escapeHtml(profile.microsoftPostalCode || "")}"></label>
-              <label class="portal-field"><span class="portal-label">Street address</span><input id="profileStreetAddress" value="${escapeHtml(profile.microsoftStreetAddress || "")}"></label>
+      <section class="portal-account-page">
+        <article class="portal-card portal-account-summary">
+          <div class="portal-account-avatar">${escapeHtml(initials(displayName))}</div>
+          <div class="portal-account-summary-copy">
+            <h2>${escapeHtml(displayName)}</h2>
+            <p>${escapeHtml(email)}</p>
+            <div class="portal-badge-row">
+              <span class="portal-badge">${escapeHtml(profile.verificationStatus || "Verified")}</span>
+              ${profile.lifetimeAccess ? '<span class="portal-badge">Lifetime access</span>' : ""}
+              <span class="portal-badge">${escapeHtml(currentPlan)}</span>
             </div>
-          </details>
-        </article>
-        <article class="portal-card portal-span-6">
-          <h2>Microsoft Entra identity</h2>
-            <div class="portal-stack">
-              <div class="portal-entry"><span class="portal-label">Tenant ID</span><strong>${escapeHtml(profile.microsoftTenantId || "Not provided")}</strong></div>
-              <div class="portal-entry"><span class="portal-label">Object ID</span><strong>${escapeHtml(profile.microsoftObjectId || "Not provided")}</strong></div>
-              <label class="portal-field"><span class="portal-label">Preferred username</span><input value="${escapeHtml(profile.microsoftPreferredUsername || "")}" disabled><small>Managed by Microsoft Entra</small></label>
-              <div class="portal-entry"><span class="portal-label">Last sync</span><strong>${escapeHtml(fmt(profile.microsoftUpdatedAt))}</strong></div>
-              <div class="portal-entry"><span class="portal-label">Graph sync</span><strong>${profile.graphSyncSuccess ? "Success" : "Not confirmed"}</strong></div>
-              <div class="portal-entry"><span class="portal-label">Last Graph sync</span><strong>${escapeHtml(fmt(profile.graphSyncLastAt || profile.microsoftUpdatedAt))}</strong></div>
-              <div class="portal-entry"><span class="portal-label">Last Graph HTTP status</span><strong>${escapeHtml(profile.graphSyncLastHttpStatus ? String(profile.graphSyncLastHttpStatus) : "Not available")}</strong></div>
-              <div class="portal-entry"><span class="portal-label">Last Graph failure</span><strong>${escapeHtml(profile.graphSyncFailureReason || "None")}</strong></div>
-            </div>
-          </article>
-        <article class="portal-card portal-span-6">
-          <h2>Account metadata</h2>
-          <div class="portal-stack">
-            <div class="portal-entry"><span class="portal-label">Current plan</span><strong>${escapeHtml(profile.currentPlan || "Standard")}</strong></div>
-            <div class="portal-entry"><span class="portal-label">Stripe billing</span><strong>${profile.stripeLinked ? "Linked" : "Not linked"}</strong></div>
-            <div class="portal-entry"><span class="portal-label">Verification</span><strong>${escapeHtml(profile.verificationStatus || "Not provided")}</strong></div>
           </div>
         </article>
-        <article class="portal-card portal-span-12">
+
+        <article class="portal-card">
+          <div class="portal-card-heading">
+            <div>
+              <h2>Account Details</h2>
+              <p class="portal-card-description">Your primary customer account information.</p>
+            </div>
+            <a class="portal-button-secondary" href="#editAccountDetails">Edit</a>
+          </div>
+          <div class="portal-stack">
+            <div class="portal-list-row"><span class="portal-label">Full name</span><strong>${escapeHtml(displayName)}</strong></div>
+            <div class="portal-list-row"><span class="portal-label">Email address</span><strong>${escapeHtml(email)}</strong></div>
+            <div class="portal-list-row"><span class="portal-label">Account type</span><strong>${escapeHtml(profile.accountType || "Customer")}</strong></div>
+            <div class="portal-list-row"><span class="portal-label">Member since</span><strong>${escapeHtml(fmt(profile.createdAt))}</strong></div>
+          </div>
+        </article>
+
+        <article class="portal-card">
+          <div class="portal-card-heading">
+            <div>
+              <h2>Current Plan / Membership</h2>
+              <p class="portal-card-description">Membership and billing status for JA Experiences &amp; Discovery.</p>
+            </div>
+            <button class="portal-button-secondary" type="button" data-action="manage-stripe-billing">Manage</button>
+          </div>
+          <div class="portal-stack">
+            <div class="portal-list-row"><span class="portal-label">Current plan</span><strong>${escapeHtml(currentPlan)}</strong></div>
+            <div class="portal-list-row"><span class="portal-label">Membership status</span><strong>${escapeHtml(membershipStatus)}</strong></div>
+            <div class="portal-list-row"><span class="portal-label">Billing status</span><strong>${profile.stripeLinked ? "Stripe linked" : "Not linked"}</strong></div>
+          </div>
+        </article>
+
+        <article class="portal-card">
           <h2>Builder Usage Tokens</h2>
           <div class="portal-grid mini">
             <div class="portal-entry"><span class="portal-label">Remaining tokens</span><strong>${escapeHtml(String(tokenSummary.remaining_tokens ?? 0))}</strong></div>
@@ -395,26 +413,60 @@ async function renderPage(page) {
           </div>
           <p class="portal-note inline">${escapeHtml(tokenSummary.deduction_rule || "Builder Usage Tokens are deducted only when a finished builder output is saved successfully. Opening, selecting, typing and previewing do not deduct tokens.")}</p>
           <div class="portal-form-actions">
+            <a class="portal-button-secondary" href="/account/tokens/">View token ledger</a>
             <a class="portal-button" href="/builders/">Open Experience Builders</a>
-            <a class="portal-button secondary" href="/account/tokens/">View token ledger</a>
-          </div>
-          <div class="portal-stack">
-            ${builderOutputs.slice(0, 4).map((output) => `
-              <div class="portal-entry"><strong>${escapeHtml(output.title || output.builder_name || "Builder output")}</strong><small>${escapeHtml(output.builder_name || "Experience Builder")} · ${escapeHtml(fmt(output.created_at))}</small></div>
-            `).join("") || '<div class="portal-note inline">No saved builder outputs yet.</div>'}
           </div>
         </article>
-        <article class="portal-card portal-span-12">
-          <h2>Privacy and consent</h2>
-          <div class="portal-form-grid">
-            <label class="portal-field"><span class="portal-label">Support notes</span><textarea id="profileSupportNotes">${escapeHtml(profile.supportNotes || "")}</textarea></label>
-            <div class="portal-stack">
-              <div class="portal-entry"><span class="portal-label">Microsoft display name</span><strong>${escapeHtml(profile.microsoftDisplayName || "Not provided")}</strong></div>
-              <div class="portal-entry"><span class="portal-label">Country</span><strong>${escapeHtml(profile.microsoftCountry || "Not provided")}</strong></div>
-              <div class="portal-entry"><span class="portal-label">Job title</span><strong>${escapeHtml(profile.microsoftJobTitle || "Not provided")}</strong></div>
-              <div class="portal-entry"><span class="portal-label">Graph sync status</span><strong>${profile.graphSyncSuccess ? "Latest values confirmed" : "Last sync needs attention"}</strong></div>
+
+        <article class="portal-card">
+          <div class="portal-card-heading">
+            <div>
+              <h2>Security and JA Group Services ID</h2>
+              <p class="portal-card-description">Your sign-in is protected by Microsoft Entra External ID.</p>
+            </div>
+            <a class="portal-button-secondary" href="/account/security/">Security</a>
+          </div>
+          <div class="portal-stack">
+            <div class="portal-list-row"><span class="portal-label">Connection</span><strong>${profile.microsoftEmail || profile.microsoftObjectId ? "Connected" : "Not confirmed"}</strong></div>
+            <div class="portal-list-row"><span class="portal-label">Last sync</span><strong>${escapeHtml(fmt(profile.microsoftUpdatedAt || profile.updatedAt))}</strong></div>
+            <div class="portal-list-row"><span class="portal-label">Verification status</span><strong>${escapeHtml(profile.verificationStatus || "Not provided")}</strong></div>
+          </div>
+        </article>
+
+        <article class="portal-card">
+          <div class="portal-card-heading">
+            <div>
+              <h2>Privacy and data</h2>
+              <p class="portal-card-description">Manage privacy requests and consent preferences.</p>
             </div>
           </div>
+          <div class="portal-stack">
+            <div class="portal-list-row"><span class="portal-label">Data protection</span><a class="portal-button-secondary" href="/account/data-protection/">Open</a></div>
+            <div class="portal-list-row"><span class="portal-label">Cookie Preferences</span><button class="portal-button-secondary" type="button" data-action="cookie-preferences">Manage</button></div>
+            <div class="portal-list-row"><span class="portal-label">Support notes</span><strong>${escapeHtml(profile.supportNotes || "No support notes saved")}</strong></div>
+          </div>
+        </article>
+
+        <article class="portal-card" id="editAccountDetails">
+          <details>
+            <summary><strong>Edit account details</strong></summary>
+            <div class="portal-form-grid">
+              <label class="portal-field"><span class="portal-label">Display name</span><input class="portal-input" id="profileDisplayName" value="${escapeHtml(profile.displayName || "")}"></label>
+              <label class="portal-field"><span class="portal-label">Given name</span><input class="portal-input" id="profileGivenName" value="${escapeHtml(profile.microsoftGivenName || "")}"></label>
+              <label class="portal-field"><span class="portal-label">Surname</span><input class="portal-input" id="profileFamilyName" value="${escapeHtml(profile.microsoftFamilyName || "")}"></label>
+              <label class="portal-field"><span class="portal-label">Phone</span><input class="portal-input" id="profilePhone" value="${escapeHtml(profile.phone || "")}"></label>
+              <label class="portal-field"><span class="portal-label">Communication preference</span><select class="portal-select" id="profileComms"><option>Email</option><option>Phone</option><option>Email first, phone if urgent</option></select></label>
+              <label class="portal-field"><span class="portal-label">Preferred language</span><input class="portal-input" id="profilePreferredLanguage" value="${escapeHtml(profile.microsoftPreferredLanguage || "")}"></label>
+              <label class="portal-field"><span class="portal-label">Mobile phone</span><input class="portal-input" id="profileMobilePhone" value="${escapeHtml(profile.microsoftMobilePhone || "")}"></label>
+              <label class="portal-field"><span class="portal-label">Office location</span><input class="portal-input" id="profileOfficeLocation" value="${escapeHtml(profile.microsoftOfficeLocation || "")}"></label>
+              <label class="portal-field"><span class="portal-label">City</span><input class="portal-input" id="profileCity" value="${escapeHtml(profile.microsoftCity || "")}"></label>
+              <label class="portal-field"><span class="portal-label">State</span><input class="portal-input" id="profileState" value="${escapeHtml(profile.microsoftState || "")}"></label>
+              <label class="portal-field"><span class="portal-label">Country</span><input class="portal-input" id="profileCountry" value="${escapeHtml(profile.microsoftCountry || "")}"></label>
+              <label class="portal-field"><span class="portal-label">Postal code</span><input class="portal-input" id="profilePostalCode" value="${escapeHtml(profile.microsoftPostalCode || "")}"></label>
+              <label class="portal-field"><span class="portal-label">Street address</span><input class="portal-input" id="profileStreetAddress" value="${escapeHtml(profile.microsoftStreetAddress || "")}"></label>
+              <label class="portal-field"><span class="portal-label">Support notes</span><textarea class="portal-textarea" id="profileSupportNotes">${escapeHtml(profile.supportNotes || "")}</textarea></label>
+            </div>
+          </details>
           <div class="portal-form-actions">
             <button class="portal-button" type="button" id="saveProfileBtn">Save changes</button>
           </div>

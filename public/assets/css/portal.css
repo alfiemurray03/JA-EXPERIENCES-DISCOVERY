@@ -177,6 +177,10 @@ a { color: inherit; }
   margin: 0 auto;
 }
 
+.portal-wrap-centered {
+  width: min(820px, 100%);
+}
+
 .portal-page-header,
 .portal-hero {
   display: flex;
@@ -250,6 +254,67 @@ a { color: inherit; }
 
 .portal-stack { gap: 10px; }
 .portal-action-row { gap: 10px; }
+
+.portal-account-page {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.portal-account-summary {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.portal-account-avatar {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #dbeafe;
+  color: #1e40af;
+  font-size: 1.3rem;
+  font-weight: 800;
+}
+
+.portal-account-summary-copy {
+  min-width: 0;
+}
+
+.portal-account-summary-copy h2 {
+  margin: 0 0 4px;
+  font-family: "Plus Jakarta Sans", var(--font-sans);
+  font-size: 1.35rem;
+  line-height: 1.25;
+}
+
+.portal-account-summary-copy p {
+  margin: 0 0 12px;
+  color: var(--portal-muted);
+  overflow-wrap: anywhere;
+}
+
+.portal-badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.portal-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 5px 9px;
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
 
 .portal-entry,
 .portal-list-row {
@@ -543,6 +608,10 @@ details summary { cursor: pointer; margin-bottom: 16px; }
   .portal-card-header,
   .portal-entry,
   .portal-list-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .portal-account-summary {
     align-items: flex-start;
     flex-direction: column;
   }
