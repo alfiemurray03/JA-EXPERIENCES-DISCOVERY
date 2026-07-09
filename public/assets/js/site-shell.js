@@ -5,6 +5,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (main && !main.id) main.id = "main";
 
+  function escapeHtml(value) {
+    return String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char]));
+  }
+
   const themeLink = document.querySelector('link[href^="/assets/css/theme.css"]') || document.createElement("link");
   if (!themeLink.parentNode) {
     themeLink.rel = "stylesheet";
@@ -108,6 +112,48 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
+  function nativeIdentity() {
+    const meta = document.querySelector('meta[name="ja-native-identity"]');
+    if (!meta?.content) return null;
+    try {
+      return JSON.parse(meta.content);
+    } catch {
+      return null;
+    }
+  }
+
+  function setupAccountDropdown() {
+    const identity = nativeIdentity();
+    const actions = document.querySelector(".site-nav-actions");
+    if (!identity?.email || !actions) return;
+    const label = identity.name || identity.email;
+    actions.innerHTML = `
+      <div class="site-account-menu">
+        <button class="site-button primary" type="button" id="siteAccountMenuButton" aria-expanded="false" aria-controls="siteAccountMenu">
+          ${escapeHtml(label)}
+        </button>
+        <div class="site-account-dropdown" id="siteAccountMenu" hidden>
+          <a href="/account/profile/">Profile</a>
+          <a href="/account/dashboard/">Account</a>
+          <a href="/builders/">Builders dashboard</a>
+          <a href="/account/logout">Sign out</a>
+        </div>
+      </div>
+    `;
+    const button = document.querySelector("#siteAccountMenuButton");
+    const menu = document.querySelector("#siteAccountMenu");
+    button?.addEventListener("click", () => {
+      const next = menu.hidden;
+      menu.hidden = !next;
+      button.setAttribute("aria-expanded", String(next));
+    });
+    document.addEventListener("click", (event) => {
+      if (event.target.closest(".site-account-menu")) return;
+      if (menu) menu.hidden = true;
+      button?.setAttribute("aria-expanded", "false");
+    });
+  }
+
   function updateActiveLinks() {
     const page = document.body.dataset.page;
     if (!page) return;
@@ -118,12 +164,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   await Promise.all([
-    loadPartial(headerTarget, "/assets/includes/header.html?v=20260709-2"),
-    loadPartial(footerTarget, "/assets/includes/footer.html?v=20260709-2")
+    loadPartial(headerTarget, "/assets/includes/header.html?v=20260709-auth-1"),
+    loadPartial(footerTarget, "/assets/includes/footer.html?v=20260709-auth-1")
   ]);
 
   setupThemeToggle();
   setupMobileMenu();
+  setupAccountDropdown();
   updateActiveLinks();
 
   // Load legacy scripts if needed

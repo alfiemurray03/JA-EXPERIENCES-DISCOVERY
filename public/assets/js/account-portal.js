@@ -239,7 +239,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const needsRequests = new Set(["dashboard", "membership", "support", "messages", "data", "bookings", "saved"]);
   const needsPins = page === "security";
   const needsSaved = new Set(["dashboard", "membership", "bookings", "saved", "builders"]);
-  const needsBuilders = new Set(["dashboard", "tokens", "builders", "membership"]);
+  const needsBuilders = new Set(["dashboard", "profile", "tokens", "builders", "membership"]);
   const needsBilling = new Set(["membership", "downloads"]);
   const titleMap = {
     dashboard: ["Overview", "Live overview of your account activity, support and membership."],
@@ -325,6 +325,9 @@ async function renderPage(page) {
   }
 
   if (page === "profile") {
+    const builderData = portalState.builders || {};
+    const tokenSummary = builderData.token_summary || {};
+    const builderOutputs = Array.isArray(builderData.outputs) ? builderData.outputs : [];
     pageRoot.innerHTML = `
       <section class="portal-grid">
         <article class="portal-card portal-span-12">
@@ -366,6 +369,27 @@ async function renderPage(page) {
             <div class="portal-entry"><span class="portal-label">Current plan</span><strong>${escapeHtml(profile.currentPlan || "Standard")}</strong></div>
             <div class="portal-entry"><span class="portal-label">Stripe billing</span><strong>${profile.stripeLinked ? "Linked" : "Not linked"}</strong></div>
             <div class="portal-entry"><span class="portal-label">Verification</span><strong>${escapeHtml(profile.verificationStatus || "Not provided")}</strong></div>
+          </div>
+        </article>
+        <article class="portal-card portal-span-12">
+          <h2>Builder Usage Tokens</h2>
+          <div class="portal-grid mini">
+            <div class="portal-entry"><span class="portal-label">Remaining tokens</span><strong>${escapeHtml(String(tokenSummary.remaining_tokens ?? 0))}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Used tokens</span><strong>${escapeHtml(String(tokenSummary.used_tokens ?? 0))}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Trial tokens</span><strong>${escapeHtml(String(tokenSummary.trial_tokens ?? 0))}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Purchased tokens</span><strong>${escapeHtml(String(tokenSummary.purchased_addon_tokens ?? 0))}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Trial status</span><strong>${tokenSummary.trial_active ? "Active" : tokenSummary.trial ? "Used/expired" : "Not activated"}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Saved outputs</span><strong>${escapeHtml(String(builderOutputs.length))}</strong></div>
+          </div>
+          <p class="portal-note inline">${escapeHtml(tokenSummary.deduction_rule || "Builder Usage Tokens are deducted only when a finished builder output is saved successfully. Opening, selecting, typing and previewing do not deduct tokens.")}</p>
+          <div class="portal-form-actions">
+            <a class="portal-button" href="/builders/">Open Experience Builders</a>
+            <a class="portal-button secondary" href="/account/tokens/">View token ledger</a>
+          </div>
+          <div class="portal-stack">
+            ${builderOutputs.slice(0, 4).map((output) => `
+              <div class="portal-entry"><strong>${escapeHtml(output.title || output.builder_name || "Builder output")}</strong><small>${escapeHtml(output.builder_name || "Experience Builder")} · ${escapeHtml(fmt(output.created_at))}</small></div>
+            `).join("") || '<div class="portal-note inline">No saved builder outputs yet.</div>'}
           </div>
         </article>
         <article class="portal-card portal-span-12">

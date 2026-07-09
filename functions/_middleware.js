@@ -331,6 +331,33 @@ function requestIdentitySnapshot(request) {
   };
 }
 
+function hasFileExtension(path) {
+  return /\/[^/]+\.[a-z0-9]+$/i.test(path);
+}
+
+function isPublicDocumentPath(path) {
+  if (path === "/" || path === "/index.html") return true;
+  if (path === "/ja-group-services-id" || path === "/ja-group-services-id/") return true;
+  if (path === "/legal/terms" || path === "/legal/terms/") return true;
+  if (path === "/legal/privacy" || path === "/legal/privacy/") return true;
+  if (path === "/legal/cookies" || path === "/legal/cookies/") return true;
+  if (path === "/account" || path === "/account/") return true;
+  if (path === "/admin" || path === "/admin/") return true;
+  if (path === "/signed-out" || path.startsWith("/signed-out/")) return true;
+  return false;
+}
+
+function shouldGateCustomerDocument(request, path, publicAuthPath) {
+  if (publicAuthPath || isPublicDocumentPath(path)) return false;
+  if (path.startsWith("/admin/") || path === "/admin/dashboard") return false;
+  if (path.startsWith("/assets/") || path.startsWith("/api/")) return false;
+  if (path === "/favicon.ico" || path === "/robots.txt" || path === "/sitemap.xml") return false;
+  if (hasFileExtension(path)) return false;
+  const accept = (request.headers.get("Accept") || "").toLowerCase();
+  const destination = (request.headers.get("Sec-Fetch-Dest") || "").toLowerCase();
+  return destination === "document" || accept.includes("text/html") || accept.includes("*/*");
+}
+
 async function getAuthenticatedAdminIdentity(request, env) {
   try {
     const identity = await getNativeSession(request, env, "admin");
@@ -370,7 +397,7 @@ export async function onRequest(context) {
   ]).has(path);
   const realm = !rootLanding && (path.startsWith("/admin/") || path === "/admin/dashboard")
     ? "admin"
-    : !rootLanding && (path.startsWith("/account/") || path === "/account/dashboard")
+    : !rootLanding && (path.startsWith("/account/") || path === "/account/dashboard" || shouldGateCustomerDocument(request, path, publicAuthPath))
       ? "customer"
       : "";
 

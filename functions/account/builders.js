@@ -88,15 +88,33 @@ async function tokenBalance(DB, email) {
   return Number(row?.balance || 0);
 }
 
+async function activeSubscription(DB, email) {
+  return await first(DB, `
+    SELECT plan_name, status, current_period_end, trial_end
+    FROM stripe_subscriptions
+    WHERE lower(customer_email) = lower(?)
+      AND lower(COALESCE(status, '')) IN ('active', 'trialing')
+      AND (
+        current_period_end IS NULL
+        OR current_period_end = ''
+        OR datetime(current_period_end) > datetime('now')
+      )
+    ORDER BY COALESCE(current_period_end, trial_end, subscription_start, updated_at) DESC
+    LIMIT 1
+  `, [email]).catch(() => null);
+}
+
 async function tokenSummary(DB, email) {
-  const [trial, balanceRow, usedRow, addOnRow] = await Promise.all([
+  const [trial, balanceRow, usedRow, addOnRow, subscription] = await Promise.all([
     first(DB, `SELECT * FROM trial_access_tokens WHERE lower(email) = lower(?)`, [email]),
     first(DB, `SELECT COALESCE(SUM(amount), 0) AS balance FROM builder_token_ledger WHERE lower(email) = lower(?)`, [email]),
     first(DB, `SELECT ABS(COALESCE(SUM(amount), 0)) AS used FROM builder_token_ledger WHERE lower(email) = lower(?) AND amount < 0 AND source = 'builder_usage'`, [email]),
-    first(DB, `SELECT COALESCE(SUM(amount), 0) AS purchased FROM builder_token_ledger WHERE lower(email) = lower(?) AND source = 'add_on_purchase'`, [email])
+    first(DB, `SELECT COALESCE(SUM(amount), 0) AS purchased FROM builder_token_ledger WHERE lower(email) = lower(?) AND source = 'add_on_purchase'`, [email]),
+    activeSubscription(DB, email)
   ]);
   const now = Date.now();
   const activeTrial = trial && trial.status === "Active" && new Date(trial.expires_at).getTime() > now;
+  const activePlan = Boolean(subscription);
   return {
     wording: "Builder Usage Tokens",
     remaining_tokens: Number(balanceRow?.balance || 0),
@@ -107,7 +125,10 @@ async function tokenSummary(DB, email) {
     token_reset_at: "",
     trial: trial || null,
     trial_active: Boolean(activeTrial),
-    plan_name: activeTrial ? "14-Day Free Trial" : "No active self-service plan detected",
+    subscription: subscription || null,
+    subscription_active: activePlan,
+    plan_active: Boolean(activeTrial || activePlan),
+    plan_name: activeTrial ? "14-Day Free Trial" : activePlan ? (subscription.plan_name || "Active membership") : "No active self-service plan detected",
     deduction_rule: "Tokens are deducted only when a finished builder output is created, saved, generated or completed. Opening or viewing a builder does not deduct tokens."
   };
 }
@@ -189,7 +210,7 @@ export async function onRequest(context) {
       return json({ error: "This builder is not currently available." }, 403);
     }
     const summary = await tokenSummary(env.DB, identity.email);
-    if (!summary.trial_active) {
+    if (!summary.plan_active) {
       await blockAttempt(env.DB, identity.email, builder, "No active paid subscription or active trial.", summary.remaining_tokens, Number(builder.token_cost || 0));
       return json({ error: "An active trial or paid subscription is required before completing this builder.", token_summary: summary }, 402);
     }

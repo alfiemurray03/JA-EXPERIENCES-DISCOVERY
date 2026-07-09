@@ -16,16 +16,14 @@
       <nav class="site-nav" id="siteNav" aria-label="Primary navigation">
         <div class="site-nav-links">
           <a href="/" data-nav-page="home">Home</a>
-          <a href="/builders/" data-nav-page="builders">Builders</a>
-          <a href="/destinations/" data-nav-page="destinations">Destinations</a>
-          <a href="/experiences/" data-nav-page="experiences">Experiences</a>
-          <a href="/pricing/" data-nav-page="pricing">Pricing</a>
-          <a href="/contact/" data-nav-page="contact">Contact</a>
-          <a href="/status/" data-nav-page="status">Status</a>
+          <a href="/ja-group-services-id/" data-nav-page="ja-group-services-id">JA Group Services ID</a>
+          <a href="/legal/terms/" data-nav-page="terms">Terms</a>
+          <a href="/legal/privacy/" data-nav-page="privacy">Privacy</a>
+          <a href="/legal/cookies/" data-nav-page="cookies">Cookies</a>
         </div>
         <div class="site-nav-actions">
           <a class="site-button ghost" href="/account/login/?return_to=%2Faccount%2Fdashboard%2F">Sign in</a>
-          <a class="site-button primary" href="/pricing/#trial">Create account</a>
+          <a class="site-button primary" href="/account/login/?return_to=%2Faccount%2Fdashboard%2F">Create account</a>
         </div>
       </nav>
     </div>
@@ -111,6 +109,25 @@
     box-shadow: 0 12px 24px hsl(var(--primary) / .18);
   }
   .site-button.primary:hover { background: hsl(221 83% 47%); color: hsl(var(--primary-foreground)); }
+  .site-account-menu { position: relative; }
+  .site-account-dropdown {
+    position: absolute;
+    right: 0;
+    top: calc(100% + .45rem);
+    z-index: 60;
+    min-width: 13rem;
+    border: 1px solid hsl(var(--border));
+    border-radius: .9rem;
+    background: hsl(var(--card));
+    box-shadow: var(--shadow-xl);
+    padding: .45rem;
+  }
+  .site-account-dropdown a {
+    display: block;
+    width: 100%;
+    border-radius: .65rem;
+    padding: .72rem .8rem;
+  }
   .menu-toggle {
     display: none;
     width: 2.75rem;
@@ -152,6 +169,7 @@
     .site-nav a { width: 100%; padding: .9rem .95rem; }
     .site-nav-actions { border-top: 1px solid hsl(var(--border)); margin-top: .35rem; padding-top: .65rem; }
     .site-button { min-height: 2.85rem; }
+    .site-account-dropdown { position: static; margin-top: .4rem; box-shadow: none; }
   }
   @media (max-width: 520px) {
     .site-brand { min-width: 0; }

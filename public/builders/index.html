@@ -3,165 +3,122 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Experience Builders and Builder Usage Tokens | JA Experiences &amp; Discovery</title>
-  <meta name="description" content="Experience Builders, Builder Usage Tokens and self-service planning categories for JA Experiences & Discovery.">
+  <title>Experience Builders | JA Experiences &amp; Discovery</title>
+  <meta name="description" content="Choose guided Experience Builders, preview outputs, and spend Builder Usage Tokens only when a finished output is saved.">
   <link rel="stylesheet" href="/assets/css/theme.css?v=20260709-airo-1">
+  <link rel="stylesheet" href="/assets/css/builders.css?v=20260709-doc-hub-1">
 </head>
 <body data-page="builders">
   <div id="siteShellHeader"></div>
-  <main id="main" class="platform-main">
-    <section class="platform-hero">
-      <div class="container platform-hero-grid">
+  <main id="main" class="builder-app-shell" aria-live="polite">
+    <section class="builder-page">
+      <div class="builder-page-head">
         <div>
-          <span class="platform-eyebrow">Experience Builders</span>
-          <h1>Use guided builders and spend tokens only when you save a finished output.</h1>
-          <p>Builder Usage Tokens are for self-service builder tools. Tokens are deducted only when a finished builder output is created, saved, generated or completed. Opening or viewing a builder does not deduct tokens.</p>
-          <div class="platform-actions"><a class="btn btn-primary" href="#builderApp">Open builders</a><button class="btn btn-secondary" type="button" id="claimTrialButton">Claim 14-Day Free Trial</button></div>
+          <p class="builder-kicker">Experience Builders</p>
+          <h1>Experience Builders</h1>
+          <p>Choose a guided builder, preview your output, and only spend Builder Usage Tokens when you save.</p>
         </div>
-        <aside class="glass-strong dashboard-preview">
-          <div class="dashboard-topline"><div><strong>Token balance</strong><p class="muted" id="builderTokenStatus">Sign in to load tokens</p></div><span class="platform-eyebrow status-info">Self-service</span></div>
-          <div class="dashboard-metrics"><div class="metric"><strong id="tokensRemaining">-</strong><span>Remaining</span></div><div class="metric"><strong id="tokensUsed">-</strong><span>Used</span></div><div class="metric"><strong id="trialStatus">-</strong><span>Trial</span></div></div>
-        </aside>
+        <div class="builder-head-actions">
+          <a class="builder-button builder-button-outline" href="/account/tokens/">View tokens</a>
+          <a class="builder-button builder-button-outline" id="createAccountTrialLink" href="/account/login/?return_to=%2Fbuilders%2F%3Fclaim_trial%3D1">Create account / start trial</a>
+          <button class="builder-button" type="button" id="claimTrialButton">Claim 14-Day Free Trial</button>
+        </div>
       </div>
-    </section>
 
-    <section class="platform-section soft-band" id="builderApp">
-      <div class="container">
-        <div class="section-heading"><span class="platform-eyebrow">Available builders</span><h2>Choose a builder to preview and complete.</h2><p>Completion checks your plan/trial and Builder Usage Token balance before saving.</p></div>
-        <div id="builderStatus" class="platform-card">Loading builders...</div>
-        <div id="builderGrid" class="grid grid-3"></div>
+      <div id="claimIntentNotice" class="builder-alert builder-alert-info" hidden>
+        Sign in completed. Claim your 14-day trial when you are ready.
       </div>
-    </section>
 
-    <section class="platform-section">
-      <div class="container grid grid-2">
-        <form class="platform-card" id="builderForm">
-          <span class="platform-eyebrow">Builder form</span>
-          <h2 id="selectedBuilderName">Select a builder</h2>
-          <p id="selectedBuilderDescription">Opening a builder does not deduct tokens.</p>
-          <input type="hidden" id="selectedBuilderId">
-          <p><label>Output title<input id="builderTitle" placeholder="Example: Saturday family day out"></label></p>
-          <p><label>Main idea or destination<input id="builderIdea" placeholder="Where, what or who is this for?"></label></p>
-          <p><label>Dates or timings<input id="builderTiming" placeholder="Dates, time window, duration"></label></p>
-          <p><label>Budget or token notes<input id="builderBudget" placeholder="Budget, priorities or limits"></label></p>
-          <p><label>Accessibility/support notes<textarea id="builderSupport" rows="4" placeholder="Optional support, access or suitability notes"></textarea></label></p>
-          <div class="platform-actions"><button class="btn btn-secondary" type="button" id="previewBuilderButton">Preview output</button><button class="btn btn-primary" type="submit">Save finished output</button></div>
-          <p class="muted" id="builderFormStatus"></p>
-        </form>
-        <article class="platform-card">
-          <span class="platform-eyebrow">Preview</span>
-          <h2>Finished output preview</h2>
-          <div id="builderPreview"><p class="muted">Select a builder and preview your output before saving. Tokens are not deducted for previewing.</p></div>
+      <section class="builder-stats" aria-label="Builder summary">
+        <article class="builder-stat-card">
+          <span>Available builders</span>
+          <strong id="availableBuilderCount">0</strong>
         </article>
+        <article class="builder-stat-card">
+          <span>Remaining tokens</span>
+          <strong id="tokensRemaining">Sign in</strong>
+        </article>
+        <article class="builder-stat-card">
+          <span>Trial status</span>
+          <strong id="trialStatus">Not signed in</strong>
+        </article>
+        <article class="builder-stat-card">
+          <span>Saved outputs</span>
+          <strong id="savedOutputCount">Sign in</strong>
+        </article>
+      </section>
+
+      <div id="builderStatus" class="builder-alert" hidden></div>
+
+      <section class="builder-toolbar" aria-label="Builder filters">
+        <div>
+          <p class="builder-kicker">Builder catalogue</p>
+          <h2>Choose a builder</h2>
+        </div>
+        <div class="builder-tabs" id="builderTabs" role="tablist" aria-label="Builder categories">
+          <button class="builder-tab is-active" type="button" data-filter="all">All</button>
+          <button class="builder-tab" type="button" data-filter="Everyday">Everyday</button>
+          <button class="builder-tab" type="button" data-filter="Travel">Travel</button>
+          <button class="builder-tab" type="button" data-filter="Accessibility/support">Accessibility/support</button>
+          <button class="builder-tab" type="button" data-filter="Organisation">Organisation</button>
+        </div>
+      </section>
+
+      <div id="builderSkeleton" class="builder-grid">
+        <div class="builder-skeleton-card"></div>
+        <div class="builder-skeleton-card"></div>
+        <div class="builder-skeleton-card"></div>
       </div>
+      <section id="builderGrid" class="builder-grid" aria-label="Available Experience Builders"></section>
+
+      <section id="builderEditor" class="builder-workspace" aria-label="Builder editor">
+        <aside class="builder-editor-panel">
+          <div class="builder-editor-head">
+            <button class="builder-button builder-button-ghost" type="button" id="backToBuildersButton">Back to builders</button>
+            <span class="builder-badge" id="selectedBuilderCost">No builder selected</span>
+          </div>
+          <div class="builder-selected-card">
+            <div class="builder-icon" id="selectedBuilderIcon">EB</div>
+            <div>
+              <h2 id="selectedBuilderName">Select a builder</h2>
+              <p id="selectedBuilderDescription">Opening a builder does not deduct tokens.</p>
+            </div>
+          </div>
+          <form id="builderForm" class="builder-form">
+            <input type="hidden" id="selectedBuilderId">
+            <label>Title<input id="builderTitle" autocomplete="off" placeholder="Example: Saturday family day out"></label>
+            <label>Main idea or destination<input id="builderIdea" autocomplete="off" placeholder="Where, what or who is this for?"></label>
+            <label>Dates or timings<input id="builderTiming" autocomplete="off" placeholder="Dates, time window, duration"></label>
+            <label>Budget<input id="builderBudget" autocomplete="off" placeholder="Budget, priorities or limits"></label>
+            <label>Accessibility/support notes<textarea id="builderSupport" rows="4" placeholder="Optional support, access or suitability notes"></textarea></label>
+            <label>Extra notes<textarea id="builderNotes" rows="4" placeholder="Anything else the finished output should consider"></textarea></label>
+            <div class="builder-form-actions">
+              <button class="builder-button builder-button-outline" type="button" id="previewBuilderButton">Preview output</button>
+              <button class="builder-button" type="submit" id="saveBuilderButton">Save finished output</button>
+            </div>
+            <p class="builder-form-status" id="builderFormStatus">Previewing does not deduct tokens.</p>
+          </form>
+        </aside>
+        <article class="builder-preview-panel">
+          <div class="builder-preview-topline">
+            <div>
+              <p class="builder-kicker">Finished output preview</p>
+              <h2>Preview</h2>
+            </div>
+            <span class="builder-badge">No token deduction</span>
+          </div>
+          <div id="builderPreview" class="builder-preview-document">
+            <div class="builder-empty-state">
+              <strong>Select a builder to begin</strong>
+              <span>Complete the form and preview your finished output before saving.</span>
+            </div>
+          </div>
+        </article>
+      </section>
     </section>
   </main>
   <div id="siteShellFooter"></div>
-  <script src="/assets/js/site-shell.js?v=20260709-airo-1"></script>
-  <script>
-    const state = { builders: [], selected: null, requestId: "" };
-    const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[c]));
-    async function loadBuilders() {
-      const status = document.getElementById("builderStatus");
-      try {
-        const response = await fetch("/account/builders", { credentials: "include", headers: { Accept: "application/json" }, cache: "no-store" });
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(data.error || "Sign in to use Experience Builders.");
-        state.builders = data.builders || [];
-        renderSummary(data.token_summary || {});
-        renderBuilders(state.builders);
-        status.hidden = true;
-      } catch (error) {
-        status.hidden = false;
-        status.innerHTML = `<h2>Sign in required</h2><p>${esc(error.message || "Unable to load builders.")}</p><a class="btn btn-primary" href="/account/login/?return_to=%2Fbuilders%2F">Sign in</a>`;
-      }
-    }
-    function renderSummary(summary) {
-      document.getElementById("builderTokenStatus").textContent = summary.deduction_rule || "Tokens load after sign-in";
-      document.getElementById("tokensRemaining").textContent = summary.remaining_tokens ?? 0;
-      document.getElementById("tokensUsed").textContent = summary.used_tokens ?? 0;
-      document.getElementById("trialStatus").textContent = summary.trial_active ? "Active" : "Inactive";
-    }
-    function renderBuilders(builders) {
-      document.getElementById("builderGrid").innerHTML = builders.map((builder) => `
-        <article class="platform-card glass-hover">
-          <span class="platform-eyebrow">${esc(builder.builder_type)}</span>
-          <h3>${esc(builder.name)}</h3>
-          <p>${esc(builder.description || "")}</p>
-          <p><strong>${esc(builder.token_cost)} Builder Usage Tokens</strong></p>
-          <button class="btn btn-secondary" type="button" data-builder="${esc(builder.id)}">Open builder</button>
-        </article>
-      `).join("");
-    }
-    function selectBuilder(id) {
-      const builder = state.builders.find((item) => item.id === id);
-      if (!builder) return;
-      state.selected = builder;
-      state.requestId = crypto.randomUUID ? crypto.randomUUID() : String(Date.now());
-      document.getElementById("selectedBuilderId").value = builder.id;
-      document.getElementById("selectedBuilderName").textContent = builder.name;
-      document.getElementById("selectedBuilderDescription").textContent = `${builder.description || ""} Saving this finished output costs ${builder.token_cost} Builder Usage Tokens.`;
-      document.getElementById("builderFormStatus").textContent = "Builder opened. No tokens have been deducted.";
-      document.getElementById("builderForm").scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-    function fields() {
-      return {
-        idea: document.getElementById("builderIdea").value,
-        timing: document.getElementById("builderTiming").value,
-        budget: document.getElementById("builderBudget").value,
-        support: document.getElementById("builderSupport").value
-      };
-    }
-    function preview() {
-      if (!state.selected) {
-        document.getElementById("builderFormStatus").textContent = "Select a builder first.";
-        return;
-      }
-      const data = fields();
-      document.getElementById("builderPreview").innerHTML = `<h3>${esc(document.getElementById("builderTitle").value || state.selected.name + " output")}</h3><p>${esc(state.selected.name)} preview created from your supplied details.</p><ul>${Object.entries(data).filter(([, v]) => v).map(([k, v]) => `<li><strong>${esc(k)}:</strong> ${esc(v)}</li>`).join("")}</ul><p class="muted">Previewing does not deduct tokens. Tokens are deducted only when you save the finished output.</p>`;
-    }
-    document.addEventListener("click", async (event) => {
-      const builderButton = event.target.closest("[data-builder]");
-      if (builderButton) selectBuilder(builderButton.dataset.builder);
-      if (event.target.id === "previewBuilderButton") preview();
-      if (event.target.id === "claimTrialButton") {
-        try {
-          const response = await fetch("/account/builders", { method: "POST", credentials: "include", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify({ action: "activate_trial" }) });
-          const data = await response.json().catch(() => ({}));
-          if (!response.ok) throw new Error(data.error || "Trial could not be activated.");
-          renderSummary(data.token_summary || {});
-          document.getElementById("builderStatus").hidden = false;
-          document.getElementById("builderStatus").textContent = "Trial activated. 30 Builder Usage Tokens were added once only.";
-        } catch (error) {
-          document.getElementById("builderStatus").hidden = false;
-          document.getElementById("builderStatus").textContent = error.message || "Trial could not be activated.";
-        }
-      }
-    });
-    document.getElementById("builderForm").addEventListener("submit", async (event) => {
-      event.preventDefault();
-      if (!state.selected) {
-        document.getElementById("builderFormStatus").textContent = "Select a builder first.";
-        return;
-      }
-      preview();
-      const response = await fetch("/account/builders", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ action: "save_output", builder_id: state.selected.id, title: document.getElementById("builderTitle").value, fields: fields(), request_id: state.requestId })
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        document.getElementById("builderFormStatus").textContent = data.error || "Output could not be saved.";
-        if (data.token_summary) renderSummary(data.token_summary);
-        return;
-      }
-      renderSummary(data.token_summary || {});
-      document.getElementById("builderFormStatus").textContent = "Finished output saved. Builder Usage Tokens were deducted and a ledger entry was created.";
-      state.requestId = crypto.randomUUID ? crypto.randomUUID() : String(Date.now());
-    });
-    loadBuilders();
-  </script>
+  <script src="/assets/js/site-shell.js?v=20260709-auth-1"></script>
+  <script src="/assets/js/builders.js?v=20260709-doc-hub-1"></script>
 </body>
 </html>
