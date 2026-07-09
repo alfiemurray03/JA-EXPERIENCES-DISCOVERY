@@ -1,7 +1,58 @@
-/coming-soon/ /launch-gateway/ 301
-/coming-soon/* /launch-gateway/:splat 301
-/launch-gateway/ /launch-gateway/index.html 200
-/launch-gateway/* /launch-gateway/:splat 200
+# JA Experiences & Discovery - Public Routes
+# SaaS Platform routing configuration
+
+# Admin routes (protected)
+/admin/ /admin/index.html 200
+/admin/* /admin/:splat 200
+
+# Account routes (protected)
+/account/ /account/index.html 200
+/account/* /account/:splat 200
+
+# API routes
+/api/* /api/:splat 200
+
+# Static assets
 /assets/* /assets/:splat 200
+
+# Public pages - all accessible
+/ /index.html 200
+/pricing/ /pricing/index.html 200
+/builders/ /builders/index.html 200
+/about/ /about/index.html 200
+/contact/ /contact/index.html 200
+/accessibility-support/ /accessibility-support/index.html 200
+/affiliate-disclosure/ /affiliate-disclosure/index.html 200
+/booking-partners/ /booking-partners/index.html 200
+/complaints/ /complaints/index.html 200
+
+# Legal pages
+/legal/terms/ /legal/terms/index.html 200
+/legal/privacy/ /legal/privacy/index.html 200
+/legal/cookies/ /legal/cookies/index.html 200
+
+#JA Group Services ID
+/ja-group-services-id/ /ja-group-services-id/index.html 200
+
+# Destinations
+/destinations/ /destinations/index.html 200
+/destinations/* /destinations/:splat/index.html 200
+
+# Experiences
+/activities/ /activities/index.html 200
+/accommodation/ /accommodation/index.html 200
+/budget-experiences/ /budget-experiences/index.html 200
+/couples-experiences/ /couples-experiences/index.html 200
+
+# Legacy routes - redirect to homepage or relevant page
+/coming-soon/ / 301
+/coming-soon/* / 301
+/launch-gateway/ / 301
+/launch-gateway/* / 301
+
+# Preview routes
 /preview/ /preview/index.html 200
 /preview/* /preview/:splat 200
+
+# Fallback - serve index for SPA-like behavior
+/* /index.html 200

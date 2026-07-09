@@ -4,9 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Experience Builders | JA Experiences &amp; Discovery</title>
-  <meta name="description" content="Choose guided Experience Builders, preview outputs, and spend Builder Usage Tokens only when a finished output is saved.">
-  <link rel="stylesheet" href="/assets/css/theme.css?v=20260709-airo-1">
-  <link rel="stylesheet" href="/assets/css/builders.css?v=20260709-doc-hub-1">
+  <meta name="description" content="Choose guided Experience Builders, preview outputs, and spend Builder Credits only when you save a finished plan.">
+  <link rel="stylesheet" href="/assets/css/theme.css?v=20260709-saas-2">
+  <link rel="stylesheet" href="/assets/css/builders.css?v=20260709-saas-2">
 </head>
 <body data-page="builders">
   <div id="siteShellHeader"></div>
@@ -14,19 +14,19 @@
     <section class="builder-page">
       <div class="builder-page-head">
         <div>
-          <p class="builder-kicker">Experience Builders</p>
+          <span class="builder-kicker">Self-service planning tools</span>
           <h1>Experience Builders</h1>
-          <p>Choose a guided builder, preview your output, and only spend Builder Usage Tokens when you save.</p>
+          <p>Choose a guided builder, preview your output, and only spend Builder Credits when you save a finished plan. Previewing is always free.</p>
         </div>
         <div class="builder-head-actions">
           <a class="builder-button builder-button-outline" href="/account/tokens/">View tokens</a>
-          <a class="builder-button builder-button-outline" id="createAccountTrialLink" href="/account/login/?return_to=%2Fbuilders%2F%3Fclaim_trial%3D1">Create account / start trial</a>
+          <a class="builder-button builder-button-outline" id="createAccountTrialLink" href="/account/login/?return_to=%2Fbuilders%2F%3Fclaim_trial%3D1">Create account</a>
           <button class="builder-button" type="button" id="claimTrialButton">Claim 14-Day Free Trial</button>
         </div>
       </div>
 
       <div id="claimIntentNotice" class="builder-alert builder-alert-info" hidden>
-        Sign in completed. Claim your 14-day trial when you are ready.
+        You're signed in. Claim your 14-day free trial to start building.
       </div>
 
       <section class="builder-stats" aria-label="Builder summary">
@@ -52,14 +52,14 @@
 
       <section class="builder-toolbar" aria-label="Builder filters">
         <div>
-          <p class="builder-kicker">Builder catalogue</p>
+          <span class="builder-kicker">Catalogue</span>
           <h2>Choose a builder</h2>
         </div>
         <div class="builder-tabs" id="builderTabs" role="tablist" aria-label="Builder categories">
           <button class="builder-tab is-active" type="button" data-filter="all">All</button>
           <button class="builder-tab" type="button" data-filter="Everyday">Everyday</button>
           <button class="builder-tab" type="button" data-filter="Travel">Travel</button>
-          <button class="builder-tab" type="button" data-filter="Accessibility/support">Accessibility/support</button>
+          <button class="builder-tab" type="button" data-filter="Accessibility/support">Accessibility</button>
           <button class="builder-tab" type="button" data-filter="Organisation">Organisation</button>
         </div>
       </section>
@@ -74,38 +74,50 @@
       <section id="builderEditor" class="builder-workspace" aria-label="Builder editor">
         <aside class="builder-editor-panel">
           <div class="builder-editor-head">
-            <button class="builder-button builder-button-ghost" type="button" id="backToBuildersButton">Back to builders</button>
-            <span class="builder-badge" id="selectedBuilderCost">No builder selected</span>
+            <button class="builder-button builder-button-ghost" type="button" id="backToBuildersButton">← Back to builders</button>
+            <span class="builder-badge builder-badge-primary" id="selectedBuilderCost">No builder selected</span>
           </div>
           <div class="builder-selected-card">
             <div class="builder-icon" id="selectedBuilderIcon">EB</div>
             <div>
               <h2 id="selectedBuilderName">Select a builder</h2>
-              <p id="selectedBuilderDescription">Opening a builder does not deduct tokens.</p>
+              <p id="selectedBuilderDescription">Opening a builder does not deduct tokens. Preview and save when ready.</p>
             </div>
           </div>
           <form id="builderForm" class="builder-form">
             <input type="hidden" id="selectedBuilderId">
-            <label>Title<input id="builderTitle" autocomplete="off" placeholder="Example: Saturday family day out"></label>
-            <label>Main idea or destination<input id="builderIdea" autocomplete="off" placeholder="Where, what or who is this for?"></label>
-            <label>Dates or timings<input id="builderTiming" autocomplete="off" placeholder="Dates, time window, duration"></label>
-            <label>Budget<input id="builderBudget" autocomplete="off" placeholder="Budget, priorities or limits"></label>
-            <label>Accessibility/support notes<textarea id="builderSupport" rows="4" placeholder="Optional support, access or suitability notes"></textarea></label>
-            <label>Extra notes<textarea id="builderNotes" rows="4" placeholder="Anything else the finished output should consider"></textarea></label>
+            <label>Plan title
+              <input id="builderTitle" autocomplete="off" placeholder="Example: Saturday family day out">
+            </label>
+            <label>Main idea or destination
+              <input id="builderIdea" autocomplete="off" placeholder="Where, what or who is this for?">
+            </label>
+            <label>Dates or timings
+              <input id="builderTiming" autocomplete="off" placeholder="Dates, time window, duration">
+            </label>
+            <label>Budget range
+              <input id="builderBudget" autocomplete="off" placeholder="Budget, priorities or limits">
+            </label>
+            <label>Accessibility or support notes
+              <textarea id="builderSupport" rows="3" placeholder="Optional support, access or suitability notes"></textarea>
+            </label>
+            <label>Extra notes
+              <textarea id="builderNotes" rows="3" placeholder="Anything else the finished output should consider"></textarea>
+            </label>
             <div class="builder-form-actions">
               <button class="builder-button builder-button-outline" type="button" id="previewBuilderButton">Preview output</button>
               <button class="builder-button" type="submit" id="saveBuilderButton">Save finished output</button>
             </div>
-            <p class="builder-form-status" id="builderFormStatus">Previewing does not deduct tokens.</p>
+            <p class="builder-form-status" id="builderFormStatus">Previewing does not deduct tokens. Only saving uses your Builder Credits.</p>
           </form>
         </aside>
         <article class="builder-preview-panel">
           <div class="builder-preview-topline">
             <div>
-              <p class="builder-kicker">Finished output preview</p>
+              <span class="builder-kicker">Finished output preview</span>
               <h2>Preview</h2>
             </div>
-            <span class="builder-badge">No token deduction</span>
+            <span class="builder-badge builder-badge-primary">No token deduction</span>
           </div>
           <div id="builderPreview" class="builder-preview-document">
             <div class="builder-empty-state">
@@ -119,6 +131,6 @@
   </main>
   <div id="siteShellFooter"></div>
   <script src="/assets/js/site-shell.js?v=20260709-auth-1"></script>
-  <script src="/assets/js/builders.js?v=20260709-doc-hub-1"></script>
+  <script src="/assets/js/builders.js?v=20260709-saas-2"></script>
 </body>
 </html>

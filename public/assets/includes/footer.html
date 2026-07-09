@@ -4,25 +4,38 @@
       <div class="site-footer-grid">
         <section class="site-footer-brand-block">
           <a class="site-footer-brand" href="/">JA Experiences &amp; Discovery</a>
-          <p>A subscription-based self-service platform for building, saving and managing everyday and travel experience plans.</p>
+          <p>A subscription-based platform for building, saving, and managing everyday and travel experience plans with guided tools.</p>
+          <div class="site-footer-cta">
+            <a class="btn btn-secondary" href="/account/login/?return_to=%2Faccount%2Fdashboard%2F">Start Free Trial</a>
+          </div>
+        </section>
+
+        <section>
+          <h2>Platform</h2>
+          <nav>
+            <a href="/builders/">Experience Builders</a>
+            <a href="/pricing/">Pricing</a>
+            <a href="/about/">About</a>
+            <a href="/destinations/">Destinations</a>
+          </nav>
         </section>
 
         <section>
           <h2>Account</h2>
           <nav>
             <a href="/account/login/?return_to=%2Faccount%2Fdashboard%2F">Sign in</a>
+            <a href="/account/login/?return_to=%2Faccount%2Fdashboard%2F">Create account</a>
             <a href="/ja-group-services-id/">JA Group Services ID</a>
             <a href="/account/">Customer portal</a>
           </nav>
         </section>
 
         <section>
-          <h2>Public pages</h2>
+          <h2>Support</h2>
           <nav>
-            <a href="/">Home</a>
-            <a href="/legal/terms/">Terms</a>
-            <a href="/legal/privacy/">Privacy</a>
-            <a href="/legal/cookies/">Cookies</a>
+            <a href="/contact/">Contact us</a>
+            <a href="/accessibility-support/">Accessibility</a>
+            <a href="/complaints/">Complaints</a>
           </nav>
         </section>
 
@@ -38,9 +51,15 @@
       </div>
 
       <div class="site-footer-bottom">
-        <p>&copy; 2026 JA Group Services Ltd.</p>
-        <p>Company No. 14227845</p>
-        <p>Registered in England &amp; Wales</p>
+        <div class="footer-legal">
+          <p>&copy; 2026 JA Group Services Ltd.</p>
+          <p>Company No. 14227845</p>
+          <p>Registered in England &amp; Wales</p>
+        </div>
+        <div class="footer-badges">
+          <span class="footer-badge">Secure payments</span>
+          <span class="footer-badge">GDPR compliant</span>
+        </div>
       </div>
     </div>
   </div>
@@ -49,48 +68,112 @@
 <style>
   .site-footer {
     background:
-      radial-gradient(circle at top right, hsl(var(--primary) / .08), transparent 30rem),
+      radial-gradient(circle at top left, hsl(var(--primary) / .06), transparent 35rem),
       hsl(var(--background));
     color: hsl(var(--foreground));
-    padding: clamp(3rem, 6vw, 5rem) 0 2rem;
+    padding: clamp(3.5rem, 7vw, 5.5rem) 0 2rem;
+    border-top: 1px solid hsl(var(--border));
   }
   .site-footer-card {
     border: 1px solid hsl(var(--glass-border));
     border-radius: 1.5rem;
-    background: hsl(var(--card) / .82);
+    background: hsl(var(--card) / .85);
     box-shadow: 0 24px 70px hsl(var(--glass-shadow));
-    padding: clamp(1.3rem, 3vw, 2rem);
+    padding: clamp(1.5rem, 4vw, 2.5rem);
   }
-  .site-footer-grid { display: grid; grid-template-columns: 1.25fr repeat(3, 1fr); gap: clamp(1.5rem, 4vw, 3rem); }
-  .site-footer-brand { display: inline-flex; margin-bottom: .8rem; font-family: var(--font-heading); font-size: 1.05rem; font-weight: 800; }
-  .site-footer-brand-block p { max-width: 24rem; }
-  .site-footer h2 { margin: 0 0 .9rem; font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: hsl(var(--foreground)); }
-  .site-footer p { margin: 0; color: hsl(var(--muted-foreground)); font-size: .92rem; line-height: 1.6; }
-  .site-footer nav { display: grid; gap: .68rem; }
+  .site-footer-grid {
+    display: grid;
+    grid-template-columns: 1.4fr repeat(4, 1fr);
+    gap: clamp(1.5rem, 4vw, 2.5rem);
+  }
+  .site-footer-brand {
+    display: inline-flex;
+    margin-bottom: 1rem;
+    font-family: var(--font-heading);
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: hsl(var(--foreground));
+  }
+  .site-footer-brand-block p {
+    max-width: 24rem;
+    line-height: 1.7;
+  }
+  .site-footer-cta {
+    margin-top: 1.5rem;
+  }
+  .site-footer-cta .btn {
+    font-size: .9rem;
+    padding: .7rem 1.25rem;
+    min-height: 2.5rem;
+  }
+  .site-footer h2 {
+    margin: 0 0 1rem;
+    font-size: .75rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: hsl(var(--foreground));
+    font-weight: 700;
+  }
+  .site-footer p { margin: 0; font-size: .95rem; line-height: 1.65; }
+  .site-footer nav { display: grid; gap: .65rem; }
   .site-footer a, .site-footer button {
     width: fit-content;
     border: 0;
     background: transparent;
     color: hsl(var(--muted-foreground));
     cursor: pointer;
-    font: 700 .92rem/1.3 var(--font-sans);
+    font: 600 .92rem/1.3 var(--font-sans);
     padding: 0;
     text-align: left;
+    transition: color .2s ease;
   }
   .site-footer a:hover, .site-footer button:hover { color: hsl(var(--primary)); }
   .site-footer-bottom {
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
-    gap: .75rem 1rem;
+    align-items: center;
+    gap: 1rem 1.5rem;
     border-top: 1px solid hsl(var(--border));
-    margin-top: 2rem;
-    padding-top: 1.2rem;
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
   }
-  .site-footer-bottom p { font-size: .78rem; font-weight: 750; }
-  @media (max-width: 860px) {
-    .site-footer-grid { grid-template-columns: 1fr 1fr; }
+  .footer-legal {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 1.5rem;
+  }
+  .footer-legal p { font-size: .78rem !important; font-weight: 600; }
+  .footer-badges {
+    display: flex;
+    gap: .75rem;
+  }
+  .footer-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    border: 1px solid hsl(var(--border));
+    border-radius: 999px;
+    background: hsl(var(--muted) / .40);
+    color: hsl(var(--muted-foreground));
+    font-size: .72rem;
+    font-weight: 600;
+    padding: .4rem .75rem;
+  }
+
+  @media (max-width: 1000px) {
+    .site-footer-grid { grid-template-columns: 1fr 1fr 1fr; }
     .site-footer-brand-block { grid-column: 1 / -1; }
   }
-  @media (max-width: 560px) { .site-footer-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 700px) {
+    .site-footer-grid { grid-template-columns: 1fr 1fr; }
+    .site-footer-brand-block { grid-column: 1 / -1; }
+    .site-footer-bottom { flex-direction: column; align-items: flex-start; gap: 1.25rem; }
+    .footer-badges { flex-wrap: wrap; }
+  }
+  @media (max-width: 480px) {
+    .site-footer-grid { grid-template-columns: 1fr; }
+    .site-footer nav { gap: .5rem; }
+    .footer-legal { flex-direction: column; gap: .5rem; }
+  }
 </style>
