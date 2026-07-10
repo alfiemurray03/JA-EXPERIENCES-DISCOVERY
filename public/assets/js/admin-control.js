@@ -15,7 +15,7 @@ const state = {
   planDirty: false,
   planSaving: false,
   initialWorkspaceApplied: false,
-  systemSettingsTab: "sitestatus"
+  systemSettingsTab: "general"
 };
 
 const sectionTitles = {
@@ -4377,6 +4377,17 @@ function renderSystemSettings(data = {}) {
   const csConfig = data.coming_soon_config || {};
   const csSettings = data.coming_soon || {};
 
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlTab = urlParams.get("tab") || urlParams.get("systemSettingsTab");
+  const supportedTabs = new Set(["general", "stripe", "products", "plans", "email", "compliance", "appearance", "sitestatus", "troubleshooting"]);
+  if (urlTab && supportedTabs.has(urlTab)) {
+    state.systemSettingsTab = urlTab;
+  } else {
+    if (!state.systemSettingsTab) {
+      state.systemSettingsTab = "general";
+    }
+  }
+
   const tabs = [
     { id: "general", label: "General", icon: "settings" },
     { id: "stripe", label: "Stripe", icon: "card" },
@@ -4397,7 +4408,7 @@ function renderSystemSettings(data = {}) {
       </div>
     </div>
     <div class="settings-category-tabs" id="systemSettingsTabs">
-      ${tabs.map((t, i) => `<button class="settings-category-tab${i === 0 ? " active" : ""}" data-tab="${t.id}">${t.label}</button>`).join("")}
+      ${tabs.map((t) => `<button class="settings-category-tab${t.id === state.systemSettingsTab ? " active" : ""}" data-tab="${t.id}">${t.label}</button>`).join("")}
     </div>
     <div id="systemSettingsTabContent"></div>
   </div>`;
