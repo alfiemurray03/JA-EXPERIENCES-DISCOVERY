@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { onRequest as middleware } from "../functions/_middleware.js";
 import { onRequestGet as siteStatusApi } from "../functions/api/site-status.js";
+import { onRequestGet as comingSoonConfigApi } from "../functions/api/coming-soon-config.js";
 import { onRequest as adminApi, runSystemDiagnostics, saveAuthoritativeSiteStatus } from "../functions/admin/api.js";
 
 class StatusDatabase {
@@ -62,6 +63,16 @@ test("site status API reads current D1 value without caching", async () => {
   const response = await siteStatusApi({ env: { DB: database } });
   assert.deepEqual(await response.json(), { status: "coming_soon" });
   assert.equal(response.headers.get("cache-control"), "no-store");
+});
+
+test("Coming Soon config preserves BST, winter GMT, blank, past and invalid date values without caching", async () => {
+  for (const launchDate of ["2026-08-29T21:01:00.000Z", "2026-12-20T22:01:00.000Z", "", "2020-01-01T00:00:00.000Z", "invalid"]) {
+    const DB = { prepare() { return { bind(key) { return { first: async () => key === "coming_soon_launch_date" ? { value: launchDate } : null }; } }; } };
+    const response = await comingSoonConfigApi({ env: { DB } });
+    const payload = await response.json();
+    assert.equal(payload.launchDate, launchDate);
+    assert.equal(response.headers.get("cache-control"), "no-store, no-cache, must-revalidate");
+  }
 });
 
 test("admin status save writes one authoritative mode and disables legacy overrides", async () => {

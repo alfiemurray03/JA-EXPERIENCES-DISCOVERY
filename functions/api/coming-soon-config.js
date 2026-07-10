@@ -20,23 +20,25 @@ function json(data, status = 200) {
     status,
     headers: {
       "Content-Type": "application/json; charset=utf-8",
-      "Cache-Control": "no-store"
+      "Cache-Control": "no-store, no-cache, must-revalidate",
+      "Pragma": "no-cache",
+      "Expires": "0"
     }
   });
 }
 
 async function readSiteSetting(env, key) {
-  if (!env?.DB) return null;
+  if (!env?.DB) return { found: false, value: null };
   try {
     const row = await env.DB.prepare("SELECT value FROM site_settings WHERE key = ?").bind(key).first();
-    return typeof row?.value === "string" && row.value.trim() ? row.value.trim() : null;
+    return row ? { found: true, value: typeof row.value === "string" ? row.value.trim() : "" } : { found: false, value: null };
   } catch (error) {
     console.warn(JSON.stringify({
       message: "Coming soon setting lookup failed",
       key,
       error: error instanceof Error ? error.message : String(error)
     }));
-    return null;
+    return { found: false, value: null };
   }
 }
 
@@ -66,10 +68,10 @@ export async function onRequestGet({ env }) {
 
   return json({
     ...DEFAULT_CONFIG,
-    headline: headline || DEFAULT_CONFIG.headline,
-    subtext: subtext || DEFAULT_CONFIG.subtext,
-    launchDate: launchDate || DEFAULT_CONFIG.launchDate,
-    description: description || DEFAULT_CONFIG.description,
-    features: parseFeatures(features)
+    headline: headline.value || DEFAULT_CONFIG.headline,
+    subtext: subtext.value || DEFAULT_CONFIG.subtext,
+    launchDate: launchDate.found ? launchDate.value : DEFAULT_CONFIG.launchDate,
+    description: description.value || DEFAULT_CONFIG.description,
+    features: parseFeatures(features.value)
   });
 }

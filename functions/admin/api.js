@@ -419,6 +419,12 @@ async function ensureTables(DB, env) {
   await safeAlter(DB, `ALTER TABLE profiles ADD COLUMN signup_notification_status TEXT`);
   await safeAlter(DB, `ALTER TABLE profiles ADD COLUMN signup_notification_provider TEXT`);
   await safeAlter(DB, `ALTER TABLE profiles ADD COLUMN signup_notification_to TEXT`);
+  await safeAlter(DB, `ALTER TABLE profiles ADD COLUMN suspended_at TEXT`);
+  await safeAlter(DB, `ALTER TABLE profiles ADD COLUMN suspended_by TEXT`);
+  await safeAlter(DB, `ALTER TABLE profiles ADD COLUMN suspension_reason TEXT`);
+  await safeAlter(DB, `ALTER TABLE profiles ADD COLUMN reactivated_at TEXT`);
+  await safeAlter(DB, `ALTER TABLE profiles ADD COLUMN reactivated_by TEXT`);
+  await safeAlter(DB, `ALTER TABLE profiles ADD COLUMN reactivation_reason TEXT`);
 
   await DB.prepare(`
     CREATE TABLE IF NOT EXISTS admin_users (
@@ -1030,6 +1036,14 @@ function protectCustomerPayload(customer, verification) {
     notifications: [],
     pins: [],
     notes: [],
+    builderOutputs: [],
+    tokenLedger: [],
+    savedItems: [],
+    customerEnquiries: [],
+    dataRequests: [],
+    customerAudit: [],
+    suspension_reason: "",
+    reactivation_reason: "",
     billing: {},
     verification
   };
@@ -3090,6 +3104,29 @@ async function getSiteStatus(DB) {
   }
 }
 
+async function getCustomerCrmList(DB) {
+  const base = `SELECT p.email, p.email AS customer_id, p.verified_name, p.display_name, p.contact_email, p.phone,
+    p.communication_preference, p.support_notes, p.admin_lifetime, p.admin_lifetime_plan_id,
+    p.admin_customer_status, p.admin_notes, p.created_at, p.updated_at, p.suspended_at, p.suspended_by,
+    p.reactivated_at, p.reactivated_by FROM profiles p ORDER BY p.updated_at DESC, p.created_at DESC LIMIT 1000`;
+  try {
+    return await all(DB, `SELECT p.email, p.email AS customer_id, p.verified_name, p.display_name, p.contact_email, p.phone,
+      p.communication_preference, p.support_notes, p.admin_lifetime, p.admin_lifetime_plan_id,
+      p.admin_customer_status, p.admin_notes, p.created_at, p.updated_at, p.suspended_at, p.suspended_by,
+      p.reactivated_at, p.reactivated_by,
+      (SELECT s.plan_name FROM stripe_subscriptions s WHERE lower(s.customer_email)=lower(p.email) ORDER BY s.updated_at DESC LIMIT 1) AS subscription_plan,
+      (SELECT s.status FROM stripe_subscriptions s WHERE lower(s.customer_email)=lower(p.email) ORDER BY s.updated_at DESC LIMIT 1) AS subscription_status,
+      (SELECT s.trial_end FROM stripe_subscriptions s WHERE lower(s.customer_email)=lower(p.email) ORDER BY s.updated_at DESC LIMIT 1) AS trial_end,
+      (SELECT t.status FROM trial_access_tokens t WHERE lower(t.email)=lower(p.email) LIMIT 1) AS trial_status,
+      (SELECT COUNT(*) FROM builder_outputs o WHERE lower(o.email)=lower(p.email) AND o.archived_at IS NULL) AS builder_usage,
+      (SELECT COALESCE(SUM(l.amount),0) FROM builder_token_ledger l WHERE lower(l.email)=lower(p.email)) AS token_balance,
+      (SELECT MAX(e.created_at) FROM customer_timeline_events e WHERE lower(e.email)=lower(p.email)) AS last_activity
+      FROM profiles p ORDER BY COALESCE(last_activity,p.updated_at,p.created_at) DESC LIMIT 1000`);
+  } catch {
+    return all(DB, base);
+  }
+}
+
 export async function saveAuthoritativeSiteStatus(DB, siteStatus) {
   if (!["normal", "coming_soon", "maintenance"].includes(siteStatus)) throw new Error("Invalid site status.");
   const values = { site_status: siteStatus, maintenance_enabled: "false", launchgateway_enabled: "false" };
@@ -3177,20 +3214,13 @@ export async function onRequest(context) {
       if (section === "customers") {
         return json({
           admin: adminContext,
-          customers: await all(env.DB, `
-            SELECT email, verified_name, display_name, contact_email, phone, communication_preference,
-              support_notes, admin_lifetime, admin_lifetime_plan_id, admin_customer_status, admin_notes,
-              created_at, updated_at
-            FROM profiles
-            ORDER BY updated_at DESC, created_at DESC
-            LIMIT 500
-          `)
+          customers: await getCustomerCrmList(env.DB)
         });
       }
       if (section === "customer") {
         const email = clean(url.searchParams.get("email"), 254);
         if (!email) return json({ error: "Customer email is required." }, 400);
-        const [customer, flags, timeline, supportCases, notifications, pins, plans, notes, billing] = await Promise.all([
+        const [customer, flags, timeline, supportCases, notifications, pins, plans, notes, billing, builderOutputs, tokenLedger, savedItems, customerEnquiries, dataRequests, customerAudit] = await Promise.all([
           env.DB.prepare(`
             SELECT
               email,
@@ -3206,7 +3236,9 @@ export async function onRequest(context) {
               admin_customer_status,
               created_at,
               updated_at,
-              admin_updated_at
+              admin_updated_at,
+              suspended_at, suspended_by, suspension_reason,
+              reactivated_at, reactivated_by, reactivation_reason
             FROM profiles
             WHERE lower(email) = lower(?)
           `).bind(email).first(),
@@ -3217,10 +3249,16 @@ export async function onRequest(context) {
           all(env.DB, `SELECT * FROM customer_support_pins WHERE lower(email) = lower(?) ORDER BY updated_at DESC LIMIT 20`, [email]),
           getPlans(env.DB),
           all(env.DB, `SELECT * FROM customer_internal_notes WHERE lower(email) = lower(?) ORDER BY pinned DESC, updated_at DESC LIMIT 100`, [email]),
-          getCustomerStripeBilling(env.DB, env, email)
+          getCustomerStripeBilling(env.DB, env, email),
+          all(env.DB, `SELECT id,builder_id,builder_name,title,status,token_cost,created_at,updated_at FROM builder_outputs WHERE lower(email)=lower(?) AND archived_at IS NULL ORDER BY created_at DESC LIMIT 100`, [email]).catch(() => []),
+          all(env.DB, `SELECT id,amount,balance_after,source,reason,created_at FROM builder_token_ledger WHERE lower(email)=lower(?) ORDER BY created_at DESC LIMIT 100`, [email]).catch(() => []),
+          all(env.DB, `SELECT * FROM customer_saved_items WHERE lower(email)=lower(?) ORDER BY updated_at DESC LIMIT 100`, [email]).catch(() => []),
+          all(env.DB, `SELECT reference,subject,status,created_at,updated_at FROM enquiries WHERE lower(email)=lower(?) ORDER BY created_at DESC LIMIT 100`, [email]).catch(() => []),
+          all(env.DB, `SELECT reference,request_type,status,submitted_at,due_at FROM data_protection_requests WHERE lower(customer_email)=lower(?) ORDER BY created_at DESC LIMIT 100`, [email]).catch(() => []),
+          all(env.DB, `SELECT action,actor_email,summary,created_at FROM admin_audit_log WHERE lower(entity_id)=lower(?) ORDER BY created_at DESC LIMIT 100`, [email]).catch(() => [])
         ]);
         const verification = await getIdentityVerificationState(env.DB, email, identity.email, adminContext);
-        const customerPayload = protectCustomerPayload({ ...customer, flags, timeline, supportCases, notifications, pins, notes, billing }, verification);
+        const customerPayload = protectCustomerPayload({ ...customer, flags, timeline, supportCases, notifications, pins, notes, billing, builderOutputs, tokenLedger, savedItems, customerEnquiries, dataRequests, customerAudit }, verification);
         return json({ admin: adminContext, customer: customerPayload, plans, verification });
       }
       if (section === "plans") {
@@ -3577,6 +3615,22 @@ export async function onRequest(context) {
           await writeAudit(env.DB, identity, "stripe_portal_open", "profiles", email, `Opened Stripe Billing Portal for ${email}.`, {});
           return json({ url: portalUrl });
         }
+        if (body.action === "suspend_account" || body.action === "reactivate_account") {
+          const reason = clean(body.reason, 1000);
+          const note = clean(body.internal_note, 2000);
+          if (!reason) return json({ error: `${body.action === "suspend_account" ? "Suspension" : "Reactivation"} reason is required.` }, 400);
+          const requestId = clean(request.headers.get("cf-ray") || request.headers.get("x-request-id"), 120) || crypto.randomUUID();
+          if (body.action === "suspend_account") {
+            await env.DB.prepare(`UPDATE profiles SET admin_customer_status='Suspended', suspended_at=CURRENT_TIMESTAMP, suspended_by=?, suspension_reason=?, admin_notes=CASE WHEN ?='' THEN admin_notes ELSE ? END, admin_updated_at=CURRENT_TIMESTAMP, updated_at=CURRENT_TIMESTAMP WHERE lower(email)=lower(?)`).bind(identity.email, reason, note, note, email).run();
+            await env.DB.prepare(`INSERT INTO customer_timeline_events (id,email,event_type,title,detail,actor_type,actor_email,metadata) VALUES (?,?, 'account_suspended','Account suspended','Customer access was suspended by an authorised administrator.','admin',?,?)`).bind(crypto.randomUUID(), email, identity.email, JSON.stringify({ request_id: requestId })).run();
+            await writeAudit(env.DB, identity, "customer_account_suspended", "profiles", email, `Suspended customer account ${email}.`, { reason, result: "success", request_id: requestId });
+          } else {
+            await env.DB.prepare(`UPDATE profiles SET admin_customer_status='Active', reactivated_at=CURRENT_TIMESTAMP, reactivated_by=?, reactivation_reason=?, admin_notes=CASE WHEN ?='' THEN admin_notes ELSE ? END, admin_updated_at=CURRENT_TIMESTAMP, updated_at=CURRENT_TIMESTAMP WHERE lower(email)=lower(?)`).bind(identity.email, reason, note, note, email).run();
+            await env.DB.prepare(`INSERT INTO customer_timeline_events (id,email,event_type,title,detail,actor_type,actor_email,metadata) VALUES (?,?, 'account_reactivated','Account reactivated','Customer access was restored by an authorised administrator.','admin',?,?)`).bind(crypto.randomUUID(), email, identity.email, JSON.stringify({ request_id: requestId })).run();
+            await writeAudit(env.DB, identity, "customer_account_reactivated", "profiles", email, `Reactivated customer account ${email}.`, { reason, result: "success", request_id: requestId });
+          }
+          return json({ saved: true, account_status: body.action === "suspend_account" ? "Suspended" : "Active", request_id: requestId });
+        }
         if (body.action === "add_note") {
           const noteId = `note_${Date.now()}`;
           await DB.prepare(`
@@ -3619,6 +3673,7 @@ export async function onRequest(context) {
               created_at,
               updated_at,
               admin_updated_at
+              ,suspended_at, suspended_by, suspension_reason, reactivated_at, reactivated_by, reactivation_reason
             FROM profiles
             WHERE lower(email) = lower(?)
           `).bind(email).first(),

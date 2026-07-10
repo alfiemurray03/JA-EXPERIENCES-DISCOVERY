@@ -1236,3 +1236,27 @@ td span { margin-top: .13rem; color: var(--muted); font-size: .67rem; }
 /* Unified System Settings */
 .settings-category-tabs{display:flex;gap:.45rem;overflow-x:auto;margin:1.1rem 0;padding-bottom:.35rem}.settings-category-tab{flex:0 0 auto;border:1px solid var(--border);border-radius:999px;background:var(--surface);color:var(--muted);padding:.6rem .85rem;font:inherit;font-weight:700;cursor:pointer}.settings-category-tab.active{border-color:var(--accent);background:var(--accent);color:#fff}.settings-link-grid,.status-mode-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.8rem}.settings-link-grid .quick-card{width:100%;text-align:left}.settings-link-grid .quick-card span,.status-mode-card span{display:block;margin-top:.25rem;color:var(--muted);font-size:.78rem;line-height:1.45}.settings-status-stack{display:grid;gap:1rem}.status-mode-card{display:block;border:1px solid var(--border);border-radius:14px;padding:1rem;background:var(--surface);cursor:pointer}.status-mode-card.selected{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 18%,transparent)}.status-mode-card input{margin-right:.45rem}.settings-status-stack .admin-button{margin-top:1rem}.settings-status-stack ul{padding-left:1.2rem;color:var(--muted);line-height:1.7}
 @media (max-width:800px){.settings-link-grid,.status-mode-grid{grid-template-columns:1fr}.settings-category-tabs{margin-inline:-.2rem}}
+
+/* Centred System Settings workspace */
+.system-settings-page { width: 100%; }
+.system-settings-shell { width: min(100%, 780px); margin: 0 auto; display: grid; gap: 1rem; }
+.system-settings-shell > .section-head { justify-content: center; text-align: center; }
+.system-settings-shell > .section-head > div { max-width: 640px; }
+.system-settings-shell .settings-category-tabs { justify-content: center; flex-wrap: wrap; margin: 0 auto .35rem; }
+#systemSettingsTabContent { width: 100%; display: grid; gap: 1rem; }
+#systemSettingsTabContent > .admin-card,
+#systemSettingsTabContent > .section-head,
+#systemSettingsTabContent > .admin-grid,
+#systemSettingsTabContent > .dashboard-layout,
+#systemSettingsTabContent > .table-wrap { width: 100%; margin-inline: auto; }
+#systemSettingsTabContent > .section-head { text-align: center; justify-content: center; }
+#systemSettingsTabContent .admin-form { grid-template-columns: 1fr; }
+#systemSettingsTabContent .admin-form input,
+#systemSettingsTabContent .admin-form select,
+#systemSettingsTabContent .admin-form textarea { width: 100%; }
+#systemSettingsTabContent .admin-card > h2 { text-align: center; }
+#systemSettingsTabContent .admin-card > p { max-width: 66ch; margin-inline: auto; }
+@media (max-width: 800px) {
+  .system-settings-shell { width: 100%; }
+  .system-settings-shell .settings-category-tabs { justify-content: flex-start; flex-wrap: nowrap; margin-inline: 0; }
+}

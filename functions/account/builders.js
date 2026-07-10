@@ -24,7 +24,7 @@ function getAccessIdentity(request) {
   return { email: cleanEmail(nativeEmail), name: clean(request.headers.get("x-ja-auth-name") || nativeEmail, 160) };
 }
 
-const DEFAULT_BUILDERS = [
+export const DEFAULT_BUILDERS = [
   ["day-trip", "Day Trip Builder", "Small", "Everyday experiences", 10, "trial,membership,plus,family", "trial", "Build a practical day trip outline with timings, budget prompts and checklist notes."],
   ["family-day-out", "Family Day Out Builder", "Standard", "Everyday experiences", 15, "trial,membership,plus,family", "trial", "Plan a family day out with pace, facilities, accessibility and weather alternatives."],
   ["school-holiday", "School Holiday Planner", "Standard", "Everyday experiences", 15, "membership,plus,family", "paid", "Organise school holiday ideas across dates, budgets and family priorities."],
@@ -144,7 +144,7 @@ async function tokenSummary(DB, email) {
   };
 }
 
-function outputFromInput(builder, body) {
+export function outputFromInput(builder, body) {
   const fields = body.fields && typeof body.fields === "object" ? body.fields : {};
   const notes = Object.entries(fields)
     .filter(([, value]) => clean(value, 1000))
@@ -183,6 +183,10 @@ export async function onRequest(context) {
   const identity = getAccessIdentity(request);
   if (!identity.email) return json({ error: "Not signed in." }, 401);
   await ensureTables(env.DB);
+  const profile = await first(env.DB, `SELECT admin_customer_status FROM profiles WHERE lower(email)=lower(?)`, [identity.email]).catch(() => null);
+  if (["suspended", "blocked", "closed", "disabled"].includes(String(profile?.admin_customer_status || "").toLowerCase())) {
+    return json({ error: "Your account is currently suspended. Please contact JA Experiences & Discovery for assistance." }, 403);
+  }
 
   if (request.method === "GET") {
     const [builders, outputs, ledger, attempts, packages, summary] = await Promise.all([
@@ -231,6 +235,12 @@ export async function onRequest(context) {
       await blockAttempt(env.DB, identity.email, builder, "No active paid subscription or active trial.", summary.remaining_tokens, Number(builder.token_cost || 0));
       return json({ error: "An active trial or paid subscription is required before completing this builder.", token_summary: summary }, 402);
     }
+    const accessCode = summary.trial_active ? "trial" : clean(summary.subscription?.plan_code || summary.subscription?.plan_name, 80).toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    const includedPlans = String(builder.plan_inclusion || "").toLowerCase().split(",").map((item) => item.trim()).filter(Boolean);
+    if (includedPlans.length && !includedPlans.some((plan) => accessCode === plan || accessCode.includes(plan))) {
+      await blockAttempt(env.DB, identity.email, builder, "Builder is not included in the active plan.", summary.remaining_tokens, Number(builder.token_cost || 0));
+      return json({ error: "This builder is not included in your current plan.", token_summary: summary }, 403);
+    }
     const cost = Math.max(0, Number(builder.token_cost || 0));
     if (summary.remaining_tokens < cost) {
       await blockAttempt(env.DB, identity.email, builder, "Insufficient Builder Usage Tokens.", summary.remaining_tokens, cost);
@@ -242,15 +252,17 @@ export async function onRequest(context) {
     const outputId = crypto.randomUUID();
     const output = outputFromInput(builder, body);
     const balanceAfter = summary.remaining_tokens - cost;
-    await env.DB.prepare(`INSERT INTO builder_outputs (id, email, builder_id, builder_name, title, token_cost, input_payload, output_payload, request_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(
+    const statements = [env.DB.prepare(`INSERT INTO builder_outputs (id, email, builder_id, builder_name, title, token_cost, input_payload, output_payload, request_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(
       outputId, identity.email, builder.id, builder.name, output.title, cost, JSON.stringify(body.fields || {}), JSON.stringify(output), requestId
-    ).run();
+    )];
     if (cost > 0) {
-      await env.DB.prepare(`INSERT INTO builder_token_ledger (id, email, amount, balance_after, source, reason, builder_output_id, builder_id, metadata) VALUES (?, ?, ?, ?, 'builder_usage', ?, ?, ?, ?)`).bind(
+      statements.push(env.DB.prepare(`INSERT INTO builder_token_ledger (id, email, amount, balance_after, source, reason, builder_output_id, builder_id, metadata) VALUES (?, ?, ?, ?, 'builder_usage', ?, ?, ?, ?)`).bind(
         crypto.randomUUID(), identity.email, -cost, balanceAfter, `Completed ${builder.name}`, outputId, builder.id, JSON.stringify({ requestId })
-      ).run();
+      ));
     }
-    await env.DB.prepare(`UPDATE experience_builders SET usage_count = COALESCE(usage_count, 0) + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?`).bind(builder.id).run();
+    statements.push(env.DB.prepare(`UPDATE experience_builders SET usage_count = COALESCE(usage_count, 0) + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?`).bind(builder.id));
+    if (typeof env.DB.batch === "function") await env.DB.batch(statements);
+    else for (const statement of statements) await statement.run();
     return json({ saved: true, output, output_id: outputId, token_summary: await tokenSummary(env.DB, identity.email) });
   }
 

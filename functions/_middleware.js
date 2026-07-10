@@ -481,7 +481,7 @@ export async function onRequest(context) {
           .bind(identity.email).first();
         const status = String(profile?.admin_customer_status || "").trim().toLowerCase();
         if (["blocked", "closed", "disabled", "suspended"].includes(status)) {
-          return new Response("This customer account is not active.", {
+          return new Response("Your account is currently suspended. Please contact JA Experiences & Discovery for assistance.", {
             status: 403,
             headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" }
           });

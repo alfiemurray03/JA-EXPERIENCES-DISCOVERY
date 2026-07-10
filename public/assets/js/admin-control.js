@@ -534,6 +534,7 @@ async function loadSection(section) {
   renderFavourites();
 
   const panel = document.getElementById("adminPanel");
+  panel.classList.remove("system-settings-page");
   panel.innerHTML = `<div class="admin-loading">Loading ${escapeHtml(sectionTitles[section] || section)}...</div>`;
 
   try {
@@ -2192,14 +2193,15 @@ function renderCustomers(customers = []) {
       <tr class="customer-row-click" data-action="open-customer-profile" data-email="${escapeAttr(c.email)}">
         <td><input type="checkbox" class="customer-select" data-customer-select="${escapeAttr(c.email)}" aria-label="Select ${escapeAttr(name)}"></td>
         <td><strong>${escapeHtml(name)}</strong><span>${escapeHtml(c.email || "")}</span></td>
-        <td>${escapeHtml(c.contact_email || c.email || "")}</td>
-        <td>${lifetime ? badge(`Lifetime${planSuffix}`, "amber") : badge(c.admin_customer_status || "Standard")}</td>
-        <td>${badge((c.country || "Unknown"), "blue")}</td>
-        <td>${badge(flags[0]?.flag || "None", flags.length ? "violet" : "")}</td>
+        <td>${escapeHtml(c.customer_id || c.email || "Not available")}</td>
+        <td>${badge(c.admin_customer_status || "Standard", String(c.admin_customer_status).toLowerCase() === "suspended" ? "red" : "green")}</td>
+        <td>${escapeHtml(c.subscription_plan || (lifetime ? `Lifetime${planSuffix}` : "No subscription"))}</td>
+        <td>${escapeHtml(c.trial_status || (c.trial_end ? `Ends ${formatDate(c.trial_end)}` : "Not available"))}</td>
         <td>${escapeHtml(c.last_activity || formatDate(c.updated_at || c.created_at))}</td>
-        <td>${escapeHtml(c.phone || "Not added")}</td>
-        <td>${escapeHtml(c.communication_preference || "Email")}</td>
-        <td>${escapeHtml(formatDate(c.updated_at || c.created_at))}</td>
+        <td>${escapeHtml(String(c.builder_usage ?? "Not available"))}</td>
+        <td>${escapeHtml(String(c.token_balance ?? "Not available"))}</td>
+        <td>${escapeHtml(formatDate(c.created_at))}</td>
+        <td><button class="mini-button" type="button" data-action="open-customer-profile" data-email="${escapeAttr(c.email)}">View profile</button></td>
       </tr>
     `;
   };
@@ -2216,15 +2218,15 @@ function renderCustomers(customers = []) {
       <div class="table-tools" style="margin-top:1rem;">
         <div class="table-filters">
           <label class="table-search"><span class="sr-only">Search customers</span><input id="customerSearch" type="search" placeholder="Search name, email or phone" autocomplete="off"></label>
-          <label><span class="sr-only">Filter by membership</span><select id="customerStatusFilter"><option value="all">All customers</option><option value="lifetime">Lifetime members</option><option value="standard">Standard customers</option></select></label>
-          <label><span class="sr-only">Filter by support status</span><select id="customerSupportFilter"><option value="all">All support statuses</option><option value="open">Open support</option><option value="awaiting">Awaiting staff</option><option value="closed">Closed</option></select></label>
+          <label><span class="sr-only">Filter by account status</span><select id="customerStatusFilter"><option value="all">All account statuses</option><option value="active">Active</option><option value="suspended">Suspended</option><option value="trial">Trial</option><option value="paid">Paid</option><option value="expired">Expired</option><option value="none">No subscription</option></select></label>
+          <label><span class="sr-only">Filter by plan</span><select id="customerSupportFilter"><option value="all">All plans</option><option value="membership">Membership</option><option value="plus">Plus</option><option value="family">Family</option><option value="lifetime">Lifetime</option></select></label>
           <label><span class="sr-only">Sort customers</span><select id="customerSortFilter"><option value="updated_desc">Last activity</option><option value="created_desc">Registration date</option><option value="name_asc">Name</option></select></label>
         </div>
         <span class="table-count" id="customerResultCount"></span>
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th></th><th>Customer</th><th>Contact email</th><th>Status</th><th>Country</th><th>Flag</th><th>Last activity</th><th>Phone</th><th>Preference</th><th>Updated</th></tr></thead>
+          <thead><tr><th></th><th>Customer</th><th>Customer ID</th><th>Status</th><th>Subscription plan</th><th>Trial</th><th>Last activity</th><th>Builder usage</th><th>Token balance</th><th>Registered</th><th>Actions</th></tr></thead>
           <tbody id="customerTableBody"></tbody>
         </table>
       </div>
@@ -2260,9 +2262,12 @@ function renderCustomers(customers = []) {
       const searchable = [customer.display_name, customer.verified_name, customer.email, customer.contact_email, customer.phone]
         .filter(Boolean).join(" ").toLowerCase();
       const lifetime = Number(customer.admin_lifetime || 0) === 1;
-      const supportStatus = String(customer.support_status || customer.admin_customer_status || "").toLowerCase();
-      const matchesStatus = selectedStatus === "all" || (selectedStatus === "lifetime" && lifetime) || (selectedStatus === "standard" && !lifetime);
-      const matchesSupport = selectedSupport === "all" || (selectedSupport === "open" && supportStatus.includes("open")) || (selectedSupport === "awaiting" && supportStatus.includes("awaiting")) || (selectedSupport === "closed" && supportStatus.includes("closed"));
+      const accountStatus = String(customer.admin_customer_status || "active").toLowerCase();
+      const subscriptionStatus = String(customer.subscription_status || "").toLowerCase();
+      const plan = String(customer.subscription_plan || customer.admin_lifetime_plan_id || "").toLowerCase();
+      const trial = String(customer.trial_status || "").toLowerCase();
+      const matchesStatus = selectedStatus === "all" || (selectedStatus === "active" && !["suspended","expired","cancelled"].includes(accountStatus)) || (selectedStatus === "suspended" && accountStatus === "suspended") || (selectedStatus === "trial" && (trial === "active" || subscriptionStatus === "trialing")) || (selectedStatus === "paid" && ["active","trialing"].includes(subscriptionStatus)) || (selectedStatus === "expired" && (trial === "expired" || ["expired","cancelled","canceled"].includes(subscriptionStatus))) || (selectedStatus === "none" && !plan && !lifetime);
+      const matchesSupport = selectedSupport === "all" || (selectedSupport === "lifetime" && lifetime) || plan.includes(selectedSupport);
       return matchesStatus && matchesSupport && (!query || searchable.includes(query));
     });
     filtered = filtered.sort((a, b) => {
@@ -2274,7 +2279,7 @@ function renderCustomers(customers = []) {
     currentPage = Math.min(currentPage, pages);
     const start = (currentPage - 1) * pageSize;
     const visible = filtered.slice(start, start + pageSize);
-    document.getElementById("customerTableBody").innerHTML = visible.map(customerRow).join("") || `<tr><td colspan="10">No customers match these filters.</td></tr>`;
+    document.getElementById("customerTableBody").innerHTML = visible.map(customerRow).join("") || `<tr><td colspan="11">No customers match these filters.</td></tr>`;
     document.getElementById("customerResultCount").textContent = `${filtered.length} ${filtered.length === 1 ? "customer" : "customers"}`;
     document.getElementById("customerPageStatus").textContent = `Page ${currentPage} of ${pages}`;
     previous.disabled = currentPage <= 1;
@@ -2357,6 +2362,12 @@ function renderCustomerProfile(customer, plans = []) {
   const notifications = Array.isArray(customer.notifications) ? customer.notifications : [];
   const pins = Array.isArray(customer.pins) ? customer.pins : [];
   const notes = Array.isArray(customer.notes) ? customer.notes : [];
+  const builderOutputs = Array.isArray(customer.builderOutputs) ? customer.builderOutputs : [];
+  const tokenLedger = Array.isArray(customer.tokenLedger) ? customer.tokenLedger : [];
+  const savedItems = Array.isArray(customer.savedItems) ? customer.savedItems : [];
+  const customerEnquiries = Array.isArray(customer.customerEnquiries) ? customer.customerEnquiries : [];
+  const dataRequests = Array.isArray(customer.dataRequests) ? customer.dataRequests : [];
+  const customerAudit = Array.isArray(customer.customerAudit) ? customer.customerAudit : [];
   const billing = customer.billing || {};
   const subscription = billing.subscription || null;
   const verification = customer.verification || {};
@@ -2390,7 +2401,25 @@ function renderCustomerProfile(customer, plans = []) {
         ${stat("Support cases", supportCases.length || 0)}
         ${stat("Notifications", notifications.length || 0)}
         ${stat("Internal notes", notes.length || 0)}
+        ${stat("Builder outputs", builderOutputs.length)}
+        ${stat("Saved items", savedItems.length)}
+        ${stat("Token balance", tokenLedger[0]?.balance_after ?? "Not available")}
       </div>
+    </section>
+    <section class="admin-card" id="customerAccountAccess">
+      <div class="section-head"><div><h2>Account access</h2><p>Suspend or reactivate this customer without deleting their profile, subscription history, saved plans or outputs.</p></div></div>
+      <div class="drawer-grid">
+        <div class="drawer-field"><span>Current status</span><strong>${escapeHtml(customer.admin_customer_status || "Standard")}</strong></div>
+        <div class="drawer-field"><span>Suspended</span><strong>${escapeHtml(formatDate(customer.suspended_at))}</strong></div>
+        <div class="drawer-field"><span>Suspended by</span><strong>${escapeHtml(customer.suspended_by || "Not available")}</strong></div>
+        <div class="drawer-field"><span>Reactivated</span><strong>${escapeHtml(formatDate(customer.reactivated_at))}</strong></div>
+      </div>
+      <form class="admin-form" id="customerAccessForm" style="margin-top:1rem;">
+        <label>${String(customer.admin_customer_status).toLowerCase() === "suspended" ? "Reactivation" : "Suspension"} reason<textarea id="customerAccessReason" required maxlength="1000"></textarea></label>
+        <label>Optional internal note<textarea id="customerAccessNote" maxlength="2000"></textarea></label>
+        <button class="admin-button ${String(customer.admin_customer_status).toLowerCase() === "suspended" ? "" : "danger"}" type="submit" ${protectedDisabled}>${String(customer.admin_customer_status).toLowerCase() === "suspended" ? "Reactivate Account" : "Suspend Account"}</button>
+        <div id="customerAccessStatus" class="admin-alert" hidden></div>
+      </form>
     </section>
     <div class="dashboard-layout">
       <div class="dashboard-stack">
@@ -2429,6 +2458,11 @@ function renderCustomerProfile(customer, plans = []) {
             <section class="drawer-section-card"><h3>Notifications</h3>${notifications.length ? `<p>${notifications.length} linked notifications available.</p>` : "<p>No notifications recorded.</p>"}</section>
             <section class="drawer-section-card"><h3>Security PINs</h3>${pins.length ? `<p>${pins.length} PIN records available.</p>` : "<p>No PIN records stored.</p>"}</section>
             <section class="drawer-section-card"><h3>Flags</h3><p>${escapeHtml(flags.map((flag) => flag.flag).join(", ") || "None")}</p></section>
+            <section class="drawer-section-card"><h3>Builder usage</h3><p>${builderOutputs.length ? `${builderOutputs.length} saved builder outputs.` : "No builder outputs recorded."}</p></section>
+            <section class="drawer-section-card"><h3>Saved plans and outputs</h3><p>${savedItems.length ? `${savedItems.length} saved items.` : "No saved items recorded."}</p></section>
+            <section class="drawer-section-card"><h3>Customer enquiries</h3><p>${customerEnquiries.length ? `${customerEnquiries.length} enquiries.` : "No enquiries recorded."}</p></section>
+            <section class="drawer-section-card"><h3>Data requests</h3><p>${dataRequests.length ? `${dataRequests.length} data requests.` : "No data requests recorded."}</p></section>
+            <section class="drawer-section-card"><h3>Audit history</h3><p>${customerAudit.length ? `${customerAudit.length} administrative events.` : "No audit events recorded."}</p></section>
           </div>
         </section>
         <section class="admin-card">
@@ -2446,6 +2480,21 @@ function renderCustomerProfile(customer, plans = []) {
   `;
   setValue("customer_note_category", "General");
   bindCustomerIdentityForms(customer, plans);
+  document.getElementById("customerAccessForm")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const suspended = String(customer.admin_customer_status || "").toLowerCase() === "suspended";
+    const reason = getValue("customerAccessReason");
+    const status = document.getElementById("customerAccessStatus");
+    status.hidden = false;
+    if (!reason) { status.textContent = `${suspended ? "Reactivation" : "Suspension"} reason is required.`; return; }
+    if (!window.confirm(`${suspended ? "Reactivate" : "Suspend"} ${customer.email}? This action is recorded in the audit log.`)) return;
+    status.textContent = suspended ? "Reactivating account..." : "Suspending account...";
+    try {
+      await api("customer", { method: "POST", body: JSON.stringify({ action: suspended ? "reactivate_account" : "suspend_account", email: customer.email, reason, internal_note: getValue("customerAccessNote") }) });
+      status.className = "admin-success"; status.textContent = suspended ? "Customer account reactivated." : "Customer account suspended.";
+      await openCustomerProfile(customer.email);
+    } catch (error) { status.className = "admin-alert"; status.textContent = error.message || "Account access could not be updated."; }
+  });
   document.getElementById("customerNoteForm")?.addEventListener("submit", async (event) => {
     event.preventDefault();
     const data = await api("customer", {
@@ -4322,6 +4371,7 @@ function priorityColour(priority = "") {
 
 function renderSystemSettings(data = {}) {
   const container = document.getElementById("adminPanel");
+  container.classList.add("system-settings-page");
   const platform = data.platform || {};
   const siteStatus = data.site_status || "normal";
   const csConfig = data.coming_soon_config || {};
@@ -4339,7 +4389,7 @@ function renderSystemSettings(data = {}) {
     { id: "troubleshooting", label: "Troubleshooting", icon: "alert" }
   ];
 
-  container.innerHTML = `
+  container.innerHTML = `<div class="system-settings-shell">
     <div class="section-head">
       <div>
         <h2>System Settings</h2>
@@ -4350,7 +4400,7 @@ function renderSystemSettings(data = {}) {
       ${tabs.map((t, i) => `<button class="settings-category-tab${i === 0 ? " active" : ""}" data-tab="${t.id}">${t.label}</button>`).join("")}
     </div>
     <div id="systemSettingsTabContent"></div>
-  `;
+  </div>`;
 
   const tabContent = document.getElementById("systemSettingsTabContent");
   const tabButtons = container.querySelectorAll(".settings-category-tab");

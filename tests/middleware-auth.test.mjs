@@ -291,5 +291,5 @@ test("middleware enforces Customer account status before serving the portal", as
     next: async () => { throw new Error("Blocked customer reached the origin."); }
   });
   assert.equal(response.status, 403);
-  assert.match(await response.text(), /not active/);
+  assert.match(await response.text(), /currently suspended/);
 });

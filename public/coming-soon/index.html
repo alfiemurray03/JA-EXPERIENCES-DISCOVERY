@@ -461,6 +461,7 @@
               <label for="seconds">Seconds</label>
             </div>
           </div>
+          <p class="countdown-label hidden" id="countdownComplete">Our planned launch time has arrived. Please check back shortly.</p>
         </div>
 
         <div class="features" id="featureList" aria-label="Platform preview features"></div>
@@ -541,16 +542,31 @@
 
       function renderCountdown(targetIso) {
         var wrap = byId('countdownWrap');
-        if (!wrap || !targetIso) return;
+        var complete = byId('countdownComplete');
+        var countdown = wrap && wrap.querySelector('.countdown');
+        if (timer) { clearInterval(timer); timer = null; }
+        if (!wrap || !targetIso) {
+          if (wrap) wrap.classList.add('hidden');
+          return;
+        }
+        var targetTime = new Date(targetIso).getTime();
+        if (!Number.isFinite(targetTime)) {
+          wrap.classList.add('hidden');
+          return;
+        }
 
         function tick() {
           var parts = getCountdown(targetIso);
           if (parts.expired) {
-            wrap.classList.add('hidden');
-            if (timer) clearInterval(timer);
+            if (countdown) countdown.classList.add('hidden');
+            if (complete) complete.classList.remove('hidden');
+            wrap.classList.remove('hidden');
+            if (timer) { clearInterval(timer); timer = null; }
             return;
           }
 
+          if (countdown) countdown.classList.remove('hidden');
+          if (complete) complete.classList.add('hidden');
           byId('days').textContent = pad(parts.days);
           byId('hours').textContent = pad(parts.hours);
           byId('minutes').textContent = pad(parts.minutes);
@@ -559,7 +575,6 @@
         }
 
         tick();
-        if (timer) clearInterval(timer);
         timer = setInterval(tick, 1000);
       }
 
@@ -595,7 +610,7 @@
 
       renderFeatures(DEFAULTS.features);
 
-      fetch('/api/coming-soon-config', { headers: { 'Accept': 'application/json' } })
+      fetch('/api/coming-soon-config', { cache: 'no-store', headers: { 'Accept': 'application/json', 'Cache-Control': 'no-cache' } })
         .then(function (response) { return response.ok ? response.json() : null; })
         .then(function (data) { applyConfig(data && data.success !== false ? data : DEFAULTS); })
         .catch(function () { applyConfig(DEFAULTS); });
