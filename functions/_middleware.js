@@ -121,14 +121,14 @@ async function getSiteSettings(DB) {
     return settings;
   } catch {
     return {
-      maintenance_enabled: "false",
+      maintenance_enabled: "true",
       maintenance_content_mode: "plain",
-      maintenance_content: "",
+      maintenance_content: "We are temporarily unavailable while we resolve a technical issue. Please check back shortly.",
       launchgateway_enabled: "false",
       launchgateway_content_mode: "plain",
       launchgateway_content: "",
       site_theme_mode: "dark",
-      site_status: "normal"
+      site_status: "maintenance"
     };
   }
 }

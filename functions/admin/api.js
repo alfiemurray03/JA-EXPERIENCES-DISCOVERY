@@ -3184,7 +3184,12 @@ export async function onRequest(context) {
       if (["builders", "credits", "usage", "addons", "platformsettings"].includes(section)) {
         const platform = await getBuilderPlatform(env.DB);
         const siteStatus = await getSiteStatus(env.DB);
-        return json({ admin: adminContext, platform, site_status: siteStatus });
+        const [csHeadline, csSubtext, csLaunchDate] = await Promise.all([
+          env.DB.prepare("SELECT value FROM site_settings WHERE key = 'coming_soon_headline'").first().then((r) => r?.value || "").catch(() => ""),
+          env.DB.prepare("SELECT value FROM site_settings WHERE key = 'coming_soon_subtext'").first().then((r) => r?.value || "").catch(() => ""),
+          env.DB.prepare("SELECT value FROM site_settings WHERE key = 'coming_soon_launch_date'").first().then((r) => r?.value || "").catch(() => "")
+        ]);
+        return json({ admin: adminContext, platform, site_status: siteStatus, coming_soon: { headline: csHeadline, subtext: csSubtext, launchDate: csLaunchDate } });
       }
       if (section === "notifications") return json({ admin: adminContext, notifications: await getNotifications(env.DB) });
       if (section === "membership") return json({ admin: adminContext, membership: await getMembership(env.DB) });
@@ -3249,6 +3254,33 @@ export async function onRequest(context) {
 
           const platform = await getBuilderPlatform(env.DB);
           return json({ platform, site_status: nextStatus, saved: true });
+        }
+
+        if (body.action === "update_coming_soon_settings") {
+          const headline = clean(body.headline, 200) || "Coming Soon";
+          const subtext = clean(body.subtext, 500) || "We are putting the finishing touches on something great.";
+          let launchDate = "";
+          if (body.launch_date) {
+            const parsed = new Date(body.launch_date);
+            if (Number.isNaN(parsed.getTime())) {
+              return json({ error: "Launch date is not a valid date." }, 400);
+            }
+            launchDate = parsed.toISOString();
+          }
+
+          await saveSettings(env.DB, {
+            coming_soon_headline: headline,
+            coming_soon_subtext: subtext,
+            coming_soon_launch_date: launchDate
+          });
+
+          await writeAudit(env.DB, identity, "coming_soon_settings_update", "site_settings", "coming_soon", `Updated Coming Soon settings.`, {
+            headline,
+            subtext,
+            launch_date: launchDate
+          });
+
+          return json({ coming_soon: { headline, subtext, launchDate }, saved: true });
         }
       }
       if (body.action === "export_customer_data") {

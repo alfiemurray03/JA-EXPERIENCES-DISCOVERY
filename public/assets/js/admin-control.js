@@ -1171,9 +1171,27 @@ function renderPlatformSettings(platform = {}) {
               <option value="maintenance" ${currentStatus === "maintenance" ? "selected" : ""}>Maintenance Mode</option>
             </select>
           </label>
-          <button class="admin-button" type="submit" style="margin-top: 1rem;">Update Site Status</button>
+          <button class="admin-button" type="submit" style="margin-top: 1rem;">Save Site Status</button>
         </form>
         <div id="siteStatusSaved" class="admin-alert" style="margin-top: 1rem;" hidden></div>
+      </article>
+
+      <article class="admin-card">
+        <h2>Coming Soon Settings</h2>
+        <form class="admin-form single" id="comingSoonSettingsForm">
+          <label>Page Headline
+            <input type="text" id="comingSoonHeadline" placeholder="Coming Soon" maxlength="200">
+          </label>
+          <label>Subtext
+            <input type="text" id="comingSoonSubtext" placeholder="We are putting the finishing touches on something great." maxlength="500">
+          </label>
+          <label>Launch Date &amp; Time (UK local time)
+            <input type="datetime-local" id="comingSoonLaunchDate" step="60">
+          </label>
+          <p style="font-size: 0.82rem; color: #64748b; margin-top: -0.5rem;">Enter the date and time in UK local time. BST/GMT is handled automatically. Stored as UTC.</p>
+          <button class="admin-button" type="submit" style="margin-top: 1rem;">Save Countdown Settings</button>
+        </form>
+        <div id="comingSoonSaved" class="admin-alert" style="margin-top: 1rem;" hidden></div>
       </article>
 
       <article class="admin-card">
@@ -1230,6 +1248,71 @@ function renderPlatformSettings(platform = {}) {
       statusEl.textContent = error.message || "Failed to update site status.";
     }
   });
+
+  const comingSoonForm = document.getElementById("comingSoonSettingsForm");
+  if (comingSoonForm) {
+    fetch("/api/coming-soon-config", { headers: { Accept: "application/json" } })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((cfg) => {
+        if (!cfg) return;
+        if (cfg.headline) document.getElementById("comingSoonHeadline").value = cfg.headline;
+        if (cfg.subtext) document.getElementById("comingSoonSubtext").value = cfg.subtext;
+        if (cfg.launchDate) {
+          const d = new Date(cfg.launchDate);
+          if (!Number.isNaN(d.getTime())) {
+            const ukOffset = getUkOffset(d);
+            const local = new Date(d.getTime() - ukOffset);
+            document.getElementById("comingSoonLaunchDate").value = local.toISOString().slice(0, 16);
+          }
+        }
+      })
+      .catch(() => {});
+
+    comingSoonForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const savedEl = document.getElementById("comingSoonSaved");
+      if (!savedEl) return;
+      savedEl.hidden = false;
+      savedEl.className = "admin-alert";
+      savedEl.textContent = "Saving countdown settings...";
+
+      try {
+        const rawDate = document.getElementById("comingSoonLaunchDate").value;
+        let launchDate = "";
+        if (rawDate) {
+          const d = new Date(rawDate);
+          if (Number.isNaN(d.getTime())) {
+            throw new Error("Launch date is not a valid date.");
+          }
+          launchDate = d.toISOString();
+        }
+
+        const data = await api("platformsettings", {
+          method: "POST",
+          body: JSON.stringify({
+            action: "update_coming_soon_settings",
+            headline: document.getElementById("comingSoonHeadline").value,
+            subtext: document.getElementById("comingSoonSubtext").value,
+            launch_date: launchDate
+          })
+        });
+        savedEl.className = "admin-success";
+        savedEl.textContent = "Countdown settings saved successfully.";
+      } catch (error) {
+        savedEl.className = "admin-alert";
+        savedEl.textContent = error.message || "Failed to save countdown settings.";
+      }
+    });
+  }
+}
+
+function getUkOffset(date) {
+  const year = date.getUTCFullYear();
+  const lastDayOfMarch = new Date(Date.UTC(year, 2, 31));
+  const lastDayOfOctober = new Date(Date.UTC(year, 9, 31));
+  const bstStart = new Date(Date.UTC(year, 2, 31 - lastDayOfMarch.getUTCDay(), 1, 0, 0));
+  const gmtStart = new Date(Date.UTC(year, 9, 31 - lastDayOfOctober.getUTCDay(), 1, 0, 0));
+  return (date >= bstStart && date < gmtStart) ? 60 : 0;
 }
 
 function renderPlatformScaffold(title, description, rows = []) {

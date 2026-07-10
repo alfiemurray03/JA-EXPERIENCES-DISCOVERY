@@ -2,7 +2,7 @@ const DEFAULT_CONFIG = {
   success: true,
   headline: "Coming Soon",
   subtext: "We are putting the finishing touches on something great.",
-  launchDate: "2026-08-03T09:00:00+01:00",
+  launchDate: "2026-08-29T22:01:00+01:00",
   platformName: "JA Experiences & Discovery",
   description: "JA Experiences & Discovery is a self-service experience planning platform that helps you build, save and manage everyday, travel and support planning outputs.",
   features: [
