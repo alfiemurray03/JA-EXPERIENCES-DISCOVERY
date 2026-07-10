@@ -13,17 +13,16 @@ for (const destination of destinations) {
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>${destination.name} Travel Planning Guide | JA Experiences &amp; Discovery</title>
   <meta name="description" content="Practical ${destination.name} travel planning guidance and personalised research support from JA Experiences & Discovery.">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/assets/css/ja-travel-rebuild.css">
+  <link rel="stylesheet" href="/assets/css/theme.css?v=20260709-airo-2">
+  <link rel="stylesheet" href="/assets/css/public-saas.css?v=20260710-public-finish-1">
+  <script id="Cookiebot" src="https://consent.cookiebot.com/uc.js" data-cbid="762d90c4-b030-45b0-9e70-c21806c665e3" data-blockingmode="auto" type="text/javascript"></script>
 </head>
 <body data-page="destinations">
   <div id="siteShellHeader"></div>
   <main id="destinationGuide" data-slug="${destination.slug}" data-name="${destination.name.replaceAll('"', "&quot;")}"></main>
   <div id="siteShellFooter"></div>
-  <script src="/assets/js/site-shell.js?v=20260702-1"></script>
-  <script src="/assets/js/destination-page.js?v=20260620-3"></script>
+  <script src="/assets/js/site-shell.js?v=20260710-public-finish-1"></script>
+  <script src="/assets/js/destination-page.js?v=20260620-6"></script>
 </body>
 </html>
 `;
