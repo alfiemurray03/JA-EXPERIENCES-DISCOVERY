@@ -644,6 +644,18 @@ main {
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
+.hero-builder-visual {
+  padding: clamp(1rem, 2vw, 1.3rem);
+}
+
+.builder-preview-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 1.4rem;
+  box-shadow: 0 18px 50px rgba(37, 99, 235, 0.12);
+}
+
 .destination-card:hover,
 .partner-browser-card:hover,
 .partner-experience-card:hover,
@@ -755,7 +767,7 @@ main {
 
 .partner-browser-card {
   position: relative;
-  min-height: 15rem;
+  min-height: 17rem;
 }
 
 .partner-browser-card::before {
@@ -802,6 +814,7 @@ main {
 
 .provider-widget,
 .headout-gallery {
+  min-height: 18rem;
   overflow: hidden;
   border: 1px solid var(--ja-line);
   border-radius: 1rem;
@@ -1430,7 +1443,7 @@ main {
   .md\:text-5xl { font-size: 3rem; }
 
   .site-footer-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -1447,6 +1460,10 @@ main {
   .lg\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .lg\:grid-cols-6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
   .lg\:text-6xl { font-size: 4rem; }
+
+  .site-footer-grid {
+    grid-template-columns: minmax(16rem, 1.25fr) repeat(4, minmax(0, 1fr));
+  }
 
   main > .section-lg:first-child {
     padding-top: clamp(3.4rem, 5vw, 4.8rem);

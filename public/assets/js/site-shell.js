@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
   const publicThemeLink = document.querySelector('link[href^="/assets/css/public-saas.css"]') || document.createElement("link");
   publicThemeLink.rel = "stylesheet";
-  publicThemeLink.href = "/assets/css/public-saas.css?v=20260710-saas-repair-1";
+  publicThemeLink.href = "/assets/css/public-saas.css?v=20260710-public-finish-1";
   if (!publicThemeLink.parentNode) {
     document.head.appendChild(publicThemeLink);
   }
@@ -216,7 +216,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   await Promise.all([
     loadPartial(headerTarget, "/assets/includes/header.html?v=20260710-partners-1"),
-    loadPartial(footerTarget, "/assets/includes/footer.html?v=20260709-shell-1")
+    loadPartial(footerTarget, "/assets/includes/footer.html?v=20260710-footer-account-1")
   ]);
 
   setupThemeToggle();

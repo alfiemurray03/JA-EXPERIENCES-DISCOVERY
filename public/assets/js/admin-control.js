@@ -1132,9 +1132,34 @@ function renderPaidAddOns(platform = {}) {
 
 function renderPlatformSettings(platform = {}) {
   const currentStatus = state.data.platformsettings?.site_status || "normal";
+  const settingsCategories = [
+    ["General", "Platform identity, launch mode and operating defaults."],
+    ["Stripe", "Payment environment, portal state and price ID mapping."],
+    ["Products", "Subscription products and public product wording."],
+    ["Plans", "Starter, Plus and Family plan configuration."],
+    ["Builders", "Builder catalogue, availability and plan access."],
+    ["Builder Usage Tokens", "Trial, monthly and add-on token rules."],
+    ["Branding", "Public brand, footer and customer-facing labels."],
+    ["Email", "Transactional email sender and support routing."],
+    ["Compliance", "Cookiebot, legal pages, audit and GDPR controls."],
+    ["Site Status", "Normal, coming soon and maintenance mode."],
+    ["Troubleshooting", "Health checks, diagnostics and support notes."]
+  ];
+  const settingsCategoryCards = settingsCategories.map(([title, description]) => `
+      <article class="settings-category-card">
+        <span>${escapeHtml(title)}</span>
+        <p>${escapeHtml(description)}</p>
+      </article>
+    `).join("");
   setPanel(`
-    <div class="section-head"><div><span class="eyebrow">Platform controls</span><h1>Platform Settings</h1><p>Review trial, credit, plan and enforcement rules.</p></div></div>
+    <div class="section-head"><div><span class="eyebrow">System settings</span><h1>Platform Settings</h1><p>Review public site, subscription, builder and operational settings from the protected admin shell.</p></div></div>
     ${renderConfigurationReadyNotice()}
+    <div class="settings-category-tabs" aria-label="System settings categories">
+      ${settingsCategories.map(([title], index) => `<button class="settings-category-tab${index === 0 ? " active" : ""}" type="button">${escapeHtml(title)}</button>`).join("")}
+    </div>
+    <div class="settings-category-grid">
+      ${settingsCategoryCards}
+    </div>
     <div class="admin-grid">
       <article class="admin-card">
         <h2>Site Status Controls</h2>
@@ -1151,9 +1176,22 @@ function renderPlatformSettings(platform = {}) {
         <div id="siteStatusSaved" class="admin-alert" style="margin-top: 1rem;" hidden></div>
       </article>
 
-      <article class="admin-card"><h2>Trial settings</h2><form class="admin-form single"><label>Trial length<input value="14 days"></label><label>Trial tokens<input value="30 once only"></label><label><input type="checkbox" checked> One trial per customer/account</label></form></article>
-      <article class="admin-card"><h2>Builder token rules</h2><form class="admin-form single"><label><input type="checkbox" checked> Deduct only on completed/saved/generated output</label><label><input type="checkbox" checked> No deduction for opening/viewing a builder</label><label><input type="checkbox" checked> Block completion when tokens are insufficient</label></form></article>
-      <article class="admin-card"><h2>Plan rules</h2><form class="admin-form single"><label><input type="checkbox" checked> Paid plans only</label><label><input type="checkbox" checked> No permanent free plan</label><label><input type="checkbox" checked> Trial can upgrade to paid subscription</label></form></article>
+      <article class="admin-card">
+        <h2>Subscription Plans</h2>
+        <div class="settings-plan-grid">
+          <div><strong>Starter</strong><span>150 Builder Usage Tokens/month</span></div>
+          <div><strong>Plus</strong><span>350 Builder Usage Tokens/month</span></div>
+          <div><strong>Family</strong><span>750 Builder Usage Tokens/month</span></div>
+        </div>
+        <p>Plan names, prices and live Stripe price IDs remain controlled by the existing billing configuration. No fake plan IDs are shown here.</p>
+      </article>
+      <article class="admin-card"><h2>Stripe settings</h2><form class="admin-form single"><label>Stripe mode<input value="Configured through environment and Stripe admin" readonly></label><label>Customer portal<input value="Use server-side billing portal route" readonly></label><label>Price IDs<input value="Not displayed unless configured by backend settings" readonly></label></form></article>
+      <article class="admin-card"><h2>Trial settings</h2><form class="admin-form single"><label>Trial length<input value="14 days" readonly></label><label>Trial tokens<input value="30 once only" readonly></label><label class="check"><input type="checkbox" checked disabled> One trial per customer/account</label></form></article>
+      <article class="admin-card"><h2>Builder Usage Token rules</h2><form class="admin-form single"><label class="check"><input type="checkbox" checked disabled> Deduct only on completed/saved/generated output</label><label class="check"><input type="checkbox" checked disabled> No deduction for opening/viewing a builder</label><label class="check"><input type="checkbox" checked disabled> Block completion when tokens are insufficient</label></form></article>
+      <article class="admin-card"><h2>Builder catalogue</h2><form class="admin-form single"><label>Public label<input value="Builder Usage Tokens" readonly></label><label>Customer access<input value="Authenticated customer account required" readonly></label><label>Discovery pages<input value="Public informational pages remain available" readonly></label></form></article>
+      <article class="admin-card"><h2>Compliance and cookies</h2><form class="admin-form single"><label>Cookie consent<input value="Cookiebot remains the consent controller" readonly></label><label>Legal footer<input value="Privacy, terms, cookies, complaints and accessibility links" readonly></label><label>Audit approach<input value="Admin changes require auditable backend actions before live enforcement" readonly></label></form></article>
+      <article class="admin-card"><h2>Email and support</h2><form class="admin-form single"><label>Enquiries mailbox<input value="hello@jagroupservices.co.uk" readonly></label><label>Telephone support<input value="020 3834 2790" readonly></label><label>Status and support pages<input value="Linked from public footer and protected admin shell" readonly></label></form></article>
+      <article class="admin-card"><h2>Troubleshooting</h2><p>Use Production Health, Status Centre, Audit, Sessions and System Reports for live diagnostics. This settings overview does not expose secrets or bypass authentication.</p></article>
       <article class="admin-card"><h2>Affiliate/service boundary wording</h2><p>Headout and GetYourGuide remain third-party providers. JA Group Services Ltd may receive commission from qualifying bookings. Bookings are made directly with the relevant provider and are subject to that provider's terms, cancellation rules, refund rules and privacy notice.</p></article>
     </div>
     <button class="admin-button" type="button" data-action="validate-platform-settings">Validate settings</button>

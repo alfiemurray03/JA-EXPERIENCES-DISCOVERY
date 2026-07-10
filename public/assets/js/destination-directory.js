@@ -60,7 +60,16 @@ function renderDestinations() {
   const search = document.querySelector("#destinationSearch");
   const count = document.querySelector("#destinationCount");
   const activeFilter = document.querySelector("#destinationFilters .filter-chip[aria-pressed='true']")?.dataset.filter || "all";
-  if (!grid || !search || !count || !Array.isArray(window.JA_DESTINATIONS)) return;
+  if (!grid || !search || !count) return;
+  if (!Array.isArray(window.JA_DESTINATIONS)) {
+    grid.innerHTML = `
+    <div class="saas-panel saas-empty">
+      <h3>Destination boards are not available</h3>
+      <p>Please refresh the page. If the issue continues, contact support.</p>
+    </div>`;
+    count.textContent = "Destination data could not be loaded";
+    return;
+  }
 
   const query = search.value.trim().toLocaleLowerCase("en-GB");
   const destinations = window.JA_DESTINATIONS.map(classifyDestination);
@@ -88,22 +97,30 @@ function renderDestinations() {
   count.textContent = `${matches.length} destination ${matches.length === 1 ? "board" : "boards"} shown`;
 }
 
-const initialQuery = new URLSearchParams(window.location.search).get("q");
-if (initialQuery && document.querySelector("#destinationSearch")) {
-  document.querySelector("#destinationSearch").value = initialQuery;
+function initDestinationDirectory() {
+  const initialQuery = new URLSearchParams(window.location.search).get("q");
+  const search = document.querySelector("#destinationSearch");
+  if (initialQuery && search) {
+    search.value = initialQuery;
+  }
+
+  search?.addEventListener("input", renderDestinations);
+  document.querySelector("#destinationClear")?.addEventListener("click", () => {
+    if (search) search.value = "";
+    renderDestinations();
+  });
+  document.querySelector("#destinationFilters")?.addEventListener("click", event => {
+    const button = event.target.closest(".filter-chip");
+    if (!button) return;
+    document.querySelectorAll("#destinationFilters .filter-chip").forEach(item => item.setAttribute("aria-pressed", "false"));
+    button.setAttribute("aria-pressed", "true");
+    renderDestinations();
+  });
+  renderDestinations();
 }
 
-document.querySelector("#destinationSearch")?.addEventListener("input", renderDestinations);
-document.querySelector("#destinationClear")?.addEventListener("click", () => {
-  const search = document.querySelector("#destinationSearch");
-  if (search) search.value = "";
-  renderDestinations();
-});
-document.querySelector("#destinationFilters")?.addEventListener("click", event => {
-  const button = event.target.closest(".filter-chip");
-  if (!button) return;
-  document.querySelectorAll("#destinationFilters .filter-chip").forEach(item => item.setAttribute("aria-pressed", "false"));
-  button.setAttribute("aria-pressed", "true");
-  renderDestinations();
-});
-renderDestinations();
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initDestinationDirectory, { once: true });
+} else {
+  initDestinationDirectory();
+}
