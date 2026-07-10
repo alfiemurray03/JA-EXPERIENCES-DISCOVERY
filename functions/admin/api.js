@@ -49,7 +49,7 @@ const PERMISSION_SECTIONS = {
   policies: ["manage_policies", "manage_content"],
   launchgateway: ["manage_content"],
   maintenance: ["manage_content"],
-  systemsettings: ["manage_settings"]
+  systemsettings: ["manage_settings", "manage_status"]
 };
 
 async function healthCount(DB, sql, bindings = []) {
@@ -3233,7 +3233,8 @@ export async function onRequest(context) {
         return json({ admin: adminContext, platform: await getBuilderPlatform(env.DB), saved: false });
       }
       if (section === "platformsettings" || section === "systemsettings") {
-        if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_plans", "manage_pricing", "manage_settings"])) {
+        const requiredSettingsPermissions = section === "systemsettings" ? ["manage_settings", "manage_status"] : ["manage_plans", "manage_pricing", "manage_settings"];
+        if (!ownerAccess && !hasAnyPermission(adminContext.permissions, requiredSettingsPermissions)) {
           return json({ error: "Forbidden.", section }, 403);
         }
         if (body.action === "update_site_status") {
@@ -3440,24 +3441,10 @@ export async function onRequest(context) {
         return json({ email: await saveEmailSettings(env.DB, body, env, identity), saved: true });
       }
       if (section === "maintenance") {
-        if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_content"])) return json({ error: "Forbidden.", section }, 403);
-        const previous = await getMaintenance(env.DB);
-        const maintenance = await saveMaintenance(env.DB, body);
-        await writeAudit(env.DB, identity, "maintenance_update", "site_settings", "maintenance", `Maintenance mode ${body.maintenance_enabled ? "enabled" : "disabled"}.`, {
-          previousValue: previous,
-          newValue: maintenance
-        });
-        return json({ maintenance, saved: true });
+        return json({ error: "Legacy Maintenance controls are retired. Use System Settings > Site Status." }, 409);
       }
       if (section === "launchgateway") {
-        if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_content"])) return json({ error: "Forbidden.", section }, 403);
-        const previous = await getLaunchGateway(env.DB);
-        const launchgateway = await saveLaunchGateway(env.DB, body);
-        await writeAudit(env.DB, identity, "launchgateway_update", "site_settings", "launchgateway", `Launch Gateway page ${body.launchgateway_enabled ? "enabled" : "disabled"}.`, {
-          previousValue: previous,
-          newValue: launchgateway
-        });
-        return json({ launchgateway, saved: true });
+        return json({ error: "Legacy Launch Gateway controls are retired. Use System Settings > Site Status." }, 409);
       }
       if (section === "stripe") {
         if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_stripe"])) return json({ error: "Forbidden.", section }, 403);

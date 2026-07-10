@@ -551,7 +551,7 @@ async function loadSection(section) {
 
     if (section === "systemsettings") {
       const [platformData, comingSoonConfig] = await Promise.all([
-        api("platformsettings"),
+        api("systemsettings"),
         fetch("/api/coming-soon-config", { headers: { Accept: "application/json" } })
           .then((r) => r.ok ? r.json() : null)
           .catch(() => null)
@@ -4308,7 +4308,7 @@ function priorityColour(priority = "") {
 }
 
 function renderSystemSettings(data = {}) {
-  const container = document.getElementById("sectionContent");
+  const container = document.getElementById("adminPanel");
   const platform = data.platform || {};
   const siteStatus = data.site_status || "normal";
   const csConfig = data.coming_soon_config || {};
@@ -4357,26 +4357,22 @@ function renderSystemSettingsTab(tabId, container, data) {
       container.innerHTML = renderGeneralTab(data);
       break;
     case "stripe":
-      container.innerHTML = "";
-      renderStripe(data.stripe || {});
+      container.innerHTML = renderSettingsLinkTab("Stripe", "Payment configuration and connection status.", "stripe");
       break;
     case "products":
       container.innerHTML = renderProductsTab(data);
       break;
     case "plans":
-      container.innerHTML = "";
-      renderPlans(data.plans || []);
+      container.innerHTML = renderSettingsLinkTab("Plans", "Plan pricing, availability and entitlements.", "plans");
       break;
     case "email":
-      container.innerHTML = "";
-      renderEmail(data.email || {}, data.test || null);
+      container.innerHTML = renderSettingsLinkTab("Email", "Outbound email and delivery testing.", "email");
       break;
     case "compliance":
       container.innerHTML = renderComplianceTab(data);
       break;
     case "appearance":
-      container.innerHTML = "";
-      renderAppearance(data.appearance || {});
+      container.innerHTML = renderSettingsLinkTab("Appearance", "Public website theme and presentation.", "appearance");
       break;
     case "sitestatus":
       renderSiteStatusTab(container, data);
@@ -4387,6 +4383,21 @@ function renderSystemSettingsTab(tabId, container, data) {
     default:
       container.innerHTML = "<p class=\"admin-card\">This tab has no content yet.</p>";
   }
+}
+
+function ukLocalDateTimeToIso(value) {
+  if (!value) return "";
+  const [date, time] = value.split("T");
+  const [year, month, day] = date.split("-").map(Number);
+  const [hour, minute] = time.split(":").map(Number);
+  const localAsUtc = Date.UTC(year, month - 1, day, hour, minute);
+  let instant = new Date(localAsUtc);
+  for (let index = 0; index < 2; index += 1) instant = new Date(localAsUtc - getUkOffset(instant) * 60000);
+  return instant.toISOString();
+}
+
+function renderSettingsLinkTab(title, description, section) {
+  return `<article class="admin-card"><h2>${escapeHtml(title)}</h2><p>${escapeHtml(description)}</p><button class="admin-button" type="button" data-action="load-section" data-section="${escapeAttr(section)}">Open ${escapeHtml(title)} settings</button></article>`;
 }
 
 function renderGeneralTab(data) {
@@ -4542,7 +4553,7 @@ function renderSiteStatusTab(container, data) {
     if (!Number.isNaN(d.getTime())) {
       launchDateDisplay = formatUkDateTime(d);
       const ukOffset = getUkOffset(d);
-      const local = new Date(d.getTime() - ukOffset * 60000);
+      const local = new Date(d.getTime() + ukOffset * 60000);
       launchDateValue = local.toISOString().slice(0, 16);
     }
   }
@@ -4701,9 +4712,7 @@ function initSiteStatusTab(container, savedStatus) {
         const rawDate = dateInput.value;
         let launchDate = "";
         if (rawDate) {
-          const d = new Date(rawDate);
-          if (Number.isNaN(d.getTime())) throw new Error("Launch date is not a valid date.");
-          launchDate = d.toISOString();
+          launchDate = ukLocalDateTimeToIso(rawDate);
         }
 
         const result = await api("platformsettings", {

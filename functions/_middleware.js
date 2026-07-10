@@ -533,6 +533,12 @@ export async function onRequest(context) {
     path === "/account/logout/" ||
     path === "/account" ||
     path === "/account/" ||
+    path.startsWith("/account/") ||
+    path === "/login" ||
+    path.startsWith("/login/") ||
+    path.startsWith("/legal/") ||
+    path === "/accessibility-support" ||
+    path === "/accessibility-support/" ||
     path === "/status" ||
     path.startsWith("/status/") ||
     path === "/api/status" ||
@@ -557,7 +563,7 @@ export async function onRequest(context) {
     path === "/api/coming-soon-config" ||
     path === "/api/site-status";
 
-  if (bypass || !env.DB) {
+  if (bypass) {
     return next(request);
   }
 
@@ -581,11 +587,10 @@ export async function onRequest(context) {
     stage: "public_gate_decision",
     path,
     bypassDecision: "deny",
-    launchGatewayEnabled: String(settings.launchgateway_enabled || "false"),
-    maintenanceEnabled: String(settings.maintenance_enabled || "false")
+    siteStatus: String(settings.site_status || "maintenance")
   }));
 
-  if (settings.site_status === "maintenance" || settings.maintenance_enabled === "true") {
+  if (settings.site_status === "maintenance") {
     return new Response(pageHtml(settings, "maintenance"), {
       status: 503,
       headers: {
@@ -611,16 +616,6 @@ export async function onRequest(context) {
       status: 503,
       headers: {
         "Content-Type": "application/json; charset=utf-8",
-        "Cache-Control": "no-store"
-      }
-    });
-  }
-
-  if (settings.launchgateway_enabled === "true") {
-    return new Response(pageHtml(settings, "launch-gateway"), {
-      status: 200,
-      headers: {
-        "Content-Type": "text/html; charset=utf-8",
         "Cache-Control": "no-store"
       }
     });

@@ -1,12 +1,13 @@
 export async function onRequestGet({ env }) {
   if (!env.DB) {
-    return new Response(JSON.stringify({ status: "normal" }), {
-      headers: { "Content-Type": "application/json; charset=utf-8" }
+    return new Response(JSON.stringify({ status: "maintenance" }), {
+      status: 503,
+      headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" }
     });
   }
   try {
     const row = await env.DB.prepare("SELECT value FROM site_settings WHERE key = 'site_status'").first();
-    const status = row?.value || "normal";
+    const status = ["normal", "coming_soon", "maintenance"].includes(row?.value) ? row.value : "normal";
     return new Response(JSON.stringify({ status }), {
       headers: {
         "Content-Type": "application/json; charset=utf-8",
@@ -15,8 +16,9 @@ export async function onRequestGet({ env }) {
       }
     });
   } catch {
-    return new Response(JSON.stringify({ status: "normal" }), {
-      headers: { "Content-Type": "application/json; charset=utf-8" }
+    return new Response(JSON.stringify({ status: "maintenance" }), {
+      status: 503,
+      headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" }
     });
   }
 }

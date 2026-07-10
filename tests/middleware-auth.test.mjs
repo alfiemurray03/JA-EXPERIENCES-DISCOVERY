@@ -165,7 +165,7 @@ test("authenticated administrators bypass Launch Gateway and maintenance on publ
   assert.equal(await response.text(), "public site");
 });
 
-test("visitors still see Launch Gateway when public gating is enabled", async () => {
+test("legacy Launch Gateway flags no longer override the unified site status", async () => {
   const response = await onRequest({
     request: new Request("https://experiences.example.test/"),
     env: {
@@ -186,7 +186,17 @@ test("visitors still see Launch Gateway when public gating is enabled", async ()
     next: async () => new Response("public site", { status: 200 })
   });
   assert.equal(response.status, 200);
-  assert.match(await response.text(), /Launch Gateway/);
+  assert.equal(await response.text(), "public site");
+});
+
+test("public routes fail safely into maintenance when site settings cannot be read", async () => {
+  const response = await onRequest({
+    request: new Request("https://experiences.example.test/", { headers: { Accept: "text/html" } }),
+    env: { ...environment(new MiddlewareD1({ session: false })), DB: { prepare() { throw new Error("D1 unavailable"); } } },
+    next: async () => new Response("public site")
+  });
+  assert.equal(response.status, 503);
+  assert.match(await response.text(), /Maintenance/i);
 });
 
 test("signed-out users can view portal landing pages before authentication", async () => {
