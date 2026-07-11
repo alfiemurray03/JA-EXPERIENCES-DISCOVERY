@@ -394,12 +394,24 @@ export async function onRequest(context) {
   const url = new URL(request.url);
   const path = url.pathname;
 
+  const adminIdentity = await getAuthenticatedAdminIdentity(request, env);
+
+  if (adminIdentity && (path.startsWith("/coming-soon") || path.startsWith("/maintenance"))) {
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: "/",
+        "Cache-Control": "no-store"
+      }
+    });
+  }
+
   if (env.DB) {
     const settings = await getSiteSettings(env.DB);
     const isClosedMode = settings.site_status === "coming_soon" || settings.site_status === "maintenance";
     const isCustomerPath = path.startsWith("/account") || path.startsWith("/login") || path === "/login" || path === "/account";
 
-    if (isClosedMode && isCustomerPath) {
+    if (isClosedMode && isCustomerPath && !adminIdentity) {
       if (settings.site_status === "maintenance") {
         return new Response(pageHtml(settings, "maintenance"), {
           status: 503,
@@ -563,21 +575,6 @@ export async function onRequest(context) {
     console.log(JSON.stringify({ event: "admin_bypass_diag", stage: "admin_session_cookie_detected", path }));
   }
 
-  const adminIdentity = await getAuthenticatedAdminIdentity(request, env);
-  if (adminIdentity) {
-    console.log(JSON.stringify({
-      event: "admin_bypass_diag",
-      stage: "admin_identity_resolved",
-      path,
-      email: adminIdentity.identity?.email || "",
-      role: adminIdentity.role || "",
-      permissions: adminIdentity.permissions || []
-    }));
-    return next(request);
-  }
-
-  const settings = await getSiteSettings(env.DB);
-
   const bypass =
     publicAuthPath ||
     path === "/admin" ||
@@ -620,6 +617,20 @@ export async function onRequest(context) {
   if (bypass) {
     return next(request);
   }
+
+  if (adminIdentity) {
+    console.log(JSON.stringify({
+      event: "admin_bypass_diag",
+      stage: "admin_identity_resolved",
+      path,
+      email: adminIdentity.identity?.email || "",
+      role: adminIdentity.role || "",
+      permissions: adminIdentity.permissions || []
+    }));
+    return next(request);
+  }
+
+  const settings = await getSiteSettings(env.DB);
 
   console.log(JSON.stringify({
     event: "admin_bypass_diag",

@@ -169,7 +169,10 @@ test("middleware gating blocks customer dashboard and login during closed modes 
   // 2. Coming Soon Mode: blocks customer dashboard and redirects them to coming-soon
   DB.siteStatus = "coming_soon";
   request = new Request("https://experiences.example.com/account/dashboard", {
-    headers: { "Accept": "text/html" }
+    headers: {
+      "Cookie": "ja_customer_oidc_session=opaque-session",
+      "Accept": "text/html"
+    }
   });
   response = await middlewareOnRequest({ request, env, next: nextMock });
   assert.equal(response.status, 302);
@@ -192,6 +195,20 @@ test("middleware gating blocks customer dashboard and login during closed modes 
       "Cookie": "ja_admin_session=opaque-session",
       "x-ja-auth-email": "alfieholywoodmurray@jagroupservices.co.uk",
       "x-ja-auth-name": "Alfie"
+    }
+  });
+  response = await middlewareOnRequest({ request, env, next: nextMock });
+  assert.equal(response.status, 200);
+  assert.equal(await response.text(), "Success");
+
+  // 5. Closed Mode: allows authenticated administrators to access customer dashboard without redirect
+  DB.siteStatus = "coming_soon";
+  request = new Request("https://experiences.example.com/account/dashboard", {
+    headers: {
+      "Cookie": "ja_admin_session=opaque-session; ja_customer_oidc_session=opaque-session",
+      "x-ja-auth-email": "alfieholywoodmurray@jagroupservices.co.uk",
+      "x-ja-auth-name": "Alfie",
+      "Accept": "text/html"
     }
   });
   response = await middlewareOnRequest({ request, env, next: nextMock });
