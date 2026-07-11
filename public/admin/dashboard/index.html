@@ -11,155 +11,155 @@
   <link rel="apple-touch-icon" href="/assets/favicons/apple-touch-icon.png?v=20260704-1">
   <link rel="manifest" href="/assets/favicons/site.webmanifest?v=20260704-1">
   <link rel="stylesheet" href="/assets/css/theme.css?v=20260709-airo-2">
-  <link rel="stylesheet" href="/admin/assets/admin-saas-v2.css?v=20260711-smart-profile-1">
+  <link rel="stylesheet" href="/assets/css/tailwind.css?v=20260711-tw-1">
 </head>
 
 <body>
-  <a class="skip-link" href="#adminPanel">Skip to administration content</a>
-  <div class="admin-shell">
-    <aside class="admin-sidebar" id="adminSidebar" aria-label="Administration navigation">
-      <div class="admin-brand">
-        <div class="admin-logo" aria-hidden="true">JA</div>
-        <div class="admin-brand-copy">
-          <strong>Admin Portal</strong>
-          <span>JA Experiences &amp; Discovery</span>
+  <a class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-lg focus:bg-card focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:shadow-lg" href="#adminPanel">Skip to administration content</a>
+  <div class="flex min-h-screen bg-background">
+    <aside class="admin-sidebar flex flex-col w-64 shrink-0 border-r border-border bg-card transition-transform duration-300 lg:translate-x-0 -translate-x-full lg:static fixed inset-y-0 left-0 z-40" id="adminSidebar" aria-label="Administration navigation">
+      <div class="flex items-center gap-3 px-4 py-4 border-b border-border admin-brand">
+        <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-primary text-primary-foreground font-extrabold text-sm admin-logo" aria-hidden="true">JA</div>
+        <div class="min-w-0 flex-1 admin-brand-copy">
+          <strong class="block text-sm font-bold text-foreground truncate">Admin Portal</strong>
+          <span class="block text-xs text-muted-foreground truncate">JA Experiences &amp; Discovery</span>
         </div>
-        <button class="sidebar-close" id="sidebarCloseButton" type="button" aria-label="Close navigation">&times;</button>
+        <button class="lg:hidden flex items-center justify-center w-8 h-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors sidebar-close" id="sidebarCloseButton" type="button" aria-label="Close navigation">&times;</button>
       </div>
 
-      <div class="admin-person">
-        <div class="avatar" aria-hidden="true">A</div>
-        <div class="admin-person-copy">
-          <strong id="sidebarAdminName">Loading admin...</strong>
-          <span id="sidebarAdminEmail">Checking secure access...</span>
+      <div class="flex items-center gap-3 px-4 py-3 border-b border-border">
+        <div class="flex items-center justify-center w-9 h-9 rounded-full bg-primary/10 text-primary font-bold text-sm avatar" aria-hidden="true">A</div>
+        <div class="min-w-0 flex-1">
+          <strong id="sidebarAdminName" class="block text-sm font-bold text-foreground truncate">Loading admin...</strong>
+          <span id="sidebarAdminEmail" class="block text-xs text-muted-foreground truncate">Checking secure access...</span>
         </div>
-        <span class="role-pill" id="sidebarAdminAccess">Admin Access Verified</span>
+        <span class="badge-base bg-muted text-muted-foreground text-xs" id="sidebarAdminAccess">Admin Access Verified</span>
       </div>
 
-      <div class="admin-nav-wrap">
-        <div class="nav-group" id="favouritesGroup" hidden>
-          <div class="nav-heading">Favourites</div>
-          <nav class="admin-nav" id="favouritesNav" aria-label="Favourites"></nav>
+      <div class="flex-1 overflow-y-auto px-2 py-4">
+        <div class="mb-4" id="favouritesGroup" hidden>
+          <div class="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 px-3">Favourites</div>
+          <nav class="admin-nav flex flex-col gap-1" id="favouritesNav" aria-label="Favourites"></nav>
         </div>
 
-        <div class="nav-group">
-          <div class="nav-heading">Dashboard</div>
-          <nav class="admin-nav" aria-label="Dashboard">
-            <button data-section="overview" data-icon="dashboard" class="active">Overview</button>
-            <button data-section="health" data-icon="pulse">Production Health</button>
-            <button data-section="operations" data-icon="pulse">Operations</button>
-            <button data-section="analytics" data-icon="chart">Analytics</button>
-            <button data-section="reports" data-icon="file">Reports</button>
-            <button data-section="status" data-icon="pulse">Status Centre</button>
-            <button data-section="audit" data-icon="clock">Audit Log</button>
+        <div class="mb-4">
+          <div class="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 px-3">Dashboard</div>
+          <nav class="admin-nav flex flex-col gap-1" aria-label="Dashboard">
+            <button data-section="overview" data-icon="dashboard" class="sidebar-item-active active">Overview</button>
+            <button data-section="health" data-icon="pulse" class="sidebar-item">Production Health</button>
+            <button data-section="operations" data-icon="pulse" class="sidebar-item">Operations</button>
+            <button data-section="analytics" data-icon="chart" class="sidebar-item">Analytics</button>
+            <button data-section="reports" data-icon="file" class="sidebar-item">Reports</button>
+            <button data-section="status" data-icon="pulse" class="sidebar-item">Status Centre</button>
+            <button data-section="audit" data-icon="clock" class="sidebar-item">Audit Log</button>
           </nav>
         </div>
 
-        <div class="nav-group">
-          <div class="nav-heading">Customer Operations</div>
-          <nav class="admin-nav" aria-label="Customer operations">
-            <button data-section="customers" data-icon="users">Customers</button>
-            <button data-section="membership" data-icon="plans">Membership</button>
-            <button data-section="security" data-icon="shield">Security</button>
-            <button data-section="notifications" data-icon="mail">Notifications</button>
-            <button data-section="datarequests" data-icon="file">Data Protection Requests</button>
-            <button data-section="systemreports" data-icon="alert">System Reports</button>
-            <button data-section="closures" data-icon="shield">Closure Requests</button>
-            <button data-section="enquiries" data-icon="mail">Contact Enquiries</button>
-            <button data-section="support" data-icon="mail">Support</button>
+        <div class="mb-4">
+          <div class="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 px-3">Customer Operations</div>
+          <nav class="admin-nav flex flex-col gap-1" aria-label="Customer operations">
+            <button data-section="customers" data-icon="users" class="sidebar-item">Customers</button>
+            <button data-section="membership" data-icon="plans" class="sidebar-item">Membership</button>
+            <button data-section="security" data-icon="shield" class="sidebar-item">Security</button>
+            <button data-section="notifications" data-icon="mail" class="sidebar-item">Notifications</button>
+            <button data-section="datarequests" data-icon="file" class="sidebar-item">Data Protection Requests</button>
+            <button data-section="systemreports" data-icon="alert" class="sidebar-item">System Reports</button>
+            <button data-section="closures" data-icon="shield" class="sidebar-item">Closure Requests</button>
+            <button data-section="enquiries" data-icon="mail" class="sidebar-item">Contact Enquiries</button>
+            <button data-section="support" data-icon="mail" class="sidebar-item">Support</button>
           </nav>
         </div>
 
-        <div class="nav-group">
-          <div class="nav-heading">Platform</div>
-          <nav class="admin-nav" aria-label="Platform">
-            <button data-section="admins" data-icon="shield">Admin Users</button>
-            <button data-section="roles" data-icon="users">Roles</button>
-            <button data-section="sessions" data-icon="clock">Sessions</button>
-            <button data-section="builders" data-icon="settings">Experience Builders</button>
-            <button data-section="plans" data-icon="plans">Plans &amp; Prices</button>
-            <button data-section="credits" data-icon="card">Builder Usage Tokens</button>
-            <button data-section="usage" data-icon="chart">Customer Usage</button>
-            <button data-section="addons" data-icon="plans">Paid Add-Ons</button>
-            <button data-section="system" data-icon="alert">System</button>
+        <div class="mb-4">
+          <div class="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 px-3">Platform</div>
+          <nav class="admin-nav flex flex-col gap-1" aria-label="Platform">
+            <button data-section="admins" data-icon="shield" class="sidebar-item">Admin Users</button>
+            <button data-section="roles" data-icon="users" class="sidebar-item">Roles</button>
+            <button data-section="sessions" data-icon="clock" class="sidebar-item">Sessions</button>
+            <button data-section="builders" data-icon="settings" class="sidebar-item">Experience Builders</button>
+            <button data-section="plans" data-icon="plans" class="sidebar-item">Plans &amp; Prices</button>
+            <button data-section="credits" data-icon="card" class="sidebar-item">Builder Usage Tokens</button>
+            <button data-section="usage" data-icon="chart" class="sidebar-item">Customer Usage</button>
+            <button data-section="addons" data-icon="plans" class="sidebar-item">Paid Add-Ons</button>
+            <button data-section="system" data-icon="alert" class="sidebar-item">System</button>
           </nav>
         </div>
 
-        <div class="nav-group">
-          <div class="nav-heading">Content</div>
-          <nav class="admin-nav" aria-label="Content">
-            <button data-section="branding" data-icon="settings">Branding</button>
-            <button data-section="cms" data-icon="file">Website CMS</button>
-            <button data-section="affiliate" data-icon="link">Affiliate Content</button>
+        <div class="mb-4">
+          <div class="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 px-3">Content</div>
+          <nav class="admin-nav flex flex-col gap-1" aria-label="Content">
+            <button data-section="branding" data-icon="settings" class="sidebar-item">Branding</button>
+            <button data-section="cms" data-icon="file" class="sidebar-item">Website CMS</button>
+            <button data-section="affiliate" data-icon="link" class="sidebar-item">Affiliate Content</button>
           </nav>
         </div>
 
-        <div class="nav-group">
-          <div class="nav-heading">System Settings</div>
-          <nav class="admin-nav" aria-label="System settings">
-            <button data-section="systemsettings" data-icon="settings">System Settings</button>
+        <div class="mb-4">
+          <div class="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 px-3">System Settings</div>
+          <nav class="admin-nav flex flex-col gap-1" aria-label="System settings">
+            <button data-section="systemsettings" data-icon="settings" class="sidebar-item">System Settings</button>
           </nav>
         </div>
       </div>
 
-      <div class="sidebar-footer">
-        <a class="sidebar-link" href="/account/dashboard"><span class="nav-icon" aria-hidden="true">&#8592;</span>Back to Dashboard</a>
-        <a class="sidebar-link" href="/admin/logout"><span class="nav-icon" aria-hidden="true">&#8594;</span>Sign Out</a>
-        <span class="sidebar-security"><span class="status-dot is-online"></span> Protected by native Microsoft Entra ID</span>
+      <div class="border-t border-border px-3 py-3 flex flex-col gap-1">
+        <a class="sidebar-item" href="/account/dashboard"><span class="nav-icon" aria-hidden="true">&#8592;</span>Back to Dashboard</a>
+        <a class="sidebar-item" href="/admin/logout"><span class="nav-icon" aria-hidden="true">&#8594;</span>Sign Out</a>
+        <span class="flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground"><span class="status-dot is-online"></span> Protected by native Microsoft Entra ID</span>
       </div>
     </aside>
 
-    <button class="sidebar-scrim" id="sidebarScrim" type="button" aria-label="Close navigation" tabindex="-1"></button>
+    <button class="hidden lg:hidden fixed inset-0 z-30 bg-foreground/20 backdrop-blur-sm" id="sidebarScrim" type="button" aria-label="Close navigation" tabindex="-1"></button>
 
-    <main class="admin-main">
-      <header class="admin-topbar">
-        <div class="topbar-leading">
-          <button class="mobile-menu-button" id="mobileMenuButton" type="button" aria-label="Open navigation" aria-controls="adminSidebar" aria-expanded="false">
-            <span></span><span></span><span></span>
+    <main class="flex-1 flex flex-col min-w-0 min-h-screen">
+      <header class="sticky top-0 z-20 flex items-center justify-between gap-4 px-4 py-3 border-b border-border bg-card/80 backdrop-blur-md">
+        <div class="flex items-center gap-3 min-w-0">
+          <button class="lg:hidden flex flex-col justify-center gap-1 w-9 h-9 rounded-lg border border-border bg-card text-foreground" id="mobileMenuButton" type="button" aria-label="Open navigation" aria-controls="adminSidebar" aria-expanded="false">
+            <span class="block w-4 h-0.5 bg-current"></span><span class="block w-4 h-0.5 bg-current"></span><span class="block w-4 h-0.5 bg-current"></span>
           </button>
-          <div class="admin-topbar-title">
-            <strong>Overview</strong>
-            <span>Executive summary of your customer and platform operations.</span>
+          <div class="min-w-0 admin-topbar-title">
+            <strong class="block text-sm font-bold text-foreground truncate">Overview</strong>
+            <span class="block text-xs text-muted-foreground truncate">Executive summary of your customer and platform operations.</span>
           </div>
         </div>
 
-        <div class="topbar-actions">
-          <button class="icon-button notification-button" type="button" aria-label="Notifications" title="Open notification centre">
+        <div class="flex items-center gap-2">
+          <button class="flex items-center justify-center w-9 h-9 rounded-lg border border-border bg-card text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors notification-button" type="button" aria-label="Notifications" title="Open notification centre">
             <span aria-hidden="true">&#9675;</span><span class="notification-dot"></span>
           </button>
-          <button class="icon-button pin-button" type="button" id="pinSectionButton" aria-label="Pin current page" title="Pin current page">&#9734;</button>
+          <button class="flex items-center justify-center w-9 h-9 rounded-lg border border-border bg-card text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors pin-button" type="button" id="pinSectionButton" aria-label="Pin current page" title="Pin current page">&#9734;</button>
 
-          <div class="admin-user" id="accountMenuButton" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">
-            <div class="admin-user-text">
-              <strong id="adminName">Loading admin...</strong>
-              <span id="adminEmail">Checking secure access...</span>
-              <span class="status-pill" id="adminStatus">Checking access</span>
+          <div class="flex items-center gap-2 cursor-pointer rounded-lg px-2 py-1 hover:bg-muted transition-colors" id="accountMenuButton" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">
+            <div class="text-right admin-user-text">
+              <strong id="adminName" class="block text-xs font-bold text-foreground truncate max-w-[170px] overflow-hidden text-ellipsis whitespace-nowrap">Loading admin...</strong>
+              <span id="adminEmail" class="block text-xs text-muted-foreground truncate max-w-[170px] overflow-hidden text-ellipsis whitespace-nowrap">Checking secure access...</span>
+              <span class="badge-primary text-xs" id="adminStatus">Checking access</span>
             </div>
-            <div class="avatar" aria-hidden="true">A</div>
-            <span class="account-chevron" aria-hidden="true">&#8964;</span>
-            <div class="account-menu" id="accountMenu" hidden>
-              <div class="account-menu-label">Administrator</div>
-              <button type="button" id="accountSettingsButton">Account settings</button>
-              <a href="/admin/logout">Sign out</a>
+            <div class="flex items-center justify-center w-9 h-9 rounded-full bg-primary/10 text-primary font-bold text-sm avatar" aria-hidden="true">A</div>
+            <span class="text-muted-foreground text-sm account-chevron" aria-hidden="true">&#8964;</span>
+            <div class="absolute right-2 top-14 z-50 w-56 rounded-lg border border-border bg-card shadow-lg overflow-hidden account-menu" id="accountMenu" hidden>
+              <div class="px-3 py-2 text-xs font-bold uppercase tracking-wider text-muted-foreground account-menu-label">Administrator</div>
+              <button class="block w-full text-left px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors" type="button" id="accountSettingsButton">Account settings</button>
+              <a class="block px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors" href="/admin/logout">Sign out</a>
             </div>
           </div>
         </div>
       </header>
 
-      <section class="admin-content" aria-live="polite">
+      <section class="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8" aria-live="polite">
         <section id="adminPanel">
-          <div class="admin-loading">Loading admin control centre...</div>
+          <div class="flex items-center justify-center py-12"><div class="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div></div>
         </section>
       </section>
     </main>
   </div>
 
-  <nav class="admin-mobile-nav" aria-label="Primary mobile administration">
-    <button type="button" data-section="overview" data-mobile-primary="overview" data-icon="dashboard"><span>Dashboard</span></button>
-    <button type="button" data-section="customers" data-mobile-primary="customers" data-icon="users"><span>CRM</span></button>
-    <button type="button" data-section="builders" data-mobile-primary="builders" data-icon="settings"><span>Builders</span></button>
-    <button type="button" data-section="systemsettings" data-mobile-primary="systemsettings" data-icon="settings"><span>Settings</span></button>
-    <button type="button" id="adminMobileMoreButton" aria-controls="adminMobileMore" aria-expanded="false" data-icon="plans"><span>More</span></button>
+  <nav class="admin-mobile-nav fixed bottom-0 inset-x-0 z-30 flex items-center justify-around border-t border-border bg-card px-2 py-1 lg:hidden" aria-label="Primary mobile administration">
+    <button type="button" data-section="overview" data-mobile-primary="overview" data-icon="dashboard" class="flex flex-col items-center gap-0.5 px-2 py-1 text-xs font-semibold text-muted-foreground"><span>Dashboard</span></button>
+    <button type="button" data-section="customers" data-mobile-primary="customers" data-icon="users" class="flex flex-col items-center gap-0.5 px-2 py-1 text-xs font-semibold text-muted-foreground"><span>CRM</span></button>
+    <button type="button" data-section="builders" data-mobile-primary="builders" data-icon="settings" class="flex flex-col items-center gap-0.5 px-2 py-1 text-xs font-semibold text-muted-foreground"><span>Builders</span></button>
+    <button type="button" data-section="systemsettings" data-mobile-primary="systemsettings" data-icon="settings" class="flex flex-col items-center gap-0.5 px-2 py-1 text-xs font-semibold text-muted-foreground"><span>Settings</span></button>
+    <button type="button" id="adminMobileMoreButton" aria-controls="adminMobileMore" aria-expanded="false" data-icon="plans" class="flex flex-col items-center gap-0.5 px-2 py-1 text-xs font-semibold text-muted-foreground"><span>More</span></button>
   </nav>
   <div class="admin-mobile-more" id="adminMobileMore" hidden>
     <button class="admin-mobile-more-scrim" type="button" aria-label="Close more navigation"></button>
@@ -171,6 +171,6 @@
     </section>
   </div>
 
-  <script src="/assets/js/admin-control.js?v=experiences-admin-control-15"></script>
+  <script src="/assets/js/admin-control.js?v=20260711-tw-1"></script>
 </body>
 </html>

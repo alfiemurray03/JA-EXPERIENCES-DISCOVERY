@@ -97,7 +97,7 @@ test("Coming Soon page hides countdown when no date is saved", async () => {
 test("Coming Soon page fetches config from API and uses saved values", async () => {
   const html = await readFile(new URL("public/coming-soon/index.html", root), "utf8");
   const script = await readFile(new URL("public/assets/js/coming-soon.js", root), "utf8");
-  assert.match(html, /src="\/assets\/js\/coming-soon\.js"[^>]*data-cookieconsent="ignore"[^>]*defer/);
+  assert.match(html, /src="\/assets\/js\/coming-soon\.js[^"]*"[^>]*data-cookieconsent="ignore"[^>]*defer/);
   assert.match(script, /\/api\/coming-soon-config/);
   assert.match(script, /cache: "no-store"/);
   assert.match(script, /tick\(\);[\s\S]*setInterval\(tick, 1000\)/);

@@ -289,7 +289,7 @@ function bindAdminActions() {
       const status = document.getElementById("platformSettingsStatus");
       if (status) {
         status.hidden = false;
-        status.className = "admin-success";
+        status.className = "alert-success";
         status.textContent = "Configuration validation passed. Settings are not written to backend persistence yet.";
       }
       return;
@@ -581,7 +581,7 @@ async function loadSection(section) {
 
   const panel = document.getElementById("adminPanel");
   panel.classList.remove("system-settings-page");
-  panel.innerHTML = `<div class="admin-loading">Loading ${escapeHtml(sectionTitles[section] || section)}...</div>`;
+  panel.innerHTML = `<div class="flex items-center justify-center py-12">Loading ${escapeHtml(sectionTitles[section] || section)}...</div>`;
 
   try {
     if (localScaffoldSections.has(section)) {
@@ -632,8 +632,8 @@ async function loadSection(section) {
     renderSection(section, data);
   } catch (error) {
     panel.innerHTML = `
-      <div class="admin-card">
-        <div class="section-head"><div><h2>${escapeHtml(sectionTitles[section] || section)}</h2><p>We couldn't load this section.</p></div></div>
+      <div class="card-base rounded-xl">
+        <div class="page-header"><div><h2>${escapeHtml(sectionTitles[section] || section)}</h2><p>We couldn't load this section.</p></div></div>
         ${renderInlineStatus("error", error.message || "Something went wrong while loading this section.", "load-section-retry")}
       </div>
     `;
@@ -660,8 +660,8 @@ function bindWorkspaceActions() {
         <div><h2>Notification Centre</h2><p>Operational notifications and activity highlights.</p></div>
         <button class="drawer-close" type="button" data-action="close-modal">×</button>
       </div>
-      <div class="admin-grid">
-        ${notifications.map((item) => `<article class="admin-stat"><span>${escapeHtml(item.label)}</span><strong>${escapeHtml(String(item.value))}</strong><span>Visible according to your permissions</span></article>`).join("")}
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        ${notifications.map((item) => `<article class="card-base rounded-xl p-6"><span>${escapeHtml(item.label)}</span><strong>${escapeHtml(String(item.value))}</strong><span>Visible according to your permissions</span></article>`).join("")}
       </div>
     `);
   });
@@ -948,7 +948,7 @@ function renderSection(section, data) {
 
 function renderConfigurationReadyNotice() {
   return `
-    <div class="admin-alert">
+    <div class="alert-error">
       Configuration-ready: these controls are usable for review and validation, but are not connected to live D1 persistence or Stripe charging yet. No fake usage, payment, or production billing records are created.
     </div>
   `;
@@ -1010,11 +1010,11 @@ function renderExperienceBuilders(platform = {}) {
     </tr>
   `).join("");
   setPanel(`
-    <div class="section-head">
+    <div class="page-header">
       <div><span class="eyebrow">Platform controls</span><h1>Experience Builders</h1><p>Create, edit, disable and archive self-service builders.</p></div>
-      <div class="section-actions"><button class="admin-button" type="button" data-action="open-builder">Create builder</button></div>
+      <div class="section-actions"><button class="btn-primary" type="button" data-action="open-builder">Create builder</button></div>
     </div>
-    <div class="admin-success">Live-connected: builder records are loaded from protected admin API and saved to D1. Stripe/payment charging is not changed.</div>
+    <div class="alert-success">Live-connected: builder records are loaded from protected admin API and saved to D1. Stripe/payment charging is not changed.</div>
     ${table(["Builder", "Type", "Token cost", "Plan inclusion", "Status", "Visibility", "Usage", "Blocked", "Actions"], rows)}
   `);
 }
@@ -1026,7 +1026,7 @@ function openBuilderModal(id = "") {
       <div><h2>${id ? "Edit builder" : "Create builder"}</h2><p>Builder records are saved to D1 through the protected admin API. Stripe/payment charging is not changed here.</p></div>
       <button class="drawer-close" type="button" data-action="close-modal">×</button>
     </div>
-    <form class="admin-form" id="builderConfigForm">
+    <form class="grid grid-cols-1 md:grid-cols-2 gap-4" id="builderConfigForm">
       <input type="hidden" id="builderId" value="${escapeAttr(builder.id || "")}">
       <label>Builder name<input id="builderName" value="${escapeAttr(builder.name || "")}" required></label>
       <label>Builder type<select id="builderType"><option${builder.type === "Everyday" ? " selected" : ""}>Everyday</option><option${builder.type === "Travel" ? " selected" : ""}>Travel</option><option${builder.type === "Accessibility/support" ? " selected" : ""}>Accessibility/support</option><option${builder.type === "Organisation" ? " selected" : ""}>Organisation</option></select></label>
@@ -1035,9 +1035,9 @@ function openBuilderModal(id = "") {
       <label>Plan inclusion<input id="builderPlans" value="${escapeAttr(builder.plans || "Membership, Plus, Family")}"></label>
       <label>Availability/status<select id="builderAvailability"><option${builder.availability === "Active" ? " selected" : ""}>Active</option><option${builder.availability === "Disabled" ? " selected" : ""}>Disabled</option><option${builder.availability === "Archived" ? " selected" : ""}>Archived</option><option${builder.availability === "Configuration ready" ? " selected" : ""}>Configuration ready</option></select></label>
       <label>Visibility<select id="builderVisibility"><option${builder.visibility === "public" ? " selected" : ""}>public</option><option${builder.visibility === "trial" ? " selected" : ""}>trial</option><option${builder.visibility === "paid" ? " selected" : ""}>paid</option><option${builder.visibility === "add-on" ? " selected" : ""}>add-on</option><option${builder.visibility === "hidden" ? " selected" : ""}>hidden</option></select></label>
-      <label class="admin-form-wide">Description<textarea id="builderDescription" rows="3">${escapeHtml(builder.description || "")}</textarea></label>
-      <div class="admin-alert" id="builderFormStatus" hidden></div>
-      <button class="admin-button" type="button" data-action="save-admin-builder">Save configuration</button>
+      <label class="col-span-full">Description<textarea id="builderDescription" rows="3">${escapeHtml(builder.description || "")}</textarea></label>
+      <div class="alert-error" id="builderFormStatus" hidden></div>
+      <button class="btn-primary" type="button" data-action="save-admin-builder">Save configuration</button>
     </form>
   `);
 }
@@ -1113,26 +1113,26 @@ function renderBuilderCredits(platform = {}) {
   const bandRows = platformAdminConfig.creditBands.map(([type, cost]) => `<tr><td>${escapeHtml(type)}</td><td>${escapeHtml(cost)}</td><td>${badge("Configured", "green")}</td></tr>`).join("");
   const ledgerRows = (Array.isArray(platform.ledger) ? platform.ledger : []).map((item) => `<tr><td>${escapeHtml(formatDate(item.created_at))}</td><td>${escapeHtml(item.email)}</td><td>${escapeHtml(String(item.amount))}</td><td>${escapeHtml(item.source)}</td><td>${escapeHtml(item.reason)}</td><td>${escapeHtml(String(item.balance_after))}</td></tr>`).join("");
   setPanel(`
-    <div class="section-head"><div><span class="eyebrow">Platform controls</span><h1>Builder Usage Tokens</h1><p>Review allowances, token cost bands and manual adjustment workflow.</p></div></div>
-    <div class="admin-success">Live-connected: manual Builder Usage Token adjustments write to D1 ledger and admin audit. Payment purchases remain Stripe-independent and are not faked.</div>
-    <div class="admin-grid">
-      <article class="admin-card"><h2>Plan allowances</h2>${table(["Plan", "Allowance", "Status"], allowanceRows)}</article>
-      <article class="admin-card"><h2>Builder Usage Token cost bands</h2>${table(["Builder type", "Cost", "Status"], bandRows)}</article>
+    <div class="page-header"><div><span class="eyebrow">Platform controls</span><h1>Builder Usage Tokens</h1><p>Review allowances, token cost bands and manual adjustment workflow.</p></div></div>
+    <div class="alert-success">Live-connected: manual Builder Usage Token adjustments write to D1 ledger and admin audit. Payment purchases remain Stripe-independent and are not faked.</div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <article class="card-base rounded-xl"><h2>Plan allowances</h2>${table(["Plan", "Allowance", "Status"], allowanceRows)}</article>
+      <article class="card-base rounded-xl"><h2>Builder Usage Token cost bands</h2>${table(["Builder type", "Cost", "Status"], bandRows)}</article>
     </div>
-    <article class="admin-card">
+    <article class="card-base rounded-xl">
       <h2>Manual token adjustment</h2>
       <p>Manual adjustments are written to the D1 token ledger with an audit reason.</p>
-      <form class="admin-form">
+      <form class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <label>Customer/account reference<input id="creditCustomerRef" placeholder="Customer email or account reference"></label>
         <label>Amount<input id="creditAdjustmentAmount" type="number" step="1" placeholder="Positive or negative amount"></label>
         <label>Adjustment type<select id="creditAdjustmentType"><option>Add tokens</option><option>Remove tokens</option><option>Correction</option></select></label>
         <label>Admin user<input id="creditAdminUser" value="${escapeAttr(state.adminName || "")}" placeholder="Signed-in admin"></label>
-        <label class="admin-form-wide">Reason<textarea id="creditAdjustmentReason" rows="3" placeholder="Required audit reason"></textarea></label>
-        <div class="admin-alert" id="creditAdjustmentStatus" hidden></div>
-        <button class="admin-button" type="button" data-action="validate-credit-adjustment">Validate adjustment</button>
+        <label class="col-span-full">Reason<textarea id="creditAdjustmentReason" rows="3" placeholder="Required audit reason"></textarea></label>
+        <div class="alert-error" id="creditAdjustmentStatus" hidden></div>
+        <button class="btn-primary" type="button" data-action="validate-credit-adjustment">Validate adjustment</button>
       </form>
     </article>
-    <article class="admin-card"><h2>Token ledger</h2>${table(["Date", "Customer", "Amount", "Source", "Reason", "Balance"], ledgerRows)}</article>
+    <article class="card-base rounded-xl"><h2>Token ledger</h2>${table(["Date", "Customer", "Amount", "Source", "Reason", "Balance"], ledgerRows)}</article>
   `);
 }
 
@@ -1142,7 +1142,7 @@ async function validateCreditAdjustment() {
   const reason = document.getElementById("creditAdjustmentReason")?.value.trim();
   const status = document.getElementById("creditAdjustmentStatus");
   status.hidden = false;
-  status.className = "admin-alert";
+  status.className = "alert-error";
   if (!ref) {
     status.textContent = "Customer/account reference is required.";
     return;
@@ -1155,7 +1155,7 @@ async function validateCreditAdjustment() {
     status.textContent = "Reason is required for auditability.";
     return;
   }
-  status.className = "admin-success";
+  status.className = "alert-success";
   status.textContent = "Saving adjustment...";
   try {
     const response = await api("credits", {
@@ -1170,7 +1170,7 @@ async function validateCreditAdjustment() {
     });
     renderBuilderCredits(response.platform || {});
   } catch (error) {
-    status.className = "admin-alert";
+    status.className = "alert-error";
     status.textContent = error.message || "Adjustment could not be saved.";
   }
 }
@@ -1183,17 +1183,17 @@ function renderCustomerUsage(platform = {}) {
   const blockedRows = attempts.map((item) => `<tr><td>${escapeHtml(item.email)}</td><td>${escapeHtml(item.builder_name)}</td><td>${escapeHtml(item.reason)}</td><td>${escapeHtml(formatDate(item.created_at))}</td><td>${escapeHtml(String(item.tokens_available))}</td><td>${escapeHtml(String(item.tokens_required))}</td><td>${escapeHtml(item.action_offered)}</td></tr>`).join("");
   const trialRows = trials.map((item) => `<tr><td>${escapeHtml(item.email)}</td><td>${escapeHtml(item.status)}</td><td>${escapeHtml(formatDate(item.activated_at))}</td><td>${escapeHtml(formatDate(item.expires_at))}</td><td>${escapeHtml(String(item.token_allowance))}</td></tr>`).join("");
   setPanel(`
-    <div class="section-head"><div><span class="eyebrow">Platform controls</span><h1>Customer Usage</h1><p>Review trial status, tokens, completed builders and blocked usage attempts.</p></div></div>
-    <div class="admin-success">Live-connected: usage, trials and blocked attempts are read from D1.</div>
-    <div class="admin-card">
-      <div class="admin-form">
+    <div class="page-header"><div><span class="eyebrow">Platform controls</span><h1>Customer Usage</h1><p>Review trial status, tokens, completed builders and blocked usage attempts.</p></div></div>
+    <div class="alert-success">Live-connected: usage, trials and blocked attempts are read from D1.</div>
+    <div class="card-base rounded-xl">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <label>Search customers<input type="search" placeholder="Search customer, plan or status"></label>
         <label>Plan filter<select><option>All plans</option><option>Trial</option><option>Membership</option><option>Plus</option><option>Family</option></select></label>
       </div>
     </div>
     ${table(["Customer", "Builder", "Output", "Tokens used", "Status", "Created"], usageRows)}
-    <article class="admin-card"><h2>Trial tokens</h2>${table(["Customer", "Status", "Activated", "Expires", "Tokens"], trialRows)}</article>
-    <article class="admin-card">
+    <article class="card-base rounded-xl"><h2>Trial tokens</h2>${table(["Customer", "Status", "Activated", "Expires", "Tokens"], trialRows)}</article>
+    <article class="card-base rounded-xl">
       <h2>Blocked usage attempts</h2>
       ${table(["Customer", "Builder", "Reason blocked", "Date/time", "Tokens available", "Required tokens", "Action offered"], blockedRows)}
     </article>
@@ -1204,8 +1204,8 @@ function renderPaidAddOns(platform = {}) {
   syncPlatformConfig(platform);
   const rows = platformAdminConfig.addOns.map(([name, price, tokens, status]) => `<tr><td><strong>${escapeHtml(name)}</strong></td><td>${escapeHtml(price)}</td><td>${escapeHtml(tokens)}</td><td>${badge(status, "blue")}</td><td>Payment status visible when available</td></tr>`).join("");
   setPanel(`
-    <div class="section-head"><div><span class="eyebrow">Platform controls</span><h1>Paid Add-Ons</h1><p>Review extra token packages and separate human support add-ons.</p></div></div>
-    <div class="admin-success">Configuration-ready: add-on catalogue is D1-backed for admin visibility. Live Stripe charging was not changed.</div>
+    <div class="page-header"><div><span class="eyebrow">Platform controls</span><h1>Paid Add-Ons</h1><p>Review extra token packages and separate human support add-ons.</p></div></div>
+    <div class="alert-success">Configuration-ready: add-on catalogue is D1-backed for admin visibility. Live Stripe charging was not changed.</div>
     ${table(["Add-on", "Price", "Tokens/service", "Billing connection", "Payment status"], rows)}
   `);
 }
@@ -1225,27 +1225,27 @@ function renderPlatformSettings(platform = {}) {
     ["Troubleshooting", "Health checks, diagnostics and support notes."]
   ];
   const settingsCategoryCards = settingsCategories.map(([title, description]) => `
-      <article class="settings-category-card">
+      <article class="card-base rounded-xl">
         <span>${escapeHtml(title)}</span>
         <p>${escapeHtml(description)}</p>
       </article>
     `).join("");
   setPanel(`
-    <div class="section-head"><div><span class="eyebrow">System settings</span><h1>Platform Settings</h1><p>Review public site, subscription, builder and operational settings from the protected admin shell.</p></div></div>
+    <div class="page-header"><div><span class="eyebrow">System settings</span><h1>Platform Settings</h1><p>Review public site, subscription, builder and operational settings from the protected admin shell.</p></div></div>
     ${renderConfigurationReadyNotice()}
-    <div class="settings-category-tabs" aria-label="System settings categories">
-      ${settingsCategories.map(([title], index) => `<button class="settings-category-tab${index === 0 ? " active" : ""}" type="button">${escapeHtml(title)}</button>`).join("")}
+    <div class="flex gap-2 flex-wrap" aria-label="System settings categories">
+      ${settingsCategories.map(([title], index) => `<button class="tab-base${index === 0 ? " active" : ""}" type="button">${escapeHtml(title)}</button>`).join("")}
     </div>
-    <div class="settings-category-grid">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       ${settingsCategoryCards}
     </div>
-    <div class="admin-grid">
-      <article class="admin-card">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <article class="card-base rounded-xl">
         <h2>Site Status</h2>
         <p>Site status and Coming Soon countdown settings are now managed in <strong>System Settings &rarr; Site Status</strong>.</p>
-        <button class="admin-button" type="button" onclick="document.querySelector('[data-section=\\'systemsettings\\']').click()">Go to Site Status</button>
+        <button class="btn-primary" type="button" onclick="document.querySelector('[data-section=\\'systemsettings\\']').click()">Go to Site Status</button>
       </article>
-      <article class="admin-card">
+      <article class="card-base rounded-xl">
         <h2>Subscription Plans</h2>
         <div class="settings-plan-grid">
           <div><strong>Starter</strong><span>150 Builder Usage Tokens/month</span></div>
@@ -1254,14 +1254,14 @@ function renderPlatformSettings(platform = {}) {
         </div>
         <p>Plan names, prices and live Stripe price IDs remain controlled by the existing billing configuration. No fake plan IDs are shown here.</p>
       </article>
-      <article class="admin-card"><h2>Stripe settings</h2><form class="admin-form single"><label>Stripe mode<input value="Configured through environment and Stripe admin" readonly></label><label>Customer portal<input value="Use server-side billing portal route" readonly></label><label>Price IDs<input value="Not displayed unless configured by backend settings" readonly></label></form></article>
-      <article class="admin-card"><h2>Trial settings</h2><form class="admin-form single"><label>Trial length<input value="14 days" readonly></label><label>Trial tokens<input value="30 once only" readonly></label><label class="check"><input type="checkbox" checked disabled> One trial per customer/account</label></form></article>
-      <article class="admin-card"><h2>Builder Usage Token rules</h2><form class="admin-form single"><label class="check"><input type="checkbox" checked disabled> Deduct only on completed/saved/generated output</label><label class="check"><input type="checkbox" checked disabled> No deduction for opening/viewing a builder</label><label class="check"><input type="checkbox" checked disabled> Block completion when tokens are insufficient</label></form></article>
-      <article class="admin-card"><h2>Builder catalogue</h2><form class="admin-form single"><label>Public label<input value="Builder Usage Tokens" readonly></label><label>Customer access<input value="Authenticated customer account required" readonly></label><label>Discovery pages<input value="Public informational pages remain available" readonly></label></form></article>
-      <article class="admin-card"><h2>Compliance and cookies</h2><form class="admin-form single"><label>Cookie consent<input value="Cookiebot remains the consent controller" readonly></label><label>Legal footer<input value="Privacy, terms, cookies, complaints and accessibility links" readonly></label><label>Audit approach<input value="Admin changes require auditable backend actions before live enforcement" readonly></label></form></article>
-      <article class="admin-card"><h2>Email and support</h2><form class="admin-form single"><label>Enquiries mailbox<input value="hello@jagroupservices.co.uk" readonly></label><label>Telephone support<input value="020 3834 2790" readonly></label><label>Status and support pages<input value="Linked from public footer and protected admin shell" readonly></label></form></article>
-      <article class="admin-card"><h2>Troubleshooting</h2><p>Use Production Health, Status Centre, Audit, Sessions and System Reports for live diagnostics. This settings overview does not expose secrets or bypass authentication.</p></article>
-      <article class="admin-card"><h2>Affiliate/service boundary wording</h2><p>Headout and GetYourGuide remain third-party providers. JA Group Services Ltd may receive commission from qualifying bookings. Bookings are made directly with the relevant provider and are subject to that provider's terms, cancellation rules, refund rules and privacy notice.</p></article>
+      <article class="card-base rounded-xl"><h2>Stripe settings</h2><form class="grid grid-cols-1 gap-4"><label>Stripe mode<input value="Configured through environment and Stripe admin" readonly></label><label>Customer portal<input value="Use server-side billing portal route" readonly></label><label>Price IDs<input value="Not displayed unless configured by backend settings" readonly></label></form></article>
+      <article class="card-base rounded-xl"><h2>Trial settings</h2><form class="grid grid-cols-1 gap-4"><label>Trial length<input value="14 days" readonly></label><label>Trial tokens<input value="30 once only" readonly></label><label class="check"><input type="checkbox" checked disabled> One trial per customer/account</label></form></article>
+      <article class="card-base rounded-xl"><h2>Builder Usage Token rules</h2><form class="grid grid-cols-1 gap-4"><label class="check"><input type="checkbox" checked disabled> Deduct only on completed/saved/generated output</label><label class="check"><input type="checkbox" checked disabled> No deduction for opening/viewing a builder</label><label class="check"><input type="checkbox" checked disabled> Block completion when tokens are insufficient</label></form></article>
+      <article class="card-base rounded-xl"><h2>Builder catalogue</h2><form class="grid grid-cols-1 gap-4"><label>Public label<input value="Builder Usage Tokens" readonly></label><label>Customer access<input value="Authenticated customer account required" readonly></label><label>Discovery pages<input value="Public informational pages remain available" readonly></label></form></article>
+      <article class="card-base rounded-xl"><h2>Compliance and cookies</h2><form class="grid grid-cols-1 gap-4"><label>Cookie consent<input value="Cookiebot remains the consent controller" readonly></label><label>Legal footer<input value="Privacy, terms, cookies, complaints and accessibility links" readonly></label><label>Audit approach<input value="Admin changes require auditable backend actions before live enforcement" readonly></label></form></article>
+      <article class="card-base rounded-xl"><h2>Email and support</h2><form class="grid grid-cols-1 gap-4"><label>Enquiries mailbox<input value="hello@jagroupservices.co.uk" readonly></label><label>Telephone support<input value="020 3834 2790" readonly></label><label>Status and support pages<input value="Linked from public footer and protected admin shell" readonly></label></form></article>
+      <article class="card-base rounded-xl"><h2>Troubleshooting</h2><p>Use Production Health, Status Centre, Audit, Sessions and System Reports for live diagnostics. This settings overview does not expose secrets or bypass authentication.</p></article>
+      <article class="card-base rounded-xl"><h2>Affiliate/service boundary wording</h2><p>Headout and GetYourGuide remain third-party providers. JA Group Services Ltd may receive commission from qualifying bookings. Bookings are made directly with the relevant provider and are subject to that provider's terms, cancellation rules, refund rules and privacy notice.</p></article>
     </div>
   `);
 }
@@ -1277,21 +1277,21 @@ function getUkOffset(date) {
 
 function renderPlatformScaffold(title, description, rows = []) {
   setPanel(`
-    <div class="section-head">
+    <div class="page-header">
       <div>
         <span class="eyebrow">Configuration-ready</span>
         <h1>${escapeHtml(title)}</h1>
         <p>${escapeHtml(description)}</p>
       </div>
       <div class="section-actions">
-        <button class="admin-button secondary" type="button" disabled>Backend persistence pending</button>
+        <button class="btn-secondary" type="button" disabled>Backend persistence pending</button>
       </div>
     </div>
-    <div class="kpi-grid">
-      <article class="kpi-card"><span>Access model</span><strong>Admin only</strong><small>Uses existing protected admin shell</small></article>
-      <article class="kpi-card"><span>Billing state</span><strong>Not faked</strong><small>Payment status shown only when connected</small></article>
-      <article class="kpi-card"><span>Auditability</span><strong>Required</strong><small>Permanent logs before live enforcement</small></article>
-      <article class="kpi-card"><span>Launch target</span><strong>Mid-Sep 2026</strong><small>Platform direction milestone</small></article>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <article class="card-base rounded-xl"><span>Access model</span><strong>Admin only</strong><small>Uses existing protected admin shell</small></article>
+      <article class="card-base rounded-xl"><span>Billing state</span><strong>Not faked</strong><small>Payment status shown only when connected</small></article>
+      <article class="card-base rounded-xl"><span>Auditability</span><strong>Required</strong><small>Permanent logs before live enforcement</small></article>
+      <article class="card-base rounded-xl"><span>Launch target</span><strong>Mid-Sep 2026</strong><small>Platform direction milestone</small></article>
     </div>
     <div class="admin-table-card">
       <table>
@@ -1331,8 +1331,8 @@ function renderOverview(overview) {
       const websiteLabel = maintenanceOn ? "Maintenance" : launchGatewayOn ? "Launch Gateway" : "Online";
   const websiteTone = maintenanceOn ? "critical" : launchGatewayOn ? "warning" : "online";
   const widgetCards = widgets.map((widget) => `
-    <article class="admin-card widget-card">
-      <div class="section-head"><div><h3>${escapeHtml(widget.label)}</h3><p>${escapeHtml(widget.section)}</p></div></div>
+    <article class="card-base rounded-xl widget-card">
+      <div class="page-header"><div><h3>${escapeHtml(widget.label)}</h3><p>${escapeHtml(widget.section)}</p></div></div>
       <div class="widget-body">
         <strong>${escapeHtml(widget.section === "stripe" ? "Open section" : widget.section === "sessions" ? "Session management" : widget.section === "audit" ? "Audit review" : "Workspace card")}</strong>
       </div>
@@ -1353,7 +1353,7 @@ function renderOverview(overview) {
       </div>
     </header>
 
-    <section class="kpi-grid" aria-label="Key performance indicators">
+    <section class="grid grid-cols-2 md:grid-cols-4 gap-4" aria-label="Key performance indicators">
       ${kpi("Total customers", overview.customers, "All customer profiles")}
       ${kpi("Lifetime members", overview.lifetimeUsers, "Lifetime access enabled")}
       ${kpi("Active plans", overview.activePlans, `${overview.plans || 0} plans configured`)}
@@ -1364,8 +1364,8 @@ function renderOverview(overview) {
       ${kpi("Worker status", "Online", "Admin API responded successfully")}
     </section>
 
-    <section class="admin-card">
-      <div class="section-head">
+    <section class="card-base rounded-xl">
+      <div class="page-header">
         <div><h2>Workspace</h2><p>Your personalised dashboard layout is driven by your role and preferences.</p></div>
       </div>
       <div class="workspace-grid">
@@ -1375,17 +1375,17 @@ function renderOverview(overview) {
 
     <div class="dashboard-layout">
       <div class="dashboard-stack">
-        <section class="admin-card">
-          <div class="section-head">
+        <section class="card-base rounded-xl">
+          <div class="page-header">
             <div><h2>Quick actions</h2><p>Common operational tasks and platform controls.</p></div>
           </div>
-          <div class="quick-grid">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             ${dashboardQuickCards().join("")}
           </div>
         </section>
 
-        <section class="admin-card">
-          <div class="section-head">
+        <section class="card-base rounded-xl">
+          <div class="page-header">
             <div><h2>Recent activity</h2><p>Platform events will appear here once activity tracking is enabled.</p></div>
             <button class="mini-button" type="button" data-action="load-section" data-section="audit">View audit log</button>
           </div>
@@ -1396,20 +1396,20 @@ function renderOverview(overview) {
       </div>
 
       <div class="dashboard-stack">
-        <section class="admin-card">
-          <div class="section-head"><div><h2>Platform health</h2><p>Verified controls available in the overview response.</p></div></div>
+        <section class="card-base rounded-xl">
+          <div class="page-header"><div><h2>Platform health</h2><p>Verified controls available in the overview response.</p></div></div>
           <div class="health-list">
             ${health("Website", websiteLabel, websiteTone)}
             ${health("Maintenance mode", maintenanceOn ? "Enabled" : "Disabled", maintenanceOn ? "warning" : "online")}
             ${health("Launch Gateway", launchGatewayOn ? "Enabled" : "Disabled", launchGatewayOn ? "warning" : "online")}
           </div>
-          <div class="section-actions"><button class="admin-button secondary" type="button" data-action="load-section" data-section="health">Open Production Health</button></div>
+          <div class="section-actions"><button class="btn-secondary" type="button" data-action="load-section" data-section="health">Open Production Health</button></div>
         </section>
 
-        <section class="admin-card">
-          <div class="section-head"><div><h2>Website access</h2><p>Preview the public website while your administrator session remains active.</p></div></div>
+        <section class="card-base rounded-xl">
+          <div class="page-header"><div><h2>Website access</h2><p>Preview the public website while your administrator session remains active.</p></div></div>
           <div class="section-actions">
-            <a class="admin-button secondary" href="/?preview_public_block=1" target="_blank" rel="noopener noreferrer">Preview Public View</a>
+            <a class="btn-secondary" href="/?preview_public_block=1" target="_blank" rel="noopener noreferrer">Preview Public View</a>
           </div>
         </section>
       </div>
@@ -1417,42 +1417,42 @@ function renderOverview(overview) {
 
     <div class="dashboard-layout" style="margin-top:1rem;">
       <div class="dashboard-stack">
-        <section class="admin-card">
-          <div class="section-head"><div><h2>Recent Audit Events</h2><p>Latest privileged activity.</p></div></div>
+        <section class="card-base rounded-xl">
+          <div class="page-header"><div><h2>Recent Audit Events</h2><p>Latest privileged activity.</p></div></div>
           ${table(["Action", "Actor", "Entity", "Record", "Date"], recentAudit.map((item) => `
             <tr><td><strong>${escapeHtml(item.action)}</strong><span>${escapeHtml(item.summary || "")}</span></td><td>${escapeHtml(item.actor_email || "system")}</td><td>${escapeHtml(item.entity_type || "")}</td><td>${escapeHtml(item.entity_id || "")}</td><td>${escapeHtml(formatDate(item.created_at))}</td></tr>
           `).join(""))}
         </section>
-        <section class="admin-card">
-          <div class="section-head"><div><h2>Active Administrators</h2><p>Administrators currently marked as active.</p></div></div>
+        <section class="card-base rounded-xl">
+          <div class="page-header"><div><h2>Active Administrators</h2><p>Administrators currently marked as active.</p></div></div>
           ${table(["Name", "Role", "Email", "Updated"], activeAdmins.map((item) => `
             <tr><td><strong>${escapeHtml(item.name || item.email)}</strong></td><td>${escapeHtml(item.role || "")}</td><td>${escapeHtml(item.email || "")}</td><td>${escapeHtml(formatDate(item.updated_at))}</td></tr>
           `).join(""))}
         </section>
       </div>
       <div class="dashboard-stack">
-        <section class="admin-card">
-          <div class="section-head"><div><h2>Latest Customer Activity</h2><p>Recently updated customer records.</p></div></div>
+        <section class="card-base rounded-xl">
+          <div class="page-header"><div><h2>Latest Customer Activity</h2><p>Recently updated customer records.</p></div></div>
           ${table(["Customer", "Contact", "Updated"], latestCustomers.map((item) => `
             <tr><td><strong>${escapeHtml(item.display_name || item.verified_name || item.email)}</strong></td><td>${escapeHtml(item.contact_email || item.email || "")}</td><td>${escapeHtml(formatDate(item.updated_at))}</td></tr>
           `).join(""))}
         </section>
-        <section class="admin-card">
-          <div class="section-head"><div><h2>Latest Support Activity</h2><p>Recent support ticket updates.</p></div></div>
+        <section class="card-base rounded-xl">
+          <div class="page-header"><div><h2>Latest Support Activity</h2><p>Recent support ticket updates.</p></div></div>
           ${table(["Subject", "Priority", "Status", "Updated"], latestSupport.map((item) => `
             <tr><td><strong>${escapeHtml(item.subject || item.id || "")}</strong></td><td>${escapeHtml(item.priority || "")}</td><td>${escapeHtml(item.status || "")}</td><td>${escapeHtml(formatDate(item.updated_at))}</td></tr>
           `).join(""))}
         </section>
-        <section class="admin-card">
-          <div class="section-head"><div><h2>Latest System Reports</h2><p>Recent platform report activity.</p></div></div>
+        <section class="card-base rounded-xl">
+          <div class="page-header"><div><h2>Latest System Reports</h2><p>Recent platform report activity.</p></div></div>
           ${table(["Title", "Status", "Updated"], latestReports.map((item) => `
             <tr><td><strong>${escapeHtml(item.title || item.id || "")}</strong></td><td>${escapeHtml(item.status || "")}</td><td>${escapeHtml(formatDate(item.updated_at))}</td></tr>
           `).join(""))}
         </section>
       </div>
       <div class="dashboard-stack">
-        <section class="admin-card">
-          <div class="section-head"><div><h2>Active Sessions</h2><p>Current administrator access sessions.</p></div></div>
+        <section class="card-base rounded-xl">
+          <div class="page-header"><div><h2>Active Sessions</h2><p>Current administrator access sessions.</p></div></div>
           ${table(["Administrator", "Created", "Last used", "Status"], sessions.map((session) => `
             <tr><td><strong>${escapeHtml(session.admin_email || "")}</strong></td><td>${escapeHtml(formatDate(session.created_at))}</td><td>${escapeHtml(formatDate(session.last_used_at || session.created_at))}</td><td>${session.revoked_at ? "Revoked" : "Active"}</td></tr>
           `).join(""))}
@@ -1467,7 +1467,7 @@ function renderOperations(operations) {
 }
 
 function kpi(label, value, meta) {
-  return `<article class="kpi-card"><span class="kpi-label">${escapeHtml(label)}</span><strong class="kpi-value">${escapeHtml(value)}</strong><span class="kpi-meta">${escapeHtml(meta)}</span></article>`;
+  return `<article class="card-base rounded-xl"><span class="kpi-label">${escapeHtml(label)}</span><strong class="kpi-value">${escapeHtml(value)}</strong><span class="kpi-meta">${escapeHtml(meta)}</span></article>`;
 }
 
 function health(label, status, tone = "online") {
@@ -1530,13 +1530,13 @@ function renderProductionHealth(payload = {}) {
       </div>
     </header>
 
-    <section class="kpi-grid" aria-label="Production health metrics">
+    <section class="grid grid-cols-2 md:grid-cols-4 gap-4" aria-label="Production health metrics">
       ${metricCards.map(([label, value, note]) => kpi(label, value ?? "Unavailable", note)).join("")}
     </section>
 
     <div class="dashboard-layout">
-      <section class="admin-card">
-        <div class="section-head"><div><h2>Service health</h2><p>Each status is derived from a live dependency check, Worker execution, D1 query or saved production control.</p></div></div>
+      <section class="card-base rounded-xl">
+        <div class="page-header"><div><h2>Service health</h2><p>Each status is derived from a live dependency check, Worker execution, D1 query or saved production control.</p></div></div>
         <div class="health-list">
           ${Object.entries(serviceLabels).map(([key, label]) => {
             const service = services[key] || { status: "unavailable", message: "No health result was returned." };
@@ -1546,14 +1546,14 @@ function renderProductionHealth(payload = {}) {
       </section>
 
       <div class="dashboard-stack">
-        <section class="admin-card">
-          <div class="section-head"><div><h2>Recent system errors</h2><p>Open records from the system event register.</p></div></div>
+        <section class="card-base rounded-xl">
+          <div class="page-header"><div><h2>Recent system errors</h2><p>Open records from the system event register.</p></div></div>
           ${recentErrors.length ? table(["Issue", "Severity", "Status", "Updated"], recentErrors.map((item) => `<tr><td><strong>${escapeHtml(item.title || item.id || "System event")}</strong></td><td>${badge(item.severity || "Unknown")}</td><td>${escapeHtml(item.status || "Open")}</td><td>${escapeHtml(formatDate(item.updated_at || item.created_at))}</td></tr>`).join("")) : `<div class="activity-empty"><div><strong>No open system errors recorded</strong><p>This reflects the application system-event register, not the Cloudflare telemetry stream.</p></div></div>`}
         </section>
-        <section class="admin-card">
-          <div class="section-head"><div><h2>Verification boundaries</h2><p>These checks deliberately distinguish configuration from confirmed delivery telemetry.</p></div></div>
+        <section class="card-base rounded-xl">
+          <div class="page-header"><div><h2>Verification boundaries</h2><p>These checks deliberately distinguish configuration from confirmed delivery telemetry.</p></div></div>
           <ul>${limitations.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
-          <div class="section-actions"><button class="admin-button" type="button" data-action="load-section" data-section="health">Refresh health checks</button><button class="admin-button secondary" type="button" data-action="load-section" data-section="status">Open Status Centre</button></div>
+          <div class="section-actions"><button class="btn-primary" type="button" data-action="load-section" data-section="health">Refresh health checks</button><button class="btn-secondary" type="button" data-action="load-section" data-section="status">Open Status Centre</button></div>
         </section>
       </div>
     </div>
@@ -1562,7 +1562,7 @@ function renderProductionHealth(payload = {}) {
 
 function quick(section, icon, title, text) {
   return `
-    <button class="quick-card" type="button" data-action="load-section" data-section="${escapeAttr(section)}">
+    <button class="card-hover rounded-xl" type="button" data-action="load-section" data-section="${escapeAttr(section)}">
       <span class="quick-icon">${iconSvg(icon)}</span>
       <span><strong>${escapeHtml(title)}</strong><span>${escapeHtml(text)}</span></span>
     </button>
@@ -1591,14 +1591,14 @@ function renderAnalytics(analytics = {}, statusData = null) {
   }).map(([label, value]) => `<tr><td><strong>${escapeHtml(label)}</strong></td><td>${escapeHtml(value ?? 0)}</td></tr>`).join("");
 
   document.getElementById("adminPanel").innerHTML = `
-    <div class="section-head">
+    <div class="page-header">
       <div><h2>Analytics</h2><p>Operational dashboard for account, request, enquiry, notification and live service activity.</p></div>
       <div class="section-actions">
-        <button class="admin-button secondary" type="button" data-action="load-section" data-section="status">Open Status Centre</button>
-        <button class="admin-button secondary" type="button" data-action="export-records" data-section="analytics" data-format="csv">Export CSV</button>
+        <button class="btn-secondary" type="button" data-action="load-section" data-section="status">Open Status Centre</button>
+        <button class="btn-secondary" type="button" data-action="export-records" data-section="analytics" data-format="csv">Export CSV</button>
       </div>
     </div>
-    <div class="admin-grid">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       ${stat("Total users", analytics.totalUsers || 0)}
       ${stat("New this month", analytics.newUsersThisMonth || 0)}
       ${stat("Lifetime users", analytics.lifetimeUsers || 0)}
@@ -1610,8 +1610,8 @@ function renderAnalytics(analytics = {}, statusData = null) {
       ${stat("Active Incidents", summary.activeIncidents || 0)}
       ${stat("Scheduled Maintenance", summary.scheduledMaintenance || 0)}
     </div>
-    <div class="admin-card">
-      <div class="section-head"><div><h2>Performance Summary</h2><p>Use this table for a quick management snapshot. Date-range filters can be extended once booking/referral event data is available.</p></div></div>
+    <div class="card-base rounded-xl">
+      <div class="page-header"><div><h2>Performance Summary</h2><p>Use this table for a quick management snapshot. Date-range filters can be extended once booking/referral event data is available.</p></div></div>
       ${table(["Metric", "Value"], rows)}
     </div>
   `;
@@ -1628,19 +1628,19 @@ function renderStatusCentre(statusData = {}) {
   const latestUpdated = status?.lastUpdated || source.updatedAt || new Date().toISOString();
 
   document.getElementById("adminPanel").innerHTML = `
-    <div class="admin-card">
-      <div class="section-head">
+    <div class="card-base rounded-xl">
+      <div class="page-header">
         <div>
           <h2>Status Centre</h2>
           <p>Live operational dashboard from Atlassian Statuspage. The same feed powers the public status page.</p>
         </div>
         <div class="section-actions">
-          <button class="admin-button secondary" type="button" data-action="refresh-status-centre">Refresh Status</button>
-          <a class="admin-button secondary" href="/status/" target="_blank" rel="noopener noreferrer">Open Public Status Page</a>
-          <a class="admin-button" href="https://jagroupservices.statuspage.io" target="_blank" rel="noopener noreferrer">Open Atlassian Statuspage</a>
+          <button class="btn-secondary" type="button" data-action="refresh-status-centre">Refresh Status</button>
+          <a class="btn-secondary" href="/status/" target="_blank" rel="noopener noreferrer">Open Public Status Page</a>
+          <a class="btn-primary" href="https://jagroupservices.statuspage.io" target="_blank" rel="noopener noreferrer">Open Atlassian Statuspage</a>
         </div>
       </div>
-      <div class="admin-grid">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         ${stat("Overall System Status", overall.label || "Status unavailable")}
         ${stat("Component Status", `${summary.operationalComponents || 0}/${summary.totalComponents || 0} operational`)}
         ${stat("Current Incidents", incidents.active?.length || summary.activeIncidents || 0)}
@@ -1648,8 +1648,8 @@ function renderStatusCentre(statusData = {}) {
         ${stat("Last Updated", formatDate(latestUpdated))}
         ${stat("Automatic Refresh", `${Math.max(Number(status?.refreshAfter || 60), 30)}s`)}
       </div>
-      <div class="admin-card" style="margin-top:1rem;">
-        <div class="section-head"><div><h2>System Health Summary</h2><p>${escapeHtml(overall.description || "Live service status supplied by the official portal.")}</p></div></div>
+      <div class="card-base rounded-xl" style="margin-top:1rem;">
+        <div class="page-header"><div><h2>System Health Summary</h2><p>${escapeHtml(overall.description || "Live service status supplied by the official portal.")}</p></div></div>
         <div class="health-list">
           ${health("Overall", overall.label || "Status unavailable", overall.tone || "online")}
           ${health("API feed", status?.ok ? "Connected" : "Unavailable", status?.ok ? "online" : "warning")}
@@ -1662,8 +1662,8 @@ function renderStatusCentre(statusData = {}) {
     </div>
     <div class="dashboard-layout">
       <div class="dashboard-stack">
-        <section class="admin-card">
-          <div class="section-head"><div><h2>Component Status</h2><p>Current status for each published service component.</p></div></div>
+        <section class="card-base rounded-xl">
+          <div class="page-header"><div><h2>Component Status</h2><p>Current status for each published service component.</p></div></div>
           <div class="component-grid">
             ${components.map((component) => `
               <article class="component-card">
@@ -1676,21 +1676,21 @@ function renderStatusCentre(statusData = {}) {
                 </div>
                 <p>Updated ${escapeHtml(formatDate(component.updatedAt || latestUpdated))}</p>
               </article>
-            `).join("") || `<div class="admin-alert">No components are currently published by the official status service.</div>`}
+            `).join("") || `<div class="alert-error">No components are currently published by the official status service.</div>`}
           </div>
         </section>
       </div>
       <div class="dashboard-stack">
-        <section class="admin-card">
-          <div class="section-head"><div><h2>Current Incidents</h2><p>Active incidents and the latest published updates.</p></div></div>
+        <section class="card-base rounded-xl">
+          <div class="page-header"><div><h2>Current Incidents</h2><p>Active incidents and the latest published updates.</p></div></div>
           ${renderStatusEventList(incidents.active || [], "No active incidents", "The official status service has not published any active incidents.")}
         </section>
-        <section class="admin-card">
-          <div class="section-head"><div><h2>Scheduled Maintenance</h2><p>Upcoming or in-progress maintenance events.</p></div></div>
+        <section class="card-base rounded-xl">
+          <div class="page-header"><div><h2>Scheduled Maintenance</h2><p>Upcoming or in-progress maintenance events.</p></div></div>
           ${renderStatusEventList([...(maintenance.active || []), ...(maintenance.scheduled || [])], "No scheduled maintenance", "The official status service has not published any maintenance events.")}
         </section>
-        <section class="admin-card">
-          <div class="section-head"><div><h2>Status History</h2><p>Recently resolved incidents and completed maintenance.</p></div></div>
+        <section class="card-base rounded-xl">
+          <div class="page-header"><div><h2>Status History</h2><p>Recently resolved incidents and completed maintenance.</p></div></div>
           ${renderStatusEventList([...(incidents.history || []), ...(maintenance.history || [])], "No recent history", "No resolved incidents or completed maintenance are currently published.")}
         </section>
       </div>
@@ -1706,12 +1706,12 @@ function renderStatusCentre(statusData = {}) {
 
 function renderStatusEventList(events = [], emptyTitle, emptyDescription) {
   if (!events.length) {
-    return `<div class="admin-alert">${escapeHtml(emptyTitle)}: ${escapeHtml(emptyDescription)}</div>`;
+    return `<div class="alert-error">${escapeHtml(emptyTitle)}: ${escapeHtml(emptyDescription)}</div>`;
   }
 
   return `<div class="activity-list">${events.map((event) => `
     <article class="activity-card">
-      <div class="section-head">
+      <div class="page-header">
         <div>
           <h3>${escapeHtml(event.name || "Service event")}</h3>
           <p>${escapeHtml(event.eventType || "Service update")}</p>
@@ -1766,29 +1766,29 @@ function renderAdmins(admins = []) {
   }).join("");
 
   document.getElementById("adminPanel").innerHTML = `
-    <div class="admin-card">
-      <div class="section-head">
+    <div class="card-base rounded-xl">
+      <div class="page-header">
         <div>
           <h2>Identity Management</h2>
           <p>Add, review and update Microsoft Entra-authenticated administrators. The application authorises access from the admin_users table.</p>
         </div>
         <div class="section-actions">
-          <a class="admin-button secondary" href="https://entra.microsoft.com/" target="_blank" rel="noopener noreferrer">Open Microsoft Entra</a>
+          <a class="btn-secondary" href="https://entra.microsoft.com/" target="_blank" rel="noopener noreferrer">Open Microsoft Entra</a>
         </div>
       </div>
 
-      <form class="admin-form" id="adminUserForm">
+      <form class="grid grid-cols-1 md:grid-cols-2 gap-4" id="adminUserForm">
         ${input("Admin email", "new_admin_email", "email")}
         ${input("Display name", "new_admin_name")}
-        <label class="admin-label">Role
+        <label class="label-base">Role
           <select id="new_admin_role">${roleOptions}</select>
         </label>
-        <button class="admin-button" type="submit">Add admin</button>
+        <button class="btn-primary" type="submit">Add admin</button>
       </form>
 
-      <div id="adminUserSaved" class="admin-success" hidden></div>
-      <div class="admin-form" style="margin-bottom:1rem;">
-        <label class="admin-label">Search administrators<input id="adminSearch" type="search" placeholder="Search name, email, role or status"></label>
+      <div id="adminUserSaved" class="alert-success" hidden></div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4" style="margin-bottom:1rem;">
+        <label class="label-base">Search administrators<input id="adminSearch" type="search" placeholder="Search name, email, role or status"></label>
       </div>
       <div id="adminTableWrap">${table(["Administrator", "Role", "Permissions", "Status", "Source", "Updated", "Actions"], rows)}</div>
     </div>
@@ -1868,36 +1868,36 @@ function renderRoles(roles = [], permissionCatalog = {}) {
 
   const categories = Object.entries(permissionCatalog || {});
   document.getElementById("adminPanel").innerHTML = `
-    <div class="admin-card">
-      <div class="section-head">
+    <div class="card-base rounded-xl">
+      <div class="page-header">
         <div>
           <h2>Roles &amp; Permissions</h2>
           <p>Create, clone and edit access roles using grouped permission categories.</p>
         </div>
         <div class="section-actions">
-          <button class="admin-button" type="button" data-action="create-role">Create role</button>
+          <button class="btn-primary" type="button" data-action="create-role">Create role</button>
         </div>
       </div>
-      <div class="admin-grid" style="margin-bottom:1rem;">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" style="margin-bottom:1rem;">
         ${roles.map((role) => `
-          <article class="admin-stat">
+          <article class="card-base rounded-xl p-6">
             <span>${escapeHtml(role.name)}</span>
             <strong>${escapeHtml(String(role.assigned_count || 0))} members</strong>
             <span>${escapeHtml(role.is_system ? "System role" : `${(Array.isArray(role.permissions) ? role.permissions.length : 0)} permissions`)}</span>
           </article>
         `).join("")}
       </div>
-      <div class="admin-form" style="margin-bottom:1rem;">
-        <label class="admin-label">Search roles<input id="roleSearch" type="search" placeholder="Search by role name or description"></label>
-        <label class="admin-label">Filter type<select id="roleTypeFilter"><option value="">All</option><option value="system">System</option><option value="custom">Custom</option></select></label>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4" style="margin-bottom:1rem;">
+        <label class="label-base">Search roles<input id="roleSearch" type="search" placeholder="Search by role name or description"></label>
+        <label class="label-base">Filter type<select id="roleTypeFilter"><option value="">All</option><option value="system">System</option><option value="custom">Custom</option></select></label>
       </div>
       <div id="roleTableWrap">${table(["Role", "Type", "Permissions", "Assigned users", "Updated", "Actions"], rows)}</div>
     </div>
-    <div class="admin-card" style="margin-top:1rem;">
-      <div class="section-head"><div><h2>Permission catalog</h2><p>These permissions power the navigation, route security and dashboard visibility.</p></div></div>
+    <div class="card-base rounded-xl" style="margin-top:1rem;">
+      <div class="page-header"><div><h2>Permission catalog</h2><p>These permissions power the navigation, route security and dashboard visibility.</p></div></div>
       <div class="permission-catalog">
         ${categories.map(([group, permissions]) => `
-          <article class="list-card">
+          <article class="card-base rounded-xl">
             <strong>${escapeHtml(group)}</strong>
             <div class="permission-tags">
               ${permissions.map((permission) => `<span class="badge">${escapeHtml(permission)}</span>`).join("")}
@@ -1956,7 +1956,7 @@ function buildPermissionGroups(selected = []) {
   return Object.entries(catalog).map(([group, permissions]) => `
     <fieldset class="permission-group">
       <legend>${escapeHtml(group)}</legend>
-      <div class="permission-grid">
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
         ${permissions.map((permission) => `
           <label class="permission-item">
             <input type="checkbox" value="${escapeAttr(permission)}" ${selected.includes(permission) ? "checked" : ""}>
@@ -1983,7 +1983,7 @@ function renderPermissionEditor(selected = [], filter = "", locked = false) {
       return `
         <fieldset class="permission-group">
           <legend>${escapeHtml(group)}</legend>
-          <div class="permission-grid">
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
             ${filtered.map((permission) => `
               <label class="permission-item">
                 <input type="checkbox" value="${escapeAttr(permission)}" ${selected.includes(permission) ? "checked" : ""} ${locked ? "disabled" : ""}>
@@ -1998,16 +1998,16 @@ function renderPermissionEditor(selected = [], filter = "", locked = false) {
     .join("");
 
   return `
-    <div class="admin-card" style="margin:0;">
-      <div class="section-head">
+    <div class="card-base rounded-xl" style="margin:0;">
+      <div class="page-header">
         <div><h3>Permissions</h3><p>${locked ? "Platform Owner permissions are fixed and cannot be reduced." : "Choose the effective permissions for this administrator."}</p></div>
         <div class="section-actions">
           <button class="mini-button" type="button" data-action="select-all-permissions" ${locked ? "disabled" : ""}>Select All</button>
           <button class="mini-button" type="button" data-action="clear-all-permissions" ${locked ? "disabled" : ""}>Clear All</button>
         </div>
       </div>
-      <label class="admin-label">Search permissions<input id="adminPermissionSearch" type="search" placeholder="Filter permissions" value="${escapeAttr(filter)}" ${locked ? "disabled" : ""}></label>
-      <div class="permission-catalog">${groups || `<div class="admin-alert">No permissions match this filter.</div>`}</div>
+      <label class="label-base">Search permissions<input id="adminPermissionSearch" type="search" placeholder="Filter permissions" value="${escapeAttr(filter)}" ${locked ? "disabled" : ""}></label>
+      <div class="permission-catalog">${groups || `<div class="alert-error">No permissions match this filter.</div>`}</div>
     </div>
   `;
 }
@@ -2020,14 +2020,14 @@ function openRoleEditor(role = null) {
       <div><h2>${isEdit ? `Edit role: ${escapeHtml(role.name)}` : "Create role"}</h2><p>${isEdit ? "Update the role definition and assign permissions." : "Create a custom role from grouped permissions."}</p></div>
       <button class="drawer-close" type="button" data-action="close-modal">×</button>
     </div>
-    <form class="admin-form" id="roleForm">
+    <form class="grid grid-cols-1 md:grid-cols-2 gap-4" id="roleForm">
       ${input("Role name", "role_name")}
-      <label class="admin-label">Description<textarea id="role_description"></textarea></label>
+      <label class="label-base">Description<textarea id="role_description"></textarea></label>
       <div class="permission-catalog">${buildPermissionGroups(permissions)}</div>
       <div class="section-actions">
-        <button class="admin-button" type="submit">${isEdit ? "Save role" : "Create role"}</button>
+        <button class="btn-primary" type="submit">${isEdit ? "Save role" : "Create role"}</button>
       </div>
-      <div id="roleSaved" class="admin-success" hidden></div>
+      <div id="roleSaved" class="alert-success" hidden></div>
     </form>
   `);
 
@@ -2081,7 +2081,7 @@ async function openAdminProfileModal(email, options = {}) {
       state.data.admins = data;
       adminList = data.admins || [];
     } catch (error) {
-      openModal(`<div class="modal-head"><div><h2>Admin profile</h2><p>Profile details could not be loaded.</p></div><button class="drawer-close" type="button" data-action="close-modal">×</button></div><div class="admin-alert">${escapeHtml(error.message)}</div>`);
+      openModal(`<div class="modal-head"><div><h2>Admin profile</h2><p>Profile details could not be loaded.</p></div><button class="drawer-close" type="button" data-action="close-modal">×</button></div><div class="alert-error">${escapeHtml(error.message)}</div>`);
       return;
     }
   }
@@ -2109,14 +2109,14 @@ async function openAdminProfileModal(email, options = {}) {
       <div><h2>${isOwnProfile ? "Account settings" : "Admin profile"}</h2><p>${isOwnProfile ? "Manage your supported display details. Your sign-in identity remains controlled by Microsoft Entra ID." : "Review and update this administrator's supported profile details."}</p></div>
       <button class="drawer-close" type="button" data-action="close-modal">×</button>
     </div>
-    <form class="admin-form single admin-profile-form" id="adminProfileForm">
+    <form class="grid grid-cols-1 gap-4 admin-profile-form" id="adminProfileForm">
       ${input("Display name", "admin_profile_name")}
-      <label class="admin-label">Admin email<input id="admin_profile_email" type="email" value="${escapeAttr(admin.email)}"></label>
-      <label class="admin-label">Access source<input type="text" value="${escapeAttr(isDefault ? "Protected environment admin" : "Admin portal")}" readonly></label>
-      <label class="admin-label">Role
+      <label class="label-base">Admin email<input id="admin_profile_email" type="email" value="${escapeAttr(admin.email)}"></label>
+      <label class="label-base">Access source<input type="text" value="${escapeAttr(isDefault ? "Protected environment admin" : "Admin portal")}" readonly></label>
+      <label class="label-base">Role
         <select id="admin_profile_role" ${isDefault ? "disabled" : ""}>${roleOptions}</select>
       </label>
-      <label class="admin-label">Status
+      <label class="label-base">Status
         <select id="admin_profile_status" ${isDefault ? "disabled" : ""}>
           <option value="Active">Active</option>
           <option value="Inactive">Inactive</option>
@@ -2127,17 +2127,17 @@ async function openAdminProfileModal(email, options = {}) {
         ${isDefault ? "" : `<button class="mini-button" type="button" data-action="profile-status-toggle">${isSuspended ? "Reactivate administrator" : "Suspend administrator"}</button>`}
         ${isOwnProfile ? `<a class="mini-button secondary" href="/admin/logout">Sign out</a>` : ""}
       </div>
-      <div class="admin-card" style="margin:0;">
-        <div class="section-head"><div><h3>Login history</h3><p>Recent access and role-related events.</p></div></div>
+      <div class="card-base rounded-xl" style="margin:0;">
+        <div class="page-header"><div><h3>Login history</h3><p>Recent access and role-related events.</p></div></div>
         ${table(["Event", "Entity", "Date"], loginHistory.map((item) => `
           <tr><td><strong>${escapeHtml(item.action || "")}</strong><span>${escapeHtml(item.summary || "")}</span></td><td>${escapeHtml(item.entity_type || "")}</td><td>${escapeHtml(formatDate(item.created_at))}</td></tr>
         `).join(""))}
       </div>
-      <div class="admin-alert">${isDefault ? "This is a protected environment administrator. Email, role and status are read-only; only the display name can be updated." : "Email changes and separate internal admin notes are not supported by the current admin API, so they are not editable here."}</div>
+      <div class="alert-error">${isDefault ? "This is a protected environment administrator. Email, role and status are read-only; only the display name can be updated." : "Email changes and separate internal admin notes are not supported by the current admin API, so they are not editable here."}</div>
       <div class="section-actions">
-        <button class="admin-button" type="submit">Save profile</button>
+        <button class="btn-primary" type="submit">Save profile</button>
       </div>
-      <div id="adminProfileSaved" class="admin-success" hidden></div>
+      <div id="adminProfileSaved" class="alert-success" hidden></div>
     </form>
   `);
 
@@ -2256,17 +2256,17 @@ function renderCustomers(customers = []) {
   };
 
   document.getElementById("adminPanel").innerHTML = `
-    <div class="admin-card">
-      <div class="section-head">
+    <div class="card-base rounded-xl">
+      <div class="page-header">
         <div>
           <h2>Customer relationship management</h2>
           <p>Search customer profiles and open a record to review account details, Lifetime access and internal notes.</p>
         </div>
       </div>
-      <div class="admin-alert">Customer data displayed here is confidential and subject to UK GDPR. Access is logged by the platform perimeter; use it only for legitimate business purposes.</div>
-      <div class="table-tools" style="margin-top:1rem;">
-        <div class="table-filters">
-          <label class="table-search"><span class="sr-only">Search customers</span><input id="customerSearch" type="search" placeholder="Search name, email or phone" autocomplete="off"></label>
+      <div class="alert-error">Customer data displayed here is confidential and subject to UK GDPR. Access is logged by the platform perimeter; use it only for legitimate business purposes.</div>
+      <div class="flex flex-wrap items-center justify-between gap-4 mb-4" style="margin-top:1rem;">
+        <div class="flex flex-wrap gap-2">
+          <label class="input-base max-w-xs"><span class="sr-only">Search customers</span><input id="customerSearch" type="search" placeholder="Search name, email or phone" autocomplete="off"></label>
           <label><span class="sr-only">Filter by account status</span><select id="customerStatusFilter"><option value="all">All account statuses</option><option value="active">Active</option><option value="suspended">Suspended</option><option value="trial">Trial</option><option value="paid">Paid</option><option value="expired">Expired</option><option value="none">No subscription</option></select></label>
           <label><span class="sr-only">Filter by plan</span><select id="customerSupportFilter"><option value="all">All plans</option><option value="membership">Membership</option><option value="plus">Plus</option><option value="family">Family</option><option value="lifetime">Lifetime</option></select></label>
           <label><span class="sr-only">Sort customers</span><select id="customerSortFilter"><option value="updated_desc">Last activity</option><option value="created_desc">Registration date</option><option value="name_asc">Name</option></select></label>
@@ -2402,7 +2402,7 @@ function auditTimeline(items = []) {
 
 function renderCustomerProfile(customer, plans = []) {
   if (!customer) {
-    document.getElementById("adminPanel").innerHTML = `<div class="admin-card">${emptyCard("Select a customer from CRM to open the profile.")}</div>`;
+    document.getElementById("adminPanel").innerHTML = `<div class="card-base rounded-xl">${emptyCard("Select a customer from CRM to open the profile.")}</div>`;
     return;
   }
   const flags = Array.isArray(customer.flags) ? customer.flags : [];
@@ -2438,7 +2438,7 @@ function renderCustomerProfile(customer, plans = []) {
       <span class="customer-id-badge">${escapeHtml(customer.customer_id || customer.email)}</span>
     </header>
     ${warnings.length ? `<div class="customer-warning-banner" role="status"><strong>Account attention required</strong><div>${warnings.map((warning) => `<span>${escapeHtml(warning)}</span>`).join("")}</div></div>` : ""}
-    <section class="admin-card customer-identity-card">
+    <section class="card-base rounded-xl customer-identity-card">
       <div class="customer-record-avatar" aria-hidden="true">${escapeHtml(displayName.slice(0, 1).toUpperCase())}</div>
       <div class="customer-record-identity">
         <h1>${escapeHtml(displayName)}</h1>
@@ -2453,17 +2453,17 @@ function renderCustomerProfile(customer, plans = []) {
       </div>
       <div class="customer-record-meta"><span>Joined</span><strong>${escapeHtml(formatDate(customer.created_at))}</strong><span>Last activity</span><strong>${escapeHtml(formatDate(customer.updated_at || customer.created_at))}</strong></div>
       <div class="customer-record-actions">
-        <button class="admin-button" type="button" data-action="send-customer-notification" data-email="${escapeAttr(customer.email)}" ${protectedDisabled}>Send notification</button>
-        <button class="admin-button secondary" type="button" data-action="verify-customer-pin" data-email="${escapeAttr(customer.email)}">Verify identity</button>
-        <button class="admin-button secondary" type="button" data-action="open-stripe-portal" data-email="${escapeAttr(customer.email)}" ${billing.portalAvailable && identityVerified ? "" : "disabled"}>Stripe portal</button>
+        <button class="btn-primary" type="button" data-action="send-customer-notification" data-email="${escapeAttr(customer.email)}" ${protectedDisabled}>Send notification</button>
+        <button class="btn-secondary" type="button" data-action="verify-customer-pin" data-email="${escapeAttr(customer.email)}">Verify identity</button>
+        <button class="btn-secondary" type="button" data-action="open-stripe-portal" data-email="${escapeAttr(customer.email)}" ${billing.portalAvailable && identityVerified ? "" : "disabled"}>Stripe portal</button>
       </div>
     </section>
     <nav class="customer-record-tabs" aria-label="Customer record sections">
       ${[["customerOverview","Overview"],["customerAccountAccess","Account Controls"],["customerMembership","Plans & Billing"],["customerTimeline","Timeline"],["customerSupport","Support & Data"],["customerNotes","Notes"]].map(([id,label]) => `<a href="#${id}">${label}</a>`).join("")}
     </nav>
-    <section class="admin-card" id="customerOverview">
+    <section class="card-base rounded-xl" id="customerOverview">
       ${renderCustomerIdentityVerification(customer, verification, securityQuestions)}
-      <div class="admin-grid">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         ${stat("Contact email", customer.contact_email || "Not added")}
         ${stat("Phone", customer.phone || "Not added")}
         ${stat("Preference", customer.communication_preference || "Email")}
@@ -2476,25 +2476,25 @@ function renderCustomerProfile(customer, plans = []) {
         ${stat("Token balance", tokenLedger[0]?.balance_after ?? "Not available")}
       </div>
     </section>
-    <section class="admin-card" id="customerAccountAccess">
-      <div class="section-head"><div><h2>Account access</h2><p>Suspend or reactivate this customer without deleting their profile, subscription history, saved plans or outputs.</p></div></div>
+    <section class="card-base rounded-xl" id="customerAccountAccess">
+      <div class="page-header"><div><h2>Account access</h2><p>Suspend or reactivate this customer without deleting their profile, subscription history, saved plans or outputs.</p></div></div>
       <div class="drawer-grid">
         <div class="drawer-field"><span>Current status</span><strong>${escapeHtml(customer.admin_customer_status || "Standard")}</strong></div>
         <div class="drawer-field"><span>Suspended</span><strong>${escapeHtml(formatDate(customer.suspended_at))}</strong></div>
         <div class="drawer-field"><span>Suspended by</span><strong>${escapeHtml(customer.suspended_by || "Not available")}</strong></div>
         <div class="drawer-field"><span>Reactivated</span><strong>${escapeHtml(formatDate(customer.reactivated_at))}</strong></div>
       </div>
-      <form class="admin-form" id="customerAccessForm" style="margin-top:1rem;">
+      <form class="grid grid-cols-1 md:grid-cols-2 gap-4" id="customerAccessForm" style="margin-top:1rem;">
         <label>${String(customer.admin_customer_status).toLowerCase() === "suspended" ? "Reactivation" : "Suspension"} reason<textarea id="customerAccessReason" required maxlength="1000"></textarea></label>
         <label>Optional internal note<textarea id="customerAccessNote" maxlength="2000"></textarea></label>
-        <button class="admin-button ${String(customer.admin_customer_status).toLowerCase() === "suspended" ? "" : "danger"}" type="submit" ${protectedDisabled}>${String(customer.admin_customer_status).toLowerCase() === "suspended" ? "Reactivate Account" : "Suspend Account"}</button>
-        <div id="customerAccessStatus" class="admin-alert" hidden></div>
+        <button class="btn-primary ${String(customer.admin_customer_status).toLowerCase() === "suspended" ? "" : "danger"}" type="submit" ${protectedDisabled}>${String(customer.admin_customer_status).toLowerCase() === "suspended" ? "Reactivate Account" : "Suspend Account"}</button>
+        <div id="customerAccessStatus" class="alert-error" hidden></div>
       </form>
     </section>
     <div class="dashboard-layout">
       <div class="dashboard-stack">
-        <section class="admin-card" id="customerMembership">
-          <div class="section-head"><div><h2>Membership status</h2><p>Current record, entitlement and plan context.</p></div></div>
+        <section class="card-base rounded-xl" id="customerMembership">
+          <div class="page-header"><div><h2>Membership status</h2><p>Current record, entitlement and plan context.</p></div></div>
           <div class="drawer-grid">
             <div class="drawer-field"><span>Status</span><strong>${escapeHtml(customer.admin_customer_status || "Standard")}</strong></div>
             <div class="drawer-field"><span>Lifetime</span><strong>${Number(customer.admin_lifetime || 0) === 1 ? "Enabled" : "Disabled"}</strong></div>
@@ -2508,21 +2508,21 @@ function renderCustomerProfile(customer, plans = []) {
             <div class="drawer-field"><span>Updated</span><strong>${escapeHtml(formatDate(customer.updated_at || customer.created_at))}</strong></div>
           </div>
         </section>
-        <section class="admin-card" id="customerTimeline">
-          <div class="section-head"><div><h2>Editable support fields</h2><p>Use the existing customer record editor for lifetime access, notes and flags.</p></div></div>
+        <section class="card-base rounded-xl" id="customerTimeline">
+          <div class="page-header"><div><h2>Editable support fields</h2><p>Use the existing customer record editor for lifetime access, notes and flags.</p></div></div>
           <div class="section-actions">
-            <button class="admin-button" type="button" data-action="open-customer" data-email="${escapeAttr(customer.email)}" ${protectedDisabled}>Open support drawer</button>
-            <button class="admin-button secondary" type="button" data-action="load-section" data-section="notifications" ${protectedDisabled}>View notifications</button>
+            <button class="btn-primary" type="button" data-action="open-customer" data-email="${escapeAttr(customer.email)}" ${protectedDisabled}>Open support drawer</button>
+            <button class="btn-secondary" type="button" data-action="load-section" data-section="notifications" ${protectedDisabled}>View notifications</button>
           </div>
         </section>
       </div>
       <div class="dashboard-stack">
-        <section class="admin-card" id="customerSupport">
-          <div class="section-head"><div><h2>Timeline</h2><p>Customer history and operational events.</p></div></div>
+        <section class="card-base rounded-xl" id="customerSupport">
+          <div class="page-header"><div><h2>Timeline</h2><p>Customer history and operational events.</p></div></div>
           ${customerTimeline(timeline)}
         </section>
-        <section class="admin-card" id="customerNotes">
-          <div class="section-head"><div><h2>Support / GDPR / security</h2><p>Linked records across the operational workspaces.</p></div></div>
+        <section class="card-base rounded-xl" id="customerNotes">
+          <div class="page-header"><div><h2>Support / GDPR / security</h2><p>Linked records across the operational workspaces.</p></div></div>
           <div class="drawer-section-grid">
             <section class="drawer-section-card"><h3>Support cases</h3>${supportCases.length ? `<p>${supportCases.length} linked cases available.</p>` : "<p>No support cases recorded.</p>"}</section>
             <section class="drawer-section-card"><h3>Notifications</h3>${notifications.length ? `<p>${notifications.length} linked notifications available.</p>` : "<p>No notifications recorded.</p>"}</section>
@@ -2535,14 +2535,14 @@ function renderCustomerProfile(customer, plans = []) {
             <section class="drawer-section-card"><h3>Audit history</h3><p>${customerAudit.length ? `${customerAudit.length} administrative events.` : "No audit events recorded."}</p></section>
           </div>
         </section>
-        <section class="admin-card">
-          <div class="section-head"><div><h2>Internal notes</h2><p>Non-customer-visible operational record.</p></div></div>
+        <section class="card-base rounded-xl">
+          <div class="page-header"><div><h2>Internal notes</h2><p>Non-customer-visible operational record.</p></div></div>
           ${notes.length ? `<div class="timeline-stack">${notes.map((note) => `<article class="timeline-item"><strong>${escapeHtml(note.category || "General")}${note.pinned ? " · Pinned" : ""}</strong><span>${escapeHtml(note.body || "")}</span><small>${escapeHtml(note.author_email || "System")} · ${escapeHtml(formatDate(note.updated_at || note.created_at))}</small></article>`).join("")}</div>` : "<p>No internal notes recorded.</p>"}
-          <form class=\"admin-form\" id=\"customerNoteForm\" style=\"margin-top:1rem;\">
+          <form class=\"grid grid-cols-1 md:grid-cols-2 gap-4\" id=\"customerNoteForm\" style=\"margin-top:1rem;\">
             ${input("Note category", "customer_note_category")}
             ${textarea("Internal note", "customer_note_body")}
             <label class=\"check\"><input id=\"customer_note_pinned\" type=\"checkbox\"> Pin note</label>
-            <button class=\"admin-button\" type=\"submit\" ${protectedDisabled}>Add internal note</button>
+            <button class=\"btn-primary\" type=\"submit\" ${protectedDisabled}>Add internal note</button>
           </form>
         </section>
       </div>
@@ -2561,9 +2561,9 @@ function renderCustomerProfile(customer, plans = []) {
     status.textContent = suspended ? "Reactivating account..." : "Suspending account...";
     try {
       await api("customer", { method: "POST", body: JSON.stringify({ action: suspended ? "reactivate_account" : "suspend_account", email: customer.email, reason, internal_note: getValue("customerAccessNote") }) });
-      status.className = "admin-success"; status.textContent = suspended ? "Customer account reactivated." : "Customer account suspended.";
+      status.className = "alert-success"; status.textContent = suspended ? "Customer account reactivated." : "Customer account suspended.";
       await openCustomerProfile(customer.email);
-    } catch (error) { status.className = "admin-alert"; status.textContent = error.message || "Account access could not be updated."; }
+    } catch (error) { status.className = "alert-error"; status.textContent = error.message || "Account access could not be updated."; }
   });
   document.getElementById("customerNoteForm")?.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -2585,52 +2585,52 @@ function renderCustomerProfile(customer, plans = []) {
 function renderCustomerIdentityVerification(customer, verification = {}, questions = []) {
   if (verification.verified) {
     return `
-      <div class="admin-success" role="status">
+      <div class="alert-success" role="status">
         Identity Verified by ${escapeHtml(verification.method || "Customer Identity Verification")}. Verification expires ${escapeHtml(formatDate(verification.expires_at))}.
       </div>
     `;
   }
 
   const lockedMessage = verification.locked
-    ? `<div class="admin-alert">Identity verification has failed. For security, this customer profile is locked. A Supervisor or System Administrator must provide a reason and override the lock before work can continue.</div>`
+    ? `<div class="alert-error">Identity verification has failed. For security, this customer profile is locked. A Supervisor or System Administrator must provide a reason and override the lock before work can continue.</div>`
     : "";
   const activePins = Array.isArray(customer.support_pins)
     ? customer.support_pins.filter((pin) => !pin.used_at && !pin.revoked_at && (!pin.expires_at || new Date(pin.expires_at).getTime() > Date.now()))
     : [];
   const hasVerificationMethod = activePins.length > 0 || questions.length > 0;
   const unavailableMessage = !hasVerificationMethod
-    ? `<div class="admin-alert">No active Support PIN or security questions are available for this customer. Ask the customer to sign in and generate a new one-time Support PIN, or escalate to a Supervisor/System Administrator with an audit reason. Sensitive actions remain locked until identity is verified.</div>`
+    ? `<div class="alert-error">No active Support PIN or security questions are available for this customer. Ask the customer to sign in and generate a new one-time Support PIN, or escalate to a Supervisor/System Administrator with an audit reason. Sensitive actions remain locked until identity is verified.</div>`
     : "";
   const questionFields = questions.map((question) => `
-    <label class="admin-label">
+    <label class="label-base">
       ${escapeHtml(question.question_label)}
       <input type="password" data-security-answer="${escapeAttr(question.id)}" autocomplete="off">
     </label>
   `).join("");
 
   return `
-    <section class="admin-card" style="margin-top:1rem;">
-      <div class="section-head">
+    <section class="card-base rounded-xl" style="margin-top:1rem;">
+      <div class="page-header">
         <div><h2>Verify Customer Identity</h2><p>Identity Verification Required before sensitive customer actions are available.</p></div>
       </div>
       ${lockedMessage}
       ${unavailableMessage}
-      <form class="admin-form" id="customerIdentityPinForm">
-        <label class="admin-label">Support PIN<input id="customerIdentityPin" type="password" inputmode="numeric" autocomplete="off" ${verification.locked ? "disabled" : ""}></label>
-        <button class="admin-button" type="submit" ${verification.locked ? "disabled" : ""}>Verify PIN</button>
+      <form class="grid grid-cols-1 md:grid-cols-2 gap-4" id="customerIdentityPinForm">
+        <label class="label-base">Support PIN<input id="customerIdentityPin" type="password" inputmode="numeric" autocomplete="off" ${verification.locked ? "disabled" : ""}></label>
+        <button class="btn-primary" type="submit" ${verification.locked ? "disabled" : ""}>Verify PIN</button>
       </form>
-      <div id="customerIdentityStatus" class="admin-alert" hidden></div>
+      <div id="customerIdentityStatus" class="alert-error" hidden></div>
       <details style="margin-top:1rem;" ${verification.locked ? "" : ""}>
         <summary>Use Security Questions</summary>
-        <form class="admin-form" id="customerSecurityQuestionsForm" style="margin-top:1rem;">
+        <form class="grid grid-cols-1 md:grid-cols-2 gap-4" id="customerSecurityQuestionsForm" style="margin-top:1rem;">
           ${questionFields || "<p>No security questions are configured for this customer. Do not continue with sensitive support actions unless another verified method or authorised supervisor override is available.</p>"}
-          <button class="admin-button secondary" type="submit" ${questions.length && !verification.locked ? "" : "disabled"}>Verify by Security Questions</button>
+          <button class="btn-secondary" type="submit" ${questions.length && !verification.locked ? "" : "disabled"}>Verify by Security Questions</button>
         </form>
       </details>
       ${verification.supervisor_override_available ? `
-        <form class="admin-form" id="customerIdentityOverrideForm" style="margin-top:1rem;">
+        <form class="grid grid-cols-1 md:grid-cols-2 gap-4" id="customerIdentityOverrideForm" style="margin-top:1rem;">
           ${textarea("Reason for Override", "customer_identity_override_reason")}
-          <button class="admin-button" type="submit">Supervisor Override</button>
+          <button class="btn-primary" type="submit">Supervisor Override</button>
         </form>
       ` : ""}
     </section>
@@ -2642,7 +2642,7 @@ function bindCustomerIdentityForms(customer, plans = []) {
   const showIdentityStatus = (message, isError = true) => {
     if (!status) return;
     status.hidden = false;
-    status.className = isError ? "admin-alert" : "admin-success";
+    status.className = isError ? "alert-error" : "alert-success";
     status.textContent = message;
   };
 
@@ -2723,14 +2723,14 @@ function renderNotificationCentre(data = {}) {
     </tr>
   `).join("");
   document.getElementById("adminPanel").innerHTML = `
-    <section class="admin-card">
-      <div class="section-head">
+    <section class="card-base rounded-xl">
+      <div class="page-header">
         <div><h2>Communications Centre</h2><p>Drafts, scheduled sends, broadcasts and customer follow-ups.</p></div>
         <div class="section-actions">
-          <button class="admin-button" type="button" data-action="new-notification">New notification</button>
+          <button class="btn-primary" type="button" data-action="new-notification">New notification</button>
         </div>
       </div>
-      <div class="admin-grid">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         ${stat("Drafts", notifications.filter((item) => item.delivery_status === "Draft").length)}
         ${stat("Scheduled", notifications.filter((item) => item.delivery_status === "Scheduled").length)}
         ${stat("Sent", notifications.filter((item) => item.delivery_status === "Sent").length)}
@@ -2753,9 +2753,9 @@ function renderMembershipCentre(data = {}) {
     </tr>
   `).join("");
   document.getElementById("adminPanel").innerHTML = `
-    <section class="admin-card">
-      <div class="section-head"><div><h2>Membership Centre</h2><p>Plan status, lifetime access and entitlement history.</p></div></div>
-      <div class="admin-grid">
+    <section class="card-base rounded-xl">
+      <div class="page-header"><div><h2>Membership Centre</h2><p>Plan status, lifetime access and entitlement history.</p></div></div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         ${stat("Lifetime", data.summary?.lifetime || 0)}
         ${stat("Suspended", data.summary?.suspended || 0)}
         ${stat("Cancelled", data.summary?.cancelled || 0)}
@@ -2763,7 +2763,7 @@ function renderMembershipCentre(data = {}) {
         ${stat("Complimentary", data.summary?.complimentary || 0)}
       </div>
       ${table(["Customer", "Status", "Access", "Plan", "Updated"], rows)}
-      <div class="admin-card" style="margin-top:1rem;">
+      <div class="card-base rounded-xl" style="margin-top:1rem;">
         <h3>Membership history</h3>
         ${customerTimeline(data.history || [])}
       </div>
@@ -2783,15 +2783,15 @@ function renderSecurityCentre(data = {}) {
     </tr>
   `).join("");
   document.getElementById("adminPanel").innerHTML = `
-    <section class="admin-card">
-      <div class="section-head"><div><h2>Security Centre</h2><p>Support PINs, sessions and security history.</p></div></div>
-      <div class="admin-grid">
+    <section class="card-base rounded-xl">
+      <div class="page-header"><div><h2>Security Centre</h2><p>Support PINs, sessions and security history.</p></div></div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         ${stat("PIN records", pins.length)}
         ${stat("Active sessions", sessions.length)}
         ${stat("Security events", Array.isArray(data.history) ? data.history.length : 0)}
       </div>
       ${table(["Customer", "Expires", "Last used", "Revoked"], rows)}
-      <div class="admin-card" style="margin-top:1rem;">
+      <div class="card-base rounded-xl" style="margin-top:1rem;">
         <h3>Session history</h3>
         ${customerTimeline(data.history || [])}
       </div>
@@ -2804,21 +2804,21 @@ function renderCmsCentre(data = {}) {
   const affiliate = Array.isArray(data.affiliate) ? data.affiliate : [];
   const settings = Array.isArray(data.settings) ? data.settings : [];
   document.getElementById("adminPanel").innerHTML = `
-    <section class="admin-card">
-      <div class="section-head"><div><h2>Website CMS</h2><p>Public content, policy pages and branding.</p></div></div>
-      <div class="admin-grid">
+    <section class="card-base rounded-xl">
+      <div class="page-header"><div><h2>Website CMS</h2><p>Public content, policy pages and branding.</p></div></div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         ${stat("Policies", policies.length)}
         ${stat("Affiliate blocks", affiliate.length)}
         ${stat("Settings", settings.length)}
       </div>
       <div class="dashboard-layout">
         <div class="dashboard-stack">
-          <section class="admin-card"><h3>Branding</h3><p>${escapeHtml(data.branding?.service_name || data.branding?.business_name || "Not configured")}</p></section>
-          <section class="admin-card"><h3>Settings</h3>${table(["Key", "Value", "Updated"], settings.map((item) => `<tr><td><strong>${escapeHtml(item.key)}</strong></td><td>${escapeHtml(item.value || "")}</td><td>${escapeHtml(formatDate(item.updated_at))}</td></tr>`).join(""))}</section>
+          <section class="card-base rounded-xl"><h3>Branding</h3><p>${escapeHtml(data.branding?.service_name || data.branding?.business_name || "Not configured")}</p></section>
+          <section class="card-base rounded-xl"><h3>Settings</h3>${table(["Key", "Value", "Updated"], settings.map((item) => `<tr><td><strong>${escapeHtml(item.key)}</strong></td><td>${escapeHtml(item.value || "")}</td><td>${escapeHtml(formatDate(item.updated_at))}</td></tr>`).join(""))}</section>
         </div>
         <div class="dashboard-stack">
-          <section class="admin-card"><h3>Policies</h3>${table(["Title", "Status", "Published", "Updated"], policies.map((item) => `<tr><td><strong>${escapeHtml(item.title)}</strong><span>${escapeHtml(item.slug)}</span></td><td>${escapeHtml(item.status || "")}</td><td>${Number(item.is_published || 0) === 1 ? "Yes" : "No"}</td><td>${escapeHtml(formatDate(item.updated_at))}</td></tr>`).join(""))}</section>
-          <section class="admin-card"><h3>Affiliate content</h3>${table(["Title", "Type", "Enabled", "Updated"], affiliate.map((item) => `<tr><td><strong>${escapeHtml(item.title)}</strong></td><td>${escapeHtml(item.block_type || "")}</td><td>${Number(item.is_enabled || 0) === 1 ? "Yes" : "No"}</td><td>${escapeHtml(formatDate(item.updated_at))}</td></tr>`).join(""))}</section>
+          <section class="card-base rounded-xl"><h3>Policies</h3>${table(["Title", "Status", "Published", "Updated"], policies.map((item) => `<tr><td><strong>${escapeHtml(item.title)}</strong><span>${escapeHtml(item.slug)}</span></td><td>${escapeHtml(item.status || "")}</td><td>${Number(item.is_published || 0) === 1 ? "Yes" : "No"}</td><td>${escapeHtml(formatDate(item.updated_at))}</td></tr>`).join(""))}</section>
+          <section class="card-base rounded-xl"><h3>Affiliate content</h3>${table(["Title", "Type", "Enabled", "Updated"], affiliate.map((item) => `<tr><td><strong>${escapeHtml(item.title)}</strong></td><td>${escapeHtml(item.block_type || "")}</td><td>${Number(item.is_enabled || 0) === 1 ? "Yes" : "No"}</td><td>${escapeHtml(formatDate(item.updated_at))}</td></tr>`).join(""))}</section>
         </div>
       </div>
     </section>
@@ -2829,9 +2829,9 @@ function renderReportsCentre(data = {}) {
   const overview = data.overview || {};
   const analytics = data.analytics || {};
   document.getElementById("adminPanel").innerHTML = `
-    <section class="admin-card">
-      <div class="section-head"><div><h2>Reports</h2><p>Operational summary and compliance signals.</p></div></div>
-      <div class="admin-grid">
+    <section class="card-base rounded-xl">
+      <div class="page-header"><div><h2>Reports</h2><p>Operational summary and compliance signals.</p></div></div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         ${stat("Customers", overview.customers || 0)}
         ${stat("Support tickets", overview.supportTickets || 0)}
         ${stat("Data requests", overview.dataProtectionRequests || 0)}
@@ -2839,7 +2839,7 @@ function renderReportsCentre(data = {}) {
         ${stat("Enquiries", analytics.totalEnquiries || 0)}
         ${stat("Plan changes", analytics.planChanges || 0)}
       </div>
-      <div class="admin-card" style="margin-top:1rem;">
+      <div class="card-base rounded-xl" style="margin-top:1rem;">
         <h3>Recent audit</h3>
         ${customerTimeline(data.audit || [])}
       </div>
@@ -2851,7 +2851,7 @@ function renderPlans(plans = []) {
   state.data.plans = { plans: Array.isArray(plans) ? plans : [] };
   const draft = state.planDraft || buildPlanDraft(state.data.plans.plans || []);
   const cards = draft.map((plan) => `
-    <article class="plan-card" data-plan-card data-plan-id="${escapeAttr(plan.id)}">
+    <article class="card-base rounded-xl" data-plan-card data-plan-id="${escapeAttr(plan.id)}">
       <div class="plan-top">
         <div>
           <strong>${escapeHtml(plan.plan_name)}</strong>
@@ -2878,19 +2878,19 @@ function renderPlans(plans = []) {
   `).join("");
 
   settingsRenderPanel().innerHTML = `
-    <div class="section-head">
+    <div class="page-header">
       <div>
         <h2>Manage Plans</h2>
         <p>Toggle changes are staged locally. Save Changes writes every plan state in one update.</p>
       </div>
       <div class="section-actions">
-        <button class="admin-button secondary" type="button" data-action="cancel-plan-changes" ${state.planDirty ? "" : "disabled"}>Cancel Changes</button>
-        <button class="admin-button" type="button" data-action="save-plan-changes" ${state.planDirty ? "" : "disabled"}>${state.planSaving ? "Saving…" : "Save Changes"}</button>
-        <button class="admin-button" type="button" data-action="open-plan">New plan</button>
+        <button class="btn-secondary" type="button" data-action="cancel-plan-changes" ${state.planDirty ? "" : "disabled"}>Cancel Changes</button>
+        <button class="btn-primary" type="button" data-action="save-plan-changes" ${state.planDirty ? "" : "disabled"}>${state.planSaving ? "Saving…" : "Save Changes"}</button>
+        <button class="btn-primary" type="button" data-action="open-plan">New plan</button>
       </div>
     </div>
-    <div class="admin-alert ${state.planDirty ? "" : "hidden"}" data-plan-unsaved>${state.planDirty ? "You have unsaved changes." : ""}</div>
-    <div id="plansSaved" class="admin-success" hidden></div>
+    <div class="alert-error ${state.planDirty ? "" : "hidden"}" data-plan-unsaved>${state.planDirty ? "You have unsaved changes." : ""}</div>
+    <div id="plansSaved" class="alert-success" hidden></div>
     <div class="admin-note" data-plan-save-proof hidden></div>
     <div class="plan-grid">${cards || emptyCard("No plans yet.")}</div>
   `;
@@ -2927,7 +2927,7 @@ function openPlanModal(id = "") {
       <div><h2>${id ? "Edit plan" : "New plan"}</h2><p>Changes are published to the website after saving.</p></div>
       <button class="drawer-close" type="button" data-action="close-modal">×</button>
     </div>
-    <form class="admin-form" id="planForm">
+    <form class="grid grid-cols-1 md:grid-cols-2 gap-4" id="planForm">
       ${input("Plan ID", "plan_id")}
       ${input("Plan name", "plan_name")}
       ${input("Plan type", "plan_type")}
@@ -2942,7 +2942,7 @@ function openPlanModal(id = "") {
       ${textarea("Description", "description")}
       <label class="check"><input id="is_active" type="checkbox"> Active</label>
       <label class="check"><input id="is_featured" type="checkbox"> Featured</label>
-      <button class="admin-button" type="submit">Apply plan changes</button>
+      <button class="btn-primary" type="submit">Apply plan changes</button>
     </form>
   `);
 
@@ -3147,33 +3147,33 @@ function renderStripe(stripe = {}) {
   `).join("");
 
   settingsRenderPanel().innerHTML = `
-    <div class="admin-card">
-      <div class="section-head">
+    <div class="card-base rounded-xl">
+      <div class="page-header">
         <div>
           <h2>Stripe API Controls</h2>
           <p>Store Stripe keys securely in D1-compatible settings. Secret values are masked after saving.</p>
         </div>
         <div class="section-actions">
           ${badge(stripe.mode || "Unknown", stripe.mode === "Live" ? "green" : "amber")}
-          <button class="admin-button secondary" type="button" data-action="refresh-stripe">Refresh status</button>
+          <button class="btn-secondary" type="button" data-action="refresh-stripe">Refresh status</button>
         </div>
       </div>
 
-      <div class="admin-grid">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         ${stat("Configured", stripe.configured ? "Yes" : "No")}
         ${stat("Charges", stripe.account?.charges_enabled ? "Enabled" : "Check")}
         ${stat("Payouts", stripe.account?.payouts_enabled ? "Enabled" : "Check")}
       </div>
 
-      <form class="admin-form" id="stripeForm">
+      <form class="grid grid-cols-1 md:grid-cols-2 gap-4" id="stripeForm">
         ${input("Publishable key", "stripe_publishable_key")}
         ${input("Secret key", "stripe_secret_key", "password")}
         ${input("Webhook signing secret", "stripe_webhook_secret", "password")}
-        <div class="admin-alert">Leave secret fields blank to keep existing values. Do not paste live keys unless you intend the admin platform to use them.</div>
-        <button class="admin-button" type="submit">Save Stripe settings</button>
+        <div class="alert-error">Leave secret fields blank to keep existing values. Do not paste live keys unless you intend the admin platform to use them.</div>
+        <button class="btn-primary" type="submit">Save Stripe settings</button>
       </form>
 
-      <div class="admin-card" style="margin-top:1rem;">
+      <div class="card-base rounded-xl" style="margin-top:1rem;">
         <h2>Connection Status</h2>
         <p>${escapeHtml(stripe.message || "Stripe has not been checked yet.")}</p>
         <p>Publishable key: ${escapeHtml(stripe.publishable_key_masked || "Missing")} · Secret key: ${escapeHtml(stripe.secret_key_masked || "Missing")} · Webhook: ${escapeHtml(stripe.webhook_secret_masked || "Missing")}</p>
@@ -3208,11 +3208,11 @@ async function refreshStripe() {
 
 function renderBranding(branding = {}) {
   document.getElementById("adminPanel").innerHTML = `
-    <div class="admin-card">
-      <div class="section-head">
+    <div class="card-base rounded-xl">
+      <div class="page-header">
         <div><h2>Company Branding</h2><p>Edit business and service information used by the public website, customer portal, admin portal and notification templates where supported.</p></div>
       </div>
-      <form class="admin-form" id="brandingForm">
+      <form class="grid grid-cols-1 md:grid-cols-2 gap-4" id="brandingForm">
         ${input("Business name", "business_name")}
         ${input("Trading name", "trading_name")}
         ${input("Service name", "service_name")}
@@ -3225,9 +3225,9 @@ function renderBranding(branding = {}) {
         ${input("Favicon URL", "favicon_url", "url")}
         ${textarea("Registered notice", "registered_notice")}
         ${textarea("Footer notice", "footer_notice")}
-        <button class="admin-button" type="submit">Save branding</button>
+        <button class="btn-primary" type="submit">Save branding</button>
       </form>
-      <div id="brandingSaved" class="admin-success" hidden></div>
+      <div id="brandingSaved" class="alert-success" hidden></div>
     </div>
   `;
 
@@ -3274,35 +3274,35 @@ function renderPolicies(policies = []) {
   `).join("");
 
   settingsRenderPanel().innerHTML = `
-    <div class="section-head">
+    <div class="page-header">
       <div><h2>Legal Policies</h2><p>Manage policy content, versioning and draft/published status in D1.</p></div>
     </div>
     <div class="policy-grid">${cards}</div>
     <div class="tabs">${tabs}</div>
-    <div class="admin-card">
-      <div class="section-head">
+    <div class="card-base rounded-xl">
+      <div class="page-header">
         <div><h2>${escapeHtml(selected.title || "Policy")}</h2><p>Edit the slug, content, version and publication status.</p></div>
         <div class="section-actions">
           <label class="switch" title="Publish or unpublish policy">
             <input type="checkbox" data-action="toggle-policy-published" data-slug="${escapeAttr(selected.slug || "")}" ${selectedPublished ? "checked" : ""}>
             <span></span>
           </label>
-          ${selectedPublished ? `<a class="admin-button secondary" href="/policies/${escapeAttr(selected.slug)}" target="_blank" rel="noopener">Public link</a>` : `<button class="admin-button secondary" type="button" disabled>Unpublished</button>`}
+          ${selectedPublished ? `<a class="btn-secondary" href="/policies/${escapeAttr(selected.slug)}" target="_blank" rel="noopener">Public link</a>` : `<button class="btn-secondary" type="button" disabled>Unpublished</button>`}
         </div>
       </div>
-      <form class="admin-form" id="policyForm">
+      <form class="grid grid-cols-1 md:grid-cols-2 gap-4" id="policyForm">
         <input type="hidden" id="policy_original_slug">
         ${input("Policy title", "policy_title")}
         ${input("Policy slug", "policy_slug")}
         ${input("Version", "policy_version")}
         ${input("Effective date", "policy_effective_date", "date")}
-        <label class="admin-label">Status
+        <label class="label-base">Status
           <select id="policy_status">
             <option value="draft">Draft</option>
             <option value="published">Published</option>
           </select>
         </label>
-        <label class="admin-label">Content type
+        <label class="label-base">Content type
           <select id="policy_content_type">
             <option value="markdown">Markdown</option>
             <option value="html">HTML</option>
@@ -3310,9 +3310,9 @@ function renderPolicies(policies = []) {
           </select>
         </label>
         ${textarea("Policy content", "policy_content")}
-        <button class="admin-button" type="submit">Save policy</button>
+        <button class="btn-primary" type="submit">Save policy</button>
       </form>
-      <div id="policySaved" class="admin-success" hidden></div>
+      <div id="policySaved" class="alert-success" hidden></div>
     </div>
   `;
 
@@ -3398,14 +3398,14 @@ function renderEnquiries(items = [], selectedThread = null, filters = {}) {
   `).join("");
 
   adminPanel.innerHTML = `
-    <div class="admin-card">
-      <div class="section-head"><div><h2>Contact Enquiries</h2><p>Search, assign and manage customer conversations. Internal notes remain visible to administrators only.</p></div></div>
-      <form class="admin-form" id="enquiryFilters">
+    <div class="card-base rounded-xl">
+      <div class="page-header"><div><h2>Contact Enquiries</h2><p>Search, assign and manage customer conversations. Internal notes remain visible to administrators only.</p></div></div>
+      <form class="grid grid-cols-1 md:grid-cols-2 gap-4" id="enquiryFilters">
         ${input("Search", "enquiry_search", "search")}
-        <label class="admin-label">Status<select id="enquiry_filter_status"><option value="">All statuses</option>${statuses.map((value) => `<option ${filters.status === value ? "selected" : ""}>${escapeHtml(value)}</option>`).join("")}</select></label>
-        <label class="admin-label">Priority<select id="enquiry_filter_priority"><option value="">All priorities</option>${priorities.map((value) => `<option ${filters.priority === value ? "selected" : ""}>${escapeHtml(value)}</option>`).join("")}</select></label>
-        <label class="admin-label">Category<select id="enquiry_filter_category"><option value="">All categories</option>${categories.map((value) => `<option ${filters.category === value ? "selected" : ""}>${escapeHtml(value)}</option>`).join("")}</select></label>
-        <button class="admin-button" type="submit">Apply filters</button>
+        <label class="label-base">Status<select id="enquiry_filter_status"><option value="">All statuses</option>${statuses.map((value) => `<option ${filters.status === value ? "selected" : ""}>${escapeHtml(value)}</option>`).join("")}</select></label>
+        <label class="label-base">Priority<select id="enquiry_filter_priority"><option value="">All priorities</option>${priorities.map((value) => `<option ${filters.priority === value ? "selected" : ""}>${escapeHtml(value)}</option>`).join("")}</select></label>
+        <label class="label-base">Category<select id="enquiry_filter_category"><option value="">All categories</option>${categories.map((value) => `<option ${filters.category === value ? "selected" : ""}>${escapeHtml(value)}</option>`).join("")}</select></label>
+        <button class="btn-primary" type="submit">Apply filters</button>
       </form>
       ${table(["Enquiry", "Customer", "Category", "Priority", "Status", "Assigned", "Email", ""], rows)}
     </div>
@@ -3440,8 +3440,8 @@ function openEnquiryWorkspace(thread) {
   const item = thread.enquiry;
   const statuses = ["New", "Open", "In Progress", "Awaiting Customer", "Resolved", "Closed"];
   const messages = (thread.messages || []).map((message) => `
-    <article class="list-card">
-      <div class="section-head"><div><strong>${message.is_internal ? "Internal note" : message.author_type === "administrator" ? "Administrator" : "Customer"}</strong><p>${escapeHtml(message.author_email || "")}</p></div><span>${formatDate(message.created_at)}</span></div>
+    <article class="card-base rounded-xl">
+      <div class="page-header"><div><strong>${message.is_internal ? "Internal note" : message.author_type === "administrator" ? "Administrator" : "Customer"}</strong><p>${escapeHtml(message.author_email || "")}</p></div><span>${formatDate(message.created_at)}</span></div>
       <p style="white-space:pre-wrap">${escapeHtml(message.message)}</p>
       ${message.notification_status === "Failed" ? renderInlineStatus("error", "The related email notification failed. The message remains saved.") : ""}
     </article>
@@ -3457,16 +3457,16 @@ function openEnquiryWorkspace(thread) {
     </div>
     ${failedNotifications.length ? renderInlineStatus("error", `${failedNotifications.length} email notification${failedNotifications.length === 1 ? " has" : "s have"} failed. The enquiry and messages remain saved.`) : ""}
     <section class="support-message-panel"><h3>Conversation</h3>${messages || emptyCard("No messages recorded.")}</section>
-    <form class="admin-form single support-workspace-form" id="enquiryWorkspaceForm">
+    <form class="grid grid-cols-1 gap-4 support-workspace-form" id="enquiryWorkspaceForm">
       <div class="form-grid">
-        <label class="admin-label">Status<select id="enquiry_workspace_status">${statuses.map((value) => `<option ${item.status === value ? "selected" : ""}>${escapeHtml(value)}</option>`).join("")}</select></label>
-        <label class="admin-label">Priority<select id="enquiry_workspace_priority">${priorities.map((value) => `<option ${item.priority === value ? "selected" : ""}>${escapeHtml(value)}</option>`).join("")}</select></label>
+        <label class="label-base">Status<select id="enquiry_workspace_status">${statuses.map((value) => `<option ${item.status === value ? "selected" : ""}>${escapeHtml(value)}</option>`).join("")}</select></label>
+        <label class="label-base">Priority<select id="enquiry_workspace_priority">${priorities.map((value) => `<option ${item.priority === value ? "selected" : ""}>${escapeHtml(value)}</option>`).join("")}</select></label>
         ${input("Assigned administrator email", "enquiry_workspace_assigned", "email")}
       </div>
       ${textarea("Reply to customer", "enquiry_workspace_reply")}
       ${textarea("Internal note (administrators only)", "enquiry_workspace_note")}
-      <button class="admin-button" type="submit">Save enquiry</button>
-      <div id="enquiryWorkspaceSaved" class="admin-success" role="status" hidden></div>
+      <button class="btn-primary" type="submit">Save enquiry</button>
+      <div id="enquiryWorkspaceSaved" class="alert-success" role="status" hidden></div>
     </form>
   `);
   setValue("enquiry_workspace_assigned", item.assigned_admin || "");
@@ -3515,14 +3515,14 @@ function renderSupport(items = []) {
   `).join("");
 
   document.getElementById("adminPanel").innerHTML = `
-    <div class="admin-card">
-      <div class="section-head">
+    <div class="card-base rounded-xl">
+      <div class="page-header">
         <div><h2>Support Operations</h2><p>Service desk queue with assignment, escalation and resolution workflow.</p></div>
         <div class="section-actions">
-          <button class="admin-button" type="button" data-action="new-support-case">New case</button>
+          <button class="btn-primary" type="button" data-action="new-support-case">New case</button>
         </div>
       </div>
-      <div class="admin-grid">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         ${stat("Open", items.filter((item) => !["Closed", "Archived"].includes(String(item.status || ""))).length)}
         ${stat("Awaiting customer", items.filter((item) => String(item.status || "").toLowerCase().includes("await")).length)}
         ${stat("Escalated", items.filter((item) => String(item.priority || "").toLowerCase() === "urgent").length)}
@@ -3558,26 +3558,26 @@ function openSupportModal(id) {
         <p>${escapeHtml(supportCase.notes || "No request message is stored on this record.")}</p>
       </section>
     </div>
-    <form class="admin-form single support-workspace-form" id="supportWorkspaceForm">
-      <div class="admin-form two-column-form">
-        <label class="admin-label">Customer<input id="support_workspace_customer" value="${escapeAttr(supportCase.customer_email || "")}" ${isNew ? "" : "readonly"}></label>
-        <label class="admin-label">Category<input id="support_workspace_category" value="${escapeAttr(supportCase.category || "General Enquiry")}"></label>
-        <label class="admin-label">Department<input id="support_workspace_department" value="${escapeAttr(supportCase.department || "Support")}"></label>
-        <label class="admin-label">Assigned admin<input id="support_workspace_assigned" value="${escapeAttr(supportCase.assigned_admin || "")}"></label>
-        <label class="admin-label">Status<select id="support_workspace_status">${["Open", "Awaiting Customer", "Awaiting Staff", "Escalated", "Closed", "Archived"].map((status) => `<option value="${status}" ${status === supportCase.status ? "selected" : ""}>${status}</option>`).join("")}</select></label>
-        <label class="admin-label">Priority<select id="support_workspace_priority">${priorities.map((priority) => `<option value="${priority}" ${priority === supportCase.priority ? "selected" : ""}>${priority}</option>`).join("")}</select></label>
-        <label class="admin-label">SLA target<input id="support_workspace_sla" value="${escapeAttr(supportCase.sla_target || "48h")}"></label>
+    <form class="grid grid-cols-1 gap-4 support-workspace-form" id="supportWorkspaceForm">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 two-column-form">
+        <label class="label-base">Customer<input id="support_workspace_customer" value="${escapeAttr(supportCase.customer_email || "")}" ${isNew ? "" : "readonly"}></label>
+        <label class="label-base">Category<input id="support_workspace_category" value="${escapeAttr(supportCase.category || "General Enquiry")}"></label>
+        <label class="label-base">Department<input id="support_workspace_department" value="${escapeAttr(supportCase.department || "Support")}"></label>
+        <label class="label-base">Assigned admin<input id="support_workspace_assigned" value="${escapeAttr(supportCase.assigned_admin || "")}"></label>
+        <label class="label-base">Status<select id="support_workspace_status">${["Open", "Awaiting Customer", "Awaiting Staff", "Escalated", "Closed", "Archived"].map((status) => `<option value="${status}" ${status === supportCase.status ? "selected" : ""}>${status}</option>`).join("")}</select></label>
+        <label class="label-base">Priority<select id="support_workspace_priority">${priorities.map((priority) => `<option value="${priority}" ${priority === supportCase.priority ? "selected" : ""}>${priority}</option>`).join("")}</select></label>
+        <label class="label-base">SLA target<input id="support_workspace_sla" value="${escapeAttr(supportCase.sla_target || "48h")}"></label>
       </div>
-      <label class="admin-label">Customer conversation<textarea id="support_reply_draft" placeholder="Draft a reply or note to the customer">${escapeHtml((supportCase.customer_replies || []).map((reply) => reply.message).join("\n"))}</textarea></label>
-      <label class="admin-label">Internal notes<textarea id="support_internal_notes" placeholder="Internal notes only">${escapeHtml(supportCase.notes || "")}</textarea></label>
-      <div class="admin-alert">Replies remain stored in the case record. Attachments are represented as case metadata until the file workflow is connected.</div>
+      <label class="label-base">Customer conversation<textarea id="support_reply_draft" placeholder="Draft a reply or note to the customer">${escapeHtml((supportCase.customer_replies || []).map((reply) => reply.message).join("\n"))}</textarea></label>
+      <label class="label-base">Internal notes<textarea id="support_internal_notes" placeholder="Internal notes only">${escapeHtml(supportCase.notes || "")}</textarea></label>
+      <div class="alert-error">Replies remain stored in the case record. Attachments are represented as case metadata until the file workflow is connected.</div>
       <div class="section-actions">
-        <button class="admin-button" type="submit">${isNew ? "Create case" : "Save changes"}</button>
-        <button class="admin-button secondary" type="button" data-support-action="escalate">Escalate</button>
-        <button class="admin-button secondary" type="button" data-support-action="reopen">Reopen</button>
-        <button class="admin-button secondary" type="button" data-support-action="close">Close</button>
+        <button class="btn-primary" type="submit">${isNew ? "Create case" : "Save changes"}</button>
+        <button class="btn-secondary" type="button" data-support-action="escalate">Escalate</button>
+        <button class="btn-secondary" type="button" data-support-action="reopen">Reopen</button>
+        <button class="btn-secondary" type="button" data-support-action="close">Close</button>
       </div>
-      <div id="supportWorkspaceSaved" class="admin-success" hidden></div>
+      <div id="supportWorkspaceSaved" class="alert-success" hidden></div>
     </form>
   `);
 
@@ -3632,8 +3632,8 @@ function openNotificationModal(id = "", defaultEmail = "") {
       <div><h2>${escapeHtml(notification.title || "Notification")}</h2><p>Communications workspace</p></div>
       <button class="drawer-close" type="button" data-action="close-modal">×</button>
     </div>
-    <form class="admin-form single" id="notificationForm">
-      <div class="admin-form two-column-form">
+    <form class="grid grid-cols-1 gap-4" id="notificationForm">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 two-column-form">
         ${input("Target email", "notification_email", "email")}
         ${input("Category", "notification_category")}
         ${input("Priority", "notification_priority")}
@@ -3642,12 +3642,12 @@ function openNotificationModal(id = "", defaultEmail = "") {
         ${input("Title", "notification_title")}
       </div>
       ${textarea("Body", "notification_body")}
-      <label class="admin-label">Status<select id="notification_status"><option>Draft</option><option>Scheduled</option><option>Sent</option><option>Archived</option></select></label>
+      <label class="label-base">Status<select id="notification_status"><option>Draft</option><option>Scheduled</option><option>Sent</option><option>Archived</option></select></label>
       <div class="section-actions">
-        <button class="admin-button" type="submit">Save notification</button>
-        <button class="admin-button secondary" type="button" data-action="send-notification-now">Send now</button>
+        <button class="btn-primary" type="submit">Save notification</button>
+        <button class="btn-secondary" type="button" data-action="send-notification-now">Send now</button>
       </div>
-      <div id="notificationSaved" class="admin-success" hidden></div>
+      <div id="notificationSaved" class="alert-success" hidden></div>
     </form>
   `);
 
@@ -3761,11 +3761,11 @@ function renderRecordSection(title, description, items, section, fields) {
   `).join("");
 
   document.getElementById("adminPanel").innerHTML = `
-    <div class="admin-card">
-      <div class="section-head"><div><h2>${escapeHtml(title)}</h2><p>${escapeHtml(description)}</p></div></div>
-      <form class="admin-form" id="${section}Form">
+    <div class="card-base rounded-xl">
+      <div class="page-header"><div><h2>${escapeHtml(title)}</h2><p>${escapeHtml(description)}</p></div></div>
+      <form class="grid grid-cols-1 md:grid-cols-2 gap-4" id="${section}Form">
         ${fields.map(([label, id, type]) => type === "textarea" ? textarea(label, id) : input(label, id, type)).join("")}
-        <button class="admin-button" type="submit">Save ${section === "support" ? "support ticket" : "system issue"}</button>
+        <button class="btn-primary" type="submit">Save ${section === "support" ? "support ticket" : "system issue"}</button>
       </form>
       ${table([section === "support" ? "Ticket" : "Issue", "Status", "Priority", "Updated"], rows)}
     </div>
@@ -3876,7 +3876,7 @@ function renderClosures(items = []) {
         <td><button class="mini-button" type="button" data-action="open-closure" data-id="${escapeAttr(item.id)}">Open</button></td>
       </tr>
     `,
-    extraActions: `<button class="admin-button" type="button" data-action="open-closure">New closure request</button>`
+    extraActions: `<button class="btn-primary" type="button" data-action="open-closure">New closure request</button>`
   });
 }
 
@@ -3896,16 +3896,16 @@ function renderAffiliate(items = []) {
   `).join("");
 
   document.getElementById("adminPanel").innerHTML = `
-    <div class="admin-card">
-      <div class="section-head">
+    <div class="card-base rounded-xl">
+      <div class="page-header">
         <div><h2>Affiliate Content</h2><p>Manage affiliate page headings, widgets, CTA buttons, disclaimers, referral notices, featured content and FAQs without hardcoding.</p></div>
         <div class="section-actions">
-          <button class="admin-button secondary" type="button" data-action="import-affiliate-content">Import Existing Affiliate Content</button>
-          <button class="admin-button secondary" type="button" data-action="export-records" data-section="affiliate" data-format="csv">Export CSV</button>
-          <button class="admin-button" type="button" data-action="open-affiliate-block">New block</button>
+          <button class="btn-secondary" type="button" data-action="import-affiliate-content">Import Existing Affiliate Content</button>
+          <button class="btn-secondary" type="button" data-action="export-records" data-section="affiliate" data-format="csv">Export CSV</button>
+          <button class="btn-primary" type="button" data-action="open-affiliate-block">New block</button>
         </div>
       </div>
-      <div class="admin-alert">Widget code is validated before saving. Script tags, javascript URLs and inline event handlers are blocked to reduce injection risk.</div>
+      <div class="alert-error">Widget code is validated before saving. Script tags, javascript URLs and inline event handlers are blocked to reduce injection risk.</div>
       ${table(["Block", "Enabled", "Published", "Updated", "Actions"], rows)}
     </div>
   `;
@@ -3913,22 +3913,22 @@ function renderAffiliate(items = []) {
 
 function renderAppearance(settings = {}) {
   settingsRenderPanel().innerHTML = `
-    <div class="admin-card">
-      <div class="section-head">
+    <div class="card-base rounded-xl">
+      <div class="page-header">
         <div><h2>Appearance</h2><p>Control the website-wide colour mode for customer-facing pages, the customer account area and the admin portal where supported.</p></div>
         ${badge((settings.site_theme_mode || "dark").replace(/^./, (c) => c.toUpperCase()))}
       </div>
-      <form class="admin-form" id="appearanceForm">
-        <label class="admin-label">Colour mode
+      <form class="grid grid-cols-1 md:grid-cols-2 gap-4" id="appearanceForm">
+        <label class="label-base">Colour mode
           <select id="site_theme_mode">
             <option value="light">Light Mode</option>
             <option value="dark">Dark Mode</option>
             <option value="system">System Default</option>
           </select>
         </label>
-        <button class="admin-button" type="submit">Save appearance</button>
+        <button class="btn-primary" type="submit">Save appearance</button>
       </form>
-      <div id="appearanceSaved" class="admin-success" hidden></div>
+      <div id="appearanceSaved" class="alert-success" hidden></div>
     </div>
   `;
   setValue("site_theme_mode", settings.site_theme_mode || "dark");
@@ -3944,13 +3944,13 @@ function renderAppearance(settings = {}) {
 
 function renderEmail(email = {}, test = null) {
   settingsRenderPanel().innerHTML = `
-    <div class="admin-card">
-      <div class="section-head">
+    <div class="card-base rounded-xl">
+      <div class="page-header">
         <div><h2>Email (SMTP)</h2><p>Configure outbound email delivery for notifications and confirmations.</p></div>
         ${email.configured ? badge("Configured", "green") : badge("Incomplete", "amber")}
       </div>
-      <form class="admin-form" id="emailForm">
-        <label class="admin-label">Cloudflare Email Provider
+      <form class="grid grid-cols-1 md:grid-cols-2 gap-4" id="emailForm">
+        <label class="label-base">Cloudflare Email Provider
           <select id="email_provider"><option value="resend">Resend</option><option value="sendgrid">SendGrid</option><option value="postmark">Postmark</option><option value="brevo">Brevo</option><option value="mailchannels">MailChannels</option></select>
         </label>
         ${input("Provider API Key", "email_api_key", "password")}
@@ -3962,24 +3962,24 @@ function renderEmail(email = {}, test = null) {
         ${input("SMTP Password", "smtp_password", "password")}
         ${input("From Name", "smtp_from_name")}
         ${input("From Email", "smtp_from_email", "email")}
-        <label class="admin-label">Encryption/Security
+        <label class="label-base">Encryption/Security
           <select id="smtp_security"><option>STARTTLS</option><option>TLS</option><option>None</option></select>
         </label>
-        <div class="admin-alert">Cloudflare Pages Functions send mail through an HTTPS email provider. SMTP fields are still stored for service configuration, but raw SMTP sockets are not used by the edge runtime. Leave password/API key fields blank to keep existing values.</div>
-        <button class="admin-button" type="submit">Save email settings</button>
+        <div class="alert-error">Cloudflare Pages Functions send mail through an HTTPS email provider. SMTP fields are still stored for service configuration, but raw SMTP sockets are not used by the edge runtime. Leave password/API key fields blank to keep existing values.</div>
+        <button class="btn-primary" type="submit">Save email settings</button>
       </form>
-      <div id="emailSaved" class="admin-success" hidden></div>
+      <div id="emailSaved" class="alert-success" hidden></div>
     </div>
-    <div class="admin-card">
-      <div class="section-head"><div><h2>Test Notifications</h2><p>Fire a real test email to ADMIN_NOTIFICATION_EMAIL to verify the notification pipeline end-to-end.</p></div></div>
-      <form class="admin-form" id="testNotificationForm">
-        <label class="admin-label">Notification Type
+    <div class="card-base rounded-xl">
+      <div class="page-header"><div><h2>Test Notifications</h2><p>Fire a real test email to ADMIN_NOTIFICATION_EMAIL to verify the notification pipeline end-to-end.</p></div></div>
+      <form class="grid grid-cols-1 md:grid-cols-2 gap-4" id="testNotificationForm">
+        <label class="label-base">Notification Type
           <select id="notification_type"><option>New Signup</option><option>New Message</option><option>Support Request</option><option>Plan Change</option></select>
         </label>
         <div class="drawer-field"><span>ADMIN_NOTIFICATION_EMAIL</span><strong>${escapeHtml(email.admin_notification_email || "Not configured")}</strong></div>
-        <button class="admin-button" type="submit">Send Test Email</button>
+        <button class="btn-primary" type="submit">Send Test Email</button>
       </form>
-      ${test ? `<div class="${test.sent ? "admin-success" : "admin-alert"}" style="margin-top:1rem;">${escapeHtml(test.message || "")}</div>` : ""}
+      ${test ? `<div class="${test.sent ? "alert-success" : "alert-error"}" style="margin-top:1rem;">${escapeHtml(test.message || "")}</div>` : ""}
     </div>
   `;
 
@@ -4037,21 +4037,21 @@ function renderAudit(items = []) {
     </tr>
   `).join("");
   document.getElementById("adminPanel").innerHTML = `
-    <div class="admin-card">
-      <div class="section-head">
+    <div class="card-base rounded-xl">
+      <div class="page-header">
         <div><h2>Audit Log</h2><p>Review sensitive admin activity including Lifetime access, plan, privacy, closure, SMTP and affiliate changes.</p></div>
         <div class="section-actions">
-          <button class="admin-button secondary" type="button" data-action="export-records" data-section="audit" data-format="csv">Export CSV</button>
+          <button class="btn-secondary" type="button" data-action="export-records" data-section="audit" data-format="csv">Export CSV</button>
         </div>
       </div>
-      <div class="admin-form" style="margin-bottom:1rem;">
-        <label class="admin-label">Administrator<input id="audit_filter_administrator" type="search" placeholder="Filter by email"></label>
-        <label class="admin-label">Role<input id="audit_filter_role" type="search" placeholder="Filter by role"></label>
-        <label class="admin-label">Action<input id="audit_filter_action" type="search" placeholder="Filter by action"></label>
-        <label class="admin-label">Module<input id="audit_filter_module" type="search" placeholder="Filter by module"></label>
-        <label class="admin-label">From<input id="audit_filter_from" type="date"></label>
-        <label class="admin-label">To<input id="audit_filter_to" type="date"></label>
-        <label class="admin-label">Outcome<input id="audit_filter_outcome" type="search" placeholder="success / failure"></label>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4" style="margin-bottom:1rem;">
+        <label class="label-base">Administrator<input id="audit_filter_administrator" type="search" placeholder="Filter by email"></label>
+        <label class="label-base">Role<input id="audit_filter_role" type="search" placeholder="Filter by role"></label>
+        <label class="label-base">Action<input id="audit_filter_action" type="search" placeholder="Filter by action"></label>
+        <label class="label-base">Module<input id="audit_filter_module" type="search" placeholder="Filter by module"></label>
+        <label class="label-base">From<input id="audit_filter_from" type="date"></label>
+        <label class="label-base">To<input id="audit_filter_to" type="date"></label>
+        <label class="label-base">Outcome<input id="audit_filter_outcome" type="search" placeholder="success / failure"></label>
       </div>
       <div id="auditResults">${auditTimeline(baseItems)}</div>
     </div>
@@ -4109,11 +4109,11 @@ function renderSessions(sessions = []) {
     </tr>
   `).join("");
   document.getElementById("adminPanel").innerHTML = `
-    <div class="admin-card">
-      <div class="section-head">
+    <div class="card-base rounded-xl">
+      <div class="page-header">
         <div><h2>Administrator Sessions</h2><p>Review active administrator sessions and revoke them remotely.</p></div>
         <div class="section-actions">
-          <button class="admin-button danger" type="button" data-action="revoke-all-sessions">Revoke All Sessions</button>
+          <button class="btn-destructive" type="button" data-action="revoke-all-sessions">Revoke All Sessions</button>
         </div>
       </div>
       ${table(["Administrator", "Created", "Last used", "Expires", "Device", "Status", "Actions"], rows)}
@@ -4126,17 +4126,17 @@ function renderAdminRecordSection(config) {
   const statusOptions = ["", ...config.statuses].map((status) => `<option value="${escapeAttr(status)}">${escapeHtml(status || "All statuses")}</option>`).join("");
 
   document.getElementById("adminPanel").innerHTML = `
-    <div class="admin-card">
-      <div class="section-head">
+    <div class="card-base rounded-xl">
+      <div class="page-header">
         <div><h2>${escapeHtml(config.title)}</h2><p>${escapeHtml(config.description)}</p></div>
         <div class="section-actions">
           ${config.extraActions || ""}
-          <button class="admin-button secondary" type="button" data-action="export-records" data-section="${escapeAttr(config.section)}" data-format="csv">Export CSV</button>
+          <button class="btn-secondary" type="button" data-action="export-records" data-section="${escapeAttr(config.section)}" data-format="csv">Export CSV</button>
         </div>
       </div>
-      <div class="admin-form" style="margin-bottom:1rem;">
-        <label class="admin-label">Search<input id="${config.section}_search" type="search" placeholder="Search reference, customer or type"></label>
-        <label class="admin-label">Status<select id="${config.section}_status">${statusOptions}</select></label>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4" style="margin-bottom:1rem;">
+        <label class="label-base">Search<input id="${config.section}_search" type="search" placeholder="Search reference, customer or type"></label>
+        <label class="label-base">Status<select id="${config.section}_status">${statusOptions}</select></label>
       </div>
       <div id="${config.section}_table">${table(config.columns, rows)}</div>
     </div>
@@ -4181,21 +4181,21 @@ function openAdminRecordModal(section, id) {
       ${isDpr ? "" : `<div class="drawer-field"><span>Device/browser</span><strong>${escapeHtml(item.device_browser || "Not supplied")}</strong></div>`}
       <div class="drawer-field"><span>Attachments</span><strong>Not supported yet</strong></div>
     </div>
-    <div class="admin-card" style="margin-top:1rem;"><h2>Customer message</h2><p style="white-space:pre-wrap;">${escapeHtml(message || "")}</p></div>
+    <div class="card-base rounded-xl" style="margin-top:1rem;"><h2>Customer message</h2><p style="white-space:pre-wrap;">${escapeHtml(message || "")}</p></div>
     ${isDpr ? `<div class="section-actions" style="margin:1rem 0;">
-      <button class="admin-button secondary" type="button" data-action="export-customer-data" data-email="${escapeAttr(item.customer_email || item.user_id || "")}" data-format="json">Export Customer Data</button>
-      <button class="admin-button secondary" type="button" data-action="export-customer-data" data-email="${escapeAttr(item.customer_email || item.user_id || "")}" data-format="csv">Export Customer CSV</button>
+      <button class="btn-secondary" type="button" data-action="export-customer-data" data-email="${escapeAttr(item.customer_email || item.user_id || "")}" data-format="json">Export Customer Data</button>
+      <button class="btn-secondary" type="button" data-action="export-customer-data" data-email="${escapeAttr(item.customer_email || item.user_id || "")}" data-format="csv">Export Customer CSV</button>
     </div>` : ""}
-    <form class="admin-form single" id="adminRecordForm">
-      <label class="admin-label">Status<select id="record_status">${statuses.map((status) => `<option value="${escapeAttr(status)}" ${status === item.status ? "selected" : ""}>${escapeHtml(status)}</option>`).join("")}</select></label>
-      ${isDpr ? "" : `<label class="admin-label">Priority<select id="record_priority">${priorities.map((priority) => `<option value="${escapeAttr(priority)}" ${priority === item.priority ? "selected" : ""}>${escapeHtml(priority)}</option>`).join("")}</select></label>`}
-      <label class="admin-label">Assigned admin<input id="record_assigned" type="email" value="${escapeAttr(item.assigned_admin_id || "")}"></label>
+    <form class="grid grid-cols-1 gap-4" id="adminRecordForm">
+      <label class="label-base">Status<select id="record_status">${statuses.map((status) => `<option value="${escapeAttr(status)}" ${status === item.status ? "selected" : ""}>${escapeHtml(status)}</option>`).join("")}</select></label>
+      ${isDpr ? "" : `<label class="label-base">Priority<select id="record_priority">${priorities.map((priority) => `<option value="${escapeAttr(priority)}" ${priority === item.priority ? "selected" : ""}>${escapeHtml(priority)}</option>`).join("")}</select></label>`}
+      <label class="label-base">Assigned admin<input id="record_assigned" type="email" value="${escapeAttr(item.assigned_admin_id || "")}"></label>
       ${textarea("Internal admin notes", "record_notes")}
-      <button class="admin-button" type="submit">Save record</button>
-      ${isDpr ? `<button class="admin-button secondary" type="button" id="sendToDataSubjectButton">Send to Data Subject</button>` : ""}
-      <div id="recordSaved" class="admin-success" hidden></div>
+      <button class="btn-primary" type="submit">Save record</button>
+      ${isDpr ? `<button class="btn-secondary" type="button" id="sendToDataSubjectButton">Send to Data Subject</button>` : ""}
+      <div id="recordSaved" class="alert-success" hidden></div>
     </form>
-    <div class="admin-card" style="margin-top:1rem;">
+    <div class="card-base rounded-xl" style="margin-top:1rem;">
       <h2>Audit history</h2>
       ${audit.length ? `<div class="audit-list">${audit.map((event) => `<div class="drawer-field"><span>${escapeHtml(formatDate(event.timestamp))} - ${escapeHtml(event.actor || "system")}</span><strong>${escapeHtml(event.type || "Event")}${event.previousValue || event.newValue ? `: ${escapeHtml(event.previousValue || "")} -> ${escapeHtml(event.newValue || "")}` : ""}</strong></div>`).join("")}</div>` : `<p>No audit events yet.</p>`}
     </div>
@@ -4246,16 +4246,16 @@ function openClosureModal(id = "") {
       <div><h2>${id ? "Closure Request" : "New Closure Request"}</h2><p>Create, approve, reject or complete a customer account closure workflow.</p></div>
       <button class="drawer-close" type="button" data-action="close-modal">×</button>
     </div>
-    <form class="admin-form single" id="closureForm">
+    <form class="grid grid-cols-1 gap-4" id="closureForm">
       ${input("Customer email", "closure_customer_email", "email")}
       ${input("Customer name", "closure_customer_name")}
-      <label class="admin-label">Status<select id="closure_status">${closureStatuses.map((status) => `<option value="${escapeAttr(status)}">${escapeHtml(status)}</option>`).join("")}</select></label>
+      <label class="label-base">Status<select id="closure_status">${closureStatuses.map((status) => `<option value="${escapeAttr(status)}">${escapeHtml(status)}</option>`).join("")}</select></label>
       ${input("Assigned admin", "closure_assigned_admin", "email")}
       ${textarea("Reason", "closure_reason")}
       ${textarea("Internal notes", "closure_internal_notes")}
-      <button class="admin-button" type="submit">Save closure request</button>
+      <button class="btn-primary" type="submit">Save closure request</button>
     </form>
-    ${item.audit_log ? `<div class="admin-card" style="margin-top:1rem;"><h2>Request history</h2>${parseAudit(item.audit_log).map((event) => `<div class="drawer-field"><span>${escapeHtml(formatDate(event.timestamp))}</span><strong>${escapeHtml(event.type || "Event")}</strong></div>`).join("") || "<p>No history yet.</p>"}</div>` : ""}
+    ${item.audit_log ? `<div class="card-base rounded-xl" style="margin-top:1rem;"><h2>Request history</h2>${parseAudit(item.audit_log).map((event) => `<div class="drawer-field"><span>${escapeHtml(formatDate(event.timestamp))}</span><strong>${escapeHtml(event.type || "Event")}</strong></div>`).join("") || "<p>No history yet.</p>"}</div>` : ""}
   `);
   setValue("closure_customer_email", item.customer_email || "");
   setValue("closure_customer_name", item.customer_name || "");
@@ -4288,8 +4288,8 @@ function openAffiliateModal(id = "") {
       <div><h2>${id ? "Edit Affiliate Block" : "New Affiliate Block"}</h2><p>Blocks can be previewed in this admin record before being published by your public rendering layer.</p></div>
       <button class="drawer-close" type="button" data-action="close-modal">×</button>
     </div>
-    <form class="admin-form" id="affiliateForm">
-      <label class="admin-label">Block type<select id="affiliate_block_type"><option>Page heading</option><option>Intro text</option><option>Affiliate widget</option><option>CTA button</option><option>Disclaimer</option><option>Referral notice</option><option>Featured experience</option><option>FAQ</option><option>Legal notice</option></select></label>
+    <form class="grid grid-cols-1 md:grid-cols-2 gap-4" id="affiliateForm">
+      <label class="label-base">Block type<select id="affiliate_block_type"><option>Page heading</option><option>Intro text</option><option>Affiliate widget</option><option>CTA button</option><option>Disclaimer</option><option>Referral notice</option><option>Featured experience</option><option>FAQ</option><option>Legal notice</option></select></label>
       ${input("Title", "affiliate_title")}
       ${textarea("Body / intro text", "affiliate_body")}
       ${textarea("Widget or integration code", "affiliate_widget_code")}
@@ -4299,10 +4299,10 @@ function openAffiliateModal(id = "") {
       ${input("Sort order", "affiliate_sort_order", "number")}
       <label class="check"><input id="affiliate_is_enabled" type="checkbox"> Enabled</label>
       <label class="check"><input id="affiliate_is_published" type="checkbox"> Published</label>
-      <button class="admin-button" type="submit">Save affiliate block</button>
-      <div id="affiliateSaved" class="admin-success" hidden></div>
+      <button class="btn-primary" type="submit">Save affiliate block</button>
+      <div id="affiliateSaved" class="alert-success" hidden></div>
     </form>
-    <div class="admin-card" style="margin-top:1rem;"><h2>Preview</h2><p>${escapeHtml(item.body || "Preview appears here after saving content.")}</p></div>
+    <div class="card-base rounded-xl" style="margin-top:1rem;"><h2>Preview</h2><p>${escapeHtml(item.body || "Preview appears here after saving content.")}</p></div>
   `);
   setValue("affiliate_block_type", item.block_type || "Intro text");
   setValue("affiliate_title", item.title || "");
@@ -4478,18 +4478,26 @@ function renderSystemSettings(data = {}) {
         <p>Configure platform-wide settings, branding, integrations and compliance.</p>
       </div>
     </div>
-    <div class="settings-category-tabs" id="systemSettingsTabs">
-      ${tabs.map((t) => `<button class="settings-category-tab${t.id === state.systemSettingsTab ? " active" : ""}" data-tab="${t.id}"><span aria-hidden="true">${icon(t.icon)}</span>${t.label}</button>`).join("")}
+    <div class="flex gap-2 flex-wrap" id="systemSettingsTabs">
+      ${tabs.map((t) => `<button class="${t.id === state.systemSettingsTab ? "tab-active" : "tab-base"}" data-tab="${t.id}"><span aria-hidden="true">${icon(t.icon)}</span>${t.label}</button>`).join("")}
     </div>
     <div id="systemSettingsTabContent"></div>
   </div>`;
 
   const tabContent = document.getElementById("systemSettingsTabContent");
-  const tabButtons = container.querySelectorAll(".settings-category-tab");
+  const tabButtons = container.querySelectorAll(".tab-base, .tab-active");
 
   function switchTab(tabId) {
     state.systemSettingsTab = tabId;
-    tabButtons.forEach((b) => b.classList.toggle("active", b.dataset.tab === tabId));
+    tabButtons.forEach((b) => {
+      if (b.dataset.tab === tabId) {
+        b.classList.remove("tab-base");
+        b.classList.add("tab-active");
+      } else {
+        b.classList.remove("tab-active");
+        b.classList.add("tab-base");
+      }
+    });
     renderSystemSettingsTab(tabId, tabContent, data);
   }
 
@@ -4498,7 +4506,7 @@ function renderSystemSettings(data = {}) {
 }
 
 function renderSystemSettingsTab(tabId, container, data) {
-  container.innerHTML = `<div class="admin-loading">Loading ${escapeHtml(tabId.replace("sitestatus", "Site Status"))}...</div>`;
+  container.innerHTML = `<div class="flex items-center justify-center py-12">Loading ${escapeHtml(tabId.replace("sitestatus", "Site Status"))}...</div>`;
   switch (tabId) {
     case "general":
       container.innerHTML = renderGeneralTab(data);
@@ -4529,7 +4537,7 @@ function renderSystemSettingsTab(tabId, container, data) {
       renderTroubleshootingTab(container, data);
       break;
     default:
-      container.innerHTML = "<p class=\"admin-card\">This tab has no content yet.</p>";
+      container.innerHTML = "<p class=\"card-base rounded-xl\">This tab has no content yet.</p>";
   }
 }
 
@@ -4547,10 +4555,10 @@ function ukLocalDateTimeToIso(value) {
 function renderGeneralTab(data) {
   const platform = data.platform || {};
   return `
-    <article class="admin-card">
+    <article class="card-base rounded-xl">
       <h2>Platform Information</h2>
       <p>Core platform configuration and builder settings.</p>
-      <form class="admin-form" id="generalSettingsForm" style="margin-top: 1rem;">
+      <form class="grid grid-cols-1 md:grid-cols-2 gap-4" id="generalSettingsForm" style="margin-top: 1rem;">
         <label>Platform Name
           <input type="text" id="generalPlatformName" maxlength="120" value="${escapeAttr(platform.name || "JA Experiences & Discovery")}">
         </label>
@@ -4563,8 +4571,8 @@ function renderGeneralTab(data) {
         <label>Default Builder
           <input type="text" id="generalDefaultBuilder" maxlength="80" value="${escapeAttr(platform.defaultBuilder || "experience")}">
         </label>
-        <button class="admin-button" type="submit">Save General Settings</button>
-        <div id="generalSettingsSaved" class="admin-alert" hidden></div>
+        <button class="btn-primary" type="submit">Save General Settings</button>
+        <div id="generalSettingsSaved" class="alert-error" hidden></div>
       </form>
     </article>
   `;
@@ -4574,30 +4582,30 @@ function bindGeneralSettings(container, data) {
   container.querySelector("#generalSettingsForm")?.addEventListener("submit", async (event) => {
     event.preventDefault();
     const status = container.querySelector("#generalSettingsSaved");
-    status.hidden = false; status.className = "admin-alert"; status.textContent = "Saving general settings...";
+    status.hidden = false; status.className = "alert-error"; status.textContent = "Saving general settings...";
     try {
       const result = await api("systemsettings", { method: "POST", body: JSON.stringify({ action: "update_general_settings", platform_name: getValue("generalPlatformName"), default_builder: getValue("generalDefaultBuilder") }) });
       data.platform = { ...(data.platform || {}), name: result.general.platform_name, defaultBuilder: result.general.default_builder };
-      status.className = "admin-success"; status.textContent = "General settings saved successfully.";
+      status.className = "alert-success"; status.textContent = "General settings saved successfully.";
     } catch (error) { status.textContent = error.message || "General settings could not be saved."; }
   });
 }
 
 function renderProductsTab(data) {
   return `
-    <article class="admin-card">
+    <article class="card-base rounded-xl">
       <h2>Products</h2>
       <p>Manage experience builder products and add-ons.</p>
-      <div class="quick-grid" style="margin-top: 1rem;">
-        <button class="quick-card" onclick="document.querySelector('[data-section=\\'builders\\']').click()">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" style="margin-top: 1rem;">
+        <button class="card-hover rounded-xl" onclick="document.querySelector('[data-section=\\'builders\\']').click()">
           <span class="quick-icon">${icon("settings")}</span>
           <span><strong>Experience Builders</strong><span>Configure builder types</span></span>
         </button>
-        <button class="quick-card" onclick="document.querySelector('[data-section=\\'addons\\']').click()">
+        <button class="card-hover rounded-xl" onclick="document.querySelector('[data-section=\\'addons\\']').click()">
           <span class="quick-icon">${icon("plans")}</span>
           <span><strong>Paid Add-Ons</strong><span>Manage add-on products</span></span>
         </button>
-        <button class="quick-card" onclick="document.querySelector('[data-section=\\'credits\\']').click()">
+        <button class="card-hover rounded-xl" onclick="document.querySelector('[data-section=\\'credits\\']').click()">
           <span class="quick-icon">${icon("card")}</span>
           <span><strong>Usage Tokens</strong><span>Token packages and pricing</span></span>
         </button>
@@ -4608,15 +4616,15 @@ function renderProductsTab(data) {
 
 function renderComplianceTab(data) {
   return `
-    <article class="admin-card">
+    <article class="card-base rounded-xl">
       <h2>Compliance</h2>
       <p>Manage legal policies, data protection and affiliate disclosure.</p>
-      <div class="quick-grid" style="margin-top: 1rem;">
-        <button class="quick-card" onclick="document.querySelector('[data-section=\\'policies\\']').click()">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" style="margin-top: 1rem;">
+        <button class="card-hover rounded-xl" onclick="document.querySelector('[data-section=\\'policies\\']').click()">
           <span class="quick-icon">${icon("file")}</span>
           <span><strong>Policy Pages</strong><span>Privacy, terms, cookies, etc.</span></span>
         </button>
-        <button class="quick-card" onclick="document.querySelector('[data-section=\\'affiliate\\']').click()">
+        <button class="card-hover rounded-xl" onclick="document.querySelector('[data-section=\\'affiliate\\']').click()">
           <span class="quick-icon">${icon("link")}</span>
           <span><strong>Affiliate Disclosure</strong><span>Manage affiliate content</span></span>
         </button>
@@ -4628,22 +4636,22 @@ function renderComplianceTab(data) {
 function renderTroubleshootingTab(container, data) {
   const status = data.site_status || "normal";
   container.innerHTML = `
-    <article class="admin-card"><h2>Troubleshooting</h2><p>Run safe platform checks and review technical information to help diagnose common service problems.</p><button class="admin-button" type="button" id="runSystemDiagnostics">Run Diagnostics</button><div id="diagnosticsStatus" class="admin-alert" hidden></div></article>
-    <article class="admin-card"><h2>Platform checks</h2><div class="admin-grid" id="diagnosticsChecks">${["Database connection","Public Site Status API","Coming Soon configuration API","Authentication configuration","Stripe configuration","Email configuration"].map((label) => stat(label, "Not run")).join("")}</div></article>
-    <article class="admin-card"><h2>Site Status summary</h2><p>Currently saved public site status: <strong id="diagnosticsSiteStatus">${escapeHtml(status.replace("_", " "))}</strong></p><button class="admin-button secondary" type="button" id="goToSiteStatusTab">Go to Site Status</button></article>
-    <article class="admin-card"><h2>Useful technical information</h2><div class="drawer-grid" id="diagnosticsTechnical"><div class="drawer-field"><span>Environment</span><strong>Unavailable</strong></div><div class="drawer-field"><span>Application version / commit</span><strong>Unavailable</strong></div><div class="drawer-field"><span>D1 binding detected</span><strong>Unavailable</strong></div><div class="drawer-field"><span>Current public site mode</span><strong>${escapeHtml(status)}</strong></div><div class="drawer-field"><span>Last diagnostics run</span><strong id="diagnosticsCompletedAt">Not run</strong></div></div></article>
-    <article class="admin-card"><h2>Troubleshooting guidance</h2><div class="drawer-section-grid"><section class="drawer-section-card"><h3>Public mode is not changing</h3><p>Run diagnostics, confirm the saved site mode, then check that the public Site Status API is operational. Status responses are not cached.</p></section><section class="drawer-section-card"><h3>Countdown is not updating</h3><p>Confirm the UK local launch time in Site Status and verify the Coming Soon configuration API.</p></section><section class="drawer-section-card"><h3>Authentication problems</h3><p>Check authentication configuration here, then use the existing secure sign-in routes. No credentials are displayed by diagnostics.</p></section><section class="drawer-section-card"><h3>Payment configuration</h3><p>Check Stripe configuration and review the Stripe tab without entering secret values into support notes.</p></section><section class="drawer-section-card"><h3>Email delivery</h3><p>Check email configuration and use the Email tab's existing safe delivery test.</p></section></div></article>`;
+    <article class="card-base rounded-xl"><h2>Troubleshooting</h2><p>Run safe platform checks and review technical information to help diagnose common service problems.</p><button class="btn-primary" type="button" id="runSystemDiagnostics">Run Diagnostics</button><div id="diagnosticsStatus" class="alert-error" hidden></div></article>
+    <article class="card-base rounded-xl"><h2>Platform checks</h2><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="diagnosticsChecks">${["Database connection","Public Site Status API","Coming Soon configuration API","Authentication configuration","Stripe configuration","Email configuration"].map((label) => stat(label, "Not run")).join("")}</div></article>
+    <article class="card-base rounded-xl"><h2>Site Status summary</h2><p>Currently saved public site status: <strong id="diagnosticsSiteStatus">${escapeHtml(status.replace("_", " "))}</strong></p><button class="btn-secondary" type="button" id="goToSiteStatusTab">Go to Site Status</button></article>
+    <article class="card-base rounded-xl"><h2>Useful technical information</h2><div class="drawer-grid" id="diagnosticsTechnical"><div class="drawer-field"><span>Environment</span><strong>Unavailable</strong></div><div class="drawer-field"><span>Application version / commit</span><strong>Unavailable</strong></div><div class="drawer-field"><span>D1 binding detected</span><strong>Unavailable</strong></div><div class="drawer-field"><span>Current public site mode</span><strong>${escapeHtml(status)}</strong></div><div class="drawer-field"><span>Last diagnostics run</span><strong id="diagnosticsCompletedAt">Not run</strong></div></div></article>
+    <article class="card-base rounded-xl"><h2>Troubleshooting guidance</h2><div class="drawer-section-grid"><section class="drawer-section-card"><h3>Public mode is not changing</h3><p>Run diagnostics, confirm the saved site mode, then check that the public Site Status API is operational. Status responses are not cached.</p></section><section class="drawer-section-card"><h3>Countdown is not updating</h3><p>Confirm the UK local launch time in Site Status and verify the Coming Soon configuration API.</p></section><section class="drawer-section-card"><h3>Authentication problems</h3><p>Check authentication configuration here, then use the existing secure sign-in routes. No credentials are displayed by diagnostics.</p></section><section class="drawer-section-card"><h3>Payment configuration</h3><p>Check Stripe configuration and review the Stripe tab without entering secret values into support notes.</p></section><section class="drawer-section-card"><h3>Email delivery</h3><p>Check email configuration and use the Email tab's existing safe delivery test.</p></section></div></article>`;
   container.querySelector("#goToSiteStatusTab").addEventListener("click", () => document.querySelector('[data-tab="sitestatus"]')?.click());
   container.querySelector("#runSystemDiagnostics").addEventListener("click", async () => {
     const button = container.querySelector("#runSystemDiagnostics"); const message = container.querySelector("#diagnosticsStatus");
-    button.disabled = true; button.textContent = "Running Diagnostics..."; message.hidden = false; message.className = "admin-alert"; message.textContent = "Running safe read-only checks...";
+    button.disabled = true; button.textContent = "Running Diagnostics..."; message.hidden = false; message.className = "alert-error"; message.textContent = "Running safe read-only checks...";
     try {
       const response = await api("systemsettings", { query: { action: "diagnostics" } });
       const diagnostics = response.diagnostics || {}; const checks = diagnostics.checks || {}; const technical = diagnostics.technical || {};
       const labels = [["Database connection",checks.database],["Public Site Status API",checks.site_status_api],["Coming Soon configuration API",checks.coming_soon_api],["Authentication configuration",checks.authentication],["Stripe configuration",checks.stripe],["Email configuration",checks.email]];
       container.querySelector("#diagnosticsChecks").innerHTML = labels.map(([label,value]) => stat(label, value || "Unavailable")).join("");
       container.querySelector("#diagnosticsTechnical").innerHTML = [["Environment",technical.environment],["Application version / commit",technical.version],["D1 binding detected",technical.d1_binding_detected],["Profiles suspension columns",technical.suspension_columns],["Current public site mode",technical.site_status],["Last diagnostics run",formatDate(diagnostics.checked_at)]].map(([label,value]) => `<div class="drawer-field"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value || "Unavailable")}</strong></div>`).join("");
-      message.className = "admin-success"; message.textContent = "Diagnostics completed. No secrets or personal data were returned.";
+      message.className = "alert-success"; message.textContent = "Diagnostics completed. No secrets or personal data were returned.";
     } catch (error) { message.textContent = error.message || "Diagnostics could not be completed."; }
     finally { button.disabled = false; button.textContent = "Run Diagnostics"; }
   });
@@ -4686,7 +4694,7 @@ function renderSiteStatusTab(container, data) {
   }
 
   container.innerHTML = `
-    <article class="admin-card">
+    <article class="card-base rounded-xl">
       <h2>Site Status</h2>
       <p>Control whether the public website is live, in coming soon mode, or under maintenance. The admin portal remains accessible in all modes.</p>
       <div class="status-info-card" id="siteStatusInfoCard">
@@ -4710,11 +4718,11 @@ function renderSiteStatusTab(container, data) {
         </div>
       </div>
 
-      <button class="admin-button" type="button" id="saveSiteStatusBtn" style="margin-top: 1rem;">Save Site Status</button>
-      <div id="siteStatusSaved" class="admin-alert" style="margin-top: 0.75rem;" hidden></div>
+      <button class="btn-primary" type="button" id="saveSiteStatusBtn" style="margin-top: 1rem;">Save Site Status</button>
+      <div id="siteStatusSaved" class="alert-error" style="margin-top: 0.75rem;" hidden></div>
     </article>
 
-    <article class="admin-card">
+    <article class="card-base rounded-xl">
       <h2>Important notes</h2>
       <ul class="status-notes-list">
         <li>The admin portal at <code>/admin</code> is always accessible regardless of site status.</li>
@@ -4725,10 +4733,10 @@ function renderSiteStatusTab(container, data) {
       </ul>
     </article>
 
-    <article class="admin-card">
+    <article class="card-base rounded-xl">
       <h2>Coming Soon Countdown</h2>
       <p>Set a launch date and the countdown will appear live on the Coming Soon page. Leave the date blank to hide the countdown. All data is stored in the database — never in the browser.</p>
-      <form class="admin-form single" id="comingSoonSettingsForm" style="margin-top: 1rem;">
+      <form class="grid grid-cols-1 gap-4" id="comingSoonSettingsForm" style="margin-top: 1rem;">
         <label>Page Headline
           <input type="text" id="comingSoonHeadline" placeholder="Coming Soon" maxlength="200" value="${escapeHtml(csConfig.headline || csSettings.headline || "Coming Soon")}">
         </label>
@@ -4743,8 +4751,8 @@ function renderSiteStatusTab(container, data) {
           <span class="countdown-info-label">Countdown target:</span>
           <span class="countdown-info-value" id="countdownTargetDisplay">${escapeHtml(launchDateDisplay)}</span>
         </div>
-        <button class="admin-button" type="submit" id="saveCountdownBtn" style="margin-top: 1rem;">Save Countdown Settings</button>
-        <div id="comingSoonSaved" class="admin-alert" style="margin-top: 0.75rem;" hidden></div>
+        <button class="btn-primary" type="submit" id="saveCountdownBtn" style="margin-top: 1rem;">Save Countdown Settings</button>
+        <div id="comingSoonSaved" class="alert-error" style="margin-top: 0.75rem;" hidden></div>
       </form>
     </article>
   `;
@@ -4773,7 +4781,7 @@ function initSiteStatusTab(container, savedStatus) {
     saveBtn.disabled = true;
     saveBtn.textContent = "Saving...";
     statusSavedEl.hidden = false;
-    statusSavedEl.className = "admin-alert";
+    statusSavedEl.className = "alert-error";
     statusSavedEl.textContent = "Saving site status...";
 
     try {
@@ -4805,10 +4813,10 @@ function initSiteStatusTab(container, savedStatus) {
         const radio = c.querySelector("input[type=radio]");
         if (radio) radio.checked = isSelected;
       });
-      statusSavedEl.className = "admin-success";
+      statusSavedEl.className = "alert-success";
       statusSavedEl.textContent = "Site status saved successfully.";
     } catch (error) {
-      statusSavedEl.className = "admin-alert";
+      statusSavedEl.className = "alert-error";
       statusSavedEl.textContent = error.message ? `Site Status could not be saved. ${error.message}` : "Site Status could not be saved.";
     } finally {
       saveBtn.disabled = false;
@@ -4842,7 +4850,7 @@ function initSiteStatusTab(container, savedStatus) {
       btn.textContent = "Saving...";
       const savedEl = container.querySelector("#comingSoonSaved");
       savedEl.hidden = false;
-      savedEl.className = "admin-alert";
+      savedEl.className = "alert-error";
       savedEl.textContent = "Saving countdown settings...";
 
       try {
@@ -4869,10 +4877,10 @@ function initSiteStatusTab(container, savedStatus) {
           infoBox.hidden = true;
         }
 
-        savedEl.className = "admin-success";
+        savedEl.className = "alert-success";
         savedEl.textContent = "Countdown settings saved successfully.";
       } catch (error) {
-        savedEl.className = "admin-alert";
+        savedEl.className = "alert-error";
         savedEl.textContent = error.message || "Failed to save countdown settings.";
       } finally {
         btn.disabled = false;
@@ -4930,34 +4938,34 @@ function renderMaintenance(settings = {}) {
 function renderStatusForm(section, settings, labels) {
   const enabled = settings[labels.enabledKey] === "true";
   document.getElementById("adminPanel").innerHTML = `
-    <div class="admin-card status-page-editor">
-      <div class="section-head">
+    <div class="card-base rounded-xl status-page-editor">
+      <div class="page-header">
         <div><h2>${escapeHtml(labels.title)}</h2><p>${escapeHtml(labels.description)}</p></div>
         ${badge(enabled ? "Enabled" : "Disabled", enabled ? "green" : "amber")}
       </div>
-      <form class="admin-form single status-editor-form" id="${section}Form">
+      <form class="grid grid-cols-1 gap-4 status-editor-form" id="${section}Form">
         <div class="status-editor-controls">
           <label class="check">
             <span class="switch"><input id="${labels.enabledKey}" type="checkbox"><span></span></span>
             ${escapeHtml(labels.enabledLabel)}
           </label>
-          <label class="admin-label">Content mode
+          <label class="label-base">Content mode
             <select id="${labels.modeKey}">
               <option value="plain">Plain text</option>
               <option value="html">HTML</option>
             </select>
           </label>
         </div>
-        <label class="admin-label status-content-field">
+        <label class="label-base status-content-field">
           <span id="${section}ContentLabel">${escapeHtml(labels.contentLabel)}</span>
           <textarea id="${labels.contentKey}" aria-describedby="${section}ModeHelp"></textarea>
         </label>
-        <div class="admin-alert" id="${section}ModeHelp">Plain text mode escapes HTML and preserves line breaks.</div>
+        <div class="alert-error" id="${section}ModeHelp">Plain text mode escapes HTML and preserves line breaks.</div>
         <div class="section-actions">
-          <button class="admin-button" type="submit">${escapeHtml(labels.saveLabel)}</button>
-          <a class="admin-button secondary" href="/?preview_public_block=1" target="_blank" rel="noopener noreferrer">${escapeHtml(labels.previewLabel)}</a>
+          <button class="btn-primary" type="submit">${escapeHtml(labels.saveLabel)}</button>
+          <a class="btn-secondary" href="/?preview_public_block=1" target="_blank" rel="noopener noreferrer">${escapeHtml(labels.previewLabel)}</a>
         </div>
-        <div id="${section}Saved" class="admin-success" hidden></div>
+        <div id="${section}Saved" class="alert-success" hidden></div>
       </form>
     </div>
   `;
@@ -5018,7 +5026,7 @@ async function openCustomerDrawer(email) {
         <div><h2>Customer profile</h2><p>Loading customer record...</p></div>
         <button class="drawer-close" type="button" data-action="close-customer">×</button>
       </div>
-      <div class="drawer-body"><div class="admin-loading">Loading customer...</div></div>
+      <div class="drawer-body"><div class="flex items-center justify-center py-12">Loading customer...</div></div>
     </aside>
   `;
   document.body.appendChild(drawer);
@@ -5028,19 +5036,19 @@ async function openCustomerDrawer(email) {
     if (!data.customer?.verification?.verified) throw new Error("Identity Verification Required");
     renderCustomerDrawer(data.customer, data.plans || []);
   } catch (error) {
-    drawer.querySelector(".drawer-body").innerHTML = `<div class="admin-alert">${escapeHtml(error.message)}</div>`;
+    drawer.querySelector(".drawer-body").innerHTML = `<div class="alert-error">${escapeHtml(error.message)}</div>`;
   }
 }
 
 async function openCustomerProfile(email) {
   const panel = document.getElementById("adminPanel");
-  panel.innerHTML = `<div class="admin-loading">Loading customer profile...</div>`;
+  panel.innerHTML = `<div class="flex items-center justify-center py-12">Loading customer profile...</div>`;
   try {
     const data = await api("customer", { query: { email } });
     state.data.customer = data;
     renderCustomerProfile(data.customer, data.plans || []);
   } catch (error) {
-    panel.innerHTML = `<div class="admin-card">${renderInlineStatus("error", error.message || "Unable to load customer profile.")}</div>`;
+    panel.innerHTML = `<div class="card-base rounded-xl">${renderInlineStatus("error", error.message || "Unable to load customer profile.")}</div>`;
   }
 }
 
@@ -5066,7 +5074,7 @@ function renderCustomerDrawer(customer, plans = []) {
 
   drawer.querySelector(".drawer-head p").textContent = customer.email || "";
   drawer.querySelector(".drawer-body").innerHTML = `
-    <div class="admin-alert">Support viewing mode ready. Use the drawer for read-only customer review and audited account actions.</div>
+    <div class="alert-error">Support viewing mode ready. Use the drawer for read-only customer review and audited account actions.</div>
     <div class="customer-profile-head">
       <div class="customer-avatar">${escapeHtml((displayName || "C").slice(0, 1).toUpperCase())}</div>
       <div><strong>${escapeHtml(displayName)}</strong><span>${escapeHtml(customer.email || "")}</span></div>
@@ -5117,7 +5125,7 @@ function renderCustomerDrawer(customer, plans = []) {
       <h3>Customer timeline</h3>
       ${timeline.length ? `<div class="timeline-stack">${timeline.map((item) => `<div class="timeline-item"><strong>${escapeHtml(item.title || item.event_type || "Event")}</strong><span>${escapeHtml(item.detail || formatDate(item.created_at))}</span></div>`).join("")}</div>` : "<p>No customer timeline has been loaded yet.</p>"}
     </div>
-    <form class="admin-form single" id="customerAdminForm">
+    <form class="grid grid-cols-1 gap-4" id="customerAdminForm">
       <label class="check"><input id="customer_lifetime" type="checkbox" ${isLifetime ? "checked" : ""}> Mark this customer as Lifetime</label>
       <label>
         Lifetime service plan
@@ -5131,15 +5139,15 @@ function renderCustomerDrawer(customer, plans = []) {
         <input id="customer_flags" type="text" placeholder="VIP, Accessibility, Payment Review" value="${escapeAttr(flags.map((flag) => flag.flag).join(", "))}">
       </label>
       ${textarea("Internal admin notes", "customer_admin_notes")}
-      <button class="admin-button" type="submit">Save customer changes</button>
+      <button class="btn-primary" type="submit">Save customer changes</button>
     </form>
     <div class="section-actions" style="margin-top:1rem;">
-      <button class="admin-button secondary" type="button" data-action="open-closure" data-id="" id="customerClosureButton">Closure Request</button>
-      <button class="admin-button secondary" type="button" data-action="export-customer-data" data-email="${escapeAttr(customer.email)}" data-format="json">Export JSON</button>
-      <button class="admin-button secondary" type="button" data-action="export-customer-data" data-email="${escapeAttr(customer.email)}" data-format="csv">Export CSV</button>
-      <button class="admin-button" type="button" data-action="reset-microsoft-password" data-email="${escapeAttr(customer.email)}">Reset Microsoft Password</button>
+      <button class="btn-secondary" type="button" data-action="open-closure" data-id="" id="customerClosureButton">Closure Request</button>
+      <button class="btn-secondary" type="button" data-action="export-customer-data" data-email="${escapeAttr(customer.email)}" data-format="json">Export JSON</button>
+      <button class="btn-secondary" type="button" data-action="export-customer-data" data-email="${escapeAttr(customer.email)}" data-format="csv">Export CSV</button>
+      <button class="btn-primary" type="button" data-action="reset-microsoft-password" data-email="${escapeAttr(customer.email)}">Reset Microsoft Password</button>
     </div>
-    <div id="customerSaved" class="admin-success" hidden></div>
+    <div id="customerSaved" class="alert-success" hidden></div>
   `;
 
   setValue("customer_admin_notes", customer.admin_notes || "");
@@ -5205,15 +5213,15 @@ function closeModal() {
 }
 
 function stat(label, value) {
-  return `<article class="admin-stat"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></article>`;
+  return `<article class="card-base rounded-xl p-6"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></article>`;
 }
 
 function input(label, id, type = "text") {
-  return `<label class="admin-label">${escapeHtml(label)}<input id="${escapeHtml(id)}" type="${escapeHtml(type)}"></label>`;
+  return `<label class="label-base">${escapeHtml(label)}<input id="${escapeHtml(id)}" type="${escapeHtml(type)}"></label>`;
 }
 
 function textarea(label, id) {
-  return `<label class="admin-label">${escapeHtml(label)}<textarea id="${escapeHtml(id)}"></textarea></label>`;
+  return `<label class="label-base">${escapeHtml(label)}<textarea id="${escapeHtml(id)}"></textarea></label>`;
 }
 
 function table(headers, rows) {
@@ -5232,11 +5240,11 @@ function badge(label, colour = "") {
 }
 
 function emptyCard(text) {
-  return `<div class="list-card empty-state"><span class="activity-empty-icon" aria-hidden="true">∅</span><strong>${escapeHtml(text)}</strong><p>There is nothing to show here just yet.</p></div>`;
+  return `<div class="card-base rounded-xl empty-state"><span class="activity-empty-icon" aria-hidden="true">∅</span><strong>${escapeHtml(text)}</strong><p>There is nothing to show here just yet.</p></div>`;
 }
 
 function renderInlineStatus(kind, message, retryAction = "") {
-  const tone = kind === "success" ? "admin-success" : "admin-alert";
+  const tone = kind === "success" ? "alert-success" : "alert-error";
   return `<div class="${tone}" role="status">${escapeHtml(message)}${retryAction ? ` <button class="mini-button" type="button" data-action="${escapeAttr(retryAction)}">Retry</button>` : ""}</div>`;
 }
 
@@ -5244,7 +5252,7 @@ function setSaved(id, message, isError = false) {
   const el = document.getElementById(id);
   if (!el) return;
   el.hidden = false;
-  el.className = isError ? "admin-alert" : "admin-success";
+  el.className = isError ? "alert-error" : "alert-success";
   el.textContent = message;
 }
 

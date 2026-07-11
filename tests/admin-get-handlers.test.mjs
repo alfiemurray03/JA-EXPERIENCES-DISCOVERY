@@ -327,7 +327,7 @@ test("site status save rejects invalid values before changing D1", async () => {
 
 test("admin shell includes reference mobile navigation without replacing protected routes", async () => {
   const html = await readFile(new URL("../public/admin/dashboard/index.html", import.meta.url), "utf8");
-  assert.match(html, /class="admin-mobile-nav"/);
+  assert.match(html, /class="admin-mobile-nav[^"]*"/);
   assert.match(html, /data-section="customers"/);
   assert.match(html, /data-section="systemsettings"/);
   assert.match(html, /href="\/admin\/logout"/);

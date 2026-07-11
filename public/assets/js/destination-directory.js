@@ -78,19 +78,17 @@ function renderDestinations() {
   });
 
   grid.innerHTML = matches.length ? matches.map(destination => `
-    <a class="destination-card" href="/destinations/${escapeHtml(destination.slug)}/">
-      <div>
-        <div class="destination-card-meta">
-          <span>${escapeHtml(destination.type)}</span>
-          <span>${escapeHtml(destination.area)}</span>
-          ${destination.popular ? "<span>Popular</span>" : ""}
-        </div>
-        <h3>${escapeHtml(destination.name)}</h3>
-        <p>${escapeHtml(destination.description)}</p>
+    <a class="card-hover rounded-xl p-5 group" href="/destinations/${escapeHtml(destination.slug)}/">
+      <div class="flex flex-wrap items-center gap-1.5 mb-3">
+        <span class="badge-base bg-primary/8 text-primary border border-primary/16">${escapeHtml(destination.type)}</span>
+        <span class="badge-base bg-muted text-muted-foreground">${escapeHtml(destination.area)}</span>
+        ${destination.popular ? "<span class=\"badge-base bg-success-soft text-success\">Popular</span>" : ""}
       </div>
-      <span class="destination-card-action">${destination.type === "Country" ? "Open board" : "View guide"}</span>
+      <h3 class="text-base font-bold text-foreground mb-1">${escapeHtml(destination.name)}</h3>
+      <p class="text-xs text-muted-foreground mb-3 leading-relaxed">${escapeHtml(destination.description)}</p>
+      <span class="text-sm font-semibold text-primary group-hover:underline">${destination.type === "Country" ? "Open board" : "View guide"} &rarr;</span>
     </a>`).join("") : `
-    <div class="saas-panel saas-empty">
+    <div class="col-span-full empty-state">
       <h3>No destination boards found</h3>
       <p>Try a broader search term or switch back to the All filter.</p>
     </div>`;
@@ -112,8 +110,14 @@ function initDestinationDirectory() {
   document.querySelector("#destinationFilters")?.addEventListener("click", event => {
     const button = event.target.closest(".filter-chip");
     if (!button) return;
-    document.querySelectorAll("#destinationFilters .filter-chip").forEach(item => item.setAttribute("aria-pressed", "false"));
+    document.querySelectorAll("#destinationFilters .filter-chip").forEach(item => {
+      item.setAttribute("aria-pressed", "false");
+      item.classList.remove("badge-primary");
+      item.classList.add("badge-base", "bg-muted", "text-muted-foreground");
+    });
     button.setAttribute("aria-pressed", "true");
+    button.classList.remove("badge-base", "bg-muted", "text-muted-foreground");
+    button.classList.add("badge-primary");
     renderDestinations();
   });
   renderDestinations();

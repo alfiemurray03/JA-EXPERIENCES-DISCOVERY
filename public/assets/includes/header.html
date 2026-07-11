@@ -1,51 +1,51 @@
-<header class="site-header">
-  <div class="site-header-inner">
-    <a class="site-brand" href="/" aria-label="JA Experiences &amp; Discovery home">
-      <span>JA</span>
-      <span class="site-brand-accent">Experiences &amp; Discovery</span>
+<header class="sticky top-0 z-50 border-b border-border bg-card/80 glass-blur transition-all duration-200">
+  <div class="container-base flex items-center justify-between gap-4 py-3">
+    <a class="flex items-baseline gap-1.5 font-bold text-foreground whitespace-nowrap" href="/" aria-label="JA Experiences & Discovery home">
+      <span class="text-base md:text-lg">JA Experiences &amp; Discovery</span>
     </a>
 
-    <nav class="site-nav" aria-label="Primary navigation">
-      <a href="/" data-nav-page="home">Home</a>
-      <a href="/builders/" data-nav-page="builders">Builders</a>
-      <a href="/pricing/" data-nav-page="pricing">Pricing</a>
-      <a href="/about/" data-nav-page="about">About</a>
-      <a href="/destinations/" data-nav-page="destinations">Destinations</a>
-      <div class="nav-dropdown">
-        <button class="nav-dropdown-toggle" type="button" aria-haspopup="true" aria-expanded="false">Partners <span class="chevron" aria-hidden="true">▼</span></button>
-        <div class="nav-dropdown-menu" role="menu">
-          <a href="/headout/">Headout</a>
-          <a href="/getyourguide/">GetYourGuide</a>
+    <nav class="hidden lg:flex items-center gap-1" aria-label="Primary navigation">
+      <a class="nav-link" href="/" data-nav-page="home">Home</a>
+      <a class="nav-link" href="/builders/" data-nav-page="builders">Builders</a>
+      <a class="nav-link" href="/pricing/" data-nav-page="pricing">Pricing</a>
+      <a class="nav-link" href="/about/" data-nav-page="about">About</a>
+      <a class="nav-link" href="/destinations/" data-nav-page="destinations">Destinations</a>
+      <div class="nav-dropdown relative">
+        <button class="nav-link flex items-center gap-1" type="button" aria-haspopup="true" aria-expanded="false">Partners <span class="text-xs" aria-hidden="true">&#9660;</span></button>
+        <div class="nav-dropdown-menu absolute top-full right-0 mt-2 min-w-48 rounded-lg bg-card border border-border shadow-md p-2 hidden" role="menu">
+          <a class="block px-3 py-2 rounded-lg text-sm font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" href="/headout/">Headout</a>
+          <a class="block px-3 py-2 rounded-lg text-sm font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" href="/getyourguide/">GetYourGuide</a>
         </div>
       </div>
     </nav>
 
-    <div class="site-header-actions">
-      <a class="site-login-link" href="/login/">Sign in</a>
-      <a class="site-create-link" href="/pricing/#trial">Create account</a>
+    <div class="hidden lg:flex items-center gap-3">
+      <a class="btn-ghost" href="/login/">Sign in</a>
+      <a class="btn-primary text-sm" href="/pricing/#trial">Create account</a>
     </div>
 
-    <button class="site-menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="siteMobileMenu" id="siteMenuToggle">
-      <span aria-hidden="true">☰</span>
+    <button class="lg:hidden p-2 rounded-lg text-foreground hover:bg-muted transition-colors" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="siteMobileMenu" id="siteMenuToggle">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
     </button>
   </div>
 
-  <div class="site-mobile-menu" id="siteMobileMenu">
-    <div class="site-mobile-menu-inner">
-      <a href="/">Home</a>
-      <a href="/builders/">Builders</a>
-      <a href="/pricing/">Pricing</a>
-      <a href="/about/">About</a>
-      <a href="/destinations/">Destinations</a>
-      <div class="nav-dropdown">
-        <button class="nav-dropdown-toggle" type="button" aria-haspopup="true" aria-expanded="false">Partners <span class="chevron" aria-hidden="true">▼</span></button>
-        <div class="nav-dropdown-menu" role="menu">
-          <a href="/headout/">Headout</a>
-          <a href="/getyourguide/">GetYourGuide</a>
+  <div class="site-mobile-menu lg:hidden hidden border-t border-border bg-card" id="siteMobileMenu">
+    <div class="container-base flex flex-col gap-1 py-4">
+      <a class="nav-link" href="/">Home</a>
+      <a class="nav-link" href="/builders/">Builders</a>
+      <a class="nav-link" href="/pricing/">Pricing</a>
+      <a class="nav-link" href="/about/">About</a>
+      <a class="nav-link" href="/destinations/">Destinations</a>
+      <div class="nav-dropdown relative">
+        <button class="nav-link flex items-center gap-1" type="button" aria-haspopup="true" aria-expanded="false">Partners <span class="text-xs" aria-hidden="true">&#9660;</span></button>
+        <div class="nav-dropdown-menu hidden mt-2 min-w-48 rounded-lg bg-muted border border-border p-2" role="menu">
+          <a class="block px-3 py-2 rounded-lg text-sm font-semibold text-muted-foreground hover:text-foreground hover:bg-card transition-colors" href="/headout/">Headout</a>
+          <a class="block px-3 py-2 rounded-lg text-sm font-semibold text-muted-foreground hover:text-foreground hover:bg-card transition-colors" href="/getyourguide/">GetYourGuide</a>
         </div>
       </div>
-      <a href="/login/">Sign in</a>
-      <a href="/pricing/#trial">Create account</a>
+      <hr class="border-border my-2">
+      <a class="btn-secondary text-sm" href="/login/">Sign in</a>
+      <a class="btn-primary text-sm mt-2" href="/pricing/#trial">Create account</a>
     </div>
   </div>
 </header>

@@ -15,11 +15,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     themeLink.href = "/assets/css/theme.css?v=20260709-airo-2";
     document.head.appendChild(themeLink);
   }
-  const publicThemeLink = document.querySelector('link[href^="/assets/css/public-saas.css"]') || document.createElement("link");
-  publicThemeLink.rel = "stylesheet";
-  publicThemeLink.href = "/assets/css/public-saas.css?v=20260710-wordmark-unified-1";
-  if (!publicThemeLink.parentNode) {
-    document.head.appendChild(publicThemeLink);
+  // public-saas.css auto-injection removed — tailwind.css is now the primary stylesheet
+  // and is injected by the tailwindLink block below.
+
+  const tailwindLink = document.querySelector('link[href^="/assets/css/tailwind.css"]') || document.createElement("link");
+  tailwindLink.rel = "stylesheet";
+  tailwindLink.href = "/assets/css/tailwind.css?v=20260711-tw-1";
+  if (!tailwindLink.parentNode) {
+    document.head.appendChild(tailwindLink);
   }
 
   function ensureFaviconLink(rel, attrs = {}) {
