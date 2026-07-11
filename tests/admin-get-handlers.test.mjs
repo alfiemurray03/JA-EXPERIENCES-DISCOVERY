@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { onRequest as adminApiOnRequest } from "../functions/admin/api.js";
 import { onRequest as middlewareOnRequest } from "../functions/_middleware.js";
@@ -322,4 +323,34 @@ test("site status save rejects invalid values before changing D1", async () => {
   const response = await adminApiOnRequest({ request, env: getMockEnv(DB) });
   assert.equal(response.status, 400);
   assert.equal(DB.siteStatus, "normal");
+});
+
+test("admin shell includes reference mobile navigation without replacing protected routes", async () => {
+  const html = await readFile(new URL("../public/admin/dashboard/index.html", import.meta.url), "utf8");
+  assert.match(html, /class="admin-mobile-nav"/);
+  assert.match(html, /data-section="customers"/);
+  assert.match(html, /data-section="systemsettings"/);
+  assert.match(html, /href="\/admin\/logout"/);
+  assert.match(html, /Protected by native Microsoft Entra ID/);
+});
+
+test("customer record renderer keeps identity verification and adds full profile structure", async () => {
+  const client = await readFile(new URL("../public/assets/js/admin-control.js", import.meta.url), "utf8");
+  assert.match(client, /customer-record-page-head/);
+  assert.match(client, /customer-warning-banner/);
+  assert.match(client, /customer-identity-card/);
+  assert.match(client, /customer-record-tabs/);
+  assert.match(client, /renderCustomerIdentityVerification\(customer, verification, securityQuestions\)/);
+  assert.match(client, /protectedDisabled/);
+  assert.match(client, /Back to CRM/);
+});
+
+test("System Settings uses the narrow reference workspace and icon tab structure", async () => {
+  const client = await readFile(new URL("../public/assets/js/admin-control.js", import.meta.url), "utf8");
+  const css = await readFile(new URL("../public/admin/assets/admin-saas-v2.css", import.meta.url), "utf8");
+  assert.match(client, /settings-page-head/);
+  assert.match(client, /settings-page-icon/);
+  assert.match(client, /icon\(t\.icon\)/);
+  assert.match(css, /system-settings-shell[^}]+768px/s);
+  assert.match(css, /settings-category-tabs[^}]+background: #f1f5f9/s);
 });

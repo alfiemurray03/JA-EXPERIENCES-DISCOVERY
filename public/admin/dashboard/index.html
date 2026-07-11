@@ -124,11 +124,10 @@
         </div>
 
         <div class="topbar-actions">
-          <button class="mini-button" id="sidebarToggleButton" type="button">Toggle Sidebar</button>
           <button class="icon-button notification-button" type="button" aria-label="Notifications" title="Open notification centre">
             <span aria-hidden="true">&#9675;</span><span class="notification-dot"></span>
           </button>
-          <button class="mini-button pin-button" type="button" id="pinSectionButton">Pin Page</button>
+          <button class="icon-button pin-button" type="button" id="pinSectionButton" aria-label="Pin current page" title="Pin current page">&#9734;</button>
 
           <div class="admin-user" id="accountMenuButton" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">
             <div class="admin-user-text">
@@ -155,6 +154,23 @@
     </main>
   </div>
 
-  <script src="/assets/js/admin-control.js?v=experiences-admin-control-14"></script>
+  <nav class="admin-mobile-nav" aria-label="Primary mobile administration">
+    <button type="button" data-section="overview" data-mobile-primary="overview" data-icon="dashboard"><span>Dashboard</span></button>
+    <button type="button" data-section="customers" data-mobile-primary="customers" data-icon="users"><span>CRM</span></button>
+    <button type="button" data-section="builders" data-mobile-primary="builders" data-icon="settings"><span>Builders</span></button>
+    <button type="button" data-section="systemsettings" data-mobile-primary="systemsettings" data-icon="settings"><span>Settings</span></button>
+    <button type="button" id="adminMobileMoreButton" aria-controls="adminMobileMore" aria-expanded="false" data-icon="plans"><span>More</span></button>
+  </nav>
+  <div class="admin-mobile-more" id="adminMobileMore" hidden>
+    <button class="admin-mobile-more-scrim" type="button" aria-label="Close more navigation"></button>
+    <section class="admin-mobile-more-sheet" aria-label="More administration sections">
+      <div class="mobile-sheet-handle" aria-hidden="true"></div>
+      <div class="mobile-sheet-head"><h2>Admin — More</h2><button type="button" aria-label="Close more navigation">&times;</button></div>
+      <nav id="adminMobileMoreNav" aria-label="Additional administration sections"></nav>
+      <a class="mobile-sign-out" href="/admin/logout">Sign Out</a>
+    </section>
+  </div>
+
+  <script src="/assets/js/admin-control.js?v=experiences-admin-control-15"></script>
 </body>
 </html>

@@ -156,6 +156,7 @@ document.addEventListener("DOMContentLoaded", () => {
   decorateIcons();
   bindNav();
   bindMobileSidebar();
+  bindMobileNavigation();
   bindAccountMenu();
   bindAdminActions();
   bindFavouriteActions();
@@ -177,7 +178,7 @@ function iconSvg(name) {
 }
 
 function decorateIcons() {
-  document.querySelectorAll(".admin-nav button[data-icon]").forEach((button) => {
+  document.querySelectorAll(".admin-nav button[data-icon], .admin-mobile-nav button[data-icon], #adminMobileMoreNav button[data-icon]").forEach((button) => {
     if (button.querySelector(".nav-icon")) return;
     button.insertAdjacentHTML("afterbegin", `<span class="nav-icon" aria-hidden="true">${iconSvg(button.dataset.icon)}</span>`);
   });
@@ -531,6 +532,36 @@ async function api(section, options = {}) {
   return data;
 }
 
+function bindMobileNavigation() {
+  const moreButton = document.getElementById("adminMobileMoreButton");
+  const more = document.getElementById("adminMobileMore");
+  const moreNav = document.getElementById("adminMobileMoreNav");
+  if (!moreButton || !more || !moreNav) return;
+  const primary = new Set(["overview", "customers", "builders", "systemsettings"]);
+  const sourceButtons = [...document.querySelectorAll(".admin-sidebar .admin-nav button[data-section]")];
+  moreNav.innerHTML = sourceButtons.filter((button) => !primary.has(button.dataset.section)).map((button) => `
+    <button type="button" data-section="${escapeAttr(button.dataset.section)}" data-icon="${escapeAttr(button.dataset.icon || "dashboard")}">${escapeHtml(button.textContent.trim())}</button>
+  `).join("");
+  decorateIcons();
+  const close = () => {
+    more.hidden = true;
+    moreButton.setAttribute("aria-expanded", "false");
+    document.body.classList.remove("mobile-more-open");
+  };
+  moreButton.addEventListener("click", () => {
+    const open = more.hidden;
+    more.hidden = !open;
+    moreButton.setAttribute("aria-expanded", String(open));
+    document.body.classList.toggle("mobile-more-open", open);
+  });
+  more.querySelector(".admin-mobile-more-scrim")?.addEventListener("click", close);
+  more.querySelector(".mobile-sheet-head button")?.addEventListener("click", close);
+  moreNav.querySelectorAll("[data-section]").forEach((button) => button.addEventListener("click", () => {
+    loadSection(button.dataset.section);
+    close();
+  }));
+}
+
 async function loadSection(section) {
   if (!confirmPlanNavigation(section)) return;
   if (state.currentSection === "customer" && section !== "customer" && state.data.customer?.customer?.email) {
@@ -854,7 +885,10 @@ function renderFavourites() {
 function updatePinButton() {
   const button = document.getElementById("pinSectionButton");
   if (!button) return;
-  button.textContent = state.favourites.includes(state.currentSection) ? "Unpin Page" : "Pin Page";
+  const pinned = state.favourites.includes(state.currentSection);
+  button.textContent = pinned ? "★" : "☆";
+  button.setAttribute("aria-label", pinned ? "Unpin current page" : "Pin current page");
+  button.title = pinned ? "Unpin current page" : "Pin current page";
 }
 
 async function toggleCurrentFavourite() {
@@ -2390,23 +2424,44 @@ function renderCustomerProfile(customer, plans = []) {
   const identityLocked = Boolean(verification.locked);
   const protectedDisabled = identityVerified ? "" : "disabled";
   const securityQuestions = Array.isArray(verification.questions) ? verification.questions : [];
+  const displayName = customer.display_name || customer.verified_name || customer.email;
+  const suspended = String(customer.admin_customer_status || "").toLowerCase() === "suspended";
+  const warnings = [
+    suspended ? "Customer account is suspended" : "",
+    identityLocked ? "Identity verification is locked" : "",
+    subscription && ["past_due", "unpaid"].includes(String(subscription.status || subscription.billingStatus).toLowerCase()) ? "Billing requires attention" : "",
+    supportCases.filter((item) => ["open", "in progress", "urgent"].includes(String(item.status || "").toLowerCase())).length ? "Open support activity requires review" : ""
+  ].filter(Boolean);
   document.getElementById("adminPanel").innerHTML = `
-    <section class="admin-card">
-      <div class="section-head">
-        <div>
-          <h2>${escapeHtml(customer.display_name || customer.verified_name || customer.email)}</h2>
-          <p>${escapeHtml(customer.email || "")}</p>
-        </div>
-        <div class="section-actions">
-          ${badge(customer.admin_customer_status || "Standard")}
+    <header class="customer-record-page-head">
+      <div class="customer-record-breadcrumb"><button class="text-button" type="button" data-action="load-section" data-section="customers">← Back to CRM</button><span aria-hidden="true">/</span><strong>${escapeHtml(displayName)}</strong></div>
+      <span class="customer-id-badge">${escapeHtml(customer.customer_id || customer.email)}</span>
+    </header>
+    ${warnings.length ? `<div class="customer-warning-banner" role="status"><strong>Account attention required</strong><div>${warnings.map((warning) => `<span>${escapeHtml(warning)}</span>`).join("")}</div></div>` : ""}
+    <section class="admin-card customer-identity-card">
+      <div class="customer-record-avatar" aria-hidden="true">${escapeHtml(displayName.slice(0, 1).toUpperCase())}</div>
+      <div class="customer-record-identity">
+        <h1>${escapeHtml(displayName)}</h1>
+        <p>${escapeHtml(customer.email || "")}${customer.phone ? ` · ${escapeHtml(customer.phone)}` : ""}</p>
+        <div class="customer-record-badges">
+          ${badge(customer.admin_customer_status || "Standard", suspended ? "red" : "green")}
+          ${subscription?.plan ? badge(subscription.plan, "blue") : ""}
           ${Number(customer.admin_lifetime || 0) === 1 ? badge("Lifetime", "amber") : ""}
+          ${customer.trial_status ? badge(`Trial: ${customer.trial_status}`, "blue") : ""}
           ${identityVerified ? badge("Identity Verified", "green") : badge("Identity Required", "amber")}
-          <button class="admin-button" type="button" data-action="send-customer-notification" data-email="${escapeAttr(customer.email)}" ${protectedDisabled}>Send notification</button>
-          <button class="admin-button secondary" type="button" data-action="verify-customer-pin" data-email="${escapeAttr(customer.email)}">Verify Customer Identity</button>
-          <button class="admin-button" type="button" data-action="open-stripe-portal" data-email="${escapeAttr(customer.email)}" ${billing.portalAvailable && identityVerified ? "" : "disabled"}>Open Stripe Customer Portal</button>
-          <button class="admin-button secondary" type="button" data-action="load-section" data-section="customers">Back to CRM</button>
         </div>
       </div>
+      <div class="customer-record-meta"><span>Joined</span><strong>${escapeHtml(formatDate(customer.created_at))}</strong><span>Last activity</span><strong>${escapeHtml(formatDate(customer.updated_at || customer.created_at))}</strong></div>
+      <div class="customer-record-actions">
+        <button class="admin-button" type="button" data-action="send-customer-notification" data-email="${escapeAttr(customer.email)}" ${protectedDisabled}>Send notification</button>
+        <button class="admin-button secondary" type="button" data-action="verify-customer-pin" data-email="${escapeAttr(customer.email)}">Verify identity</button>
+        <button class="admin-button secondary" type="button" data-action="open-stripe-portal" data-email="${escapeAttr(customer.email)}" ${billing.portalAvailable && identityVerified ? "" : "disabled"}>Stripe portal</button>
+      </div>
+    </section>
+    <nav class="customer-record-tabs" aria-label="Customer record sections">
+      ${[["customerOverview","Overview"],["customerAccountAccess","Account Controls"],["customerMembership","Plans & Billing"],["customerTimeline","Timeline"],["customerSupport","Support & Data"],["customerNotes","Notes"]].map(([id,label]) => `<a href="#${id}">${label}</a>`).join("")}
+    </nav>
+    <section class="admin-card" id="customerOverview">
       ${renderCustomerIdentityVerification(customer, verification, securityQuestions)}
       <div class="admin-grid">
         ${stat("Contact email", customer.contact_email || "Not added")}
@@ -2438,7 +2493,7 @@ function renderCustomerProfile(customer, plans = []) {
     </section>
     <div class="dashboard-layout">
       <div class="dashboard-stack">
-        <section class="admin-card">
+        <section class="admin-card" id="customerMembership">
           <div class="section-head"><div><h2>Membership status</h2><p>Current record, entitlement and plan context.</p></div></div>
           <div class="drawer-grid">
             <div class="drawer-field"><span>Status</span><strong>${escapeHtml(customer.admin_customer_status || "Standard")}</strong></div>
@@ -2453,7 +2508,7 @@ function renderCustomerProfile(customer, plans = []) {
             <div class="drawer-field"><span>Updated</span><strong>${escapeHtml(formatDate(customer.updated_at || customer.created_at))}</strong></div>
           </div>
         </section>
-        <section class="admin-card">
+        <section class="admin-card" id="customerTimeline">
           <div class="section-head"><div><h2>Editable support fields</h2><p>Use the existing customer record editor for lifetime access, notes and flags.</p></div></div>
           <div class="section-actions">
             <button class="admin-button" type="button" data-action="open-customer" data-email="${escapeAttr(customer.email)}" ${protectedDisabled}>Open support drawer</button>
@@ -2462,11 +2517,11 @@ function renderCustomerProfile(customer, plans = []) {
         </section>
       </div>
       <div class="dashboard-stack">
-        <section class="admin-card">
+        <section class="admin-card" id="customerSupport">
           <div class="section-head"><div><h2>Timeline</h2><p>Customer history and operational events.</p></div></div>
           ${customerTimeline(timeline)}
         </section>
-        <section class="admin-card">
+        <section class="admin-card" id="customerNotes">
           <div class="section-head"><div><h2>Support / GDPR / security</h2><p>Linked records across the operational workspaces.</p></div></div>
           <div class="drawer-section-grid">
             <section class="drawer-section-card"><h3>Support cases</h3>${supportCases.length ? `<p>${supportCases.length} linked cases available.</p>` : "<p>No support cases recorded.</p>"}</section>
@@ -4416,14 +4471,15 @@ function renderSystemSettings(data = {}) {
   ];
 
   container.innerHTML = `<div class="system-settings-shell">
-    <div class="section-head">
+    <div class="settings-page-head">
+      <span class="settings-page-icon" aria-hidden="true">${icon("settings")}</span>
       <div>
         <h2>System Settings</h2>
         <p>Configure platform-wide settings, branding, integrations and compliance.</p>
       </div>
     </div>
     <div class="settings-category-tabs" id="systemSettingsTabs">
-      ${tabs.map((t) => `<button class="settings-category-tab${t.id === state.systemSettingsTab ? " active" : ""}" data-tab="${t.id}">${t.label}</button>`).join("")}
+      ${tabs.map((t) => `<button class="settings-category-tab${t.id === state.systemSettingsTab ? " active" : ""}" data-tab="${t.id}"><span aria-hidden="true">${icon(t.icon)}</span>${t.label}</button>`).join("")}
     </div>
     <div id="systemSettingsTabContent"></div>
   </div>`;
