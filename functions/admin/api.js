@@ -395,6 +395,15 @@ async function safeAlter(DB, sql) {
   }
 }
 
+export async function getProfilesColumns(DB) {
+  try {
+    const info = await all(DB, "PRAGMA table_info(profiles)");
+    return new Set(info.map((row) => row.name));
+  } catch {
+    return new Set();
+  }
+}
+
 async function ensureTables(DB, env) {
   await DB.prepare(`
     CREATE TABLE IF NOT EXISTS profiles (
@@ -3040,15 +3049,16 @@ async function ensureBuilderPlatformTables(DB) {
 
 async function getBuilderPlatform(DB) {
   await ensureBuilderPlatformTables(DB);
-  const [builders, outputs, ledger, attempts, addons, trials] = await Promise.all([
+  const [builders, outputs, ledger, attempts, addons, trials, manual_adjustments] = await Promise.all([
     all(DB, `SELECT * FROM experience_builders ORDER BY category, token_cost, name`),
     all(DB, `SELECT * FROM builder_outputs ORDER BY created_at DESC LIMIT 250`),
     all(DB, `SELECT * FROM builder_token_ledger ORDER BY created_at DESC LIMIT 250`),
     all(DB, `SELECT * FROM builder_blocked_attempts ORDER BY created_at DESC LIMIT 250`),
     all(DB, `SELECT * FROM token_addon_packages ORDER BY package_type DESC, price_pence ASC`),
-    all(DB, `SELECT * FROM trial_access_tokens ORDER BY activated_at DESC LIMIT 250`)
+    all(DB, `SELECT * FROM trial_access_tokens ORDER BY activated_at DESC LIMIT 250`),
+    all(DB, `SELECT * FROM manual_token_adjustments ORDER BY created_at DESC LIMIT 250`).catch(() => [])
   ]);
-  return { builders, outputs, ledger, attempts, addons, trials };
+  return { builders, outputs, ledger, attempts, addons, trials, manual_adjustments };
 }
 
 async function saveBuilderAdmin(DB, body, identity) {
@@ -3105,15 +3115,21 @@ async function getSiteStatus(DB) {
 }
 
 async function getCustomerCrmList(DB) {
+  const cols = await getProfilesColumns(DB);
+  const suspended_at_col = cols.has("suspended_at") ? "p.suspended_at" : "NULL AS suspended_at";
+  const suspended_by_col = cols.has("suspended_by") ? "p.suspended_by" : "NULL AS suspended_by";
+  const reactivated_at_col = cols.has("reactivated_at") ? "p.reactivated_at" : "NULL AS reactivated_at";
+  const reactivated_by_col = cols.has("reactivated_by") ? "p.reactivated_by" : "NULL AS reactivated_by";
+
   const base = `SELECT p.email, p.email AS customer_id, p.verified_name, p.display_name, p.contact_email, p.phone,
     p.communication_preference, p.support_notes, p.admin_lifetime, p.admin_lifetime_plan_id,
-    p.admin_customer_status, p.admin_notes, p.created_at, p.updated_at, p.suspended_at, p.suspended_by,
-    p.reactivated_at, p.reactivated_by FROM profiles p ORDER BY p.updated_at DESC, p.created_at DESC LIMIT 1000`;
+    p.admin_customer_status, p.admin_notes, p.created_at, p.updated_at, ${suspended_at_col}, ${suspended_by_col},
+    ${reactivated_at_col}, ${reactivated_by_col} FROM profiles p ORDER BY p.updated_at DESC, p.created_at DESC LIMIT 1000`;
   try {
     return await all(DB, `SELECT p.email, p.email AS customer_id, p.verified_name, p.display_name, p.contact_email, p.phone,
       p.communication_preference, p.support_notes, p.admin_lifetime, p.admin_lifetime_plan_id,
-      p.admin_customer_status, p.admin_notes, p.created_at, p.updated_at, p.suspended_at, p.suspended_by,
-      p.reactivated_at, p.reactivated_by,
+      p.admin_customer_status, p.admin_notes, p.created_at, p.updated_at, ${suspended_at_col}, ${suspended_by_col},
+      ${reactivated_at_col}, ${reactivated_by_col},
       (SELECT s.plan_name FROM stripe_subscriptions s WHERE lower(s.customer_email)=lower(p.email) ORDER BY s.updated_at DESC LIMIT 1) AS subscription_plan,
       (SELECT s.status FROM stripe_subscriptions s WHERE lower(s.customer_email)=lower(p.email) ORDER BY s.updated_at DESC LIMIT 1) AS subscription_status,
       (SELECT s.trial_end FROM stripe_subscriptions s WHERE lower(s.customer_email)=lower(p.email) ORDER BY s.updated_at DESC LIMIT 1) AS trial_end,
@@ -3146,15 +3162,26 @@ export async function runSystemDiagnostics(DB, env, request) {
   const safeCheck = async (check) => {
     try { return await check(); } catch { return "Check failed"; }
   };
-  const [database, siteStatusApi, comingSoonApi, stripe, email, siteStatus] = await Promise.all([
+  const [database, siteStatusApi, comingSoonApi, stripe, email, siteStatus, cols] = await Promise.all([
     safeCheck(async () => { await DB.prepare("SELECT 1 AS ok").first(); return "Operational"; }),
     safeCheck(async () => { const response = await fetch(`${origin}/api/site-status`, { headers: { Accept: "application/json" }, cf: { cacheTtl: 0 } }); return response.ok || response.status === 503 ? "Operational" : "Unavailable"; }),
     safeCheck(async () => { const response = await fetch(`${origin}/api/coming-soon-config`, { headers: { Accept: "application/json" }, cf: { cacheTtl: 0 } }); return response.ok ? "Operational" : "Unavailable"; }),
     safeCheck(async () => { const settings = await getStripeSettings(DB, env); return settings.secretKey ? "Operational" : "Configuration required"; }),
     safeCheck(async () => { const settings = await getEmailSettings(DB, env); return settings.configured ? "Operational" : "Configuration required"; }),
-    safeCheck(async () => getSiteStatus(DB))
+    safeCheck(async () => getSiteStatus(DB)),
+    safeCheck(async () => await getProfilesColumns(DB))
   ]);
   const authConfigured = Boolean(env.ADMIN_OIDC_ISSUER && env.ADMIN_OIDC_CLIENT_ID && env.CUSTOMER_OIDC_ISSUER && env.CUSTOMER_OIDC_CLIENT_ID);
+
+  const requiredCols = ["suspended_at", "suspended_by", "suspension_reason", "reactivated_at", "reactivated_by", "reactivation_reason"];
+  let suspensionColumnsDiagnostic = "Unavailable";
+  if (cols instanceof Set) {
+    const missing = requiredCols.filter(col => !cols.has(col));
+    suspensionColumnsDiagnostic = missing.length === 0 ? "All 6 Columns Exist" : `${6 - missing.length} / 6 Exist (Missing: ${missing.join(", ")})`;
+  } else {
+    suspensionColumnsDiagnostic = "Failed to query database columns";
+  }
+
   return {
     checked_at: checkedAt,
     checks: {
@@ -3169,7 +3196,8 @@ export async function runSystemDiagnostics(DB, env, request) {
       environment: clean(env.ENVIRONMENT || env.ENVIRONMENT_NAME, 80) || "Unavailable",
       version: clean(env.APP_VERSION || env.CF_PAGES_COMMIT_SHA, 100) || "Unavailable",
       d1_binding_detected: DB ? "Yes" : "No",
-      site_status: ["normal", "coming_soon", "maintenance"].includes(siteStatus) ? siteStatus : "Unavailable"
+      site_status: ["normal", "coming_soon", "maintenance"].includes(siteStatus) ? siteStatus : "Unavailable",
+      suspension_columns: suspensionColumnsDiagnostic
     }
   };
 }
@@ -3199,6 +3227,9 @@ export async function onRequest(context) {
       if (section === "operations") return json({ admin: adminContext, operations: await getOverview(env.DB) });
       if (section === "status") return json({ admin: adminContext, status: await fetch(`${new URL(request.url).origin}/api/status`, { headers: { "Accept": "application/json" }, cf: { cacheTtl: 0 } }).then((response) => response.json()) });
       if (section === "analytics") return json({ admin: adminContext, analytics: await getAnalytics(env.DB) });
+      if (section === "builders" || section === "credits" || section === "usage" || section === "addons") {
+        return json({ admin: adminContext, platform: await getBuilderPlatform(env.DB) });
+      }
       if (section === "audit") {
         return json({
           admin: adminContext,
@@ -3220,6 +3251,14 @@ export async function onRequest(context) {
       if (section === "customer") {
         const email = clean(url.searchParams.get("email"), 254);
         if (!email) return json({ error: "Customer email is required." }, 400);
+        const cols = await getProfilesColumns(env.DB);
+        const suspended_at_sel = cols.has("suspended_at") ? "suspended_at" : "NULL AS suspended_at";
+        const suspended_by_sel = cols.has("suspended_by") ? "suspended_by" : "NULL AS suspended_by";
+        const suspension_reason_sel = cols.has("suspension_reason") ? "suspension_reason" : "NULL AS suspension_reason";
+        const reactivated_at_sel = cols.has("reactivated_at") ? "reactivated_at" : "NULL AS reactivated_at";
+        const reactivated_by_sel = cols.has("reactivated_by") ? "reactivated_by" : "NULL AS reactivated_by";
+        const reactivation_reason_sel = cols.has("reactivation_reason") ? "reactivation_reason" : "NULL AS reactivation_reason";
+
         const [customer, flags, timeline, supportCases, notifications, pins, plans, notes, billing, builderOutputs, tokenLedger, savedItems, customerEnquiries, dataRequests, customerAudit] = await Promise.all([
           env.DB.prepare(`
             SELECT
@@ -3237,8 +3276,8 @@ export async function onRequest(context) {
               created_at,
               updated_at,
               admin_updated_at,
-              suspended_at, suspended_by, suspension_reason,
-              reactivated_at, reactivated_by, reactivation_reason
+              ${suspended_at_sel}, ${suspended_by_sel}, ${suspension_reason_sel},
+              ${reactivated_at_sel}, ${reactivated_by_sel}, ${reactivation_reason_sel}
             FROM profiles
             WHERE lower(email) = lower(?)
           `).bind(email).first(),
@@ -3615,17 +3654,26 @@ export async function onRequest(context) {
           await writeAudit(env.DB, identity, "stripe_portal_open", "profiles", email, `Opened Stripe Billing Portal for ${email}.`, {});
           return json({ url: portalUrl });
         }
+        const cols = await getProfilesColumns(env.DB);
         if (body.action === "suspend_account" || body.action === "reactivate_account") {
           const reason = clean(body.reason, 1000);
           const note = clean(body.internal_note, 2000);
           if (!reason) return json({ error: `${body.action === "suspend_account" ? "Suspension" : "Reactivation"} reason is required.` }, 400);
           const requestId = clean(request.headers.get("cf-ray") || request.headers.get("x-request-id"), 120) || crypto.randomUUID();
           if (body.action === "suspend_account") {
-            await env.DB.prepare(`UPDATE profiles SET admin_customer_status='Suspended', suspended_at=CURRENT_TIMESTAMP, suspended_by=?, suspension_reason=?, admin_notes=CASE WHEN ?='' THEN admin_notes ELSE ? END, admin_updated_at=CURRENT_TIMESTAMP, updated_at=CURRENT_TIMESTAMP WHERE lower(email)=lower(?)`).bind(identity.email, reason, note, note, email).run();
+            if (cols.has("suspended_at") && cols.has("suspended_by") && cols.has("suspension_reason")) {
+              await env.DB.prepare(`UPDATE profiles SET admin_customer_status='Suspended', suspended_at=CURRENT_TIMESTAMP, suspended_by=?, suspension_reason=?, admin_notes=CASE WHEN ?='' THEN admin_notes ELSE ? END, admin_updated_at=CURRENT_TIMESTAMP, updated_at=CURRENT_TIMESTAMP WHERE lower(email)=lower(?)`).bind(identity.email, reason, note, note, email).run();
+            } else {
+              await env.DB.prepare(`UPDATE profiles SET admin_customer_status='Suspended', admin_notes=CASE WHEN ?='' THEN admin_notes ELSE ? END, admin_updated_at=CURRENT_TIMESTAMP, updated_at=CURRENT_TIMESTAMP WHERE lower(email)=lower(?)`).bind(note, note, email).run();
+            }
             await env.DB.prepare(`INSERT INTO customer_timeline_events (id,email,event_type,title,detail,actor_type,actor_email,metadata) VALUES (?,?, 'account_suspended','Account suspended','Customer access was suspended by an authorised administrator.','admin',?,?)`).bind(crypto.randomUUID(), email, identity.email, JSON.stringify({ request_id: requestId })).run();
             await writeAudit(env.DB, identity, "customer_account_suspended", "profiles", email, `Suspended customer account ${email}.`, { reason, result: "success", request_id: requestId });
           } else {
-            await env.DB.prepare(`UPDATE profiles SET admin_customer_status='Active', reactivated_at=CURRENT_TIMESTAMP, reactivated_by=?, reactivation_reason=?, admin_notes=CASE WHEN ?='' THEN admin_notes ELSE ? END, admin_updated_at=CURRENT_TIMESTAMP, updated_at=CURRENT_TIMESTAMP WHERE lower(email)=lower(?)`).bind(identity.email, reason, note, note, email).run();
+            if (cols.has("reactivated_at") && cols.has("reactivated_by") && cols.has("reactivation_reason")) {
+              await env.DB.prepare(`UPDATE profiles SET admin_customer_status='Active', reactivated_at=CURRENT_TIMESTAMP, reactivated_by=?, reactivation_reason=?, admin_notes=CASE WHEN ?='' THEN admin_notes ELSE ? END, admin_updated_at=CURRENT_TIMESTAMP, updated_at=CURRENT_TIMESTAMP WHERE lower(email)=lower(?)`).bind(identity.email, reason, note, note, email).run();
+            } else {
+              await env.DB.prepare(`UPDATE profiles SET admin_customer_status='Active', admin_notes=CASE WHEN ?='' THEN admin_notes ELSE ? END, admin_updated_at=CURRENT_TIMESTAMP, updated_at=CURRENT_TIMESTAMP WHERE lower(email)=lower(?)`).bind(note, note, email).run();
+            }
             await env.DB.prepare(`INSERT INTO customer_timeline_events (id,email,event_type,title,detail,actor_type,actor_email,metadata) VALUES (?,?, 'account_reactivated','Account reactivated','Customer access was restored by an authorised administrator.','admin',?,?)`).bind(crypto.randomUUID(), email, identity.email, JSON.stringify({ request_id: requestId })).run();
             await writeAudit(env.DB, identity, "customer_account_reactivated", "profiles", email, `Reactivated customer account ${email}.`, { reason, result: "success", request_id: requestId });
           }
@@ -3656,6 +3704,13 @@ export async function onRequest(context) {
           await writeAudit(env.DB, identity, "customer_notification_send", "customer_notifications", email, `Sent customer notification to ${email}.`, { title: notificationPayload.title, category: notificationPayload.category });
           return json({ notifications, saved: true, notification: { email } });
         }
+        const suspended_at_sel = cols.has("suspended_at") ? "suspended_at" : "NULL AS suspended_at";
+        const suspended_by_sel = cols.has("suspended_by") ? "suspended_by" : "NULL AS suspended_by";
+        const suspension_reason_sel = cols.has("suspension_reason") ? "suspension_reason" : "NULL AS suspension_reason";
+        const reactivated_at_sel = cols.has("reactivated_at") ? "reactivated_at" : "NULL AS reactivated_at";
+        const reactivated_by_sel = cols.has("reactivated_by") ? "reactivated_by" : "NULL AS reactivated_by";
+        const reactivation_reason_sel = cols.has("reactivation_reason") ? "reactivation_reason" : "NULL AS reactivation_reason";
+
         const [customer, flags, timeline, supportCases, notifications, pins, plans, notes, billing] = await Promise.all([
           DB.prepare(`
             SELECT
@@ -3672,8 +3727,8 @@ export async function onRequest(context) {
               admin_customer_status,
               created_at,
               updated_at,
-              admin_updated_at
-              ,suspended_at, suspended_by, suspension_reason, reactivated_at, reactivated_by, reactivation_reason
+              admin_updated_at,
+              ${suspended_at_sel}, ${suspended_by_sel}, ${suspension_reason_sel}, ${reactivated_at_sel}, ${reactivated_by_sel}, ${reactivation_reason_sel}
             FROM profiles
             WHERE lower(email) = lower(?)
           `).bind(email).first(),

@@ -15,7 +15,7 @@ const state = {
   planDirty: false,
   planSaving: false,
   initialWorkspaceApplied: false,
-  systemSettingsTab: "sitestatus"
+  systemSettingsTab: "general"
 };
 
 const sectionTitles = {
@@ -4377,6 +4377,17 @@ function renderSystemSettings(data = {}) {
   const csConfig = data.coming_soon_config || {};
   const csSettings = data.coming_soon || {};
 
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlTab = urlParams.get("tab") || urlParams.get("systemSettingsTab");
+  const supportedTabs = new Set(["general", "stripe", "products", "plans", "email", "compliance", "appearance", "sitestatus", "troubleshooting"]);
+  if (urlTab && supportedTabs.has(urlTab)) {
+    state.systemSettingsTab = urlTab;
+  } else {
+    if (!state.systemSettingsTab) {
+      state.systemSettingsTab = "general";
+    }
+  }
+
   const tabs = [
     { id: "general", label: "General", icon: "settings" },
     { id: "stripe", label: "Stripe", icon: "card" },
@@ -4397,7 +4408,7 @@ function renderSystemSettings(data = {}) {
       </div>
     </div>
     <div class="settings-category-tabs" id="systemSettingsTabs">
-      ${tabs.map((t, i) => `<button class="settings-category-tab${i === 0 ? " active" : ""}" data-tab="${t.id}">${t.label}</button>`).join("")}
+      ${tabs.map((t) => `<button class="settings-category-tab${t.id === state.systemSettingsTab ? " active" : ""}" data-tab="${t.id}">${t.label}</button>`).join("")}
     </div>
     <div id="systemSettingsTabContent"></div>
   </div>`;
@@ -4560,7 +4571,7 @@ function renderTroubleshootingTab(container, data) {
       const diagnostics = response.diagnostics || {}; const checks = diagnostics.checks || {}; const technical = diagnostics.technical || {};
       const labels = [["Database connection",checks.database],["Public Site Status API",checks.site_status_api],["Coming Soon configuration API",checks.coming_soon_api],["Authentication configuration",checks.authentication],["Stripe configuration",checks.stripe],["Email configuration",checks.email]];
       container.querySelector("#diagnosticsChecks").innerHTML = labels.map(([label,value]) => stat(label, value || "Unavailable")).join("");
-      container.querySelector("#diagnosticsTechnical").innerHTML = [["Environment",technical.environment],["Application version / commit",technical.version],["D1 binding detected",technical.d1_binding_detected],["Current public site mode",technical.site_status],["Last diagnostics run",formatDate(diagnostics.checked_at)]].map(([label,value]) => `<div class="drawer-field"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value || "Unavailable")}</strong></div>`).join("");
+      container.querySelector("#diagnosticsTechnical").innerHTML = [["Environment",technical.environment],["Application version / commit",technical.version],["D1 binding detected",technical.d1_binding_detected],["Profiles suspension columns",technical.suspension_columns],["Current public site mode",technical.site_status],["Last diagnostics run",formatDate(diagnostics.checked_at)]].map(([label,value]) => `<div class="drawer-field"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value || "Unavailable")}</strong></div>`).join("");
       message.className = "admin-success"; message.textContent = "Diagnostics completed. No secrets or personal data were returned.";
     } catch (error) { message.textContent = error.message || "Diagnostics could not be completed."; }
     finally { button.disabled = false; button.textContent = "Run Diagnostics"; }
