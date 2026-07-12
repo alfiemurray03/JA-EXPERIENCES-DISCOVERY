@@ -13,6 +13,12 @@ test("shared shell initialises both before and after DOMContentLoaded", async ()
   assert.match(loader, /\/assets\/includes\/footer\.html/);
 });
 
+test("an incomplete Cookiebot API cannot abort shared shell loading", async () => {
+  const loader = await readFile(new URL("public/assets/js/site-shell.js", root), "utf8");
+  assert.match(loader, /typeof window\.Cookiebot\?\.renew !== "function"/);
+  assert.doesNotMatch(loader, /!window\.Cookiebot\) return;\s*renewalRequested = true;\s*window\.Cookiebot\.renew\(\)/);
+});
+
 test("representative root and nested public pages provide shared shell targets and loader", async () => {
   for (const path of ["public/index.html", "public/pricing/index.html", "public/destinations/london/index.html", "public/legal/privacy/index.html", "public/login/index.html"]) {
     const html = await readFile(new URL(path, root), "utf8");

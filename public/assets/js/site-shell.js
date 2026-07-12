@@ -20,7 +20,7 @@ async function initialiseSiteShell() {
     const completed = localStorage.getItem(CONSENT_MARKER);
     let renewalRequested = false;
     const requestRenewal = () => {
-      if (renewalRequested || completed === CONSENT_VERSION || !window.Cookiebot) return;
+      if (renewalRequested || completed === CONSENT_VERSION || typeof window.Cookiebot?.renew !== "function") return;
       renewalRequested = true;
       window.Cookiebot.renew();
     };
