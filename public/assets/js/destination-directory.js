@@ -19,6 +19,14 @@ function titleFromSlug(slug) {
   return slug.split("-").map(part => part.charAt(0).toUpperCase() + part.slice(1)).join(" ");
 }
 
+const destinationImageSlugs = new Set(["australia", "canada", "france", "greece", "italy", "japan", "morocco", "portugal", "spain", "united-arab-emirates", "united-kingdom", "united-states"]);
+function destinationImage(destination) {
+  if (destinationImageSlugs.has(destination.slug)) return `/assets/images/destinations/${destination.slug}.jpg`;
+  if (destination.area === "Europe") return "/assets/images/destinations/europe.jpg";
+  if (destination.area === "UK") return "/assets/images/destinations/united-kingdom.jpg";
+  return destination.type === "Island" ? "/assets/images/destinations/oceania.jpg" : "/assets/images/destinations/travel.jpg";
+}
+
 function classifyDestination(destination) {
   const slug = destination.slug;
   const name = destination.name || titleFromSlug(slug);
@@ -79,7 +87,8 @@ function renderDestinations() {
 
   grid.innerHTML = matches.length ? matches.map(destination => `
     <a class="destination-card" href="/destinations/${escapeHtml(destination.slug)}/">
-      <div>
+      <img class="destination-card-image" src="${escapeHtml(destinationImage(destination))}" alt="" loading="lazy">
+      <div class="destination-card-body">
         <div class="destination-card-meta">
           <span>${escapeHtml(destination.type)}</span>
           <span>${escapeHtml(destination.area)}</span>
@@ -88,7 +97,7 @@ function renderDestinations() {
         <h3>${escapeHtml(destination.name)}</h3>
         <p>${escapeHtml(destination.description)}</p>
       </div>
-      <span class="destination-card-action">${destination.type === "Country" ? "Open board" : "View guide"}</span>
+      <span class="destination-card-action">View guide →</span>
     </a>`).join("") : `
     <div class="saas-panel saas-empty">
       <h3>No destination boards found</h3>

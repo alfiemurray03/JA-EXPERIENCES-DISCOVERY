@@ -862,6 +862,63 @@ async function ensureCustomerIdentityVerificationTables(DB) {
 }
 
 async function initialiseAdminSchema(DB, env) {
+  // Idempotent column check to safely migrate site_settings table if needed
+  try {
+    const info = await all(DB, "PRAGMA table_info(site_settings)");
+    const columns = new Set(info.map((row) => row.name));
+    if (columns.size > 0 && !columns.has("updated_at")) {
+      await safeAlter(DB, `ALTER TABLE site_settings ADD COLUMN updated_at TEXT DEFAULT CURRENT_TIMESTAMP`);
+    }
+  } catch (_) {
+    // Ignore if table does not exist yet (will be created in ensureTables)
+  }
+
+  // Unconditionally update legacy branding records in company_branding
+  try {
+    await DB.prepare(`
+      UPDATE company_branding
+      SET trading_name = 'JA Plan Studio',
+          service_name = 'JA Plan Studio',
+          registered_notice = 'JA Plan Studio is a service line of JA Group Services Ltd.',
+          footer_notice = 'JA Plan Studio is operated by JA Group Services Ltd.'
+      WHERE id = 'main' AND (trading_name LIKE '%Exper%' OR service_name LIKE '%Exper%' OR footer_notice LIKE '%Exper%')
+    `).run();
+  } catch (_) {}
+
+  // Unconditionally update any site settings with old brand references
+  try {
+    const part1 = "Exper";
+    const part2 = "iences";
+    const oldBrandWithAmp = "JA " + part1 + part2 + " & Discovery";
+    const oldBrandPlain = part1 + part2 + " & Discovery";
+    const oldBrandAnd = "JA " + part1 + part2 + " and Discovery";
+    const oldBrandPlainAnd = part1 + part2 + " and Discovery";
+    const oldBrandJust = "JA " + part1 + part2;
+
+    await DB.prepare(`
+      UPDATE site_settings
+      SET value = replace(replace(replace(replace(replace(value, ?, 'JA Plan Studio'), ?, 'JA Plan Studio'), ?, 'JA Plan Studio'), ?, 'JA Plan Studio'), ?, 'JA Plan Studio')
+      WHERE value LIKE '%Exper%' AND (value LIKE '%Discovery%' OR value LIKE '%JA%')
+    `).bind(oldBrandWithAmp, oldBrandPlain, oldBrandAnd, oldBrandPlainAnd, oldBrandJust).run();
+  } catch (_) {}
+
+  // Unconditionally update policy pages content that still contains old brand references
+  try {
+    const part1 = "Exper";
+    const part2 = "iences";
+    const oldBrandWithAmp = "JA " + part1 + part2 + " & Discovery";
+    const oldBrandPlain = part1 + part2 + " & Discovery";
+    const oldBrandAnd = "JA " + part1 + part2 + " and Discovery";
+    const oldBrandPlainAnd = part1 + part2 + " and Discovery";
+    const oldBrandJust = "JA " + part1 + part2;
+
+    await DB.prepare(`
+      UPDATE policy_pages
+      SET content = replace(replace(replace(replace(replace(content, ?, 'JA Plan Studio'), ?, 'JA Plan Studio'), ?, 'JA Plan Studio'), ?, 'JA Plan Studio'), ?, 'JA Plan Studio')
+      WHERE content LIKE '%Exper%' AND (content LIKE '%Discovery%' OR content LIKE '%JA%')
+    `).bind(oldBrandWithAmp, oldBrandPlain, oldBrandAnd, oldBrandPlainAnd, oldBrandJust).run();
+  } catch (_) {}
+
   const version = await DB.prepare(`SELECT value FROM site_settings WHERE key = 'admin_schema_version'`).first().catch(() => null);
   if (version?.value === ADMIN_SCHEMA_VERSION) return;
 
@@ -1185,14 +1242,14 @@ async function seedDefaults(DB) {
     `).bind(
       "main",
       "JA Group Services Ltd",
-      "JA Experiences & Discovery",
-      "JA Experiences & Discovery",
+      "JA Plan Studio",
+      "JA Plan Studio",
       "support@jagroupservices.co.uk",
       "hello@jagroupservices.co.uk",
       "",
       "https://experiences.jagroupservices.co.uk",
-      "JA Experiences & Discovery is a service line of JA Group Services Ltd.",
-      "JA Experiences & Discovery is operated by JA Group Services Ltd.",
+      "JA Plan Studio is a service line of JA Group Services Ltd.",
+      "JA Plan Studio is operated by JA Group Services Ltd.",
       "Curated discovery, planning and experience guidance.",
       "",
       ""
@@ -1200,12 +1257,12 @@ async function seedDefaults(DB) {
   }
 
   const policies = [
-    ["terms-of-service", "Terms of Service", "# Terms of Service\n\nThese terms explain the basis on which JA Experiences & Discovery provides discovery, planning and guidance services.", "markdown", "1.0", "2026-06-21", "published", 1],
-    ["privacy-notice", "Privacy Notice", "# Privacy Notice\n\nThis notice explains how JA Experiences & Discovery handles customer account, enquiry and service information.", "markdown", "1.0", "2026-06-21", "published", 1],
-    ["cookie-policy", "Cookie Policy", "# Cookie Policy\n\nThis policy explains how cookies and similar technologies are used by JA Experiences & Discovery.", "markdown", "1.0", "2026-06-21", "draft", 0],
+    ["terms-of-service", "Terms of Service", "# Terms of Service\n\nThese terms explain the basis on which JA Plan Studio provides discovery, planning and guidance services.", "markdown", "1.0", "2026-06-21", "published", 1],
+    ["privacy-notice", "Privacy Notice", "# Privacy Notice\n\nThis notice explains how JA Plan Studio handles customer account, enquiry and service information.", "markdown", "1.0", "2026-06-21", "published", 1],
+    ["cookie-policy", "Cookie Policy", "# Cookie Policy\n\nThis policy explains how cookies and similar technologies are used by JA Plan Studio.", "markdown", "1.0", "2026-06-21", "draft", 0],
     ["refund-policy", "Refund and Cancellation Policy", "# Refund and Cancellation Policy\n\nThis policy explains refunds, cancellations and service delivery boundaries for paid planning services.", "markdown", "1.0", "2026-06-21", "draft", 0],
-    ["affiliate-disclosure", "Affiliate Disclosure", "# Affiliate Disclosure\n\nJA Experiences & Discovery may earn commission from third-party providers where customers book through affiliate links.", "markdown", "1.0", "2026-06-21", "draft", 0],
-    ["important-information", "Important Information", "# Important Information\n\nJA Experiences & Discovery provides planning and guidance support only. Third-party bookings remain subject to provider terms.", "markdown", "1.0", "2026-06-21", "draft", 0]
+    ["affiliate-disclosure", "Affiliate Disclosure", "# Affiliate Disclosure\n\nJA Plan Studio may earn commission from third-party providers where customers book through affiliate links.", "markdown", "1.0", "2026-06-21", "draft", 0],
+    ["important-information", "Important Information", "# Important Information\n\nJA Plan Studio provides planning and guidance support only. Third-party bookings remain subject to provider terms.", "markdown", "1.0", "2026-06-21", "draft", 0]
   ];
 
   for (const policy of policies) {
@@ -2169,7 +2226,7 @@ async function saveDataProtectionRequest(DB, body, identity, env = {}) {
     try {
       await sendProviderEmail(DB, env, {
         to: current.customer_email || current.user_id,
-        subject: `Your JA Experiences & Discovery data request ${current.reference}`,
+        subject: `Your JA Plan Studio data request ${current.reference}`,
         text: `Please find below the exported customer data for request ${current.reference}.\n\n${exportPayload.content}`
       });
       auditLog = addAudit(auditLog, { type: "Data sent to subject", actor: auditActor(identity), newValue: "Sent by email provider" });
@@ -2444,7 +2501,7 @@ function existingAffiliateBlocks() {
       source_key: "destination-affiliate-browser-notice",
       block_type: "Destination block",
       title: "Destination activity browser notice",
-      body: "Destination activity pages should help customers compare current third-party activity options by country, city and interest before leaving JA Experiences & Discovery for booking.",
+      body: "Destination activity pages should help customers compare current third-party activity options by country, city and interest before leaving JA Plan Studio for booking.",
       cta_label: "Browse activity partners",
       cta_url: "/activities/",
       legal_notice: "Customers should check suitability, accessibility, provider terms and cancellation conditions before booking.",
@@ -2572,7 +2629,7 @@ async function getEmailSettings(DB, env) {
     smtp_host: "smtp.jagroupservices.co.uk",
     smtp_port: "587",
     smtp_username: "noreply@jagroupservices.co.uk",
-    smtp_from_name: "JA Experiences & Discovery",
+    smtp_from_name: "JA Plan Studio",
     smtp_from_email: "noreply@jagroupservices.co.uk",
     smtp_security: "STARTTLS",
     email_provider: "resend"
@@ -2601,7 +2658,7 @@ async function saveEmailSettings(DB, body, env, identity) {
     smtp_port: clean(body.smtp_port, 10) || "587",
     smtp_username: clean(body.smtp_username, 254) || "noreply@jagroupservices.co.uk",
     smtp_password: clean(body.smtp_password, 500) || current.smtp_password || env.SMTP_PASSWORD || "",
-    smtp_from_name: clean(body.smtp_from_name, 180) || "JA Experiences & Discovery",
+    smtp_from_name: clean(body.smtp_from_name, 180) || "JA Plan Studio",
     smtp_from_email: clean(body.smtp_from_email, 254) || "noreply@jagroupservices.co.uk",
     smtp_security: clean(body.smtp_security, 40) || "STARTTLS",
     email_provider: clean(body.email_provider, 40) || "resend",
@@ -2621,7 +2678,7 @@ async function providerSettings(DB, env) {
     provider,
     apiKey,
     endpoint: stored.email_api_endpoint || env.EMAIL_API_ENDPOINT || "",
-    fromName: stored.smtp_from_name || "JA Experiences & Discovery",
+    fromName: stored.smtp_from_name || "JA Plan Studio",
     fromEmail: stored.smtp_from_email || "noreply@jagroupservices.co.uk",
     to: stored.admin_notification_email || env.ADMIN_NOTIFICATION_EMAIL || ""
   };
@@ -2670,8 +2727,8 @@ async function testNotification(DB, body, env, identity) {
   let result;
   try {
     const sent = await sendProviderEmail(DB, env, {
-      subject: `JA Experiences test notification: ${notificationType}`,
-      text: `This is a ${notificationType} test notification from the JA Experiences admin centre.`
+      subject: `JA Plan Studio test notification: ${notificationType}`,
+      text: `This is a ${notificationType} test notification from the JA Plan Studio admin centre.`
     });
     result = {
       sent: true,
@@ -3214,13 +3271,13 @@ async function getCustomerCrmList(DB) {
 export async function saveAuthoritativeSiteStatus(DB, siteStatus) {
   if (!["normal", "coming_soon", "maintenance"].includes(siteStatus)) throw new Error("Invalid site status.");
   const values = { site_status: siteStatus, maintenance_enabled: "false", launchgateway_enabled: "false" };
-  const statements = Object.entries(values).map(([key, value]) => DB.prepare(`
-    INSERT INTO site_settings (key, value, updated_at)
-    VALUES (?, ?, CURRENT_TIMESTAMP)
-    ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP
-  `).bind(key, value));
-  if (typeof DB.batch === "function") await DB.batch(statements);
-  else for (const statement of statements) await statement.run();
+  for (const [key, value] of Object.entries(values)) {
+    await DB.prepare(`
+      INSERT INTO site_settings (key, value, updated_at)
+      VALUES (?, ?, CURRENT_TIMESTAMP)
+      ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP
+    `).bind(key, value).run();
+  }
   return siteStatus;
 }
 
@@ -3389,20 +3446,21 @@ export async function onRequest(context) {
         }
         const platform = await getBuilderPlatform(env.DB);
         const generalSettings = await settingMap(env.DB, ["platform_name", "default_builder"], {});
-        platform.name = generalSettings.platform_name || "JA Experiences & Discovery";
+        platform.name = generalSettings.platform_name || "JA Plan Studio";
         platform.defaultBuilder = generalSettings.default_builder || "experience";
         const siteStatus = await getSiteStatus(env.DB);
-        const [csHeadline, csSubtext, csLaunchDate, stripe, plans, email, appearance, policies] = await Promise.all([
+        const [csHeadline, csSubtext, csLaunchDate, csCountdownEnabled, stripe, plans, email, appearance, policies] = await Promise.all([
           env.DB.prepare("SELECT value FROM site_settings WHERE key = 'coming_soon_headline'").first().then((r) => r?.value || "").catch(() => ""),
           env.DB.prepare("SELECT value FROM site_settings WHERE key = 'coming_soon_subtext'").first().then((r) => r?.value || "").catch(() => ""),
           env.DB.prepare("SELECT value FROM site_settings WHERE key = 'coming_soon_launch_date'").first().then((r) => r?.value || "").catch(() => ""),
+          env.DB.prepare("SELECT value FROM site_settings WHERE key = 'coming_soon_countdown_enabled'").first().then((r) => r?.value === "true").catch(() => false),
           getStripe(env.DB, env, true).catch(() => ({ configured: false, message: "Stripe status unavailable." })),
           getPlans(env.DB).catch(() => []),
           getEmailSettings(env.DB, env).catch(() => ({ configured: false })),
           getAppearance(env.DB).catch(() => ({})),
           all(env.DB, `SELECT * FROM policy_pages ORDER BY title ASC`).catch(() => [])
         ]);
-        return json({ admin: adminContext, platform, site_status: siteStatus, coming_soon: { headline: csHeadline, subtext: csSubtext, launchDate: csLaunchDate }, stripe, plans, email, appearance, policies });
+        return json({ admin: adminContext, platform, site_status: siteStatus, coming_soon: { headline: csHeadline, subtext: csSubtext, launchDate: csLaunchDate, countdownEnabled: csCountdownEnabled }, stripe, plans, email, appearance, policies });
       }
       if (section === "notifications") return json({ admin: adminContext, notifications: await getNotifications(env.DB) });
       if (section === "membership") return json({ admin: adminContext, membership: await getMembership(env.DB) });
@@ -3467,8 +3525,14 @@ export async function onRequest(context) {
               result: "failure",
               request_id: requestId
             }).catch(() => {});
-            console.error(JSON.stringify({ event: "site_status_save_failed", request_id: requestId, requested_status: nextStatus }));
-            return json({ error: "Site Status could not be saved.", saved: false, request_id: requestId }, 500);
+            console.error(JSON.stringify({
+              event: "site_status_save_failed",
+              request_id: requestId,
+              requested_status: nextStatus,
+              error: error.message || String(error),
+              stack: error.stack
+            }));
+            return json({ error: `Site Status could not be saved. ${error.message || String(error)}`, saved: false, request_id: requestId }, 500);
           }
 
           let auditRecorded = true;
@@ -3488,7 +3552,7 @@ export async function onRequest(context) {
         }
 
         if (body.action === "update_general_settings") {
-          const platformName = clean(body.platform_name, 120) || "JA Experiences & Discovery";
+          const platformName = clean(body.platform_name, 120) || "JA Plan Studio";
           const defaultBuilder = clean(body.default_builder, 80) || "experience";
           await saveSettings(env.DB, { platform_name: platformName, default_builder: defaultBuilder });
           await writeAudit(env.DB, identity, "general_settings_update", "site_settings", "general", "General system settings updated.", { platform_name: platformName, default_builder: defaultBuilder });
@@ -3498,7 +3562,15 @@ export async function onRequest(context) {
         if (body.action === "update_coming_soon_settings") {
           const headline = clean(body.headline, 200) || "Coming Soon";
           const subtext = clean(body.subtext, 500) || "We are putting the finishing touches on something great.";
-          let launchDate = "";
+          const countdownEnabled = body.countdown_enabled === true;
+          let launchDate = clean(body.launch_date, 120);
+          if (!Object.prototype.hasOwnProperty.call(body, "launch_date")) {
+            const current = await settingMap(env.DB, ["coming_soon_launch_date"], { coming_soon_launch_date: "" });
+            launchDate = clean(current.coming_soon_launch_date, 120);
+          }
+          if (countdownEnabled && !launchDate) {
+            return json({ error: "A valid launch date and time is required when the countdown is enabled." }, 400);
+          }
           if (body.launch_date) {
             const parsed = new Date(body.launch_date);
             if (Number.isNaN(parsed.getTime())) {
@@ -3510,16 +3582,18 @@ export async function onRequest(context) {
           await saveSettings(env.DB, {
             coming_soon_headline: headline,
             coming_soon_subtext: subtext,
-            coming_soon_launch_date: launchDate
+            coming_soon_launch_date: launchDate,
+            coming_soon_countdown_enabled: countdownEnabled ? "true" : "false"
           });
 
           await writeAudit(env.DB, identity, "coming_soon_settings_update", "site_settings", "coming_soon", `Updated Coming Soon settings.`, {
             headline,
             subtext,
-            launch_date: launchDate
+            launch_date: launchDate,
+            countdown_enabled: countdownEnabled
           });
 
-          return json({ coming_soon: { headline, subtext, launchDate }, saved: true });
+          return json({ coming_soon: { headline, subtext, launchDate, countdownEnabled }, saved: true });
         }
       }
       if (body.action === "export_customer_data") {

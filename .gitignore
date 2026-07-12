@@ -2,3 +2,6 @@ public/admin/index.backup.html
 .aider*
 .wrangler/
 .env
+node_modules/
+dist/
+.wrangler/

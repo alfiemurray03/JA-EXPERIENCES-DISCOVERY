@@ -9,25 +9,26 @@ document.addEventListener("DOMContentLoaded", async () => {
     return String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char]));
   }
 
-  const themeLink = document.querySelector('link[href^="/assets/css/theme.css"]') || document.createElement("link");
-  if (!themeLink.parentNode) {
-    themeLink.rel = "stylesheet";
-    themeLink.href = "/assets/css/theme.css?v=20260709-airo-2";
-    document.head.appendChild(themeLink);
-  }
+  const tailwindLink = document.querySelector('link[href^="/assets/css/tailwind.css"]') || document.createElement("link");
+  tailwindLink.rel = "stylesheet";
+  tailwindLink.href = "/assets/css/tailwind.css?v=20260711-launch-1";
+  if (!tailwindLink.parentNode) document.head.appendChild(tailwindLink);
 
-  const publicThemeLink = document.querySelector('link[href^="/assets/css/public-saas.css"]') || document.createElement("link");
-  publicThemeLink.rel = "stylesheet";
-  publicThemeLink.href = "/assets/css/public-saas.css?v=20260710-wordmark-unified-1";
-  if (!publicThemeLink.parentNode) {
-    document.head.appendChild(publicThemeLink);
-  }
-
-  const footerCssLink = document.querySelector('link[href^="/assets/includes/footer.css"]') || document.createElement("link");
-  footerCssLink.rel = "stylesheet";
-  footerCssLink.href = "/assets/includes/footer.css?v=20260710-footer-account-1";
-  if (!footerCssLink.parentNode) {
-    document.head.appendChild(footerCssLink);
+  const CONSENT_VERSION = "2026-07-launch-reset-1";
+  const CONSENT_MARKER = "ja-cookiebot-consent-version";
+  function setupCookiebotConsentRenewal() {
+    const completed = localStorage.getItem(CONSENT_MARKER);
+    let renewalRequested = false;
+    const requestRenewal = () => {
+      if (renewalRequested || completed === CONSENT_VERSION || !window.Cookiebot) return;
+      renewalRequested = true;
+      window.Cookiebot.renew();
+    };
+    const recordChoice = () => localStorage.setItem(CONSENT_MARKER, CONSENT_VERSION);
+    window.addEventListener("CookiebotOnLoad", requestRenewal, { once: true });
+    window.addEventListener("CookiebotOnAccept", recordChoice);
+    window.addEventListener("CookiebotOnDecline", recordChoice);
+    if (window.Cookiebot) requestRenewal();
   }
 
   function ensureFaviconLink(rel, attrs = {}) {
@@ -61,6 +62,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   applySiteFavicons();
+  setupCookiebotConsentRenewal();
 
   // Handle Theme Toggle
   const initTheme = () => {
@@ -93,8 +95,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function setupMobileMenu() {
-    const toggle = document.querySelector(".site-menu-toggle");
-    const nav = document.querySelector(".site-mobile-menu");
+    const toggle = document.querySelector("#siteMenuToggle") || document.querySelector(".menu-toggle");
+    const nav = document.querySelector("#siteMobileMenu") || document.querySelector("#siteNav");
     if (!toggle || !nav) return;
 
     const closeMobileMenu = () => {
@@ -219,8 +221,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   await Promise.all([
-    loadPartial(headerTarget, "/assets/includes/header.html?v=20260710-partners-1"),
-    loadPartial(footerTarget, "/assets/includes/footer.html?v=20260710-footer-account-1")
+    loadPartial(headerTarget, "/assets/includes/header.html?v=20260711-airo-nav-1"),
+    loadPartial(footerTarget, "/assets/includes/footer.html?v=20260711-tailwind-footer-1")
   ]);
 
   setupThemeToggle();

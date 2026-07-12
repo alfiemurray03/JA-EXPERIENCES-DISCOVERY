@@ -28,7 +28,7 @@ export function SignIn() {
       <div className="max-w-md w-full">
         <div className="card-base">
           <h1 className="text-2xl font-extrabold mb-2">Sign in</h1>
-          <p className="text-sm text-gray-500 mb-6">Sign in to JA Experiences & Discovery</p>
+          <p className="text-sm text-gray-500 mb-6">Sign in to JA Plan Studio</p>
           {error && <div className="alert-error mb-4">{error}</div>}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>

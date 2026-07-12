@@ -5,32 +5,28 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <meta name="theme-color" content="#f7f7f8">
-  <title>Admin Control Centre | JA Experiences &amp; Discovery</title>
-  <link rel="icon" href="/assets/favicons/favicon.svg?v=20260704-1" type="image/svg+xml">
-  <link rel="shortcut icon" href="/assets/favicons/favicon.ico?v=20260704-1" type="image/x-icon">
-  <link rel="apple-touch-icon" href="/assets/favicons/apple-touch-icon.png?v=20260704-1">
-  <link rel="manifest" href="/assets/favicons/site.webmanifest?v=20260704-1">
-  <link rel="stylesheet" href="/assets/css/theme.css?v=20260709-airo-2">
-  <link rel="stylesheet" href="/admin/assets/admin-saas-v2.css?v=20260711-tw-1">
-  <script id="Cookiebot" src="https://consent.cookiebot.com/uc.js" data-cbid="762d90c4-b030-45b0-9e70-c21806c665e3" data-blockingmode="auto" type="text/javascript"></script>
+  <title>JA Plan Studio Admin | Control Centre</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="stylesheet" href="/assets/css/tailwind.css?v=20260711-launch-1">
+
 </head>
 
 <body>
   <a class="skip-link" href="#adminPanel">Skip to administration content</a>
-  <div class="admin-shell">
-    <aside class="admin-sidebar" id="adminSidebar" aria-label="Administration navigation">
+  <div class="admin-shell min-h-screen bg-slate-50">
+    <aside class="admin-sidebar fixed inset-y-0 left-0 z-40 w-64 border-r border-slate-200 bg-white" id="adminSidebar" aria-label="Administration navigation">
       <div class="admin-brand">
-        <div class="admin-logo" aria-hidden="true">JA</div>
         <div class="admin-brand-copy">
-          <strong>Admin Portal</strong>
-          <span>JA Experiences &amp; Discovery</span>
+          <strong class="brand-wordmark" aria-label="JA Plan Studio Admin"><span class="brand-ja" aria-hidden="true">JA</span><span class="brand-name" aria-hidden="true">Plan Studio Admin</span></strong>
+          <span>Administration portal</span>
         </div>
         <button class="sidebar-close" id="sidebarCloseButton" type="button" aria-label="Close navigation">&times;</button>
       </div>
 
-      <div class="admin-user">
+      <div class="admin-person">
         <div class="avatar" aria-hidden="true">A</div>
-        <div class="admin-user-text">
+        <div class="admin-person-copy">
           <strong id="sidebarAdminName">Loading admin...</strong>
           <span id="sidebarAdminEmail">Checking secure access...</span>
         </div>
@@ -78,7 +74,7 @@
             <button data-section="roles" data-icon="users">Roles</button>
             <button data-section="sessions" data-icon="clock">Sessions</button>
             <button data-section="builders" data-icon="settings">Experience Builders</button>
-            <button data-section="plans" data-icon="plans">Plans &amp; Prices</button>
+            <button data-section="plans" data-icon="plans">Subscription Plans</button>
             <button data-section="credits" data-icon="card">Builder Usage Tokens</button>
             <button data-section="usage" data-icon="chart">Customer Usage</button>
             <button data-section="addons" data-icon="plans">Paid Add-Ons</button>
@@ -112,11 +108,11 @@
 
     <button class="sidebar-scrim" id="sidebarScrim" type="button" aria-label="Close navigation" tabindex="-1"></button>
 
-    <main class="admin-main">
-      <header class="admin-topbar">
-        <div class="admin-topbar-left">
+    <main class="admin-main lg:ml-64">
+      <header class="admin-topbar sticky top-0 z-30 border-b border-slate-200 bg-white">
+        <div class="topbar-leading">
           <button class="mobile-menu-button" id="mobileMenuButton" type="button" aria-label="Open navigation" aria-controls="adminSidebar" aria-expanded="false">
-            <span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>
+            <span></span><span></span><span></span>
           </button>
           <div class="admin-topbar-title">
             <strong>Overview</strong>
@@ -124,7 +120,7 @@
           </div>
         </div>
 
-        <div class="admin-topbar-actions">
+        <div class="topbar-actions">
           <button class="icon-button notification-button" type="button" aria-label="Notifications" title="Open notification centre">
             <span aria-hidden="true">&#9675;</span><span class="notification-dot"></span>
           </button>
@@ -148,8 +144,8 @@
       </header>
 
       <section class="admin-content" aria-live="polite">
-        <section id="adminPanel">
-          <div class="admin-loading"><div class="admin-spinner"></div></div>
+        <section class="mx-auto w-full max-w-7xl" id="adminPanel">
+          <div class="admin-loading">Loading admin control centre...</div>
         </section>
       </section>
     </main>
@@ -172,6 +168,6 @@
     </section>
   </div>
 
-  <script src="/assets/js/admin-control.js?v=20260711-tw-1"></script>
+  <script src="/assets/js/admin-control.js?v=experiences-admin-control-15"></script>
 </body>
 </html>

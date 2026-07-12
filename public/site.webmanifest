@@ -1,7 +1,7 @@
 {
-  "name": "JA Experiences & Discovery",
-  "short_name": "JA E&D",
-  "description": "Destination discovery, experience ideas and practical planning guidance from JA Experiences & Discovery",
+  "name": "JA Plan Studio",
+  "short_name": "JA Plan Studio",
+  "description": "Plans, builders and practical planning tools from JA Plan Studio",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

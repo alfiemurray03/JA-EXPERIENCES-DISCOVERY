@@ -77,9 +77,9 @@ test("Middleware falls back to maintenance on D1 failure (does not expose full s
   assert.match(mw, /site_status.*maintenance.*catch|catch[^}]+maintenance[^}]+true|maintenance_enabled.*true[\s\S]{0,200}catch/);
 });
 
-test("Coming Soon page has JA Experiences branding, countdown, noindex, and legal links", async () => {
+test("Coming Soon page has JA Plan Studio branding, countdown, noindex, and legal links", async () => {
   const html = await readFile(new URL("public/coming-soon/index.html", root), "utf8");
-  assert.match(html, /JA Experiences/i);
+  assert.match(html, /JA Plan Studio/i);
   assert.match(html, /noindex.*nofollow/i);
   assert.match(html, /days|hours|minutes|seconds/i);
   assert.match(html, /Cookiebot\.renew/);
@@ -97,7 +97,7 @@ test("Coming Soon page hides countdown when no date is saved", async () => {
 test("Coming Soon page fetches config from API and uses saved values", async () => {
   const html = await readFile(new URL("public/coming-soon/index.html", root), "utf8");
   const script = await readFile(new URL("public/assets/js/coming-soon.js", root), "utf8");
-  assert.match(html, /src="\/assets\/js\/coming-soon\.js[^"]*"[^>]*data-cookieconsent="ignore"[^>]*defer/);
+  assert.match(html, /src="\/assets\/js\/coming-soon\.js[^>]*data-cookieconsent="ignore"[^>]*defer/);
   assert.match(script, /\/api\/coming-soon-config/);
   assert.match(script, /cache: "no-store"/);
   assert.match(script, /tick\(\);[\s\S]*setInterval\(tick, 1000\)/);
@@ -105,9 +105,9 @@ test("Coming Soon page fetches config from API and uses saved values", async () 
   assert.doesNotMatch(html + script, /2026-08-29T22:01:00\+01:00/);
 });
 
-test("Maintenance page has JA Experiences branding, 503 wording, noindex, and legal links", async () => {
+test("Maintenance page has JA Plan Studio branding, 503 wording, noindex, and legal links", async () => {
   const html = await readFile(new URL("public/maintenance/index.html", root), "utf8");
-  assert.match(html, /JA Experiences/i);
+  assert.match(html, /JA Plan Studio/i);
   assert.match(html, /Maintenance/i);
   assert.match(html, /noindex,nofollow/);
   assert.match(html, /Cookiebot\.renew/);
@@ -165,6 +165,12 @@ test("Admin site status form shows saving, success, and error messages", async (
   assert.match(client, /Saving|saving/i);
   assert.match(client, /saved successfully|Saved successfully/i);
   assert.match(client, /could not be saved/i);
+});
+
+test("Admin API retains the saved launch date when countdown is disabled without a replacement date", async () => {
+  const api = await readFile(new URL("functions/admin/api.js", root), "utf8");
+  assert.match(api, /hasOwnProperty\.call\(body, "launch_date"\)/);
+  assert.match(api, /settingMap\(env\.DB, \["coming_soon_launch_date"\]/);
 });
 
 test("System Settings tabs reuse real renderers inside one stable shell", async () => {

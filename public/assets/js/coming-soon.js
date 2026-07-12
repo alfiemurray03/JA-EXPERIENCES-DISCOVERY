@@ -2,10 +2,10 @@
   "use strict";
 
   var DEFAULTS = {
-    platformName: "JA Experiences & Discovery",
+    platformName: "JA Plan Studio",
     headline: "Coming Soon",
     subtext: "We are putting the finishing touches on something great.",
-    description: "JA Experiences & Discovery is a self-service experience planning platform that helps you build, save and manage everyday, travel and support planning outputs.",
+    description: "JA Plan Studio is a self-service experience planning platform that helps you build, save and manage everyday, travel and support planning outputs.",
     features: [
       "Guided Experience Builders",
       "Builder Usage Tokens",
@@ -111,9 +111,9 @@
     setText("comingSoonTitle", data.headline);
     setText("comingSoonSubtext", data.subtext);
     setText("comingSoonDescription", data.description);
-    document.title = (data.headline || DEFAULTS.headline) + " — JA Experiences & Discovery";
+    document.title = (data.headline || DEFAULTS.headline) + " — JA Plan Studio";
     try { renderFeatures(data.features); } catch (_) { renderFeatures(DEFAULTS.features); }
-    try { renderCountdown(data.launchDate); } catch (_) {
+    try { renderCountdown(data.countdownEnabled === true ? data.launchDate : ""); } catch (_) {
       hideCountdown();
       setFallback("The launch countdown is currently unavailable.");
     }

@@ -1,8 +1,8 @@
-# JA Experiences & Discovery Architecture
+# JA Plan Studio Architecture
 
 ## Overview
 
-JA Experiences & Discovery is split into two production-facing applications:
+JA Plan Studio is split into two production-facing applications:
 
 - Customer Portal
 - Administrator Centre

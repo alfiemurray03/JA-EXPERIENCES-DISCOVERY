@@ -3,104 +3,70 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Discovery Boards and Destinations | JA Experiences &amp; Discovery</title>
+  <title>Discovery Boards and Destinations | JA Plan Studio</title>
   <meta name="description" content="Browse destination planning boards for self-service research, checklists and member planning tools.">
-  <link rel="stylesheet" href="/assets/css/theme.css?v=20260709-airo-2">
-  <link rel="stylesheet" href="/assets/css/public-saas.css?v=20260710-wordmark-unified-1">
+  <link rel="stylesheet" href="/assets/css/tailwind.css?v=20260712-airo-destinations-1">
+
   <script id="Cookiebot" src="https://consent.cookiebot.com/uc.js" data-cbid="762d90c4-b030-45b0-9e70-c21806c665e3" data-blockingmode="auto" type="text/javascript"></script>
 </head>
 <body data-page="destinations">
   <div id="siteShellHeader"></div>
-  <main>
-    <!-- Hero -->
-    <section class="section-padding">
+  <main id="main" class="saas-main">
+    <section class="saas-hero">
       <div class="container">
-        <span class="badge mb-4">Discovery boards</span>
-        <h1 class="text-3xl md:text-4xl font-extrabold mb-4">Search destination boards for self-service planning.</h1>
-        <p class="text-base muted max-w-2xl mb-8">Use country, city, island and regional pages to collect ideas, checklist prompts, accessibility notes and partner activity links before you build a saved plan.</p>
-        <form action="#browse" class="glass rounded-xl p-2 flex gap-2 max-w-2xl">
+        <span class="saas-eyebrow">Discovery boards</span>
+        <h1>Discover destinations for your next experience.</h1>
+        <p>Browse supporting destination inspiration, then use a guided builder to turn your ideas into a practical personalised plan.</p>
+        <form action="#browse" class="saas-panel saas-search-panel">
           <label class="sr-only" for="heroDestinationSearch">Search destinations</label>
-          <input id="heroDestinationSearch" type="search" placeholder="Search countries, cities, regions or islands" class="form-input flex-1">
-          <button class="btn btn-primary" type="submit">Search</button>
+          <div class="saas-search-row">
+            <input id="heroDestinationSearch" type="search" placeholder="Search countries, cities, regions or islands">
+            <button class="btn btn-primary" type="submit">Search</button>
+          </div>
         </form>
       </div>
     </section>
-
-    <!-- Featured -->
-    <section class="pb-12">
+    <section class="saas-section soft-band">
       <div class="container">
-        <div class="mb-8">
-          <span class="badge mb-2">Featured boards</span>
-          <h2 class="text-2xl font-bold">Start with a destination workspace.</h2>
-        </div>
-        <div class="grid grid-3">
-          <a class="platform-card glass-hover rounded-xl p-6 group" href="/destinations/united-kingdom/">
-            <div class="flex items-center gap-2 mb-3">
-              <span class="badge">Country</span>
-              <span class="badge soft-band muted">UK</span>
-            </div>
-            <h3 class="text-lg font-bold mb-2">United Kingdom</h3>
-            <p class="text-sm muted mb-4">Family days out, local discovery, accessibility notes and short-trip planning.</p>
-            <span class="text-sm font-semibold text-primary group-hover:underline">Open board &rarr;</span>
-          </a>
-          <a class="platform-card glass-hover rounded-xl p-6 group" href="/destinations/portugal/">
-            <div class="flex items-center gap-2 mb-3">
-              <span class="badge">Country</span>
-              <span class="badge soft-band muted">Europe</span>
-            </div>
-            <h3 class="text-lg font-bold mb-2">Portugal</h3>
-            <p class="text-sm muted mb-4">Cities, coast, island ideas and practical travel readiness prompts.</p>
-            <span class="text-sm font-semibold text-primary group-hover:underline">Open board &rarr;</span>
-          </a>
-          <a class="platform-card glass-hover rounded-xl p-6 group" href="/destinations/japan/">
-            <div class="flex items-center gap-2 mb-3">
-              <span class="badge">Country</span>
-              <span class="badge soft-band muted">Worldwide</span>
-            </div>
-            <h3 class="text-lg font-bold mb-2">Japan</h3>
-            <p class="text-sm muted mb-4">Itinerary ideas, checklist prompts and cultural planning considerations.</p>
-            <span class="text-sm font-semibold text-primary group-hover:underline">Open board &rarr;</span>
-          </a>
+        <div class="saas-heading"><span class="saas-eyebrow">Featured boards</span><h2>Start with a destination workspace.</h2></div>
+        <div class="destination-gallery-grid">
+          <a class="destination-card" href="/destinations/united-kingdom/"><img class="destination-card-image" src="/assets/images/destinations/united-kingdom.jpg" alt=""><div class="destination-card-body"><div class="destination-card-meta"><span>Country</span><span>UK</span></div><h3>United Kingdom</h3><p>Family days out, local discovery and short-trip planning.</p></div><span class="destination-card-action">View guide →</span></a>
+          <a class="destination-card" href="/destinations/portugal/"><img class="destination-card-image" src="/assets/images/destinations/portugal.jpg" alt=""><div class="destination-card-body"><div class="destination-card-meta"><span>Country</span><span>Europe</span></div><h3>Portugal</h3><p>Cities, coast, island ideas and practical planning prompts.</p></div><span class="destination-card-action">View guide →</span></a>
+          <a class="destination-card" href="/destinations/japan/"><img class="destination-card-image" src="/assets/images/destinations/japan.jpg" alt=""><div class="destination-card-body"><div class="destination-card-meta"><span>Country</span><span>Worldwide</span></div><h3>Japan</h3><p>Itinerary ideas, checklists and cultural planning considerations.</p></div><span class="destination-card-action">View guide →</span></a>
         </div>
       </div>
     </section>
-
-    <!-- All destinations -->
-    <section class="section-padding soft-band" id="browse">
+    <section class="airo-final-cta"><div class="container"><h2>Turn destination ideas into a plan.</h2><p>Choose a guided builder for itineraries, family days out, accessibility checks or preparation.</p><div class="platform-actions"><a class="btn btn-primary" href="/builders/">Plan with a Builder →</a><a class="btn airo-hero-secondary" href="/activities/">Browse activities</a></div></div></section>
+    <section class="saas-section" id="browse">
       <div class="container">
-        <div class="mb-8">
-          <span class="badge mb-2">All destination boards</span>
-          <h2 class="text-2xl font-bold mb-2">Search the destination gallery.</h2>
-          <p class="text-sm muted">Filter existing country, city, island and regional pages for self-service planning research.</p>
-        </div>
-
-        <div class="platform-card rounded-xl p-6">
-          <label for="destinationSearch" class="form-label">Search destinations</label>
-          <div class="flex gap-2 mb-4">
-            <input id="destinationSearch" type="search" placeholder="Search destinations" class="form-input flex-1">
+        <div class="saas-heading"><span class="saas-eyebrow">All destination boards</span><h2>Search the destination gallery.</h2><p>Filter existing country, city, island and regional pages for self-service planning research.</p></div>
+        <div class="saas-panel saas-search-panel">
+          <label for="destinationSearch">Search destinations</label>
+          <div class="saas-search-row">
+            <input id="destinationSearch" type="search" placeholder="Search destinations">
             <button class="btn btn-secondary" type="button" id="destinationClear">Clear</button>
           </div>
-          <div class="flex flex-wrap gap-2 mb-4" id="destinationFilters" aria-label="Filter destinations">
-            <button class="badge filter-chip cursor-pointer" type="button" data-filter="all" aria-pressed="true">All</button>
-            <button class="badge soft-band muted filter-chip cursor-pointer" type="button" data-filter="countries" aria-pressed="false">Countries</button>
-            <button class="badge soft-band muted filter-chip cursor-pointer" type="button" data-filter="cities" aria-pressed="false">Cities</button>
-            <button class="badge soft-band muted filter-chip cursor-pointer" type="button" data-filter="regions" aria-pressed="false">Regions</button>
-            <button class="badge soft-band muted filter-chip cursor-pointer" type="button" data-filter="islands" aria-pressed="false">Islands</button>
-            <button class="badge soft-band muted filter-chip cursor-pointer" type="button" data-filter="popular" aria-pressed="false">Popular</button>
-            <button class="badge soft-band muted filter-chip cursor-pointer" type="button" data-filter="europe" aria-pressed="false">Europe</button>
-            <button class="badge soft-band muted filter-chip cursor-pointer" type="button" data-filter="uk" aria-pressed="false">UK</button>
-            <button class="badge soft-band muted filter-chip cursor-pointer" type="button" data-filter="worldwide" aria-pressed="false">Worldwide</button>
+          <div class="saas-filter-row" id="destinationFilters" aria-label="Filter destinations">
+            <button class="filter-chip" type="button" data-filter="all" aria-pressed="true">All</button>
+            <button class="filter-chip" type="button" data-filter="countries" aria-pressed="false">Countries</button>
+            <button class="filter-chip" type="button" data-filter="cities" aria-pressed="false">Cities</button>
+            <button class="filter-chip" type="button" data-filter="regions" aria-pressed="false">Regions</button>
+            <button class="filter-chip" type="button" data-filter="islands" aria-pressed="false">Islands</button>
+            <button class="filter-chip" type="button" data-filter="popular" aria-pressed="false">Popular</button>
+            <button class="filter-chip" type="button" data-filter="europe" aria-pressed="false">Europe</button>
+            <button class="filter-chip" type="button" data-filter="uk" aria-pressed="false">UK</button>
+            <button class="filter-chip" type="button" data-filter="worldwide" aria-pressed="false">Worldwide</button>
           </div>
-          <p class="text-sm muted mb-4" id="destinationCount" aria-live="polite">Loading destination guides...</p>
-          <div class="grid grid-4" id="allDestinations"></div>
+          <p class="muted" id="destinationCount" aria-live="polite">Loading destination guides...</p>
+          <div class="destination-gallery-grid" id="allDestinations"></div>
         </div>
       </div>
     </section>
   </main>
   <div id="siteShellFooter"></div>
-  <script src="/assets/js/site-shell.js?v=20260710-partners-1"></script>
+  <script data-cookieconsent="ignore" src="/assets/js/site-shell.js?v=20260711-airo-nav-1"></script>
   <script src="/assets/js/destinations-data.js?v=20260710-gallery-fix-1"></script>
-  <script src="/assets/js/destination-directory.js?v=20260710-gallery-fix-1"></script>
+  <script src="/assets/js/destination-directory.js?v=20260712-airo-images-1"></script>
   <script>
     document.querySelector("form[action='#browse']")?.addEventListener("submit", function (event) {
       event.preventDefault();

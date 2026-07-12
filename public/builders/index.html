@@ -3,398 +3,230 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Experience Builders | JA Experiences &amp; Discovery</title>
+  <title>Experience Builders | JA Plan Studio</title>
   <meta name="description" content="Use guided Experience Builders to create, organise and save everyday, travel and support planning outputs.">
-  <link rel="stylesheet" href="/assets/css/theme.css?v=20260709-airo-2">
-  <link rel="stylesheet" href="/assets/css/public-saas.css?v=20260710-wordmark-unified-1">
-  <link rel="stylesheet" href="/assets/css/builders.css?v=20260709-builders-public-1">
+  <link rel="stylesheet" href="/assets/css/tailwind.css?v=20260712-airo-builders-1">
+
+
   <script id="Cookiebot" src="https://consent.cookiebot.com/uc.js" data-cbid="762d90c4-b030-45b0-9e70-c21806c665e3" data-blockingmode="auto" type="text/javascript"></script>
 </head>
-<body data-page="builders">
+<body>
   <div id="siteShellHeader"></div>
 
-  <main>
-    <!-- Hero -->
-    <section class="platform-hero">
-      <div class="absolute inset-0 overflow-hidden pointer-events-none">
-        <div class="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-blue-400/20 to-purple-500/20 rounded-full blur-3xl"></div>
-      </div>
-      <div class="container relative z-10">
-        <div class="grid grid-2 items-center">
-          <div>
-            <span class="badge mb-6">Experience Builders</span>
-            <h1 class="text-3xl md:text-4xl lg:text-5xl font-extrabold mb-6 leading-tight">
-              Build better plans with <span class="text-gradient">guided self-service tools.</span>
-            </h1>
-            <p class="text-base md:text-lg muted mb-8 max-w-xl leading-relaxed">Use guided builders to create, organise and save everyday, travel and support planning outputs. Builder Usage Tokens are only used when a finished output is saved or completed.</p>
-            <div class="builder-head-actions flex flex-wrap gap-4">
-              <a class="btn btn-primary" href="/account/login/?return_to=%2Fbuilders%2F%3Fclaim_trial%3D1">Start Free Trial</a>
-              <a class="btn btn-secondary" href="/pricing/">View Plans</a>
-            </div>
+  <main class="builder-app-shell">
+    <section class="airo-builder-flow" aria-label="How builders work"><div class="builder-page"><span><b>01</b>Choose a builder</span><i>›</i><span><b>02</b>Answer guided questions</span><i>›</i><span><b>03</b>Review your plan</span><i>›</i><span><b>04</b>Save, download or share</span><a href="/account/login/?return_to=%2Fbuilders%2F%3Fclaim_trial%3D1">Start Free Trial →</a></div></section>
+    <section class="builder-public-hero">
+      <div class="builder-page builder-public-hero-inner">
+        <div>
+          <p class="builder-kicker">Experience Builders</p>
+          <h1>Build better plans with guided self-service tools.</h1>
+          <p>Use guided builders to create, organise and save everyday, travel and support planning outputs. Builder Usage Tokens are only used when a finished output is saved or completed.</p>
+          <div class="builder-head-actions">
+            <a class="builder-button" href="/account/login/?return_to=%2Fbuilders%2F%3Fclaim_trial%3D1">Start Free Trial</a>
+            <a class="builder-button builder-button-outline" href="/pricing/">Subscription Plans</a>
           </div>
-          <aside class="glass rounded-2xl" aria-label="Trial summary">
-            <span class="badge mb-4">14-day free trial</span>
-            <strong class="block text-xl font-bold mb-3">30 Builder Usage Tokens once only</strong>
-            <p class="text-sm muted leading-relaxed">No permanent free plan. One trial per customer account, then choose a paid membership to continue saving finished outputs.</p>
-          </aside>
         </div>
+        <aside class="builder-hero-card" aria-label="Trial summary">
+          <span class="builder-badge builder-badge-primary">14-day free trial</span>
+          <strong>30 Builder Usage Tokens once only</strong>
+          <p>No permanent free plan. One trial per customer account, then choose a paid membership to continue saving finished outputs.</p>
+        </aside>
       </div>
     </section>
 
-    <!-- Builder Examples -->
-    <section class="section-padding">
-      <div class="container">
-        <div class="text-center mb-12">
-          <span class="badge mb-4">Builder examples</span>
-          <h2 class="text-2xl md:text-3xl font-bold mb-4">Tools for everyday, travel and support planning</h2>
-          <p class="muted max-w-2xl mx-auto">Each builder gives you a guided structure so you can compare options, capture notes and save a finished output when you are ready.</p>
+    <div class="builder-page">
+      <section class="builder-section">
+        <div class="builder-section-head">
+          <p class="builder-kicker">Builder examples</p>
+          <h2>Tools for everyday, travel and support planning</h2>
+          <p>Each builder gives you a guided structure so you can compare options, capture notes and save a finished output when you are ready.</p>
         </div>
-
-        <div class="grid grid-2 lg:grid-cols-4 gap-6">
-          <article class="platform-card glass-hover">
-            <span class="badge mb-3">Travel</span>
-            <h3 class="font-bold mb-2">Destination Discovery Builder</h3>
-            <p class="text-sm muted mb-4">Create a destination shortlist with ideas, priorities and provider checks.</p>
-            <strong class="block text-sm font-bold text-primary mb-1">35 Builder Usage Tokens</strong>
-            <em class="text-xs muted not-italic">Plus / Family</em>
-          </article>
-          <article class="platform-card glass-hover">
-            <span class="badge mb-3">Accessibility</span>
-            <h3 class="font-bold mb-2">Accessible Destination Checklist</h3>
-            <p class="text-sm muted mb-4">Record access, facilities, support and confirmation questions before travel.</p>
-            <strong class="block text-sm font-bold text-primary mb-1">35 Builder Usage Tokens</strong>
-            <em class="text-xs muted not-italic">Plus / Family</em>
-          </article>
-          <article class="platform-card glass-hover">
-            <span class="badge mb-3">Travel</span>
-            <h3 class="font-bold mb-2">Travel Planning Checklist</h3>
-            <p class="text-sm muted mb-4">Organise documents, packing, provider checks and planning responsibilities.</p>
-            <strong class="block text-sm font-bold text-primary mb-1">35 Builder Usage Tokens</strong>
-            <em class="text-xs muted not-italic">Membership / Plus / Family</em>
-          </article>
-          <article class="platform-card glass-hover">
-            <span class="badge mb-3">Everyday</span>
-            <h3 class="font-bold mb-2">Family Day Out Planner</h3>
-            <p class="text-sm muted mb-4">Plan pace, facilities, weather alternatives and budget prompts for a family day.</p>
-            <strong class="block text-sm font-bold text-primary mb-1">15 Builder Usage Tokens</strong>
-            <em class="text-xs muted not-italic">Trial / Membership / Plus / Family</em>
-          </article>
-          <article class="platform-card glass-hover">
-            <span class="badge mb-3">Everyday</span>
-            <h3 class="font-bold mb-2">Event Planning Builder</h3>
-            <p class="text-sm muted mb-4">Structure an occasion plan with tasks, guest needs and supplier checks.</p>
-            <strong class="block text-sm font-bold text-primary mb-1">15 Builder Usage Tokens</strong>
-            <em class="text-xs muted not-italic">Membership / Plus / Family</em>
-          </article>
-          <article class="platform-card glass-hover">
-            <span class="badge mb-3">Travel</span>
-            <h3 class="font-bold mb-2">Accommodation Comparison Builder</h3>
-            <p class="text-sm muted mb-4">Compare location, price, accessibility, terms and suitability before booking.</p>
-            <strong class="block text-sm font-bold text-primary mb-1">35 Builder Usage Tokens</strong>
-            <em class="text-xs muted not-italic">Plus / Family</em>
-          </article>
-          <article class="platform-card glass-hover">
-            <span class="badge mb-3">Organisation</span>
-            <h3 class="font-bold mb-2">Packing Checklist Builder</h3>
-            <p class="text-sm muted mb-4">Create a reusable checklist for travel, events or family activities.</p>
-            <strong class="block text-sm font-bold text-primary mb-1">10 Builder Usage Tokens</strong>
-            <em class="text-xs muted not-italic">Trial / Membership / Plus / Family</em>
-          </article>
-          <article class="platform-card glass-hover">
-            <span class="badge mb-3">Support</span>
-            <h3 class="font-bold mb-2">Support Needs Planner</h3>
-            <p class="text-sm muted mb-4">Prepare general support notes to check directly with providers.</p>
-            <strong class="block text-sm font-bold text-primary mb-1">40 Builder Usage Tokens</strong>
-            <em class="text-xs muted not-italic">Plus / Family</em>
-          </article>
+        <div class="builder-example-grid">
+          <article><span>Travel</span><h3>Destination Discovery Builder</h3><p>Create a destination shortlist with ideas, priorities and provider checks.</p><strong>35 Builder Usage Tokens</strong><em>Plus / Family</em></article>
+          <article><span>Accessibility</span><h3>Accessible Destination Checklist</h3><p>Record access, facilities, support and confirmation questions before travel.</p><strong>35 Builder Usage Tokens</strong><em>Plus / Family</em></article>
+          <article><span>Travel</span><h3>Travel Planning Checklist</h3><p>Organise documents, packing, provider checks and planning responsibilities.</p><strong>35 Builder Usage Tokens</strong><em>Membership / Plus / Family</em></article>
+          <article><span>Everyday</span><h3>Family Day Out Planner</h3><p>Plan pace, facilities, weather alternatives and budget prompts for a family day.</p><strong>15 Builder Usage Tokens</strong><em>Trial / Membership / Plus / Family</em></article>
+          <article><span>Everyday</span><h3>Event Planning Builder</h3><p>Structure an occasion plan with tasks, guest needs and supplier checks.</p><strong>15 Builder Usage Tokens</strong><em>Membership / Plus / Family</em></article>
+          <article><span>Travel</span><h3>Accommodation Comparison Builder</h3><p>Compare location, price, accessibility, terms and suitability before booking.</p><strong>35 Builder Usage Tokens</strong><em>Plus / Family</em></article>
+          <article><span>Organisation</span><h3>Packing Checklist Builder</h3><p>Create a reusable checklist for travel, events or family activities.</p><strong>10 Builder Usage Tokens</strong><em>Trial / Membership / Plus / Family</em></article>
+          <article><span>Support</span><h3>Support Needs Planner</h3><p>Prepare general support notes to check directly with providers.</p><strong>40 Builder Usage Tokens</strong><em>Plus / Family</em></article>
         </div>
-      </div>
-    </section>
-
-    <!-- How It Works -->
-    <section class="section-padding soft-band">
-      <div class="container">
-        <div class="text-center mb-12">
-          <span class="badge mb-4">How it works</span>
-          <h2 class="text-2xl md:text-3xl font-bold mb-4">Preview first, save when ready</h2>
-        </div>
-
-        <div class="grid grid-4">
-          <div class="text-center">
-            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center mx-auto mb-6 shadow-md">
-              <span class="text-2xl font-bold text-white">1</span>
-            </div>
-            <h3 class="font-bold text-lg mb-2">Choose a builder</h3>
-            <p class="text-sm muted">Select an everyday, travel, accessibility or organisation builder.</p>
-          </div>
-          <div class="text-center">
-            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-600 to-brand-800 flex items-center justify-center mx-auto mb-6 shadow-md">
-              <span class="text-2xl font-bold text-white">2</span>
-            </div>
-            <h3 class="font-bold text-lg mb-2">Complete guided questions</h3>
-            <p class="text-sm muted">Add priorities, timings, budget notes, access needs and practical details.</p>
-          </div>
-          <div class="text-center">
-            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-navy-700 to-navy-900 flex items-center justify-center mx-auto mb-6 shadow-md">
-              <span class="text-2xl font-bold text-white">3</span>
-            </div>
-            <h3 class="font-bold text-lg mb-2">Preview your output</h3>
-            <p class="text-sm muted">Review the structured output before using any Builder Usage Tokens.</p>
-          </div>
-          <div class="text-center">
-            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-navy-700 to-navy-900 flex items-center justify-center mx-auto mb-6 shadow-md">
-              <span class="text-2xl font-bold text-white">4</span>
-            </div>
-            <h3 class="font-bold text-lg mb-2">Save when ready</h3>
-            <p class="text-sm muted">Builder Usage Tokens are deducted only after a finished output is saved or completed.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Token Note -->
-    <section class="section-padding">
-      <div class="container">
-        <div class="glass p-8 rounded-2xl text-center max-w-3xl mx-auto">
-          <span class="badge mb-4">Builder Usage Tokens</span>
-          <h2 class="text-2xl font-bold mb-4">Tokens are only used for finished outputs</h2>
-          <p class="muted leading-relaxed">Builder Usage Tokens are used when you save or complete a finished builder output. Opening a builder or previewing your answers does not deduct tokens.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- Plans -->
-    <section class="section-padding soft-band">
-      <div class="container">
-        <div class="text-center mb-12">
-          <span class="badge mb-4">Plans</span>
-          <h2 class="text-2xl md:text-3xl font-bold mb-4">Choose the allowance that fits your planning needs</h2>
-          <p class="muted max-w-2xl mx-auto">Start with the once-only trial, then continue with a paid plan. There is no permanent free plan.</p>
-        </div>
-
-        <div class="grid grid-3 max-w-5xl mx-auto">
-          <div class="platform-card p-8 rounded-2xl platform-card glass-hover">
-            <span class="badge mb-4">Membership</span>
-            <h3 class="text-xl font-bold mb-2">JA Experience Builder Membership</h3>
-            <div class="mb-6">
-              <span class="text-4xl font-extrabold">&pound;19.99</span>
-              <span class="muted">/month</span>
-            </div>
-            <p class="text-sm muted mb-8">150 Builder Usage Tokens/month</p>
-            <a class="btn btn-secondary w-full" href="/pricing/">View plan</a>
-          </div>
-          <div class="platform-card p-8 rounded-2xl platform-card glass-hover relative border-primary-soft shadow-md">
-            <div class="absolute -top-3 left-1/2 -translate-x-1/2">
-              <span class="badge">Most Popular</span>
-            </div>
-            <span class="badge badge mb-4">Plus</span>
-            <h3 class="text-xl font-bold mb-2">JA Experience Builder Plus</h3>
-            <div class="mb-6">
-              <span class="text-4xl font-extrabold">&pound;29.99</span>
-              <span class="muted">/month</span>
-            </div>
-            <p class="text-sm muted mb-8">350 Builder Usage Tokens/month</p>
-            <a class="btn btn-primary w-full" href="/pricing/">View plan</a>
-          </div>
-          <div class="platform-card p-8 rounded-2xl platform-card glass-hover">
-            <span class="badge mb-4">Family</span>
-            <h3 class="text-xl font-bold mb-2">JA Experience Builder Family</h3>
-            <div class="mb-6">
-              <span class="text-4xl font-extrabold">&pound;39.99</span>
-              <span class="muted">/month</span>
-            </div>
-            <p class="text-sm muted mb-8">750 Builder Usage Tokens/month</p>
-            <a class="btn btn-secondary w-full" href="/pricing/">View plan</a>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Feature Comparison -->
-    <section class="section-padding">
-      <div class="container">
-        <div class="text-center mb-12">
-          <span class="badge mb-4">Compare plans</span>
-          <h2 class="text-2xl md:text-3xl font-bold mb-4">Feature comparison</h2>
-        </div>
-
-        <div class="glass overflow-hidden rounded-2xl max-w-4xl mx-auto">
-          <div class="overflow-x-auto">
-            <table class="w-full min-w-[640px]">
-              <thead>
-                <tr class="border-b border-default">
-                  <th class="text-left p-4 font-semibold">Feature</th>
-                  <th class="text-center p-4 font-semibold">Trial</th>
-                  <th class="text-center p-4 font-semibold">Membership</th>
-                  <th class="text-center p-4 font-semibold">Plus</th>
-                  <th class="text-center p-4 font-semibold">Family</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr class="border-b border-default hover:soft-band"><td class="p-4 font-medium">Access to public builder catalogue</td><td class="text-center p-4 muted">Yes</td><td class="text-center p-4 muted">Yes</td><td class="text-center p-4 muted">Yes</td><td class="text-center p-4 muted">Yes</td></tr>
-                <tr class="border-b border-default hover:soft-band"><td class="p-4 font-medium">14-day free trial</td><td class="text-center p-4 muted">Yes</td><td class="text-center p-4 muted">No</td><td class="text-center p-4 muted">No</td><td class="text-center p-4 muted">No</td></tr>
-                <tr class="border-b border-default hover:soft-band"><td class="p-4 font-medium">Builder Usage Tokens included</td><td class="text-center p-4 muted">30 once only</td><td class="text-center p-4 muted">150/month</td><td class="text-center p-4 muted">350/month</td><td class="text-center p-4 muted">750/month</td></tr>
-                <tr class="border-b border-default hover:soft-band"><td class="p-4 font-medium">Everyday planning builders</td><td class="text-center p-4 muted">Yes</td><td class="text-center p-4 muted">Yes</td><td class="text-center p-4 muted">Yes</td><td class="text-center p-4 muted">Yes</td></tr>
-                <tr class="border-b border-default hover:soft-band"><td class="p-4 font-medium">Travel planning builders</td><td class="text-center p-4 muted">Limited</td><td class="text-center p-4 muted">Yes</td><td class="text-center p-4 muted">Yes</td><td class="text-center p-4 muted">Yes</td></tr>
-                <tr class="border-b border-default hover:soft-band"><td class="p-4 font-medium">Accessibility/support builders</td><td class="text-center p-4 muted">Limited</td><td class="text-center p-4 muted">Limited</td><td class="text-center p-4 muted">Yes</td><td class="text-center p-4 muted">Yes</td></tr>
-                <tr class="border-b border-default hover:soft-band"><td class="p-4 font-medium">Family planning tools</td><td class="text-center p-4 muted">No</td><td class="text-center p-4 muted">No</td><td class="text-center p-4 muted">Limited</td><td class="text-center p-4 muted">Yes</td></tr>
-                <tr class="border-b border-default hover:soft-band"><td class="p-4 font-medium">Saved builder outputs</td><td class="text-center p-4 muted">Yes during trial</td><td class="text-center p-4 muted">Yes</td><td class="text-center p-4 muted">Yes</td><td class="text-center p-4 muted">Yes</td></tr>
-                <tr class="border-b border-default hover:soft-band"><td class="p-4 font-medium">Discovery boards</td><td class="text-center p-4 muted">Limited</td><td class="text-center p-4 muted">Yes</td><td class="text-center p-4 muted">Yes</td><td class="text-center p-4 muted">Yes</td></tr>
-                <tr class="border-b border-default hover:soft-band"><td class="p-4 font-medium">Priority support</td><td class="text-center p-4 muted">No</td><td class="text-center p-4 muted">No</td><td class="text-center p-4 muted">Yes</td><td class="text-center p-4 muted">Yes</td></tr>
-                <tr class="border-b border-default hover:soft-band"><td class="p-4 font-medium">Extra token add-ons</td><td class="text-center p-4 muted">No</td><td class="text-center p-4 muted">Yes</td><td class="text-center p-4 muted">Yes</td><td class="text-center p-4 muted">Yes</td></tr>
-                <tr class="border-b border-default hover:soft-band"><td class="p-4 font-medium">Human support add-ons</td><td class="text-center p-4 muted">No</td><td class="text-center p-4 muted">Yes</td><td class="text-center p-4 muted">Yes</td><td class="text-center p-4 muted">Yes</td></tr>
-                <tr class="hover:soft-band"><td class="p-4 font-medium">Multiple household/family planning support</td><td class="text-center p-4 muted">No</td><td class="text-center p-4 muted">No</td><td class="text-center p-4 muted">No</td><td class="text-center p-4 muted">Yes</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Service Boundary -->
-    <section class="section-padding soft-band">
-      <div class="container">
-        <div class="platform-card max-w-3xl mx-auto">
-          <h2 class="text-2xl font-bold mb-4">Service boundary</h2>
-          <p class="muted leading-relaxed">JA Experiences &amp; Discovery helps you plan, compare and organise experiences. We do not directly operate attractions, hotels, transport or third-party activities. Where third-party booking links or affiliate partners are shown, the booking is completed with that provider under their terms.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- Try It -->
-    <section class="section-padding">
-      <div class="container">
-        <div class="text-center max-w-2xl mx-auto">
-          <span class="badge mb-4">Try it</span>
-          <h2 class="text-2xl md:text-3xl font-bold mb-4">Browse the public catalogue</h2>
-          <p class="muted">You can browse examples before signing in. Saving finished outputs requires a customer account, an active trial or an active paid plan.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- Interactive Builder Catalogue (managed by builders.js, styled by builders.css) -->
-    <div class="container">
-      <div id="claimIntentNotice" class="platform-card rounded-lg border-l-4 border-primary-soft mb-4" hidden>Sign in or create an account to claim the once-only 14-day trial with 30 Builder Usage Tokens.</div>
-      <div id="builderStatus" class="platform-card rounded-lg border-l-4 border-primary-soft mb-4" hidden></div>
-
-      <section class="grid grid-4 mb-8" aria-label="Builder account summary">
-        <article class="platform-card text-center"><span class="text-xs muted uppercase tracking-wider">Available builders</span><strong class="block text-2xl font-extrabold text-gradient mt-2" id="availableBuilderCount">0</strong></article>
-        <article class="platform-card text-center"><span class="text-xs muted uppercase tracking-wider">Remaining tokens</span><strong class="block text-2xl font-extrabold text-gradient mt-2" id="tokensRemaining">Sign in</strong></article>
-        <article class="platform-card text-center"><span class="text-xs muted uppercase tracking-wider">Trial status</span><strong class="block text-2xl font-extrabold text-gradient mt-2" id="trialStatus">Not signed in</strong></article>
-        <article class="platform-card text-center"><span class="text-xs muted uppercase tracking-wider">Saved outputs</span><strong class="block text-2xl font-extrabold text-gradient mt-2" id="savedOutputCount">Sign in</strong></article>
       </section>
 
-      <section class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8" aria-label="Builder catalogue filters">
-        <div>
-          <span class="badge mb-2">Catalogue</span>
-          <h2 class="text-2xl font-bold">Choose a builder</h2>
+      <section class="builder-section builder-how">
+        <div class="builder-section-head">
+          <p class="builder-kicker">How it works</p>
+          <h2>Preview first, save when ready</h2>
         </div>
-        <div class="flex flex-wrap gap-2" id="builderTabs" role="tablist" aria-label="Builder categories">
-          <button class="btn btn-outline builder-tab is-active" type="button" data-filter="all">All</button>
-          <button class="btn btn-outline builder-tab" type="button" data-filter="Everyday">Everyday</button>
-          <button class="btn btn-outline builder-tab" type="button" data-filter="Travel">Travel</button>
-          <button class="btn btn-outline builder-tab" type="button" data-filter="Accessibility/support">Accessibility</button>
-          <button class="btn btn-outline builder-tab" type="button" data-filter="Organisation">Organisation</button>
+        <div class="builder-step-grid">
+          <article><strong>1</strong><h3>Choose a builder</h3><p>Select an everyday, travel, accessibility or organisation builder.</p></article>
+          <article><strong>2</strong><h3>Complete guided questions</h3><p>Add priorities, timings, budget notes, access needs and practical details.</p></article>
+          <article><strong>3</strong><h3>Preview your output</h3><p>Review the structured output before using any Builder Usage Tokens.</p></article>
+          <article><strong>4</strong><h3>Save when ready</h3><p>Builder Usage Tokens are deducted only after a finished output is saved or completed.</p></article>
+        </div>
+      </section>
+
+      <section class="builder-section builder-token-note">
+        <div>
+          <p class="builder-kicker">Builder Usage Tokens</p>
+          <h2>Tokens are only used for finished outputs</h2>
+          <p>Builder Usage Tokens are used when you save or complete a finished builder output. Opening a builder or previewing your answers does not deduct tokens.</p>
+        </div>
+      </section>
+
+      <section class="builder-section">
+        <div class="builder-section-head">
+          <p class="builder-kicker">Plans</p>
+          <h2>Choose the allowance that fits your planning needs</h2>
+          <p>Start with the once-only trial, then continue with a paid plan. There is no permanent free plan.</p>
+        </div>
+        <div class="grid gap-6 md:grid-cols-3" data-subscription-plans aria-live="polite"><p class="text-sm text-muted">Loading Subscription Plans…</p></div>
+      </section>
+
+      <section class="builder-section">
+        <div class="builder-section-head">
+          <p class="builder-kicker">Compare plans</p>
+          <h2>Feature comparison</h2>
+        </div>
+        <div class="builder-table-wrap">
+          <table class="builder-comparison-table">
+            <thead><tr><th>Feature</th><th>Trial</th><th>Membership</th><th>Plus</th><th>Family</th></tr></thead>
+            <tbody>
+              <tr><td>Access to public builder catalogue</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+              <tr><td>14-day free trial</td><td>Yes</td><td>No</td><td>No</td><td>No</td></tr>
+              <tr><td>Builder Usage Tokens included</td><td>30 once only</td><td>150/month</td><td>350/month</td><td>750/month</td></tr>
+              <tr><td>Everyday planning builders</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+              <tr><td>Travel planning builders</td><td>Limited</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+              <tr><td>Accessibility/support builders</td><td>Limited</td><td>Limited</td><td>Yes</td><td>Yes</td></tr>
+              <tr><td>Family planning tools</td><td>No</td><td>No</td><td>Limited</td><td>Yes</td></tr>
+              <tr><td>Saved builder outputs</td><td>Yes during trial</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+              <tr><td>Discovery boards</td><td>Limited</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+              <tr><td>Priority support</td><td>No</td><td>No</td><td>Yes</td><td>Yes</td></tr>
+              <tr><td>Extra token add-ons</td><td>No</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+              <tr><td>Human support add-ons</td><td>No</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+              <tr><td>Multiple household/family planning support</td><td>No</td><td>No</td><td>No</td><td>Yes</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="builder-section builder-service-boundary">
+        <h2>Service boundary</h2>
+        <p>JA Plan Studio helps you plan, compare and organise experiences. We do not directly operate attractions, hotels, transport or third-party activities. Where third-party booking links or affiliate partners are shown, the booking is completed with that provider under their terms.</p>
+      </section>
+
+      <section class="builder-section">
+        <div class="builder-section-head">
+          <p class="builder-kicker">Try it</p>
+          <h2>Browse the public catalogue</h2>
+          <p>You can browse examples before signing in. Saving finished outputs requires a customer account, an active trial or an active paid plan.</p>
+        </div>
+      </section>
+
+      <div id="claimIntentNotice" class="builder-alert builder-alert-info" hidden>Sign in or create an account to claim the once-only 14-day trial with 30 Builder Usage Tokens.</div>
+      <div id="builderStatus" class="builder-alert builder-alert-info" hidden></div>
+
+      <section class="builder-stats" aria-label="Builder account summary">
+        <article class="builder-stat-card"><span>Available builders</span><strong id="availableBuilderCount">0</strong></article>
+        <article class="builder-stat-card"><span>Remaining tokens</span><strong id="tokensRemaining">Sign in</strong></article>
+        <article class="builder-stat-card"><span>Trial status</span><strong id="trialStatus">Not signed in</strong></article>
+        <article class="builder-stat-card"><span>Saved outputs</span><strong id="savedOutputCount">Sign in</strong></article>
+      </section>
+
+      <section class="builder-toolbar" aria-label="Builder catalogue filters">
+        <div>
+          <p class="builder-kicker">Catalogue</p>
+          <h2>Choose a builder</h2>
+        </div>
+        <label class="builder-search"><span class="sr-only">Search builders</span><input id="builderSearch" type="search" placeholder="Search builders" autocomplete="off"></label>
+        <div class="builder-tabs" id="builderTabs" role="tablist" aria-label="Builder categories">
+          <button class="builder-tab is-active" type="button" data-filter="all">All</button>
+          <button class="builder-tab" type="button" data-filter="Everyday">Everyday</button>
+          <button class="builder-tab" type="button" data-filter="Travel">Travel</button>
+          <button class="builder-tab" type="button" data-filter="Accessibility/support">Accessibility</button>
+          <button class="builder-tab" type="button" data-filter="Organisation">Organisation</button>
         </div>
       </section>
 
       <div class="builder-grid" id="builderGrid" aria-live="polite"></div>
       <div class="builder-grid" id="builderSkeleton" aria-hidden="true">
-        <div class="builder--card"></div>
-        <div class="builder--card"></div>
-        <div class="builder--card"></div>
+        <div class="builder-skeleton-card"></div>
+        <div class="builder-skeleton-card"></div>
+        <div class="builder-skeleton-card"></div>
       </div>
 
       <section class="builder-workspace" id="builderEditor" aria-label="Builder editor">
         <article class="builder-editor-panel">
-          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+          <div class="builder-editor-head">
             <div>
-              <span class="badge mb-2">Builder editor</span>
-              <h2 class="text-2xl font-bold">Build your output</h2>
+              <p class="builder-kicker">Builder editor</p>
+              <h2>Build your output</h2>
             </div>
-            <button class="btn btn-secondary" type="button" id="backToBuildersButton">Back to builders</button>
+            <button class="builder-button builder-button-outline" type="button" id="backToBuildersButton">Back to builders</button>
           </div>
 
-          <div class="platform-card flex items-start gap-4 mb-6">
-            <div class="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <span class="text-lg font-bold text-primary" id="selectedBuilderIcon">EB</span>
-            </div>
+          <div class="builder-selected-card">
+            <div class="builder-icon" id="selectedBuilderIcon">EB</div>
             <div>
-              <h2 class="text-xl font-bold mb-1" id="selectedBuilderName">Select a builder</h2>
-              <p class="text-sm muted mb-2" id="selectedBuilderDescription">Open a builder from the catalogue to start. No tokens are deducted until a finished output is saved successfully.</p>
-              <p class="text-xs font-bold text-primary uppercase tracking-wider" id="selectedBuilderCost">0 Builder Usage Tokens</p>
+              <h2 id="selectedBuilderName">Select a builder</h2>
+              <p id="selectedBuilderDescription">Open a builder from the catalogue to start. No tokens are deducted until a finished output is saved successfully.</p>
+              <p class="builder-kicker" id="selectedBuilderCost">0 Builder Usage Tokens</p>
             </div>
           </div>
 
-          <form class="space-y-4" id="builderForm">
+          <form class="builder-form" id="builderForm">
             <input type="hidden" id="selectedBuilderId">
-            <div>
-              <label class="form-label">Output title</label>
-              <input id="builderTitle" maxlength="120" placeholder="Weekend family day out" class="form-input">
-            </div>
-            <div>
-              <label class="form-label">Main idea</label>
-              <textarea id="builderIdea" rows="3" placeholder="What are you trying to plan?" class="form-input"></textarea>
-            </div>
-            <div>
-              <label class="form-label">Timing</label>
-              <textarea id="builderTiming" rows="2" placeholder="Dates, start time, journey or schedule notes" class="form-input"></textarea>
-            </div>
-            <div>
-              <label class="form-label">Budget</label>
-              <textarea id="builderBudget" rows="2" placeholder="Budget, priorities or spending limits" class="form-input"></textarea>
-            </div>
-            <div>
-              <label class="form-label">Accessibility or support needs</label>
-              <textarea id="builderSupport" rows="2" placeholder="Access, facilities, pace or support considerations" class="form-input"></textarea>
-            </div>
-            <div>
-              <label class="form-label">Extra notes</label>
-              <textarea id="builderNotes" rows="3" placeholder="Anything else the finished output should include" class="form-input"></textarea>
-            </div>
-            <p class="text-sm muted" id="builderFormStatus">Select a builder to begin.</p>
-            <div class="flex flex-wrap gap-3">
-              <button class="btn btn-secondary" type="button" id="previewBuilderButton">Preview output</button>
-              <button class="btn btn-primary" type="submit" id="saveBuilderButton">Save finished output</button>
+            <div class="builder-wizard-progress" aria-label="Builder progress"><span class="is-active" data-wizard-marker="1">1 <small>Plan</small></span><span data-wizard-marker="2">2 <small>Preferences</small></span><span data-wizard-marker="3">3 <small>Details</small></span><span data-wizard-marker="4">4 <small>Review</small></span></div>
+            <label>Output title<input id="builderTitle" maxlength="120" placeholder="Weekend family day out"></label>
+            <label>Main idea<textarea id="builderIdea" rows="3" placeholder="What are you trying to plan?"></textarea></label>
+            <label>Timing<textarea id="builderTiming" rows="2" placeholder="Dates, start time, journey or schedule notes"></textarea></label>
+            <label>Budget<textarea id="builderBudget" rows="2" placeholder="Budget, priorities or spending limits"></textarea></label>
+            <label>Accessibility or support needs<textarea id="builderSupport" rows="2" placeholder="Access, facilities, pace or support considerations"></textarea></label>
+            <label>Extra notes<textarea id="builderNotes" rows="3" placeholder="Anything else the finished output should include"></textarea></label>
+            <p class="builder-form-status" id="builderFormStatus">Select a builder to begin.</p>
+            <div class="builder-form-actions">
+              <button class="builder-button builder-button-outline" type="button" id="builderBackButton">Back</button>
+              <button class="builder-button" type="button" id="builderContinueButton">Continue</button>
+              <button class="builder-button builder-button-outline" type="button" id="previewBuilderButton">Preview output</button>
+              <button class="builder-button" type="submit" id="saveBuilderButton">Save finished output</button>
             </div>
           </form>
         </article>
 
         <article class="builder-preview-panel">
-          <div class="mb-4">
-            <span class="badge mb-2">Preview</span>
-            <h2 class="text-2xl font-bold">Finished output preview</h2>
+          <div class="builder-preview-topline">
+            <div>
+              <p class="builder-kicker">Preview</p>
+              <h2>Finished output preview</h2>
+            </div>
           </div>
           <div class="builder-preview-document" id="builderPreview">
-            <div class="saas-empty">
-              <strong class="block text-lg font-bold mb-2">No preview yet</strong>
-              <span class="text-sm muted">Select a builder and add details to preview an output before saving.</span>
+            <div class="builder-empty-state">
+              <strong>No preview yet</strong>
+              <span>Select a builder and add details to preview an output before saving.</span>
             </div>
           </div>
         </article>
       </section>
 
-      <!-- FAQ -->
-      <section class="section-padding">
-        <div class="text-center mb-12">
-          <span class="badge mb-4">FAQ</span>
-          <h2 class="text-2xl md:text-3xl font-bold mb-4">Common questions</h2>
+      <section class="builder-section builder-faq">
+        <div class="builder-section-head">
+          <p class="builder-kicker">FAQ</p>
+          <h2>Common questions</h2>
         </div>
-
-        <div class="max-w-3xl mx-auto space-y-4">
-          <details class="platform-card glass-hover"><summary class="font-semibold cursor-pointer">What are Builder Usage Tokens?</summary><p class="text-sm muted mt-3">Builder Usage Tokens are the monthly or trial allowance used when you save or complete finished builder outputs.</p></details>
-          <details class="platform-card glass-hover"><summary class="font-semibold cursor-pointer">When are tokens deducted?</summary><p class="text-sm muted mt-3">Tokens are deducted only after a finished output is saved or completed. Opening a builder and previewing your answers does not deduct tokens.</p></details>
-          <details class="platform-card glass-hover"><summary class="font-semibold cursor-pointer">Can I preview before saving?</summary><p class="text-sm muted mt-3">Yes. You can preview your output before deciding whether to save it.</p></details>
-          <details class="platform-card glass-hover"><summary class="font-semibold cursor-pointer">What happens when my trial ends?</summary><p class="text-sm muted mt-3">Your trial expires 14 days after activation and cannot be restarted. Choose a paid plan to continue using paid builder features.</p></details>
-          <details class="platform-card glass-hover"><summary class="font-semibold cursor-pointer">Can I buy extra tokens?</summary><p class="text-sm muted mt-3">Extra token add-ons are available for paid members when configured in your account.</p></details>
-          <details class="platform-card glass-hover"><summary class="font-semibold cursor-pointer">Are bookings made through JA Experiences &amp; Discovery?</summary><p class="text-sm muted mt-3">No. We help you plan and organise. Any third-party booking is completed with the provider under their terms.</p></details>
-        </div>
+        <details><summary>What are Builder Usage Tokens?</summary><p>Builder Usage Tokens are the monthly or trial allowance used when you save or complete finished builder outputs.</p></details>
+        <details><summary>When are tokens deducted?</summary><p>Tokens are deducted only after a finished output is saved or completed. Opening a builder and previewing your answers does not deduct tokens.</p></details>
+        <details><summary>Can I preview before saving?</summary><p>Yes. You can preview your output before deciding whether to save it.</p></details>
+        <details><summary>What happens when my trial ends?</summary><p>Your trial expires 14 days after activation and cannot be restarted. Choose a paid plan to continue using paid builder features.</p></details>
+        <details><summary>Can I buy extra tokens?</summary><p>Extra token add-ons are available for paid members when configured in your account.</p></details>
+        <details><summary>Are bookings made through JA Plan Studio?</summary><p>No. We help you plan and organise. Any third-party booking is completed with the provider under their terms.</p></details>
       </section>
     </div>
   </main>
 
   <div id="siteShellFooter"></div>
-  <script src="/assets/js/site-shell.js?v=20260710-partners-1"></script>
-  <script src="/assets/js/builders.js?v=20260711-tw-1"></script>
+  <script data-cookieconsent="ignore" src="/assets/js/site-shell.js?v=20260711-airo-nav-1"></script>
+  <script src="/assets/js/subscription-plans.js?v=20260711-d1-plans-1" defer></script>
+  <script src="/assets/js/builders.js?v=20260712-airo-builders-1"></script>
 </body>
 </html>

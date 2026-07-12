@@ -1,6 +1,6 @@
-# JA Experiences & Discovery Website
+# JA Plan Studio Website
 
-Public website for **JA Experiences & Discovery**, a trading division and service line of JA Group Services Ltd.
+Public website for **JA Plan Studio**, a trading division and service line of JA Group Services Ltd.
 
 Production domain: `experiences.jagroupservices.co.uk`
 
@@ -29,7 +29,7 @@ The enquiry system reuses the email provider configured in the Administrator Con
 `ENQUIRY_FROM_EMAIL` should use the verified domain, for example:
 
 ```text
-JA Experiences & Discovery <enquiries@experiences.jagroupservices.co.uk>
+JA Plan Studio <enquiries@experiences.jagroupservices.co.uk>
 ```
 
 The Administrator Control Centre email settings take precedence over environment-variable fallbacks.

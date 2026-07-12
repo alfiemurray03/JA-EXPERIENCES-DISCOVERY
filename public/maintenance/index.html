@@ -3,12 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Scheduled Maintenance | JA Experiences &amp; Discovery</title>
-  <meta name="description" content="We are performing scheduled maintenance on JA Experiences &amp; Discovery. We will be back online shortly.">
+  <title>Scheduled Maintenance | JA Plan Studio</title>
+  <meta name="description" content="We are performing scheduled maintenance on JA Plan Studio. We will be back online shortly.">
   <meta name="robots" content="noindex,nofollow">
-  <link rel="icon" href="/assets/favicons/favicon.svg?v=20260704-1" type="image/svg+xml">
-  <link rel="shortcut icon" href="/assets/favicons/favicon.ico?v=20260704-1" type="image/x-icon">
-  <script id="Cookiebot" src="https://consent.cookiebot.com/uc.js" data-cbid="762d90c4-b030-45b0-9e70-c21806c665e3" data-blockingmode="auto" type="text/javascript"></script>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<script id="Cookiebot" src="https://consent.cookiebot.com/uc.js" data-cbid="762d90c4-b030-45b0-9e70-c21806c665e3" data-blockingmode="auto" type="text/javascript"></script>
   <style>
     :root {
       --background: 214 100% 99%;
@@ -26,15 +25,15 @@
     body {
       margin: 0;
       min-height: 100vh;
-      display: grid;
-      place-items: center;
-      padding: clamp(1.25rem, 5vw, 4rem);
+      display: flex;
+      flex-direction: column;
       background: hsl(var(--background));
       color: hsl(var(--foreground));
       font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
     }
     main {
       width: min(600px, 100%);
+      margin: auto;
       border: 1px solid hsl(var(--border));
       border-radius: 14px;
       background: hsl(var(--card));
@@ -42,6 +41,30 @@
       box-shadow: var(--shadow);
       text-align: center;
     }
+    .site-header {
+      width: 100%;
+      border-bottom: 1px solid hsl(var(--border));
+      background: #fff;
+    }
+    .site-header-inner, .site-footer-inner {
+      width: min(72rem, calc(100% - 2rem));
+      margin: 0 auto;
+    }
+    .site-header-inner {
+      min-height: 4.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .brand { display: inline-flex; gap: .3rem; font-size: 1.1rem; font-weight: 650; text-decoration: none; white-space: nowrap; }
+    .brand-ja { color: #000; }
+    .brand-name { color: #102449; }
+    .site-nav { display: flex; align-items: center; gap: 1rem; }
+    .site-nav a { color: hsl(var(--muted-foreground)); font-size: .9rem; font-weight: 600; text-decoration: none; }
+    .maintenance-wrap { display: grid; flex: 1; place-items: center; width: 100%; padding: clamp(1.25rem, 5vw, 4rem); }
+    .site-footer { width: 100%; border-top: 1px solid hsl(var(--border)); background: #fff; }
+    .site-footer-inner { display: flex; justify-content: space-between; gap: 1rem; padding: 1.25rem 0; color: hsl(var(--muted-foreground)); font-size: .82rem; }
     h1 {
       font-size: 1.8rem;
       margin-top: 0;
@@ -80,10 +103,22 @@
       font: inherit;
       text-decoration: underline;
     }
+    @media (max-width: 640px) {
+      .site-nav { display: none; }
+      .site-footer-inner { flex-direction: column; }
+    }
   </style>
 </head>
 <body>
-  <main>
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a class="brand" href="/" aria-label="JA Plan Studio home"><span class="brand-ja" aria-hidden="true">JA</span><span class="brand-name" aria-hidden="true">Plan Studio</span></a>
+      <nav class="site-nav" aria-label="Primary navigation">
+        <a href="/builders/">Builders</a><a href="/pricing/">Plans</a><a href="/faqs/">Help Centre</a><a href="/login/">Sign In</a>
+      </nav>
+    </div>
+  </header>
+  <div class="maintenance-wrap"><main>
     <h1>Scheduled Maintenance</h1>
     <p>We are currently performing scheduled system maintenance to improve our experience planning services.</p>
     <p>Please check back shortly. Thank you for your patience.</p>
@@ -97,6 +132,12 @@
         <button type="button" onclick="window.Cookiebot && Cookiebot.renew();">Cookie Preferences</button>
       </div>
     </div>
-  </main>
+  </main></div>
+  <footer class="site-footer">
+    <div class="site-footer-inner">
+      <span>&copy; 2026 JA Plan Studio. All rights reserved.</span>
+      <span>Operated by JA Group Services Ltd</span>
+    </div>
+  </footer>
 </body>
 </html>

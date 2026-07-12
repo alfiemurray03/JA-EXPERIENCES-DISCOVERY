@@ -3,8 +3,9 @@ const DEFAULT_CONFIG = {
   headline: "Coming Soon",
   subtext: "We are putting the finishing touches on something great.",
   launchDate: "",
-  platformName: "JA Experiences & Discovery",
-  description: "JA Experiences & Discovery is a self-service experience planning platform that helps you build, save and manage everyday, travel and support planning outputs.",
+  countdownEnabled: false,
+  platformName: "JA Plan Studio",
+  description: "JA Plan Studio is a self-service experience planning platform that helps you build, save and manage everyday, travel and support planning outputs.",
   features: [
     "Guided Experience Builders",
     "Builder Usage Tokens",
@@ -58,10 +59,11 @@ function parseFeatures(value) {
 }
 
 export async function onRequestGet({ env }) {
-  const [headline, subtext, launchDate, description, features] = await Promise.all([
+  const [headline, subtext, launchDate, countdownEnabled, description, features] = await Promise.all([
     readSiteSetting(env, "coming_soon_headline"),
     readSiteSetting(env, "coming_soon_subtext"),
     readSiteSetting(env, "coming_soon_launch_date"),
+    readSiteSetting(env, "coming_soon_countdown_enabled"),
     readSiteSetting(env, "coming_soon_description"),
     readSiteSetting(env, "coming_soon_features")
   ]);
@@ -71,6 +73,7 @@ export async function onRequestGet({ env }) {
     headline: headline.value || DEFAULT_CONFIG.headline,
     subtext: subtext.value || DEFAULT_CONFIG.subtext,
     launchDate: launchDate.found ? launchDate.value : "",
+    countdownEnabled: countdownEnabled.found && countdownEnabled.value === "true",
     description: description.value || DEFAULT_CONFIG.description,
     features: parseFeatures(features.value)
   });

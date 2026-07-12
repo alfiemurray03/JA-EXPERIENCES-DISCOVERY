@@ -1,8 +1,8 @@
-# JA Experiences & Discovery Website: Full ChatGPT Handover
+# JA Plan Studio Website: Full ChatGPT Handover
 
 **Handover date:** 15 June 2026  
 **Project owner:** JA Group Services Ltd  
-**Website/service:** JA Experiences & Discovery  
+**Website/service:** JA Plan Studio
 **Repository folder:** `C:\Users\alfie\Documents\ja-tours-activities`  
 **Production domain:** `https://experiences.jagroupservices.co.uk`  
 **Cloudflare Pages project:** `ja-experiences-discovery`  
@@ -17,12 +17,12 @@
 
 Use the following as the opening context for any new ChatGPT or Codex session:
 
-> You are continuing development of the JA Experiences & Discovery website for JA Group Services Ltd.
+> You are continuing development of the JA Plan Studio website for JA Group Services Ltd.
 >
 > The local repository is `C:\Users\alfie\Documents\ja-tours-activities`. Use British English and maintain a professional UK business tone. Read this handover completely before changing anything.
 >
 > The service must follow the Board-approved report:
-> `Z:\10 IT, Systems and Security\Website\Get Your Guide (tours.jagroupservices.co.uk)\READ ME - JA Experiences & Discovery Board Approved v.3.1.2.pdf`
+> `Z:\10 IT, Systems and Security\Website\Get Your Guide (tours.jagroupservices.co.uk)\READ ME - JA Plan Studio Board Approved v.3.1.2.pdf`
 >
 > The current production domain is `https://experiences.jagroupservices.co.uk`. GitHub `main` automatically deploys the static `public` directory to the Cloudflare Pages project `ja-experiences-discovery`.
 >
@@ -30,7 +30,7 @@ Use the following as the opening context for any new ChatGPT or Codex session:
 >
 > - Do not remove, alter or bypass the existing `/launch-gateway/` Launch Gateway unless the user expressly authorises the public launch.
 > - Do not change `public/_redirects` unless the user expressly requests it and the consequences are explained.
-> - Do not describe JA Experiences & Discovery as a travel agent, tour operator, package holiday provider, transport provider or activity supplier.
+> - Do not describe JA Plan Studio as a travel agent, tour operator, package holiday provider, transport provider or activity supplier.
 > - Do not suggest that JA sells flights, visas, transfers, coaches, ferries, trains, taxis, car hire or any transport.
 > - Do not enable hotel-room sales or customer hotel payments. There are zero approved selected partner hotels.
 > - Do not publish final legal, privacy or cookie claims without approved wording.
@@ -54,9 +54,9 @@ Use the following as the opening context for any new ChatGPT or Codex session:
 
 ## 2. Executive Project Summary
 
-JA Experiences & Discovery is a trading division/service line of **JA Group Services Ltd**, not a separate legal entity.
+JA Plan Studio is a trading division/service line of **JA Group Services Ltd**, not a separate legal entity.
 
-The website has been rebuilt from a limited affiliate/tours page into a broader professional travel experiences and discovery hub. It now contains:
+The website has been rebuilt from a limited affiliate/tours page into the broader JA Plan Studio planning platform. It now contains:
 
 - A full editorial travel homepage.
 - Destination discovery and search.
@@ -84,7 +84,7 @@ The controlling source is the Board-approved report **v3.1.2**, approved on **12
 
 ### 3.1 Core service
 
-JA Experiences & Discovery is approved as:
+JA Plan Studio is approved as:
 
 - A destination discovery service.
 - An activity and experience guidance service.
@@ -130,7 +130,7 @@ No Headout API integration may enter production without technical testing, data-
 
 ### 3.3 Travel and transport exclusions
 
-JA Experiences & Discovery must not sell, arrange, package, facilitate, advertise or take payment for:
+JA Plan Studio must not sell, arrange, package, facilitate, advertise or take payment for:
 
 - Package holidays.
 - Flights or flight-inclusive arrangements.
@@ -274,7 +274,7 @@ The Board-approved private discretionary lifetime concession is confidential and
 
 ## 5. Current Visual and Brand Direction
 
-The site has been designed as a **professional, editorial travel experiences and discovery hub**, not a generic affiliate listing page.
+The site has been designed as a **professional planning and creation tools platform**, not a generic affiliate listing page.
 
 ### 5.1 Overall visual style
 
@@ -455,7 +455,7 @@ The footer contains:
 
 Current company wording:
 
-> JA Experiences & Discovery is a trading division/service line of JA Group Services Ltd.
+> JA Plan Studio is a trading division/service line of JA Group Services Ltd.
 
 > JA Group Services Ltd is incorporated in England and Wales, Company Number 16314179.
 
@@ -991,7 +991,7 @@ Accessibility information must not be presented as a guarantee. Customers should
 
 The recent implementation sequence includes:
 
-1. Built the main multi-page JA Experiences & Discovery site structure.
+1. Built the main multi-page JA Plan Studio site structure.
 2. Added 252 destination route shells and destination rendering.
 3. Added travel imagery and editorial content structures.
 4. Added approved plan pricing and social tariff pricing.
@@ -1016,7 +1016,7 @@ The recent implementation sequence includes:
 
 Relevant recent commits:
 
-- `050373e` – Deploy complete JA Experiences website
+- `050373e` – Deploy complete JA Plan Studio website
 - `0c71fe5` – Match Launch Gateway page to travel theme
 - `d6605dd` – Add official JA Group Services footer logo
 - `ae90b7f` – Remove footer logo background
@@ -1258,7 +1258,7 @@ Do not treat the site as launch-ready until all required items are complete.
 
 As of 15 June 2026:
 
-- The professional travel experiences and discovery website is substantially built.
+- The professional JA Plan Studio website is substantially built.
 - The full site is stored in GitHub and deployed to Cloudflare Pages.
 - The custom domain is active.
 - The Launch Gateway page is the current public experience.
