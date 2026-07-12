@@ -3079,7 +3079,8 @@ const DEFAULT_PLATFORM_BUILDERS = [
   ["saved-experiences", "Saved Experiences", "Organisation", "Organisation tools", 0, "trial,membership,plus,family", "trial", "View saved experiences."],
   ["budget-planner", "Budget Planner", "Small", "Organisation tools", 10, "membership,plus,family", "paid", "Create a simple budget planning output."],
   ["booking-tracker", "Booking Tracker", "Small", "Organisation tools", 10, "membership,plus,family", "paid", "Create a booking tracker output for member-managed bookings."],
-  ["checklists", "Checklists", "Small", "Organisation tools", 10, "trial,membership,plus,family", "trial", "Create a reusable checklist."]
+  ["checklists", "Checklists", "Small", "Organisation tools", 10, "trial,membership,plus,family", "trial", "Create a reusable checklist."],
+  ["holiday-planner", "Holiday Planner", "Travel", "Travel", 5, "trial,membership,plus,family", "paid", "Organise holiday ideas, budgets and family priorities into a complete travel plan."]
 ];
 
 const DEFAULT_TOKEN_ADDONS = [
@@ -3094,13 +3095,50 @@ const DEFAULT_TOKEN_ADDONS = [
 
 async function ensureBuilderPlatformTables(DB) {
   await DB.prepare(`CREATE TABLE IF NOT EXISTS experience_builders (id TEXT PRIMARY KEY, name TEXT NOT NULL, builder_type TEXT NOT NULL, category TEXT NOT NULL, token_cost INTEGER NOT NULL DEFAULT 15, plan_inclusion TEXT NOT NULL DEFAULT 'trial,membership,plus,family', status TEXT NOT NULL DEFAULT 'Active', visibility TEXT NOT NULL DEFAULT 'paid', description TEXT, form_schema TEXT NOT NULL DEFAULT '[]', usage_count INTEGER NOT NULL DEFAULT 0, blocked_attempts INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`).run();
+
+  // Safe dynamic alters to add extended columns if they are not already present
+  const tableInfo = await DB.prepare(`PRAGMA table_info(experience_builders)`).all().then(r => r.results || []);
+  const columns = new Set(tableInfo.map(c => c.name));
+
+  if (!columns.has('slug')) await DB.prepare(`ALTER TABLE experience_builders ADD COLUMN slug TEXT`).run().catch(() => {});
+  if (!columns.has('icon')) await DB.prepare(`ALTER TABLE experience_builders ADD COLUMN icon TEXT DEFAULT '📋'`).run().catch(() => {});
+  if (!columns.has('creates_description')) await DB.prepare(`ALTER TABLE experience_builders ADD COLUMN creates_description TEXT`).run().catch(() => {});
+  if (!columns.has('estimated_minutes')) await DB.prepare(`ALTER TABLE experience_builders ADD COLUMN estimated_minutes INTEGER DEFAULT 10`).run().catch(() => {});
+  if (!columns.has('trial_eligible')) await DB.prepare(`ALTER TABLE experience_builders ADD COLUMN trial_eligible INTEGER DEFAULT 1`).run().catch(() => {});
+  if (!columns.has('featured')) await DB.prepare(`ALTER TABLE experience_builders ADD COLUMN featured INTEGER DEFAULT 0`).run().catch(() => {});
+  if (!columns.has('display_order')) await DB.prepare(`ALTER TABLE experience_builders ADD COLUMN display_order INTEGER DEFAULT 0`).run().catch(() => {});
+  if (!columns.has('output_instructions')) await DB.prepare(`ALTER TABLE experience_builders ADD COLUMN output_instructions TEXT DEFAULT ''`).run().catch(() => {});
+  if (!columns.has('version')) await DB.prepare(`ALTER TABLE experience_builders ADD COLUMN version INTEGER DEFAULT 1`).run().catch(() => {});
+
+  await DB.prepare(`CREATE TABLE IF NOT EXISTS builder_runs (
+    id TEXT PRIMARY KEY,
+    email TEXT NOT NULL,
+    builder_id TEXT NOT NULL REFERENCES experience_builders(id) ON DELETE CASCADE,
+    builder_version INTEGER NOT NULL DEFAULT 1,
+    answers TEXT NOT NULL DEFAULT '{}',
+    current_step INTEGER NOT NULL DEFAULT 0,
+    status TEXT NOT NULL DEFAULT 'draft',
+    started_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_saved_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    completed_at TEXT
+  )`).run().catch(() => {});
+
   await DB.prepare(`CREATE TABLE IF NOT EXISTS builder_outputs (id TEXT PRIMARY KEY, email TEXT NOT NULL, builder_id TEXT NOT NULL, builder_name TEXT NOT NULL, title TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'Completed', token_cost INTEGER NOT NULL DEFAULT 0, input_payload TEXT NOT NULL DEFAULT '{}', output_payload TEXT NOT NULL DEFAULT '{}', request_id TEXT, archived_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE(email, request_id))`).run();
   await DB.prepare(`CREATE TABLE IF NOT EXISTS builder_token_ledger (id TEXT PRIMARY KEY, email TEXT NOT NULL, amount INTEGER NOT NULL, balance_after INTEGER NOT NULL, source TEXT NOT NULL, reason TEXT NOT NULL, builder_output_id TEXT, builder_id TEXT, admin_email TEXT, metadata TEXT NOT NULL DEFAULT '{}', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`).run();
   await DB.prepare(`CREATE TABLE IF NOT EXISTS builder_blocked_attempts (id TEXT PRIMARY KEY, email TEXT NOT NULL, builder_id TEXT, builder_name TEXT, reason TEXT NOT NULL, tokens_available INTEGER NOT NULL DEFAULT 0, tokens_required INTEGER NOT NULL DEFAULT 0, action_offered TEXT, metadata TEXT NOT NULL DEFAULT '{}', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`).run();
   await DB.prepare(`CREATE TABLE IF NOT EXISTS trial_access_tokens (id TEXT PRIMARY KEY, email TEXT NOT NULL UNIQUE, status TEXT NOT NULL DEFAULT 'Active', activated_at TEXT NOT NULL, expires_at TEXT NOT NULL, token_allowance INTEGER NOT NULL DEFAULT 30, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`).run();
   await DB.prepare(`CREATE TABLE IF NOT EXISTS token_addon_packages (id TEXT PRIMARY KEY, name TEXT NOT NULL, price_pence INTEGER NOT NULL, token_amount INTEGER NOT NULL DEFAULT 0, package_type TEXT NOT NULL DEFAULT 'tokens', status TEXT NOT NULL DEFAULT 'Configuration Ready', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`).run();
   await DB.prepare(`CREATE TABLE IF NOT EXISTS manual_token_adjustments (id TEXT PRIMARY KEY, email TEXT NOT NULL, amount INTEGER NOT NULL, reason TEXT NOT NULL, adjustment_type TEXT NOT NULL, admin_email TEXT NOT NULL, ledger_id TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`).run();
-  for (const row of DEFAULT_PLATFORM_BUILDERS) await DB.prepare(`INSERT OR IGNORE INTO experience_builders (id, name, builder_type, category, token_cost, plan_inclusion, visibility, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`).bind(...row).run();
+
+  for (const row of DEFAULT_PLATFORM_BUILDERS) {
+    const [id, name, builder_type, category, token_cost, plan_inclusion, visibility, description] = row;
+    const exists = await DB.prepare(`SELECT id FROM experience_builders WHERE id = ?`).bind(id).first();
+    if (!exists) {
+      await DB.prepare(`INSERT OR IGNORE INTO experience_builders (id, name, builder_type, category, token_cost, plan_inclusion, status, visibility, description, slug) VALUES (?, ?, ?, ?, ?, ?, 'Active', ?, ?, ?)`).bind(id, name, builder_type, category, token_cost, plan_inclusion, visibility, description, id).run();
+    } else {
+      await DB.prepare(`UPDATE experience_builders SET slug = COALESCE(slug, id) WHERE id = ?`).bind(id).run();
+    }
+  }
   for (const row of DEFAULT_TOKEN_ADDONS) await DB.prepare(`INSERT OR IGNORE INTO token_addon_packages (id, name, price_pence, token_amount, package_type) VALUES (?, ?, ?, ?, ?)`).bind(...row).run();
 }
 
@@ -3122,14 +3160,30 @@ async function saveBuilderAdmin(DB, body, identity) {
   await ensureBuilderPlatformTables(DB);
   const name = clean(body.name, 160);
   const category = clean(body.category, 120);
-  const tokenCost = Number(body.token_cost);
+  const tokenCost = Number(body.token_cost ?? body.credits ?? 15);
   if (!name) throw new Error("Builder name is required.");
   if (!category) throw new Error("Builder category is required.");
   if (!Number.isFinite(tokenCost) || tokenCost < 0) throw new Error("Token cost must be zero or higher.");
   const id = clean(body.id, 120) || name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
+  // Extract extended admin fields
+  const slug = clean(body.slug || id, 120);
+  const icon = clean(body.icon || "📋", 20);
+  const creates_description = clean(body.creates_description || "", 1000);
+  const estimated_minutes = Number(body.estimated_minutes ?? 10);
+  const trial_eligible = Number(body.trial_eligible ?? 1);
+  const featured = Number(body.featured ?? 0);
+  const display_order = Number(body.display_order ?? 0);
+  const output_instructions = clean(body.output_instructions || "", 4000);
+  const form_schema = clean(body.form_schema || "[]", 50000);
+  const version = Number(body.version ?? 1);
+
   await DB.prepare(`
-    INSERT INTO experience_builders (id, name, builder_type, category, token_cost, plan_inclusion, status, visibility, description, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+    INSERT INTO experience_builders (
+      id, name, builder_type, category, token_cost, plan_inclusion, status, visibility, description,
+      slug, icon, creates_description, estimated_minutes, trial_eligible, featured, display_order, output_instructions, form_schema, version, updated_at
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
     ON CONFLICT(id) DO UPDATE SET
       name = excluded.name,
       builder_type = excluded.builder_type,
@@ -3139,8 +3193,22 @@ async function saveBuilderAdmin(DB, body, identity) {
       status = excluded.status,
       visibility = excluded.visibility,
       description = excluded.description,
+      slug = excluded.slug,
+      icon = excluded.icon,
+      creates_description = excluded.creates_description,
+      estimated_minutes = excluded.estimated_minutes,
+      trial_eligible = excluded.trial_eligible,
+      featured = excluded.featured,
+      display_order = excluded.display_order,
+      output_instructions = excluded.output_instructions,
+      form_schema = excluded.form_schema,
+      version = excluded.version,
       updated_at = CURRENT_TIMESTAMP
-  `).bind(id, name, clean(body.builder_type, 80) || "Standard", category, tokenCost, clean(body.plan_inclusion, 300) || "membership,plus,family", clean(body.status, 80) || "Active", clean(body.visibility, 40) || "paid", clean(body.description, 1000)).run();
+  `).bind(
+    id, name, clean(body.builder_type, 80) || "Standard", category, tokenCost, clean(body.plan_inclusion, 300) || "membership,plus,family", clean(body.status, 80) || "Active", clean(body.visibility, 40) || "paid", clean(body.description, 1000),
+    slug, icon, creates_description, estimated_minutes, trial_eligible, featured, display_order, output_instructions, form_schema, version
+  ).run();
+
   await writeAudit(DB, identity, "builder_save", "experience_builders", id, `Saved builder ${name}.`, { token_cost: tokenCost });
   return getBuilderPlatform(DB);
 }

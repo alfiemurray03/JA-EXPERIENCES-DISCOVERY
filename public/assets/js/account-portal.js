@@ -282,6 +282,22 @@ document.addEventListener("click", async (event) => {
     return;
   }
 
+  const deleteDraft = event.target.closest('[data-action="delete-builder-draft"]');
+  if (deleteDraft) {
+    if (!confirm("Are you sure you want to delete this builder draft?")) return;
+    deleteDraft.disabled = true;
+    await fetch("/account/api/builders", {
+      method: "POST",
+      credentials: "include",
+      headers: { Accept: "application/json", "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "delete_draft_by_id", id: deleteDraft.dataset.id })
+    });
+    portalState.builders = null;
+    await loadBuilders(true);
+    await renderPage("builders");
+    return;
+  }
+
   const button = event.target.closest('[data-action="manage-stripe-billing"]');
   const cookiePreferences = event.target.closest('[data-action="cookie-preferences"]');
   if (cookiePreferences) {
@@ -739,9 +755,31 @@ async function renderPage(page) {
   if (page === "builders") {
     const data = portalState.builders || await loadBuilders();
     const outputs = Array.isArray(data.outputs) ? data.outputs : [];
+    const drafts = Array.isArray(data.drafts) ? data.drafts : [];
+
+    let draftsSection = "";
+    if (drafts.length > 0) {
+      draftsSection = `
+        <section class="portal-card" style="margin-bottom: 2rem;">
+          <h2 class="${cls.cardTitle}">Drafts in Progress</h2>
+          <p class="${cls.cardDesc}">You have unfinished builder drafts. Click "Continue" to resume planning.</p>
+          ${portalTable(["Last Saved", "Builder", "Progress", "Action"], drafts.map((item) => [
+            fmt(item.last_saved_at),
+            (item.builder_icon || "📋") + " " + item.builder_name,
+            `Step ${item.current_step + 1}`,
+            `<div class="flex gap-2">
+               <a class="portal-button-primary" style="padding: 0.35rem 0.75rem; font-size: 0.75rem;" href="/builders/?builder=${escapeHtml(item.builder_id)}">Continue</a>
+               <button class="portal-button-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.75rem;" type="button" data-action="delete-builder-draft" data-id="${escapeHtml(item.id)}">Delete</button>
+             </div>`
+          ]))}
+        </section>
+      `;
+    }
+
     pageRoot.innerHTML = `
-      <section class="portal-card"><h2>Saved builder outputs and plans</h2>
-        ${outputs.length ? portalTable(["Created", "Builder", "Title", "Tokens used", "Status", "Action"], outputs.map((item) => [fmt(item.created_at), item.builder_name, item.title, item.token_cost, item.status, `<button class="portal-button secondary" type="button" data-action="archive-builder-output" data-id="${escapeHtml(item.id)}">Archive</button>`])) : emptyPortalState("No builder outputs yet", "Open a builder and save a finished output to see it here.", "/builders/", "Open Experience Builders")}
+      ${draftsSection}
+      <section class="portal-card"><h2 class="${cls.cardTitle}">Saved builder outputs and plans</h2>
+        ${outputs.length ? portalTable(["Created", "Builder", "Title", "Tokens used", "Status", "Action"], outputs.map((item) => [fmt(item.created_at), item.builder_name, item.title, item.token_cost, item.status, `<button class="portal-button-secondary" type="button" data-action="archive-builder-output" data-id="${escapeHtml(item.id)}">Archive</button>`])) : emptyPortalState("No builder outputs yet", "Open a builder and save a finished output to see it here.", "/builders/", "Open Experience Builders")}
       </section>
     `;
     return;

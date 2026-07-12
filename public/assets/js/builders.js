@@ -27,7 +27,8 @@ const PUBLIC_BUILDERS = [
   ["saved-experiences", "Saved Experiences", "Organisation", "Organisation Tools", 0, "trial", "View saved experiences."],
   ["budget-planner", "Budget Planner", "Small", "Organisation Tools", 10, "paid", "Create a simple budget planning output."],
   ["booking-tracker", "Booking Tracker", "Small", "Organisation Tools", 10, "paid", "Create a booking tracker output for member-managed bookings."],
-  ["checklists", "Checklists", "Small", "Organisation Tools", 10, "trial", "Create a reusable checklist."]
+  ["checklists", "Checklists", "Small", "Organisation Tools", 10, "trial", "Create a reusable checklist."],
+  ["holiday-planner", "Holiday Planner", "Travel", "Travel Experience Builders", 5, "paid", "Organise holiday ideas, budgets and family priorities into a complete travel plan."]
 ].map(([id, name, builder_type, category, token_cost, visibility, description]) => ({
   id,
   name,
@@ -49,9 +50,20 @@ const builderState = {
   saving: false,
   activatingTrial: false,
   filter: "all",
+
+  requestId: "",
+
+  // Guided runner properties
+  guidedRunnerActive: false,
+  guidedQuestions: [],
+  guidedAnswers: {},
+  guidedStep: 0,
+  legacyFormHtml: ""
+=======
   search: "",
   requestId: ""
   ,wizardStep: 1
+ main
 };
 
 const $ = (id) => document.getElementById(id);
@@ -59,8 +71,8 @@ const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&":
 const loginUrl = "/account/login/?return_to=%2Fbuilders%2F%3Fclaim_trial%3D1";
 
 function categoryGroup(builder) {
-  if (String(builder.builder_type).includes("Travel")) return "Travel";
-  if (String(builder.builder_type).includes("Accessibility")) return "Accessibility/support";
+  if (String(builder.builder_type || builder.category).includes("Travel")) return "Travel";
+  if (String(builder.builder_type || builder.category).includes("Accessibility")) return "Accessibility/support";
   if (String(builder.category).includes("Organisation")) return "Organisation";
   return "Everyday";
 }
@@ -189,6 +201,371 @@ async function loadAuthenticatedBuilders() {
   }
 }
 
+// --- Guided Runner Interactive rendering ---
+
+function getVisibleQuestions() {
+  return builderState.guidedQuestions.filter(q => {
+    if (!q.conditional) return true;
+    const condVal = builderState.guidedAnswers[q.conditional.field];
+    return condVal === q.conditional.value;
+  });
+}
+
+function autosaveGuidedDraft() {
+  if (!builderState.selected || !builderState.signedIn) return;
+  fetch("/account/api/builders", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      action: "save_draft",
+      builder_id: builderState.selected.id,
+      answers: builderState.guidedAnswers,
+      current_step: builderState.guidedStep
+    })
+  }).catch(err => console.error("Failed to autosave guided draft:", err));
+}
+
+function renderGuidedStep() {
+  const visible = getVisibleQuestions();
+  const step = builderState.guidedStep;
+
+  if (step >= visible.length) {
+    renderGuidedReview();
+    return;
+  }
+
+  const q = visible[step];
+  const progressPercent = Math.round(((step + 1) / visible.length) * 100);
+
+  // Generate question HTML based on type
+  let inputHtml = "";
+  const currentVal = builderState.guidedAnswers[q.id];
+
+  switch (q.type) {
+    case "short_text":
+      inputHtml = `<input type="text" id="guided_${q.id}" class="form-input w-full" placeholder="${esc(q.placeholder || "")}" value="${esc(currentVal || "")}">`;
+      break;
+    case "long_text":
+      inputHtml = `<textarea id="guided_${q.id}" rows="4" class="form-input w-full" placeholder="${esc(q.placeholder || "")}">${esc(currentVal || "")}</textarea>`;
+      break;
+    case "number":
+      inputHtml = `<input type="number" id="guided_${q.id}" min="${q.min ?? ""}" max="${q.max ?? ""}" class="form-input w-full" placeholder="${esc(q.placeholder || "")}" value="${esc(currentVal ?? "")}">`;
+      break;
+    case "date":
+      inputHtml = `<input type="date" id="guided_${q.id}" class="form-input w-full" value="${esc(currentVal || "")}">`;
+      break;
+    case "yes_no":
+      inputHtml = `
+        <div class="flex gap-4">
+          <button type="button" class="btn ${currentVal === true ? 'btn-primary' : 'btn-outline'} flex-1" id="yes_btn_${q.id}">Yes</button>
+          <button type="button" class="btn ${currentVal === false ? 'btn-primary' : 'btn-outline'} flex-1" id="no_btn_${q.id}">No</button>
+        </div>
+      `;
+      break;
+    case "single_choice":
+      inputHtml = `
+        <div class="space-y-2">
+          ${(q.options || []).map(opt => `
+            <label class="flex items-center gap-3 p-3 rounded-lg border border-default hover:bg-primary/5 cursor-pointer">
+              <input type="radio" name="guided_${q.id}" value="${esc(opt.value)}" ${currentVal === opt.value ? 'checked' : ''}>
+              <span>${esc(opt.label)}</span>
+            </label>
+          `).join("")}
+        </div>
+      `;
+      break;
+    case "multiple_choice":
+      inputHtml = `
+        <div class="space-y-2">
+          ${(q.options || []).map(opt => {
+            const checked = Array.isArray(currentVal) && currentVal.includes(opt.value);
+            return `
+              <label class="flex items-center gap-3 p-3 rounded-lg border border-default hover:bg-primary/5 cursor-pointer">
+                <input type="checkbox" name="guided_${q.id}" value="${esc(opt.value)}" ${checked ? 'checked' : ''}>
+                <span>${esc(opt.label)}</span>
+              </label>
+            `;
+          }).join("")}
+        </div>
+      `;
+      break;
+    case "selectable_cards":
+      inputHtml = `
+        <div class="grid grid-2 gap-3">
+          ${(q.options || []).map(opt => {
+            const checked = Array.isArray(currentVal) && currentVal.includes(opt.value);
+            return `
+              <button type="button" class="p-4 rounded-xl border text-center transition-all cursor-pointer ${checked ? 'border-primary bg-primary/10' : 'border-default bg-white'}" id="card_${q.id}_${esc(opt.value)}">
+                <span class="text-2xl block mb-1">${esc(opt.icon || "📋")}</span>
+                <span class="text-sm font-bold block">${esc(opt.label)}</span>
+              </button>
+            `;
+          }).join("")}
+        </div>
+      `;
+      break;
+    default:
+      inputHtml = `<input type="text" id="guided_${q.id}" class="form-input w-full" value="${esc(currentVal || "")}">`;
+  }
+
+  $("builderForm").innerHTML = `
+    <div class="space-y-6">
+      <div class="flex items-center justify-between gap-4">
+        <span class="text-xs muted font-bold uppercase tracking-wider">Step ${step + 1} of ${visible.length}</span>
+        <span class="text-xs font-bold text-primary">${progressPercent}% Complete</span>
+      </div>
+      <div class="w-full bg-default rounded-full h-1.5 overflow-hidden">
+        <div class="bg-primary h-full" style="width: ${progressPercent}%"></div>
+      </div>
+
+      <div class="space-y-2">
+        <h3 class="text-lg font-bold">${esc(q.label)} ${q.required ? `<span class="text-primary">*</span>` : `<span class="text-xs muted">(Optional)</span>`}</h3>
+        ${q.help ? `<p class="text-xs muted">${esc(q.help)}</p>` : ""}
+      </div>
+
+      <div class="p-4 bg-white/50 rounded-xl border border-default">
+        ${inputHtml}
+      </div>
+
+      <div id="guidedError" class="text-xs text-primary font-semibold" hidden></div>
+
+      <div class="flex gap-3">
+        <button type="button" class="btn btn-outline flex-1" id="guidedBackBtn" ${step === 0 ? "disabled" : ""}>Back</button>
+        <button type="button" class="btn btn-primary flex-1" id="guidedNextBtn">${step === visible.length - 1 ? "Review Answers" : "Continue"}</button>
+      </div>
+    </div>
+  `;
+
+  // Bind step interactive elements
+  if (q.type === "yes_no") {
+    $("yes_btn_" + q.id).addEventListener("click", () => {
+      builderState.guidedAnswers[q.id] = true;
+      autosaveGuidedDraft();
+      renderGuidedStep();
+    });
+    $("no_btn_" + q.id).addEventListener("click", () => {
+      builderState.guidedAnswers[q.id] = false;
+      autosaveGuidedDraft();
+      renderGuidedStep();
+    });
+  } else if (q.type === "selectable_cards") {
+    (q.options || []).forEach(opt => {
+      $("card_" + q.id + "_" + opt.value).addEventListener("click", () => {
+        let currentArr = Array.isArray(builderState.guidedAnswers[q.id]) ? [...builderState.guidedAnswers[q.id]] : [];
+        if (currentArr.includes(opt.value)) {
+          currentArr = currentArr.filter(v => v !== opt.value);
+        } else {
+          currentArr.push(opt.value);
+        }
+        builderState.guidedAnswers[q.id] = currentArr;
+        autosaveGuidedDraft();
+        renderGuidedStep();
+      });
+    });
+  }
+
+  $("guidedBackBtn").addEventListener("click", () => {
+    saveCurrentStepAnswer(q);
+    builderState.guidedStep--;
+    autosaveGuidedDraft();
+    renderGuidedStep();
+  });
+
+  $("guidedNextBtn").addEventListener("click", () => {
+    if (saveCurrentStepAnswer(q)) {
+      builderState.guidedStep++;
+      autosaveGuidedDraft();
+      renderGuidedStep();
+    }
+  });
+
+  buildPreview();
+}
+
+function saveCurrentStepAnswer(q) {
+  const el = $("guided_" + q.id);
+  const errorEl = $("guidedError");
+  if (errorEl) errorEl.hidden = true;
+
+  let val = builderState.guidedAnswers[q.id];
+
+  if (q.type === "short_text" || q.type === "long_text" || q.type === "date") {
+    val = el ? el.value.trim() : "";
+    builderState.guidedAnswers[q.id] = val;
+  } else if (q.type === "number") {
+    const rawVal = el ? el.value.trim() : "";
+    val = rawVal === "" ? undefined : Number(rawVal);
+    builderState.guidedAnswers[q.id] = val;
+  } else if (q.type === "single_choice") {
+    const checkedInput = document.querySelector(`input[name="guided_${q.id}"]:checked`);
+    val = checkedInput ? checkedInput.value : undefined;
+    builderState.guidedAnswers[q.id] = val;
+  } else if (q.type === "multiple_choice") {
+    const checkedInputs = document.querySelectorAll(`input[name="guided_${q.id}"]:checked`);
+    val = Array.from(checkedInputs).map(i => i.value);
+    builderState.guidedAnswers[q.id] = val;
+  }
+
+  // Validate answer
+  if (q.required) {
+    if (val === undefined || val === "" || (Array.isArray(val) && val.length === 0)) {
+      if (errorEl) {
+        errorEl.textContent = "This field is required.";
+        errorEl.hidden = false;
+      }
+      return false;
+    }
+  }
+
+  if (q.type === "number" && val !== undefined) {
+    if (isNaN(val)) {
+      if (errorEl) { errorEl.textContent = "Please enter a valid number."; errorEl.hidden = false; }
+      return false;
+    }
+    if (q.min !== undefined && val < q.min) {
+      if (errorEl) { errorEl.textContent = `Minimum value is ${q.min}.`; errorEl.hidden = false; }
+      return false;
+    }
+    if (q.max !== undefined && val > q.max) {
+      if (errorEl) { errorEl.textContent = `Maximum value is ${q.max}.`; errorEl.hidden = false; }
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function renderGuidedReview() {
+  const visible = getVisibleQuestions();
+
+  const rowsHtml = visible.map(q => {
+    const val = builderState.guidedAnswers[q.id];
+    let displayVal = "Not answered";
+    if (val === true) displayVal = "Yes";
+    else if (val === false) displayVal = "No";
+    else if (Array.isArray(val)) displayVal = val.length ? val.join(", ") : "Not answered";
+    else if (val !== undefined && val !== "") displayVal = String(val);
+
+    return `
+      <div class="py-2 border-b border-default last:border-0">
+        <span class="block text-xs muted font-bold">${esc(q.label)}</span>
+        <span class="text-sm font-semibold">${esc(displayVal)}</span>
+      </div>
+    `;
+  }).join("");
+
+  $("builderForm").innerHTML = `
+    <div class="space-y-6">
+      <div>
+        <span class="badge mb-2">Review</span>
+        <h3 class="text-lg font-bold">Review your answers</h3>
+        <p class="text-xs muted">Please confirm all choices are correct before generating your plan.</p>
+      </div>
+
+      <div class="p-4 bg-white/50 rounded-xl border border-default space-y-3">
+        ${rowsHtml}
+      </div>
+
+      <div class="p-4 bg-primary-soft rounded-lg text-xs font-semibold text-primary">
+        Token Cost: ${builderState.selected.token_cost ?? 5} Builder Usage Tokens will be deducted upon final creation.
+      </div>
+
+      <div id="guidedError" class="text-xs text-primary font-semibold" hidden></div>
+
+      <div class="flex gap-3">
+        <button type="button" class="btn btn-outline flex-1" id="reviewBackBtn">Back to edit</button>
+        <button type="button" class="btn btn-primary flex-1 font-bold" id="guidedSubmitBtn">Save Finished Output</button>
+      </div>
+    </div>
+  `;
+
+  $("reviewBackBtn").addEventListener("click", () => {
+    builderState.guidedStep = visible.length - 1;
+    renderGuidedStep();
+  });
+
+  $("guidedSubmitBtn").addEventListener("click", submitGuidedOutput);
+  buildPreview();
+}
+
+async function submitGuidedOutput() {
+  if (builderState.saving) return;
+  builderState.saving = true;
+  const submitBtn = $("guidedSubmitBtn");
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Saving...";
+  }
+
+  try {
+    const response = await fetch("/account/api/builders", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({
+        action: "save_output",
+        builder_id: builderState.selected.id,
+        title: "Holiday Plan: " + (builderState.guidedAnswers.destination || "Personalised trip"),
+        fields: builderState.guidedAnswers,
+        request_id: builderState.requestId
+      })
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const errEl = $("guidedError");
+      if (errEl) {
+        errEl.textContent = data.error || "Output could not be saved.";
+        errEl.hidden = false;
+      }
+      if (data.token_summary) {
+        builderState.summary = data.token_summary;
+        renderSummary();
+      }
+      return;
+    }
+
+    builderState.summary = data.token_summary || builderState.summary || {};
+    builderState.outputs.unshift(data.output || { title: "Holiday Plan" });
+    builderState.requestId = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
+
+    // Clear draft state
+    builderState.guidedAnswers = {};
+    builderState.guidedStep = 0;
+
+    // Success view
+    $("builderForm").innerHTML = `
+      <div class="space-y-6 text-center py-6">
+        <div class="w-16 h-16 rounded-full bg-success/15 flex items-center justify-center mx-auto text-success text-2xl font-bold">✓</div>
+        <div class="space-y-2">
+          <h3 class="text-xl font-extrabold">Finished Plan Saved!</h3>
+          <p class="text-sm muted">Tokens were deducted. You can find your plan inside "My Builders" in your customer portal anytime.</p>
+        </div>
+        <button class="btn btn-secondary w-full" id="startFreshGuidedBtn">Start a new fresh plan</button>
+      </div>
+    `;
+    $("startFreshGuidedBtn").addEventListener("click", () => {
+      renderGuidedStep();
+    });
+
+    renderSummary();
+  } catch (error) {
+    const errEl = $("guidedError");
+    if (errEl) {
+      errEl.textContent = error.message || "Output could not be saved.";
+      errEl.hidden = false;
+    }
+  } finally {
+    builderState.saving = false;
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Save Finished Output";
+    }
+  }
+}
+
+// --- End of Guided Runner logic ---
+
 function selectBuilder(id) {
   const builder = builderState.builders.find((item) => item.id === id) || PUBLIC_BUILDERS.find((item) => item.id === id);
   if (!builder) return;
@@ -204,6 +581,55 @@ function selectBuilder(id) {
   $("selectedBuilderDescription").textContent = builder.description || "Complete the guided fields and preview before saving.";
   $("selectedBuilderCost").textContent = `${builder.token_cost ?? 0} Builder Usage Tokens`;
   $("builderFormStatus").textContent = "Builder opened. No tokens have been deducted.";
+
+  // Store legacy template HTML once
+  if (!builderState.legacyFormHtml) {
+    builderState.legacyFormHtml = $("builderForm").innerHTML;
+  }
+
+  // Detect and initialize guided questionnaire or fallback
+  let parsedSchema = [];
+  try {
+    parsedSchema = builder.form_schema ? JSON.parse(builder.form_schema) : [];
+  } catch (e) {
+    parsedSchema = [];
+  }
+
+  if (Array.isArray(parsedSchema) && parsedSchema.length > 0) {
+    builderState.guidedRunnerActive = true;
+    builderState.guidedQuestions = parsedSchema;
+    builderState.guidedAnswers = {};
+    builderState.guidedStep = 0;
+
+    // Load persistent draft if it exists in D1
+    fetch("/account/api/builders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "get_draft", builder_id: builder.id })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.draft) {
+        const resume = confirm("You have an unfinished draft for the Holiday Planner. Would you like to resume it?");
+        if (resume) {
+          builderState.guidedAnswers = typeof data.draft.answers === "string" ? JSON.parse(data.draft.answers) : (data.draft.answers || {});
+          builderState.guidedStep = Number(data.draft.current_step || 0);
+        }
+      }
+      renderGuidedStep();
+    })
+    .catch(() => {
+      renderGuidedStep();
+    });
+
+  } else {
+    // Legacy flat form mode
+    builderState.guidedRunnerActive = false;
+    $("builderForm").innerHTML = builderState.legacyFormHtml;
+    // Bind legacy inputs
+    $("builderForm").addEventListener("submit", saveOutput);
+  }
+
   setWizardStep(1);
   $("builderEditor").scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -226,11 +652,11 @@ function setWizardStep(step) {
 
 function collectFields() {
   return {
-    idea: $("builderIdea").value.trim(),
-    timing: $("builderTiming").value.trim(),
-    budget: $("builderBudget").value.trim(),
-    support: $("builderSupport").value.trim(),
-    notes: $("builderNotes").value.trim()
+    idea: $("builderIdea") ? $("builderIdea").value.trim() : "",
+    timing: $("builderTiming") ? $("builderTiming").value.trim() : "",
+    budget: $("builderBudget") ? $("builderBudget").value.trim() : "",
+    support: $("builderSupport") ? $("builderSupport").value.trim() : "",
+    notes: $("builderNotes") ? $("builderNotes").value.trim() : ""
   };
 }
 
@@ -239,7 +665,50 @@ function buildPreview() {
     $("builderFormStatus").textContent = "Select a builder first.";
     return false;
   }
-  const title = $("builderTitle").value.trim();
+
+  if (builderState.guidedRunnerActive) {
+    // Generate beautiful interactive preview page
+    const dest = esc(builderState.guidedAnswers.destination || "Destination");
+    const dates = esc(builderState.guidedAnswers.travel_dates || "Travel Dates");
+    const nights = esc(builderState.guidedAnswers.trip_duration || "3");
+    const adults = esc(builderState.guidedAnswers.num_adults || "1");
+    const hasChildren = builderState.guidedAnswers.has_children ? "Yes" : "No";
+    const budget = esc(builderState.guidedAnswers.budget || "moderate");
+    const accom = esc(builderState.guidedAnswers.accommodation || "hotel");
+    const transport = esc(Array.isArray(builderState.guidedAnswers.transport) ? builderState.guidedAnswers.transport.join(", ") : builderState.guidedAnswers.transport || "None");
+    const interests = esc(Array.isArray(builderState.guidedAnswers.interests) ? builderState.guidedAnswers.interests.join(", ") : builderState.guidedAnswers.interests || "Sightseeing");
+    const pace = esc(builderState.guidedAnswers.preferred_pace || "moderate");
+    const access = builderState.guidedAnswers.has_accessibility ? esc(builderState.guidedAnswers.accessibility_details || "None") : "No requirements reported.";
+    const dietary = builderState.guidedAnswers.has_dietary ? esc(builderState.guidedAnswers.dietary_details || "None") : "No requirements reported.";
+
+    $("builderPreview").innerHTML = `
+      <div class="builder-preview-page">
+        <p class="builder-kicker">${esc(builderState.selected.name)} Preview</p>
+        <h3 class="text-xl font-extrabold mb-1">Trip to: ${dest}</h3>
+        <p class="text-xs muted mb-4">Dates: ${dates} (${nights} nights) · ${adults} Adult(s)</p>
+
+        <div class="space-y-4">
+          <div>
+            <h4 class="font-bold text-sm text-primary mb-1">Preferences & Pace</h4>
+            <p class="text-xs text-gray-700">Budget: <strong>${budget}</strong> · Pace: <strong>${pace}</strong> · Style: <strong>${accom}</strong></p>
+            <p class="text-xs text-gray-700">Transport: <strong>${transport}</strong></p>
+            <p class="text-xs text-gray-700">Interests: <strong>${interests}</strong></p>
+          </div>
+
+          <div>
+            <h4 class="font-bold text-sm text-primary mb-1">Support & Accessibility</h4>
+            <p class="text-xs text-gray-700">Accessibility: ${access}</p>
+            <p class="text-xs text-gray-700">Dietary: ${dietary}</p>
+          </div>
+        </div>
+
+        <div class="builder-preview-note mt-4">This is a dynamic, multi-step self-service preview. No tokens are charged for drafting, editing, or previewing questions. Tokens are spent only upon final save.</div>
+      </div>
+    `;
+    return true;
+  }
+
+  const title = $("builderTitle") ? $("builderTitle").value.trim() : "";
   const fields = collectFields();
   if (!title && !fields.idea) {
     $("builderFormStatus").textContent = "Add a title or main idea before previewing.";
@@ -305,7 +774,7 @@ async function activateTrial() {
 }
 
 async function saveOutput(event) {
-  event.preventDefault();
+  if (event) event.preventDefault();
   if (!builderState.signedIn) {
     window.location.href = loginUrl;
     return;
@@ -326,7 +795,7 @@ async function saveOutput(event) {
       body: JSON.stringify({
         action: "save_output",
         builder_id: builderState.selected.id,
-        title: $("builderTitle").value.trim(),
+        title: $("builderTitle") ? $("builderTitle").value.trim() : "",
         fields: collectFields(),
         request_id: builderState.requestId
       })
@@ -385,6 +854,11 @@ function init() {
   }
   renderSummary();
   loadAuthenticatedBuilders();
+
+  const autoBuilder = new URLSearchParams(window.location.search).get("builder");
+  if (autoBuilder) {
+    setTimeout(() => selectBuilder(autoBuilder), 800);
+  }
 }
 
 init();
