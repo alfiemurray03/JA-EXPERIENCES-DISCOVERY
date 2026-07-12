@@ -53,3 +53,15 @@ test("Cookiebot reset records only genuine accept or decline choices", async () 
   assert.match(shell, /CookiebotOnDecline/);
   assert.doesNotMatch(shell, /requestRenewal[\s\S]{0,200}localStorage\.setItem/);
 });
+
+test("Cookiebot cannot block the shared public header and footer shell", async () => {
+  const htmlFiles = (await walk(new URL("../public/", import.meta.url))).filter((url) => url.pathname.endsWith(".html"));
+  const violations = [];
+  for (const file of htmlFiles) {
+    const html = await readFile(file, "utf8");
+    if (/src="\/assets\/js\/site-shell\.js/.test(html) && !/<script[^>]*data-cookieconsent="ignore"[^>]*src="\/assets\/js\/site-shell\.js/.test(html)) {
+      violations.push(file.pathname);
+    }
+  }
+  assert.deepEqual(violations, []);
+});
