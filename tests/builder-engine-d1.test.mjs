@@ -154,23 +154,17 @@ function createMockDB(options = {}) {
   };
 }
 
-// 1. Catalogue data loading from D1 for public and authenticated users
-test("catalogue data loads from D1 and filters unpublished builders", async () => {
+// 1. Catalogue data is protected and loads from D1 for authenticated users
+test("builder catalogue API rejects unauthenticated users and filters unpublished builders", async () => {
   const DB = createMockDB();
   const context = {
     request: new Request("https://experiences.example.test/account/api/builders", { method: "GET" }),
     env: { DB }
   };
 
-  // Unauthenticated user
   const responseUnauth = await accountOnRequest(context);
-  assert.equal(responseUnauth.status, 200);
-  const dataUnauth = await responseUnauth.json();
-  assert.ok(dataUnauth.builders);
-  assert.equal(dataUnauth.builders.length, 1, "Should only return active published builder");
-  assert.equal(dataUnauth.builders[0].id, "holiday-planner");
-  assert.equal(dataUnauth.builders[0].category, "Travel");
-  assert.equal(dataUnauth.builders[0].token_cost, 5);
+  assert.equal(responseUnauth.status, 401);
+  assert.deepEqual(await responseUnauth.json(), { error: "Not signed in." });
 
   // Authenticated user
   const contextAuth = {

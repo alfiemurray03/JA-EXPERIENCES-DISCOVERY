@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 
@@ -1709,7 +1711,7 @@ main {
   background: rgba(255, 255, 255, 0.92);
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
   backdrop-filter: blur(18px);
-  font-family: "Manrope Local", Manrope, ui-sans-serif, system-ui, sans-serif;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .site-header-inner {
@@ -1729,9 +1731,9 @@ main {
   flex-shrink: 0;
   align-items: center;
   color: var(--ja-ink);
-  font-family: "Manrope Local", Manrope, ui-sans-serif, system-ui, sans-serif;
+  font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: clamp(1.2rem, calc(1.08rem + 0.3vw), 1.35rem);
-  font-weight: 675;
+  font-weight: 700;
   letter-spacing: -0.015em;
   text-decoration: none;
   white-space: nowrap;
@@ -1742,9 +1744,9 @@ main {
   align-items: baseline;
   gap: .24em;
   color: #000;
-  font-family: "Manrope Local", Manrope, ui-sans-serif, system-ui, sans-serif;
+  font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: inherit;
-  font-weight: 675;
+  font-weight: 700;
   line-height: 1.2;
   white-space: nowrap;
 }
@@ -1907,7 +1909,7 @@ main {
   margin-top: 0;
   border-top: 1px solid var(--ja-line);
   background: rgba(255, 255, 255, 0.92);
-  font-family: "Manrope Local", Manrope, ui-sans-serif, system-ui, sans-serif;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .site-footer-inner {
@@ -1927,9 +1929,9 @@ main {
   gap: 0.25rem;
   margin-bottom: 1rem;
   color: var(--ja-ink);
-  font-family: "Manrope Local", Manrope, ui-sans-serif, system-ui, sans-serif;
+  font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: clamp(1.35rem, 1.6vw, 1.5rem);
-  font-weight: 675;
+  font-weight: 700;
   line-height: 1.2;
   text-decoration: none;
 }
@@ -5553,26 +5555,6 @@ tr:hover td { background: #f8fafc; }
   .customer-record-actions .admin-button { flex: 1 1 auto; }
   #adminMobileMoreNav { grid-template-columns: 1fr 1fr; }
 }
-
-@font-face {
-  font-family: "Manrope Local";
-  font-style: normal;
-  font-display: swap;
-  font-weight: 200 800;
-  src: url("/assets/fonts/manrope/manrope-latin-variable.woff2") format("woff2-variations");
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-
-@font-face {
-  font-family: "Manrope Local";
-  font-style: normal;
-  font-display: swap;
-  font-weight: 200 800;
-  src: url("/assets/fonts/manrope/manrope-latin-ext-variable.woff2") format("woff2-variations");
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
-}
-
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap");
 
 @layer base {
   :root { color-scheme: light; }

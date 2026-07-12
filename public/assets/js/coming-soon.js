@@ -8,7 +8,7 @@
     description: "JA Plan Studio is a self-service experience planning platform that helps you build, save and manage everyday, travel and support planning outputs.",
     features: [
       "Guided Experience Builders",
-      "Builder Usage Tokens",
+      "Guided planning tools",
       "Saved Plans and outputs",
       "Destination discovery tools",
       "Accessibility and support planning",

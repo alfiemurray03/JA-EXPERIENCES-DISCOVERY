@@ -234,6 +234,30 @@ test("signed-out users can view portal landing pages before authentication", asy
   }
 });
 
+test("protected builder hub redirects signed-out visitors and preserves its return URL", async () => {
+  const response = await onRequest({
+    request: new Request("https://experiences.example.test/account/builders/?builder=holiday-planner", {
+      headers: { Accept: "text/html", "Sec-Fetch-Dest": "document" }
+    }),
+    env: environment(new MiddlewareD1({ session: false })),
+    next: async () => { throw new Error("Signed-out visitor reached the protected builder hub."); }
+  });
+  assert.equal(response.status, 302);
+  assert.equal(response.headers.get("location"), "/account/login?return_to=%2Faccount%2Fbuilders%2F%3Fbuilder%3Dholiday-planner");
+});
+
+test("authenticated customers can access the protected builder hub", async () => {
+  const response = await onRequest({
+    request: new Request("https://experiences.example.test/account/builders/", {
+      headers: { Cookie: "ja_customer_oidc_session=opaque-customer-session", Accept: "text/html" }
+    }),
+    env: environment(new MiddlewareD1()),
+    next: async () => new Response("protected builder hub")
+  });
+  assert.equal(response.status, 200);
+  assert.equal(await response.text(), "protected builder hub");
+});
+
 test("customer authentication endpoints are gated during closed modes but bypass during normal mode", async () => {
   const DB = new MiddlewareD1({ session: false });
   // Normal mode: should load successfully

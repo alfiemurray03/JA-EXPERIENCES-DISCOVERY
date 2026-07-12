@@ -407,12 +407,7 @@ export async function onRequest(context) {
   await ensureTables(env.DB);
   const identity = getAccessIdentity(request);
 
-  // Allow unauthenticated GET requests to see public builder definitions directly from D1
   if (!identity.email) {
-    if (request.method === "GET") {
-      const builders = await all(env.DB, `SELECT * FROM experience_builders WHERE COALESCE(status, 'Active') = 'Active' ORDER BY display_order ASC, category, token_cost, name`);
-      return json({ builders });
-    }
     return json({ error: "Not signed in." }, 401);
   }
 

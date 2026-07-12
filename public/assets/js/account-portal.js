@@ -4,6 +4,7 @@ const navItems = [
   ["/account/dashboard/", "Overview"],
   ["/account/account/", "My Account"],
   ["/account/profile/", "My Profile"],
+  ["/account/builders/", "Builders"],
   ["/account/tokens/", "Tokens & Usage"],
   ["/account/subscription/", "Plans & Billing"],
   ["/account/messages/", "Messages"],
@@ -484,7 +485,7 @@ async function renderPage(page) {
           <p class="portal-note inline">${escapeHtml(tokenSummary.deduction_rule || "Builder Usage Tokens are deducted only when a finished builder output is saved successfully. Opening, selecting, typing and previewing do not deduct tokens.")}</p>
           <div class="portal-form-actions">
             <a class="portal-button-secondary" href="/account/tokens/">View token ledger</a>
-            <a class="portal-button" href="/builders/">Open Experience Builders</a>
+            <a class="portal-button" href="/account/builders/">Open Experience Builders</a>
           </div>
         </article>
 
@@ -744,7 +745,7 @@ async function renderPage(page) {
           <div class="portal-entry"><span class="portal-label">Purchased add-on tokens</span><strong>${escapeHtml(String(summary.purchased_addon_tokens ?? 0))}</strong></div>
           <div class="portal-entry"><span class="portal-label">Trial expiry</span><strong>${escapeHtml(fmt(summary.trial?.expires_at))}</strong></div>
         </div></article>
-        <article class="portal-card"><h2>How tokens work</h2><p>${escapeHtml(summary.deduction_rule || "Builder Usage Tokens are deducted only on completed saved outputs.")}</p><a class="portal-button" href="/builders/">Open Experience Builders</a></article>
+        <article class="portal-card"><h2>How tokens work</h2><p>${escapeHtml(summary.deduction_rule || "Builder Usage Tokens are deducted only on completed saved outputs.")}</p><a class="portal-button" href="/account/builders/">Open Experience Builders</a></article>
       </section>
       <section class="portal-card"><h2>Token ledger</h2>${portalTable(["Date", "Amount", "Source", "Reason", "Balance"], ledger.map((item) => [fmt(item.created_at), item.amount, item.source, item.reason, item.balance_after]))}</section>
       <section class="portal-card"><h2>Blocked attempts</h2>${portalTable(["Date", "Builder", "Reason", "Available", "Required", "Action"], attempts.map((item) => [fmt(item.created_at), item.builder_name, item.reason, item.tokens_available, item.tokens_required, item.action_offered]))}</section>
@@ -768,7 +769,7 @@ async function renderPage(page) {
             (item.builder_icon || "📋") + " " + item.builder_name,
             `Step ${item.current_step + 1}`,
             `<div class="flex gap-2">
-               <a class="portal-button-primary" style="padding: 0.35rem 0.75rem; font-size: 0.75rem;" href="/builders/?builder=${escapeHtml(item.builder_id)}">Continue</a>
+               <a class="portal-button-primary" style="padding: 0.35rem 0.75rem; font-size: 0.75rem;" href="/account/builders/?builder=${escapeHtml(item.builder_id)}">Continue</a>
                <button class="portal-button-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.75rem;" type="button" data-action="delete-builder-draft" data-id="${escapeHtml(item.id)}">Delete</button>
              </div>`
           ]))}
@@ -779,7 +780,7 @@ async function renderPage(page) {
     pageRoot.innerHTML = `
       ${draftsSection}
       <section class="portal-card"><h2 class="${cls.cardTitle}">Saved builder outputs and plans</h2>
-        ${outputs.length ? portalTable(["Created", "Builder", "Title", "Tokens used", "Status", "Action"], outputs.map((item) => [fmt(item.created_at), item.builder_name, item.title, item.token_cost, item.status, `<button class="portal-button-secondary" type="button" data-action="archive-builder-output" data-id="${escapeHtml(item.id)}">Archive</button>`])) : emptyPortalState("No builder outputs yet", "Open a builder and save a finished output to see it here.", "/builders/", "Open Experience Builders")}
+        ${outputs.length ? portalTable(["Created", "Builder", "Title", "Tokens used", "Status", "Action"], outputs.map((item) => [fmt(item.created_at), item.builder_name, item.title, item.token_cost, item.status, `<button class="portal-button-secondary" type="button" data-action="archive-builder-output" data-id="${escapeHtml(item.id)}">Archive</button>`])) : emptyPortalState("No builder outputs yet", "Open a builder and save a finished output to see it here.", "/account/builders/", "Open Experience Builders")}
       </section>
     `;
     return;
@@ -964,7 +965,7 @@ async function renderPage(page) {
         <article class="portal-card portal-span-12">
           <h2>Saved Plans</h2>
           <div class="portal-stack">
-            ${outputs.map((item) => `<div class="portal-entry"><div><strong>${escapeHtml(item.title || item.builder_name || "Saved plan")}</strong><small>${escapeHtml(item.builder_name || "Experience Builder")} · ${escapeHtml(fmt(item.created_at))}</small></div><a class="portal-button-secondary" href="/account/builders/">View</a></div>`).join("") || emptyPortalState("No saved plans yet", "When you save a finished builder output, it will appear here.", "/builders/", "Open Experience Builders")}
+            ${outputs.map((item) => `<div class="portal-entry"><div><strong>${escapeHtml(item.title || item.builder_name || "Saved plan")}</strong><small>${escapeHtml(item.builder_name || "Experience Builder")} · ${escapeHtml(fmt(item.created_at))}</small></div><a class="portal-button-secondary" href="/account/builders/">View</a></div>`).join("") || emptyPortalState("No saved plans yet", "When you save a finished builder output, it will appear here.", "/account/builders/", "Open Experience Builders")}
             <a class="portal-button-secondary" href="/account/tokens/">View Builder Usage Tokens</a>
           </div>
         </article>

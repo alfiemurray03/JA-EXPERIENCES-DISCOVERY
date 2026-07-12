@@ -22,10 +22,10 @@ test("every configured builder produces a readable structured output", () => {
   }
 });
 
-test("public and server builder inventories stay aligned", async () => {
-  const source = await import("node:fs/promises").then((fs) => fs.readFile(new URL("../public/assets/js/builders.js", import.meta.url), "utf8"));
-  const publicIds = [...source.matchAll(/^\s*\["([a-z0-9-]+)",/gm)].map((match) => match[1]);
-  assert.deepEqual(publicIds, DEFAULT_BUILDERS.map((row) => row[0]));
+test("protected client and server builder inventories stay aligned", async () => {
+  const source = await import("node:fs/promises").then((fs) => fs.readFile(new URL("../public/account/assets/builders.js", import.meta.url), "utf8"));
+  const protectedIds = [...source.matchAll(/^\s*\["([a-z0-9-]+)",/gm)].map((match) => match[1]);
+  assert.deepEqual(protectedIds, DEFAULT_BUILDERS.map((row) => row[0]));
 });
 
 test("builder service enforces suspension, plan inclusion, idempotency and atomic deduction", async () => {

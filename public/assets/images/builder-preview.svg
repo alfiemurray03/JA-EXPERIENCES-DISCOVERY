@@ -1,6 +1,6 @@
 <svg width="900" height="680" viewBox="0 0 900 680" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
   <title id="title">Guided builder workspace preview</title>
-  <desc id="desc">A light SaaS planning interface showing builder steps, token usage, a checklist and saved output.</desc>
+  <desc id="desc">A light SaaS planning interface showing builder steps, a checklist and saved output.</desc>
   <rect width="900" height="680" rx="36" fill="#F8FAFC"/>
   <rect x="34" y="34" width="832" height="612" rx="30" fill="white" stroke="#D8E2F2"/>
   <rect x="34" y="34" width="832" height="82" rx="30" fill="#EEF5FF"/>
@@ -30,12 +30,12 @@
     <text x="152" y="444" fill="#334155">Save output</text>
   </g>
   <rect x="108" y="510" width="156" height="54" rx="16" fill="#FFFFFF" stroke="#CBD5E1"/>
-  <text x="126" y="533" fill="#64748B" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="700">Builder Usage Tokens</text>
+  <text x="126" y="533" fill="#64748B" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="700">Builder access</text>
   <text x="126" y="556" fill="#2563EB" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="900">30 available</text>
 
   <rect x="326" y="154" width="498" height="274" rx="24" fill="white" stroke="#D8E2F2"/>
   <text x="360" y="198" fill="#0F172A" font-family="Inter, Arial, sans-serif" font-size="26" font-weight="900">Family day out planner</text>
-  <text x="360" y="226" fill="#64748B" font-family="Inter, Arial, sans-serif" font-size="16">Preview before tokens are used</text>
+  <text x="360" y="226" fill="#64748B" font-family="Inter, Arial, sans-serif" font-size="16">Preview before saving</text>
   <rect x="360" y="260" width="202" height="44" rx="12" fill="#F8FAFC" stroke="#CBD5E1"/>
   <text x="382" y="288" fill="#334155" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="700">Weather alternative</text>
   <rect x="586" y="260" width="202" height="44" rx="12" fill="#F8FAFC" stroke="#CBD5E1"/>
@@ -55,6 +55,6 @@
   <rect x="590" y="456" width="234" height="144" rx="22" fill="#F0FDF4" stroke="#BBF7D0"/>
   <text x="624" y="494" fill="#15803D" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="900">Ready to save</text>
   <text x="624" y="532" fill="#166534" font-family="Inter, Arial, sans-serif" font-size="36" font-weight="900">15</text>
-  <text x="672" y="532" fill="#166534" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="800">tokens</text>
+  <text x="672" y="532" fill="#166534" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="800">ready</text>
   <rect x="624" y="552" width="150" height="22" rx="11" fill="#DCFCE7"/>
 </svg>

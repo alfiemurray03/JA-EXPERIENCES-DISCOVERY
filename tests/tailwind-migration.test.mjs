@@ -63,15 +63,14 @@ test("shared header and footer use refined typography and a visible full footer 
   assert.match(styles, /\.site-footer \.site-footer-brand \.brand-name\s*{\s*color:\s*#60a5fa/);
 });
 
-test("shared public shell uses locally served Manrope typography", async () => {
+test("shared public shell uses the JA Smart Profile Google Fonts typography", async () => {
   const styles = await readFile(new URL("../src/styles/tailwind.css", import.meta.url), "utf8");
-  assert.match(styles, /@font-face\s*{[\s\S]*?font-family:\s*"Manrope Local"/);
-  assert.match(styles, /url\("\/assets\/fonts\/manrope\/manrope-latin-variable\.woff2"\)/);
-  assert.match(styles, /\.site-header\s*{[\s\S]*?font-family:\s*"Manrope Local"/);
-  assert.match(styles, /\.site-footer\s*{[\s\S]*?font-family:\s*"Manrope Local"/);
+  assert.match(styles, /@import url\('https:\/\/fonts\.googleapis\.com\/css2\?family=Plus\+Jakarta\+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap'\)/);
+  assert.match(styles, /\.site-header\s*{[\s\S]*?font-family:\s*"Inter"/);
+  assert.match(styles, /\.site-footer\s*{[\s\S]*?font-family:\s*"Inter"/);
+  assert.match(styles, /\.brand-wordmark\s*{[\s\S]*?font-family:\s*"Plus Jakarta Sans"/);
   assert.match(styles, /\.site-brand\.brand-wordmark\s*{[\s\S]*?font-size:\s*clamp\(1\.2rem,[\s\S]*?1\.35rem\)/);
-  assert.doesNotMatch(styles.match(/\.site-header\s*{[\s\S]*?\}/)?.[0] || "", /Segoe UI/);
-  assert.doesNotMatch(styles.match(/\.site-footer\s*{[\s\S]*?\}/)?.[0] || "", /Segoe UI/);
+  assert.doesNotMatch(styles, /Manrope Local|fontsource-variable\/manrope|assets\/fonts\/manrope/);
 });
 
 test("Cookiebot cannot block the shared public header and footer shell", async () => {
