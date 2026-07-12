@@ -737,9 +737,20 @@ async function applyAdminBranding() {
   const businessName = branding.business_name || "JA Group Services Ltd";
 
   document.title = `Admin Control Centre | ${serviceName}`;
-  document.querySelectorAll(".admin-brand span").forEach((element) => {
-    element.textContent = serviceName;
-  });
+
+  // Set the wordmark segments and subtitle dynamically to protect layout & styling
+  const brandJa = document.querySelector(".admin-brand .brand-ja");
+  const brandName = document.querySelector(".admin-brand .brand-name");
+  if (brandJa) brandJa.textContent = "JA";
+  if (brandName) {
+    const serviceNameWithoutJA = serviceName.replace(/^JA\s*/i, "");
+    brandName.textContent = serviceNameWithoutJA.endsWith("Admin") ? serviceNameWithoutJA : `${serviceNameWithoutJA} Admin`;
+  }
+  const brandSubtitle = document.querySelector(".admin-brand-copy > span");
+  if (brandSubtitle) {
+    brandSubtitle.textContent = "Administration portal";
+  }
+
   document.querySelectorAll(".admin-topbar-title span").forEach((element) => {
     element.textContent = sectionDescriptions[state.currentSection] || `${serviceName} administration.`;
   });

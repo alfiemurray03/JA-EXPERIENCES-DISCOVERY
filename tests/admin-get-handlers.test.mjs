@@ -62,6 +62,9 @@ class MockD1 {
       },
       async run() {
         if (sql.includes("INSERT INTO admin_audit_log")) db.auditWrites += 1;
+        if (sql.includes("INSERT INTO site_settings") && stmt.bindings[0] === "site_status") {
+          db.siteStatus = stmt.bindings[1];
+        }
         return { success: true };
       },
       async all() {
