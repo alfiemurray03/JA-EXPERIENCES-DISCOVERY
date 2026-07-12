@@ -867,7 +867,7 @@ async function initialiseAdminSchema(DB, env) {
     const info = await all(DB, "PRAGMA table_info(site_settings)");
     const columns = new Set(info.map((row) => row.name));
     if (columns.size > 0 && !columns.has("updated_at")) {
-      await safeAlter(DB, `ALTER TABLE site_settings ADD COLUMN updated_at TEXT DEFAULT CURRENT_TIMESTAMP`);
+      await safeAlter(DB, `ALTER TABLE site_settings ADD COLUMN updated_at TEXT`);
     }
   } catch (_) {
     // Ignore if table does not exist yet (will be created in ensureTables)
