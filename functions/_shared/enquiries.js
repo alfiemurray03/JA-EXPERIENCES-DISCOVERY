@@ -388,7 +388,7 @@ async function providerSettings(DB, env) {
     provider: (stored.email_provider || env.EMAIL_PROVIDER || "resend").toLowerCase(),
     apiKey: stored.email_api_key || env.EMAIL_API_TOKEN || env.RESEND_API_KEY || env.SENDGRID_API_KEY || env.POSTMARK_API_KEY || env.BREVO_API_KEY || "",
     endpoint: stored.email_api_endpoint || env.EMAIL_API_ENDPOINT || "",
-    fromName: stored.smtp_from_name || "JA Experiences & Discovery",
+    fromName: stored.smtp_from_name || "JA Plan Studio",
     fromEmail: stored.smtp_from_email || env.ENQUIRY_FROM_EMAIL || "noreply@jagroupservices.co.uk",
     adminEmail: stored.admin_notification_email || env.ADMIN_NOTIFICATION_EMAIL || env.ENQUIRY_TO_EMAIL || ""
   };
@@ -431,7 +431,7 @@ async function sendProviderEmail(DB, env, message) {
 
 function brandedEmail(title, paragraphs, details = []) {
   const detailHtml = details.length ? `<table role="presentation" style="border-collapse:collapse;width:100%;margin:20px 0">${details.map(([label, value]) => `<tr><th style="padding:9px;text-align:left;vertical-align:top;background:#f1f5f9;border:1px solid #cbd5e1">${escapeHtml(label)}</th><td style="padding:9px;white-space:pre-wrap;border:1px solid #cbd5e1">${escapeHtml(value || "Not provided")}</td></tr>`).join("")}</table>` : "";
-  return `<!doctype html><html lang="en-GB"><body style="margin:0;background:#f8fafc;color:#0f172a;font-family:Arial,sans-serif"><div style="max-width:720px;margin:0 auto;padding:28px"><div style="background:#1d4ed8;color:#fff;padding:20px;border-radius:12px 12px 0 0"><strong>JA Experiences &amp; Discovery</strong></div><main style="background:#fff;border:1px solid #cbd5e1;border-top:0;padding:24px;border-radius:0 0 12px 12px"><h1 style="font-size:24px">${escapeHtml(title)}</h1>${paragraphs.map((paragraph) => `<p style="line-height:1.6">${escapeHtml(paragraph)}</p>`).join("")}${detailHtml}<p style="line-height:1.6">Kind regards,<br>JA Experiences &amp; Discovery<br>JA Group Services Ltd</p></main></div></body></html>`;
+  return `<!doctype html><html lang="en-GB"><body style="margin:0;background:#f8fafc;color:#0f172a;font-family:Arial,sans-serif"><div style="max-width:720px;margin:0 auto;padding:28px"><div style="background:#1d4ed8;color:#fff;padding:20px;border-radius:12px 12px 0 0"><strong>JA Plan Studio</strong></div><main style="background:#fff;border:1px solid #cbd5e1;border-top:0;padding:24px;border-radius:0 0 12px 12px"><h1 style="font-size:24px">${escapeHtml(title)}</h1>${paragraphs.map((paragraph) => `<p style="line-height:1.6">${escapeHtml(paragraph)}</p>`).join("")}${detailHtml}<p style="line-height:1.6">Kind regards,<br>JA Plan Studio<br>JA Group Services Ltd</p></main></div></body></html>`;
 }
 
 async function deliverNotification(DB, env, notification) {
@@ -469,7 +469,7 @@ export async function sendNewEnquiryNotifications(DB, env, reference) {
   const customerOk = await deliverNotification(DB, env, {
     reference, type: "customer_confirmation", to: enquiry.email,
     subject: `${reference}: We have received your enquiry`,
-    text: `Hello ${enquiry.name},\n\nThank you for contacting JA Experiences & Discovery. We have received your enquiry.\n\nReference: ${reference}\nExpected response time: within 2 working days.\n\nView My Enquiries: https://experiences.jagroupservices.co.uk/account/enquiries/`,
+    text: `Hello ${enquiry.name},\n\nThank you for contacting JA Plan Studio. We have received your enquiry.\n\nReference: ${reference}\nExpected response time: within 2 working days.\n\nView My Enquiries: https://experiences.jagroupservices.co.uk/account/enquiries/`,
     html: brandedEmail("We have received your enquiry", [`Hello ${enquiry.name},`, "Thank you for contacting us. We have received your enquiry and normally respond within 2 working days.", `Your reference is ${reference}.`, "View My Enquiries: https://experiences.jagroupservices.co.uk/account/enquiries/"])
   });
   const status = adminOk && customerOk ? "Sent" : adminOk || customerOk ? "Partially failed" : "Failed";
@@ -524,7 +524,7 @@ export async function updateEnquiryAsAdmin(DB, env, body, identity) {
     await DB.prepare(`INSERT INTO enquiry_messages (id, enquiry_reference, author_type, author_email, message, is_internal, notification_status) VALUES (?, ?, 'administrator', ?, ?, 0, 'Pending')`).bind(messageId, reference, identity.email, reply).run();
     const ok = await deliverNotification(DB, env, {
       reference, messageId, type: status === "Awaiting Customer" ? "additional_information_requested" : "administrator_reply", to: current.email,
-      subject: `${reference}: Reply from JA Experiences & Discovery`,
+      subject: `${reference}: Reply from JA Plan Studio`,
       text: `Hello ${current.name},\n\n${reply}\n\nStatus: ${status}\nReference: ${reference}\n\nContinue the conversation: https://experiences.jagroupservices.co.uk/account/enquiries/`,
       html: brandedEmail("We have replied to your enquiry", [`Hello ${current.name},`, reply, `Status: ${status}`, `Reference: ${reference}`, "Continue the conversation: https://experiences.jagroupservices.co.uk/account/enquiries/"])
     });

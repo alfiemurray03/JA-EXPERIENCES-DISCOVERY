@@ -4,62 +4,64 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
-  <title>Member Account Access | JA Experiences &amp; Discovery</title>
-  <meta name="description" content="Secure member account access for JA Experiences & Discovery customers using JA Group Services ID.">
-  <link rel="icon" href="/assets/favicons/favicon.svg?v=20260704-1" type="image/svg+xml">
-  <link rel="stylesheet" href="/assets/css/theme.css?v=20260709-airo-2">
-  <link rel="stylesheet" href="/assets/css/portal.css?v=20260709-builders-portal-1">
+  <title>Member Account Access | JA Plan Studio</title>
+  <meta name="description" content="Secure member account access for JA Plan Studio customers using JA Group Services ID.">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/assets/css/tailwind.css?v=20260712-airo-portal-1">
+
+
   <script id="Cookiebot" src="https://consent.cookiebot.com/uc.js" data-cbid="762d90c4-b030-45b0-9e70-c21806c665e3" data-blockingmode="auto" type="text/javascript"></script>
 </head>
 <body data-page="account">
   <div id="siteShellHeader"></div>
-  <main class="flex items-center justify-center section-padding px-4">
-    <div class="container max-w-4xl">
-      <div class="glass rounded-2xl p-8 md:p-10">
-        <div class="grid grid-2 items-center">
-          <section>
-            <span class="badge mb-6 inline-block">Secure member account</span>
-            <h1 class="text-2xl md:text-3xl font-extrabold mb-4">JA Group Services ID</h1>
-            <p class="text-sm muted mb-8 leading-relaxed">JA Group Services ID is the secure Single Sign-On system for JA Experiences &amp; Discovery, provided through Microsoft Entra External ID.</p>
-            <div class="flex flex-col gap-3">
-              <a class="btn btn-primary w-full" href="/account/login/?return_to=%2Faccount%2Fdashboard%2F">Continue with JA Group Services ID</a>
-              <a class="btn btn-secondary w-full" href="/">Return to website</a>
-              <a class="btn btn-outline w-full" href="/contact/">Need help signing in?</a>
+  <main class="account-entry-shell">
+    <div class="account-entry-card">
+      <div class="grid md:grid-cols-2 gap-8 items-center">
+        <section>
+          <span class="badge mb-4">Secure member account</span>
+          <h1 class="text-3xl md:text-4xl font-extrabold mb-4 font-ja-heading">JA Group Services ID</h1>
+          <p class="text-secondary mb-6">JA Group Services ID is the secure Single Sign-On system for JA Plan Studio, provided through Microsoft Entra External ID.</p>
+          <div class="flex flex-col gap-3">
+            <a class="btn btn-primary" href="/account/login/?return_to=%2Faccount%2Fdashboard%2F">Continue with JA Group Services ID</a>
+            <a class="btn btn-secondary" href="/">Return to website</a>
+            <a class="btn btn-ghost" href="/contact/">Need help signing in?</a>
+          </div>
+        </section>
+        <aside class="account-entry-aside">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <strong class="block font-semibold">Your account</strong>
+              <span class="text-sm">Account management in one place</span>
             </div>
-          </section>
-          <aside class="platform-card rounded-xl soft-band">
-            <div class="flex items-center justify-between mb-4">
-              <div>
-                <strong class="block font-bold">Member benefits</strong>
-                <span class="text-sm muted">Account-only platform tools</span>
-              </div>
-              <span class="badge">Secure</span>
+            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 text-blue-400 text-xs font-semibold">
+              <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+              Secure
+            </span>
+          </div>
+          <div class="space-y-3">
+            <div class="flex items-center justify-between py-3 border-b border-white/10">
+              <span class="text-sm">Profile and preferences</span>
+              <span class="text-sm font-semibold">Manage</span>
             </div>
-            <div class="space-y-3">
-              <div class="flex items-center justify-between py-3 border-b border-default">
-                <span class="text-sm muted">Experience Builders</span>
-                <span class="text-sm font-semibold text-primary">Guided outputs</span>
-              </div>
-              <div class="flex items-center justify-between py-3 border-b border-default">
-                <span class="text-sm muted">Builder Usage Tokens</span>
-                <span class="text-sm font-semibold text-primary">Usage allowance</span>
-              </div>
-              <div class="flex items-center justify-between py-3 border-b border-default">
-                <span class="text-sm muted">Saved Plans</span>
-                <span class="text-sm font-semibold text-primary">Member workspace</span>
-              </div>
-              <div class="flex items-center justify-between py-3">
-                <span class="text-sm muted">Support Requests</span>
-                <span class="text-sm font-semibold text-primary">Auditable help</span>
-              </div>
+            <div class="flex items-center justify-between py-3 border-b border-white/10">
+              <span class="text-sm">Tokens and usage</span>
+              <span class="text-sm font-semibold">Review</span>
             </div>
-          </aside>
-        </div>
+            <div class="flex items-center justify-between py-3 border-b border-white/10">
+              <span class="text-sm">Plans and billing</span>
+              <span class="text-sm font-semibold">Secure</span>
+            </div>
+            <div class="flex items-center justify-between py-3">
+              <span class="text-sm">Support Requests</span>
+              <span class="text-sm font-semibold">Get help</span>
+            </div>
+          </div>
+        </aside>
       </div>
     </div>
   </main>
   <div id="siteShellFooter"></div>
-  <script src="/assets/js/site-shell.js?v=20260710-partners-1"></script>
-  <script src="/assets/js/account-portal.js?v=20260709-builders-portal-1"></script>
+  <script src="/assets/js/site-shell.js?v=20260711-airo-nav-1"></script>
+  <script src="/assets/js/account-portal.js?v=20260712-smart-profile-1"></script>
 </body>
 </html>

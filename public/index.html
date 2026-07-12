@@ -3,130 +3,135 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>JA Experiences &amp; Discovery | Experience Planning Platform</title>
+  <title>JA Plan Studio | Experience Planning Platform</title>
   <meta name="description" content="Build and manage your own everyday life and travel experience plans with guided builders, templates, and planning tools. Start your free trial today.">
-  <link rel="stylesheet" href="/assets/css/theme.css?v=20260709-airo-2">
-  <link rel="stylesheet" href="/assets/css/public-saas.css?v=20260710-wordmark-unified-1">
+  <link rel="stylesheet" href="/assets/css/tailwind.css?v=20260711-launch-1">
+
   <script id="Cookiebot" src="https://consent.cookiebot.com/uc.js" data-cbid="762d90c4-b030-45b0-9e70-c21806c665e3" data-blockingmode="auto" type="text/javascript"></script>
 </head>
-<body data-page="home">
+<body>
   <div id="siteShellHeader"></div>
 
-  <main>
-    <!-- Hero -->
-    <section class="platform-hero">
+  <main class="relative overflow-hidden">
+    <!-- Hero Section -->
+    <section class="airo-home-hero">
+
       <div class="container relative z-10">
-        <div class="grid grid-2 items-center">
-          <div>
-            <span class="badge mb-6">Experience Planning Platform</span>
-            <h1 class="text-3xl md:text-4xl lg:text-5xl font-extrabold mb-6 leading-tight">
+        <div class="grid lg:grid-cols-2 gap-12 items-center">
+          <div class="animate-fadeIn">
+            <span class="airo-hero-badge">✧ Guided experience builders — 14-day free trial</span>
+            <h1 class="airo-hero-title">
               Plan smarter.<br>
-              <span class="text-gradient">Build better experiences.</span>
+              <span>Build better experiences.</span>
             </h1>
-            <p class="text-base md:text-lg muted mb-8 max-w-xl leading-relaxed">
-              Create, organize, and manage everyday experiences and travel plans with guided builders, smart templates, and intuitive planning tools.
+            <p class="airo-hero-copy">
+              Use guided digital builders to create personalised plans for days out, holidays, family activities, celebrations, date nights and more — in minutes, not hours.
             </p>
             <div class="flex flex-wrap gap-4">
-              <a href="/account/login/?return_to=%2Fbuilders%2F%3Fclaim_trial%3D1" class="btn btn-primary">
+              <a href="/account/login/?return_to=%2Fbuilders%2F%3Fclaim_trial%3D1" class="btn btn-primary btn-lg">
                 Start Free Trial
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
               </a>
-              <a href="/pricing/" class="btn btn-secondary">View Plans</a>
+              <a href="/builders/" class="btn airo-hero-secondary btn-lg">
+                Explore Builders
+              </a>
             </div>
-            <p class="text-sm muted mt-4">14-day free trial with 30 Builder Usage Tokens. No credit card required.</p>
+            <p class="airo-trial-note">14-day free trial · No credit card required</p>
+            <div class="airo-hero-checks" aria-label="Trial benefits"><span>✓ No credit card required</span><span>✓ 14-day free trial</span><span>✓ Cancel anytime</span></div>
           </div>
 
-          <div class="glass">
-            <img src="/assets/images/builder-preview.svg" alt="Guided builder workspace preview" class="w-full h-auto rounded-lg">
+          <!-- Builder Preview Visual -->
+          <div class="airo-builder-preview animate-fadeIn delayed-fade">
+            <img src="/assets/images/builder-preview.svg" alt="Guided builder workspace preview" class="builder-preview-image">
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Stats -->
+    <!-- Stats Section -->
     <section class="py-8">
       <div class="container">
         <div class="glass p-2 rounded-2xl">
-          <div class="grid grid-4 gap-2">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
             <div class="text-center p-6">
               <div class="text-3xl font-extrabold text-gradient">5+</div>
-              <div class="text-sm muted mt-1">Guided builders</div>
+              <div class="text-sm text-muted mt-1">Guided builders</div>
             </div>
             <div class="text-center p-6">
               <div class="text-3xl font-extrabold text-gradient">150+</div>
-              <div class="text-sm muted mt-1">Destination guides</div>
+              <div class="text-sm text-muted mt-1">Destination guides</div>
             </div>
             <div class="text-center p-6">
               <div class="text-3xl font-extrabold text-gradient">14</div>
-              <div class="text-sm muted mt-1">Days free trial</div>
+              <div class="text-sm text-muted mt-1">Days free trial</div>
             </div>
             <div class="text-center p-6">
               <div class="text-3xl font-extrabold text-gradient">30</div>
-              <div class="text-sm muted mt-1">Trial tokens</div>
+              <div class="text-sm text-muted mt-1">Trial Builder Usage Tokens</div>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Features -->
-    <section class="section-padding">
+    <!-- Features Section -->
+    <section class="section">
       <div class="container">
         <div class="text-center mb-12">
           <span class="badge mb-4">Platform Features</span>
-          <h2 class="text-2xl md:text-3xl font-bold mb-4">Everything you need to plan experiences</h2>
-          <p class="muted max-w-2xl mx-auto">From family days out to travel adventures, our guided builders help you create detailed, actionable plans in minutes.</p>
+          <h2 class="text-3xl md:text-4xl font-bold mb-4">Everything you need to plan experiences</h2>
+          <p class="text-secondary max-w-2xl mx-auto">From family days out to travel adventures, our guided builders help you create detailed, actionable plans in minutes.</p>
         </div>
 
-        <div class="grid grid-2 lg:grid-cols-4 gap-6">
-          <div class="platform-card glass-hover">
-            <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div class="card card-hover">
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center mb-4">
               <span class="text-xl font-bold text-primary">EB</span>
             </div>
             <h3 class="font-bold mb-2">Experience Builders</h3>
-            <p class="text-sm muted">Step-by-step guided builders for days out, family activities, trips, and local discovery.</p>
+            <p class="text-sm text-secondary">Step-by-step guided builders for days out, family activities, trips, and local discovery.</p>
           </div>
 
-          <div class="platform-card glass-hover">
-            <div class="w-12 h-12 rounded-xl bg-success/10 flex items-center justify-center mb-4">
+          <div class="card card-hover">
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center mb-4">
               <span class="text-xl font-bold text-success">TC</span>
             </div>
-            <h3 class="font-bold mb-2">Usage Tokens</h3>
-            <p class="text-sm muted">Flexible usage tokens for creating and saving plans. Only spend when you save.</p>
+            <h3 class="font-bold mb-2">Builder Usage Tokens</h3>
+            <p class="text-sm text-secondary">Flexible usage tokens for creating and saving plans. Only spend when you save.</p>
           </div>
 
-          <div class="platform-card glass-hover">
-            <div class="w-12 h-12 rounded-xl bg-accent/5 flex items-center justify-center mb-4">
+          <div class="card card-hover">
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center mb-4">
               <span class="text-xl font-bold text-accent">DB</span>
             </div>
             <h3 class="font-bold mb-2">Discovery Boards</h3>
-            <p class="text-sm muted">Organize ideas, budgets, bookings, accessibility notes, and checklists.</p>
+            <p class="text-sm text-secondary">Organize ideas, budgets, bookings, accessibility notes, and checklists.</p>
           </div>
 
-          <div class="platform-card glass-hover">
-            <div class="w-12 h-12 rounded-xl bg-warning/10 flex items-center justify-center mb-4">
+          <div class="card card-hover">
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center mb-4">
               <span class="text-xl font-bold text-warning">SP</span>
             </div>
             <h3 class="font-bold mb-2">Saved Plans</h3>
-            <p class="text-sm muted">Access your completed plans anytime from your secure member account.</p>
+            <p class="text-sm text-secondary">Access your completed plans anytime from your secure member account.</p>
           </div>
         </div>
       </div>
     </section>
 
     <!-- Builders CTA -->
-    <section class="section-padding">
+    <section class="section">
       <div class="container">
-        <div class="glass p-8 md:p-10 rounded-2xl">
-          <div class="grid grid-2 items-center">
+        <div class="glass p-8 md:p-10 rounded-3xl">
+          <div class="grid md:grid-cols-2 gap-8 items-center">
             <div>
               <span class="badge mb-4">Experience Builders</span>
-              <h2 class="text-2xl md:text-3xl font-bold mb-4">Experience Builders</h2>
-              <p class="muted leading-relaxed">Use guided tools to create, organise and save everyday, travel and support planning outputs. Opening and previewing builders does not use Builder Usage Tokens.</p>
+              <h2 class="text-3xl md:text-4xl font-bold mb-4">Experience Builders</h2>
+              <p class="text-secondary leading-relaxed">Use guided tools to create, organise and save everyday, travel and support planning outputs. Opening and previewing builders does not use Builder Usage Tokens.</p>
             </div>
             <div class="flex flex-wrap md:justify-end gap-4">
-              <a class="btn btn-primary" href="/builders/">Explore Builders</a>
-              <a class="btn btn-secondary" href="/account/login/?return_to=%2Fbuilders%2F%3Fclaim_trial%3D1">Start Free Trial</a>
+              <a class="btn btn-primary btn-lg" href="/builders/">Explore Experience Builders</a>
+              <a class="btn btn-secondary btn-lg" href="/account/login/?return_to=%2Fbuilders%2F%3Fclaim_trial%3D1">Start Free Trial</a>
             </div>
           </div>
         </div>
@@ -134,171 +139,119 @@
     </section>
 
     <!-- How It Works -->
-    <section class="section-padding soft-band">
+    <section class="section soft-blue-band">
       <div class="container">
         <div class="text-center mb-12">
           <span class="badge mb-4">How It Works</span>
-          <h2 class="text-2xl md:text-3xl font-bold mb-4">Simple, guided planning</h2>
-          <p class="muted max-w-2xl mx-auto">Create your first plan in three easy steps. Preview for free, only use Builder Usage Tokens when you save.</p>
+          <h2 class="text-3xl md:text-4xl font-bold mb-4">Simple, guided planning</h2>
+          <p class="text-secondary max-w-2xl mx-auto">Create your first plan in three easy steps. Preview for free, only use Builder Usage Tokens when you save.</p>
         </div>
 
-        <div class="grid grid-3">
+        <div class="grid md:grid-cols-3 gap-8">
           <div class="text-center">
-            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center mx-auto mb-6 shadow-md">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center mx-auto mb-6 shadow-glow">
               <span class="text-2xl font-bold text-white">1</span>
             </div>
             <h3 class="font-bold text-lg mb-2">Choose a builder</h3>
-            <p class="text-sm muted">Select from our library of guided builders for everyday activities, travel, occasions, and more.</p>
+            <p class="text-sm text-secondary">Select from our library of guided builders for everyday activities, travel, occasions, and more.</p>
           </div>
 
           <div class="text-center">
-            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-600 to-brand-800 flex items-center justify-center mx-auto mb-6 shadow-md">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center mx-auto mb-6 shadow-glow">
               <span class="text-2xl font-bold text-white">2</span>
             </div>
             <h3 class="font-bold text-lg mb-2">Fill in your details</h3>
-            <p class="text-sm muted">Answer guided questions about your plans, preferences, budget, and accessibility needs.</p>
+            <p class="text-sm text-secondary">Answer guided questions about your plans, preferences, budget, and accessibility needs.</p>
           </div>
 
           <div class="text-center">
-            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-navy-700 to-navy-900 flex items-center justify-center mx-auto mb-6 shadow-md">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-pink-500 to-red-600 flex items-center justify-center mx-auto mb-6 shadow-glow">
               <span class="text-2xl font-bold text-white">3</span>
             </div>
             <h3 class="font-bold text-lg mb-2">Preview and save</h3>
-            <p class="text-sm muted">Preview your finished plan for free. Only use Builder Usage Tokens when you save the final output.</p>
+            <p class="text-sm text-secondary">Preview your finished plan for free. Only use Builder Usage Tokens when you save the final output.</p>
           </div>
         </div>
 
         <div class="text-center mt-12">
-          <a href="/account/login/?return_to=%2Fbuilders%2F" class="btn btn-primary">Get Started Free</a>
+          <a href="/account/login/?return_to=%2Fbuilders%2F" class="btn btn-primary btn-lg">
+            Get Started Free
+          </a>
         </div>
+      </div>
+    </section>    <!-- Subscription Plans Preview -->
+    <section class="section">
+      <div class="container">
+        <div class="mb-12 text-center">
+          <span class="badge mb-4">Subscription Plans</span>
+          <h2 class="mb-4 text-3xl font-bold md:text-4xl">Plans that grow with you</h2>
+          <p class="mx-auto max-w-2xl text-secondary">Current plans and prices are loaded securely from our Subscription Plans service.</p>
+        </div>
+        <div class="mx-auto grid max-w-5xl gap-8 md:grid-cols-3" data-subscription-plans aria-live="polite"><p class="text-sm text-muted">Loading Subscription Plans…</p></div>
+        <div class="mt-8 text-center"><a href="/pricing/" class="btn btn-secondary">View all Subscription Plans</a></div>
       </div>
     </section>
 
-    <!-- Pricing Preview -->
-    <section class="section-padding">
+    <section class="section" aria-labelledby="discover-title">
       <div class="container">
-        <div class="text-center mb-12">
-          <span class="badge mb-4">Pricing</span>
-          <h2 class="text-2xl md:text-3xl font-bold mb-4">Plans that grow with you</h2>
-          <p class="muted max-w-2xl mx-auto">Choose a subscription that fits your planning needs. All plans include access to our full builder library.</p>
+        <div class="airo-section-heading"><span>Supporting discovery</span><h2 id="discover-title">Discover destinations and activities</h2><p>Browse ideas, then use a builder to shape them into a practical personalised plan.</p></div>
+        <div class="airo-destination-grid">
+          <a href="/destinations/united-kingdom/"><img src="/assets/images/destinations/united-kingdom.jpg" alt=""><strong>United Kingdom</strong></a>
+          <a href="/destinations/france/"><img src="/assets/images/destinations/france.jpg" alt=""><strong>France</strong></a>
+          <a href="/destinations/spain/"><img src="/assets/images/destinations/spain.jpg" alt=""><strong>Spain</strong></a>
+          <a href="/destinations/italy/"><img src="/assets/images/destinations/italy.jpg" alt=""><strong>Italy</strong></a>
+          <a href="/destinations/greece/"><img src="/assets/images/destinations/greece.jpg" alt=""><strong>Greece</strong></a>
+          <a href="/activities/"><img src="/assets/images/destinations/travel.jpg" alt=""><strong>Activities</strong></a>
         </div>
-
-        <div class="grid grid-3 max-w-5xl mx-auto">
-          <!-- Starter -->
-          <div class="platform-card p-8 rounded-2xl platform-card glass-hover">
-            <span class="badge mb-4">Starter</span>
-            <h3 class="text-xl font-bold mb-2">Experience Builder</h3>
-            <div class="mb-6">
-              <span class="text-4xl font-extrabold">&pound;19.99</span>
-              <span class="muted">/month</span>
-            </div>
-            <ul class="space-y-3 mb-8">
-              <li class="flex items-center gap-3 text-sm muted">
-                <svg class="w-5 h-5 text-success flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-                150 Builder Usage Tokens/month
-              </li>
-              <li class="flex items-center gap-3 text-sm muted">
-                <svg class="w-5 h-5 text-success flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-                All guided builders
-              </li>
-              <li class="flex items-center gap-3 text-sm muted">
-                <svg class="w-5 h-5 text-success flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-                Discovery boards
-              </li>
-            </ul>
-            <a href="/account/login/?return_to=%2Fbuilders%2F%3Fclaim_trial%3D1" class="btn btn-secondary w-full">Get Started</a>
-          </div>
-
-          <!-- Plus -->
-          <div class="platform-card p-8 rounded-2xl platform-card glass-hover relative border-primary-soft shadow-md">
-            <div class="absolute -top-3 left-1/2 -translate-x-1/2">
-              <span class="badge">Most Popular</span>
-            </div>
-            <span class="badge badge mb-4">Plus</span>
-            <h3 class="text-xl font-bold mb-2">Experience Plus</h3>
-            <div class="mb-6">
-              <span class="text-4xl font-extrabold">&pound;29.99</span>
-              <span class="muted">/month</span>
-            </div>
-            <ul class="space-y-3 mb-8">
-              <li class="flex items-center gap-3 text-sm muted">
-                <svg class="w-5 h-5 text-success flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-                350 Builder Usage Tokens/month
-              </li>
-              <li class="flex items-center gap-3 text-sm muted">
-                <svg class="w-5 h-5 text-success flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-                Priority support
-              </li>
-              <li class="flex items-center gap-3 text-sm muted">
-                <svg class="w-5 h-5 text-success flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-                Early access features
-              </li>
-            </ul>
-            <a href="/account/login/?return_to=%2Fbuilders%2F%3Fclaim_trial%3D1" class="btn btn-primary w-full">Get Started</a>
-          </div>
-
-          <!-- Family -->
-          <div class="platform-card p-8 rounded-2xl platform-card glass-hover">
-            <span class="badge mb-4">Family</span>
-            <h3 class="text-xl font-bold mb-2">Experience Family</h3>
-            <div class="mb-6">
-              <span class="text-4xl font-extrabold">&pound;39.99</span>
-              <span class="muted">/month</span>
-            </div>
-            <ul class="space-y-3 mb-8">
-              <li class="flex items-center gap-3 text-sm muted">
-                <svg class="w-5 h-5 text-success flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-                750 Builder Usage Tokens/month
-              </li>
-              <li class="flex items-center gap-3 text-sm muted">
-                <svg class="w-5 h-5 text-success flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-                Family planning tools
-              </li>
-              <li class="flex items-center gap-3 text-sm muted">
-                <svg class="w-5 h-5 text-success flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-                Multiple boards support
-              </li>
-            </ul>
-            <a href="/account/login/?return_to=%2Fbuilders%2F%3Fclaim_trial%3D1" class="btn btn-secondary w-full">Get Started</a>
-          </div>
-        </div>
-
-        <div class="text-center mt-8">
-          <p class="text-sm muted">Or try <strong >14 days free</strong> with 30 Builder Usage Tokens. <a href="/pricing/" class="text-primary hover:underline">View full pricing</a>.</p>
-        </div>
+        <div class="airo-inline-links"><a href="/destinations/">Explore destinations →</a><a href="/activities/">Browse activities →</a></div>
       </div>
     </section>
 
-    <!-- CTA -->
-    <section class="section-padding">
+    <section class="section soft-blue-band" aria-labelledby="account-title">
+      <div class="container airo-account-preview-grid">
+        <div class="airo-account-preview" aria-hidden="true"><div class="airo-window-bar"><i></i><i></i><i></i><span>jaexperiences.com/account</span></div><div class="airo-account-preview-body"><nav><strong>Overview</strong><span>My Account</span><span>Plans &amp; Billing</span><span>Tokens &amp; Usage</span><span>Security</span></nav><div><h3>Overview</h3><div class="airo-preview-stats"><span>Membership<strong>Active</strong></span><span>Tokens<strong>30</strong></span><span>Messages<strong>0</strong></span><span>Security<strong>Protected</strong></span></div></div></div></div>
+        <div class="airo-account-copy"><span>Your account</span><h2 id="account-title">Everything in one place</h2><p>Manage your profile, membership, token usage, messages, privacy and security in one clean account area.</p><ul><li>Account overview and quick actions</li><li>Membership and billing</li><li>Tokens and usage</li><li>Messages and notifications</li><li>Profile, security and settings</li></ul><a class="btn btn-primary" href="/login/">Sign in to your account →</a></div>
+      </div>
+    </section>
+
+    <section class="section airo-support-section" aria-labelledby="support-title"><div class="container"><div class="airo-section-heading text-center mx-auto"><span>Help &amp; support</span><h2 id="support-title">We're here when you need us</h2><p>Browse the help centre, contact support, or find answers about builders, tokens and your account.</p></div><div class="airo-support-grid"><a href="/faqs/"><b>?</b><strong>Help Centre</strong><p>Browse guides and frequently asked questions.</p><span>Visit Help Centre →</span></a><a href="/contact/"><b>◯</b><strong>Contact Support</strong><p>Send us a message and our team will get back to you.</p><span>Contact Us →</span></a><a href="/how-it-works/"><b>◎</b><strong>Getting Started</strong><p>See how builders, tokens and your account work.</p><span>Get Started →</span></a></div></div></section>
+
+    <!-- CTA Section -->
+    <section class="section">
       <div class="container">
-        <div class="rounded-2xl p-12 text-center cta-section">
+        <div class="glass-dark p-12 rounded-3xl text-center relative overflow-hidden">
+          <div class="absolute inset-0 overflow-hidden">
+            <div class="absolute -top-20 -right-20 w-64 h-64 bg-gradient-to-br from-blue-500/30 to-purple-500/30 rounded-full blur-3xl"></div>
+            <div class="absolute -bottom-20 -left-20 w-64 h-64 bg-gradient-to-br from-purple-500/30 to-pink-500/30 rounded-full blur-3xl"></div>
+          </div>
           <div class="relative z-10">
-            <h2 class="text-2xl md:text-3xl font-bold text-white mb-4">Ready to start planning?</h2>
-            <p class="text-base text-white/80 mb-8 max-w-xl mx-auto">Join thousands of members creating better experiences with guided tools and smart planning features.</p>
-            <a href="/account/login/?return_to=%2Fbuilders%2F%3Fclaim_trial%3D1" class="btn btn-primary">Start Free Trial</a>
+            <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">Ready to start planning?</h2>
+            <p class="text-lg text-white/80 mb-8 max-w-xl mx-auto">Join thousands of members creating better experiences with guided tools and smart planning features.</p>
+            <a href="/account/login/?return_to=%2Fbuilders%2F%3Fclaim_trial%3D1" class="btn btn-lg light-cta">
+              Start Free Trial
+            </a>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Info -->
-    <section class="section-padding">
+    <!-- Info Section -->
+    <section class="section">
       <div class="container">
-        <div class="grid grid-2">
-          <div class="platform-card">
+        <div class="grid md:grid-cols-2 gap-8">
+          <div class="card">
             <span class="badge mb-4">Everyday and travel</span>
             <h3 class="text-xl font-bold mb-4">Built for practical self-service planning</h3>
-            <p class="text-sm muted mb-4">Use builders for everyday experiences, family days out, local discovery, occasions, travel readiness, budgets and booking trackers.</p>
-            <p class="text-sm muted mb-6">Members remain responsible for checking prices, opening times, suitability, accessibility, travel arrangements and provider terms.</p>
+            <p class="text-sm text-secondary mb-4">Use builders for everyday experiences, family days out, local discovery, occasions, travel readiness, budgets and booking trackers.</p>
+            <p class="text-sm text-muted mb-6">Members remain responsible for checking prices, opening times, suitability, accessibility, travel arrangements and provider terms.</p>
             <a href="/account/login/?return_to=%2Fbuilders%2F" class="btn btn-primary">Start Building</a>
           </div>
 
-          <div class="platform-card">
+          <div class="card">
             <span class="badge mb-4">Third-party booking</span>
             <h3 class="text-xl font-bold mb-4">Book direct with providers</h3>
-            <p class="text-sm muted mb-4">Some links may direct members to third-party providers. Bookings are made directly with the relevant provider under their own terms.</p>
-            <p class="text-sm muted">JA Group Services Ltd does not sell package holidays, arrange flights, arrange transport, apply for visas or ETIAS, manage third-party bookings, or handle third-party refunds.</p>
+            <p class="text-sm text-secondary mb-4">Some links may direct members to third-party providers. Bookings are made directly with the relevant provider under their own terms.</p>
+            <p class="text-sm text-muted">JA Group Services Ltd does not sell package holidays, arrange flights, arrange transport, apply for visas or ETIAS, manage third-party bookings, or handle third-party refunds.</p>
           </div>
         </div>
       </div>
@@ -306,6 +259,7 @@
   </main>
 
   <div id="siteShellFooter"></div>
-  <script src="/assets/js/site-shell.js?v=20260710-partners-1"></script>
+  <script src="/assets/js/site-shell.js?v=20260711-airo-nav-1"></script>
+  <script src="/assets/js/subscription-plans.js?v=20260711-d1-plans-1" defer></script>
 </body>
 </html>

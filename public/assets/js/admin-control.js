@@ -27,7 +27,7 @@ const sectionTitles = {
   customers: "CRM",
   customer: "Customer Profile",
   builders: "Experience Builders",
-  plans: "Plans & Prices",
+  plans: "Subscription Plans",
   credits: "Builder Usage Tokens",
   usage: "Customer Usage",
   addons: "Paid Add-Ons",
@@ -713,13 +713,13 @@ async function touchRecentSection(section) {
 function setTopbar(section) {
   const title = sectionTitles[section] || "Overview";
   document.querySelector(".admin-topbar-title strong").textContent = title;
-  document.querySelector(".admin-topbar-title span").textContent = sectionDescriptions[section] || "JA Experiences & Discovery administration.";
+  document.querySelector(".admin-topbar-title span").textContent = sectionDescriptions[section] || "JA Plan Studio administration.";
   updatePinButton();
 }
 
 function getServiceName() {
   const branding = state.branding || {};
-  return branding.service_name || branding.trading_name || "JA Experiences & Discovery";
+  return branding.service_name || branding.trading_name || "JA Plan Studio";
 }
 
 async function applyAdminBranding() {
@@ -813,7 +813,7 @@ function dashboardQuickCards() {
     ["audit", "clock", "Audit logs", "Review sensitive administrative activity"],
     ["datarequests", "file", "Data requests", "Process UK GDPR rights requests"],
     ["builders", "settings", "Experience Builders", "Configure self-service builder availability and costs"],
-    ["plans", "plans", "Plans & Prices", "Review plan visibility and pricing"],
+    ["plans", "plans", "Subscription Plans", "Manage the authoritative D1 and Stripe-connected plan catalogue"],
     ["credits", "card", "Builder Usage Tokens", "Review allowances, costs and manual adjustments"],
     ["usage", "chart", "Customer Usage", "Review trial, subscription and blocked usage signals"],
     ["admins", "shield", "Admin Users", "Manage administrator access"],
@@ -1345,7 +1345,7 @@ function renderOverview(overview) {
         <p class="eyebrow">Operations dashboard</p>
         <h1>${escapeHtml(greeting)}, ${escapeHtml(name)}</h1>
         <p class="eyebrow">${escapeHtml(roleName)}</p>
-        <p>Here is the latest operational view of JA Experiences &amp; Discovery.</p>
+        <p>Here is the latest operational view of JA Plan Studio.</p>
       </div>
       <div class="website-state">
         <span class="status-dot is-${escapeAttr(websiteTone)}"></span>
@@ -3991,7 +3991,7 @@ function renderEmail(email = {}, test = null) {
   setValue("smtp_port", email.smtp_port || "587");
   setValue("smtp_username", email.smtp_username || "noreply@jagroupservices.co.uk");
   setValue("smtp_password", email.smtp_password_masked || "");
-  setValue("smtp_from_name", email.smtp_from_name || "JA Experiences & Discovery");
+  setValue("smtp_from_name", email.smtp_from_name || "JA Plan Studio");
   setValue("smtp_from_email", email.smtp_from_email || "noreply@jagroupservices.co.uk");
   setValue("smtp_security", email.smtp_security || "STARTTLS");
 
@@ -4472,14 +4472,14 @@ function renderSystemSettings(data = {}) {
 
   container.innerHTML = `<div class="system-settings-shell">
     <div class="settings-page-head">
-      <span class="settings-page-icon" aria-hidden="true">${icon("settings")}</span>
+      <span class="settings-page-icon" aria-hidden="true">${iconSvg("settings")}</span>
       <div>
         <h2>System Settings</h2>
         <p>Configure platform-wide settings, branding, integrations and compliance.</p>
       </div>
     </div>
     <div class="settings-category-tabs" id="systemSettingsTabs">
-      ${tabs.map((t) => `<button class="settings-category-tab${t.id === state.systemSettingsTab ? " active" : ""}" data-tab="${t.id}"><span aria-hidden="true">${icon(t.icon)}</span>${t.label}</button>`).join("")}
+      ${tabs.map((t) => `<button class="settings-category-tab${t.id === state.systemSettingsTab ? " active" : ""}" data-tab="${t.id}"><span aria-hidden="true">${iconSvg(t.icon)}</span>${t.label}</button>`).join("")}
     </div>
     <div id="systemSettingsTabContent"></div>
   </div>`;
@@ -4554,7 +4554,7 @@ function renderGeneralTab(data) {
       <p>Core platform configuration and builder settings.</p>
       <form class="admin-form" id="generalSettingsForm" style="margin-top: 1rem;">
         <label>Platform Name
-          <input type="text" id="generalPlatformName" maxlength="120" value="${escapeAttr(platform.name || "JA Experiences & Discovery")}">
+          <input type="text" id="generalPlatformName" maxlength="120" value="${escapeAttr(platform.name || "JA Plan Studio")}">
         </label>
         <label>Platform Version
           <input type="text" value="${escapeHtml(platform.version || "2026.07")}" readonly>
@@ -4592,15 +4592,15 @@ function renderProductsTab(data) {
       <p>Manage experience builder products and add-ons.</p>
       <div class="quick-grid" style="margin-top: 1rem;">
         <button class="quick-card" onclick="document.querySelector('[data-section=\\'builders\\']').click()">
-          <span class="quick-icon">${icon("settings")}</span>
+          <span class="quick-icon">${iconSvg("settings")}</span>
           <span><strong>Experience Builders</strong><span>Configure builder types</span></span>
         </button>
         <button class="quick-card" onclick="document.querySelector('[data-section=\\'addons\\']').click()">
-          <span class="quick-icon">${icon("plans")}</span>
+          <span class="quick-icon">${iconSvg("plans")}</span>
           <span><strong>Paid Add-Ons</strong><span>Manage add-on products</span></span>
         </button>
         <button class="quick-card" onclick="document.querySelector('[data-section=\\'credits\\']').click()">
-          <span class="quick-icon">${icon("card")}</span>
+          <span class="quick-icon">${iconSvg("card")}</span>
           <span><strong>Usage Tokens</strong><span>Token packages and pricing</span></span>
         </button>
       </div>
@@ -4615,11 +4615,11 @@ function renderComplianceTab(data) {
       <p>Manage legal policies, data protection and affiliate disclosure.</p>
       <div class="quick-grid" style="margin-top: 1rem;">
         <button class="quick-card" onclick="document.querySelector('[data-section=\\'policies\\']').click()">
-          <span class="quick-icon">${icon("file")}</span>
+          <span class="quick-icon">${iconSvg("file")}</span>
           <span><strong>Policy Pages</strong><span>Privacy, terms, cookies, etc.</span></span>
         </button>
         <button class="quick-card" onclick="document.querySelector('[data-section=\\'affiliate\\']').click()">
-          <span class="quick-icon">${icon("link")}</span>
+          <span class="quick-icon">${iconSvg("link")}</span>
           <span><strong>Affiliate Disclosure</strong><span>Manage affiliate content</span></span>
         </button>
       </div>
@@ -4655,6 +4655,7 @@ function renderSiteStatusTab(container, data) {
   const siteStatus = data.site_status || "normal";
   const csConfig = data.coming_soon_config || {};
   const csSettings = data.coming_soon || {};
+  const countdownEnabled = csConfig.countdownEnabled === true || csSettings.countdownEnabled === true;
 
   const statusLabels = {
     normal: "Normal",
@@ -4731,6 +4732,10 @@ function renderSiteStatusTab(container, data) {
       <h2>Coming Soon Countdown</h2>
       <p>Set a launch date and the countdown will appear live on the Coming Soon page. Leave the date blank to hide the countdown. All data is stored in the database — never in the browser.</p>
       <form class="admin-form single" id="comingSoonSettingsForm" style="margin-top: 1rem;">
+        <label class="settings-switch-row" for="comingSoonCountdownEnabled">
+          <span><strong>Show countdown on Coming Soon page</strong><small>Display Days, Hours, Minutes and Seconds using the saved launch time.</small></span>
+          <span class="switch"><input type="checkbox" id="comingSoonCountdownEnabled" ${countdownEnabled ? "checked" : ""}><span></span></span>
+        </label>
         <label>Page Headline
           <input type="text" id="comingSoonHeadline" placeholder="Coming Soon" maxlength="200" value="${escapeHtml(csConfig.headline || csSettings.headline || "Coming Soon")}">
         </label>
@@ -4745,6 +4750,10 @@ function renderSiteStatusTab(container, data) {
           <span class="countdown-info-label">Countdown target:</span>
           <span class="countdown-info-value" id="countdownTargetDisplay">${escapeHtml(launchDateDisplay)}</span>
         </div>
+        <div class="admin-countdown-preview" id="adminCountdownPreview" ${countdownEnabled && launchDateDisplay ? "" : "hidden"} aria-live="polite">
+          ${["Days","Hours","Minutes","Seconds"].map((label) => `<span><strong data-countdown-preview="${label.toLowerCase()}">00</strong><small>${label}</small></span>`).join("")}
+        </div>
+        <a class="admin-button secondary" href="/coming-soon/" target="_blank" rel="noopener">Preview Coming Soon page</a>
         <button class="admin-button" type="submit" id="saveCountdownBtn" style="margin-top: 1rem;">Save Countdown Settings</button>
         <div id="comingSoonSaved" class="admin-alert" style="margin-top: 0.75rem;" hidden></div>
       </form>
@@ -4821,8 +4830,35 @@ function initSiteStatusTab(container, savedStatus) {
   const comingSoonForm = container.querySelector("#comingSoonSettingsForm");
   if (comingSoonForm) {
     const dateInput = container.querySelector("#comingSoonLaunchDate");
+    const enabledInput = container.querySelector("#comingSoonCountdownEnabled");
     const infoBox = container.querySelector("#countdownInfoBox");
     const targetDisplay = container.querySelector("#countdownTargetDisplay");
+    const preview = container.querySelector("#adminCountdownPreview");
+    let previewTimer = null;
+    const updatePreview = () => {
+      if (!enabledInput.checked || !dateInput.value) {
+        preview.hidden = true;
+        if (previewTimer) clearInterval(previewTimer);
+        previewTimer = null;
+        return;
+      }
+      const target = new Date(ukLocalDateTimeToIso(dateInput.value)).getTime();
+      if (!Number.isFinite(target)) { preview.hidden = true; return; }
+      const difference = Math.max(0, target - Date.now());
+      const totalSeconds = Math.floor(difference / 1000);
+      const values = {
+        days: Math.floor(totalSeconds / 86400),
+        hours: Math.floor((totalSeconds % 86400) / 3600),
+        minutes: Math.floor((totalSeconds % 3600) / 60),
+        seconds: totalSeconds % 60
+      };
+      Object.entries(values).forEach(([key, value]) => {
+        const element = preview.querySelector(`[data-countdown-preview="${key}"]`);
+        if (element) element.textContent = String(value).padStart(2, "0");
+      });
+      preview.hidden = false;
+      if (!previewTimer) previewTimer = setInterval(updatePreview, 1000);
+    };
 
     dateInput.addEventListener("change", () => {
       if (dateInput.value) {
@@ -4834,7 +4870,10 @@ function initSiteStatusTab(container, savedStatus) {
       } else {
         infoBox.hidden = true;
       }
+      updatePreview();
     });
+    enabledInput.addEventListener("change", updatePreview);
+    updatePreview();
 
     comingSoonForm.addEventListener("submit", async (event) => {
       event.preventDefault();
@@ -4853,6 +4892,7 @@ function initSiteStatusTab(container, savedStatus) {
         if (rawDate) {
           launchDate = ukLocalDateTimeToIso(rawDate);
         }
+        if (enabledInput.checked && !launchDate) throw new Error("A launch date and time is required when the countdown is enabled.");
 
         const result = await api("systemsettings", {
           method: "POST",
@@ -4860,7 +4900,8 @@ function initSiteStatusTab(container, savedStatus) {
             action: "update_coming_soon_settings",
             headline: container.querySelector("#comingSoonHeadline").value,
             subtext: container.querySelector("#comingSoonSubtext").value,
-            launch_date: launchDate
+            launch_date: launchDate,
+            countdown_enabled: enabledInput.checked
           })
         });
 
@@ -5301,4 +5342,3 @@ function formatMoney(amount, currency) {
     currency: (currency || "gbp").toUpperCase()
   }).format(Number(amount) / 100);
 }
-

@@ -59,9 +59,9 @@ export async function onRequestGet({ env }) {
 <html lang="en-GB">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Affiliate Disclosure | JA Experiences & Discovery</title>
-  <meta name="description" content="How affiliate links and third-party activity bookings work on JA Experiences & Discovery.">
-  <link rel="stylesheet" href="/assets/css/theme.css?v=20260709-airo-2"><link rel="stylesheet" href="/assets/css/public-saas.css?v=20260709-saas-1">
+  <title>Affiliate Disclosure | JA Plan Studio</title>
+  <meta name="description" content="How affiliate links and third-party activity bookings work on JA Plan Studio.">
+  <link rel="stylesheet" href="/assets/css/tailwind.css?v=20260711-launch-1">
 </head>
 <body><div id="siteShellHeader"></div><main id="main">
   <section class="page-hero"><div class="container"><span class="eyebrow">Clear commercial disclosure</span><h1>${escapeHtml(hero.title || "Affiliate links and independent providers")}</h1><p>${escapeHtml(hero.body || "")}</p></div></section>

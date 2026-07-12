@@ -79,11 +79,11 @@ async function createCheckoutSession(planCode, env) {
   params.append("billing_address_collection", "auto");
   params.append("success_url", siteUrl + "/payment-success/?session_id={CHECKOUT_SESSION_ID}");
   params.append("cancel_url", siteUrl + "/pricing/?payment=cancelled");
-  params.append("metadata[service_line]", "JA Experiences & Discovery");
+  params.append("metadata[service_line]", "JA Plan Studio");
   params.append("metadata[plan_code]", selectedPlan.id);
   params.append("metadata[plan_name]", selectedPlan.plan_name || selectedPlan.id);
   params.append("metadata[plan_type]", selectedPlan.plan_type || "");
-  params.append("payment_intent_data[metadata][service_line]", "JA Experiences & Discovery");
+  params.append("payment_intent_data[metadata][service_line]", "JA Plan Studio");
   params.append("payment_intent_data[metadata][plan_code]", selectedPlan.id);
   params.append("payment_intent_data[metadata][plan_name]", selectedPlan.plan_name || selectedPlan.id);
 

@@ -2,20 +2,17 @@ const portalState = { profile: null, requests: null, pins: null, saved: null, bi
 
 const navItems = [
   ["/account/dashboard/", "Overview"],
-  ["/account/profile/", "My Account"],
-  ["/account/tokens/", "Builder Usage Tokens"],
-  ["/account/builders/", "My Builders"],
-  ["/account/saved/", "Saved Plans"],
-  ["/account/saved/?view=experiences", "Saved Experiences"],
-  ["/account/bookings/", "Bookings"],
-  ["/account/subscription/", "Membership"],
+  ["/account/account/", "My Account"],
+  ["/account/profile/", "My Profile"],
+  ["/account/tokens/", "Tokens & Usage"],
+  ["/account/subscription/", "Plans & Billing"],
   ["/account/messages/", "Messages"],
-  ["/account/enquiries/", "Enquiries"],
+  ["/account/notifications/", "Notifications"],
   ["/account/support/", "Support"],
-  ["/account/security/", "Security"],
+  ["/account/security/", "Security Settings"],
+  ["/account/data-protection/", "My Data & Privacy"],
   ["/account/settings/", "Settings"],
-  ["/account/data-protection/", "Data Protection"],
-  ["/account/downloads/", "Downloads"],
+  ["/account/help/", "Help Centre"],
   ["/account/logout/", "Sign out"]
 ];
 
@@ -26,146 +23,59 @@ const money = (value, currency = "gbp") => Number.isFinite(Number(value))
   ? new Intl.NumberFormat("en-GB", { style: "currency", currency: String(currency || "gbp").toUpperCase() }).format(Number(value) / 100)
   : "Not available";
 
-/* ---- Legacy portal-* class fragments (shared component patterns) ---- */
-const cls = {
-  // sidebar navigation items
-  sidebarItem: "portal-nav-link",
-  sidebarItemActive: "portal-nav-link active",
-  // page header (title block)
-  pageHeader: "portal-page-header",
-  // status badges
-  statusActive: "portal-status active",
-  statusPending: "portal-status pending",
-  statusInactive: "portal-status inactive",
-  // table
-  tableBase: "portal-table",
-  tableWrap: "portal-table-wrap",
-  tableTh: "portal-table th",
-  tableTd: "portal-table td",
-  // tabs
-  tabBase: "portal-tab",
-  tabActive: "portal-tab active",
-  // alerts
-  alertInfo: "portal-alert info",
-  alertWarning: "portal-alert warning",
-  alertDanger: "portal-alert error",
-  alertSuccess: "portal-alert success",
-  // badge-warning (not in tailwind.css)
-  badgeWarning: "portal-badge warning",
-  // portal-specific composites
-  shell: "portal-shell",
-  sidebar: "portal-sidebar",
-  main: "portal-main",
-  brandCopyStrong: "portal-brand-copy strong",
-  brandCopySpan: "portal-brand-copy span",
-  person: "portal-person",
-  personStrong: "portal-person strong",
-  personSpan: "portal-person span",
-  avatar: "portal-avatar",
-  statusPill: "portal-status",
-  navGroup: "portal-nav-group",
-  navHeading: "portal-nav-heading",
-  sidebarFooter: "portal-sidebar-footer",
-  wrap: "portal-wrap",
-  wrapCentered: "portal-wrap-centered",
-  eyebrow: "portal-eyebrow",
-  lead: "portal-lead",
-  heroPanel: "portal-hero-panel",
-  heroEntry: "portal-hero-panel",
-  heroLabel: "portal-eyebrow",
-  heroValue: "portal-card-title",
-  grid12: "portal-grid",
-  gridMini: "portal-grid mini",
-  span4: "portal-span-4",
-  span6: "portal-span-6",
-  span8: "portal-span-8",
-  span12: "portal-span-12",
-  cardHeading: "portal-card-heading",
-  cardTitle: "portal-card-title",
-  cardDesc: "portal-card-description",
-  stack: "portal-stack",
-  accountPage: "portal-account-page",
-  accountSummary: "portal-account-summary",
-  accountAvatar: "portal-account-avatar",
-  badgeRow: "portal-badge-row",
-  entry: "portal-entry",
-  entryStrong: "portal-entry strong",
-  entrySmall: "portal-entry small",
-  listRow: "portal-list-row",
-  quickActions: "portal-quick-actions",
-  action: "portal-action",
-  actionStrong: "portal-action strong",
-  actionSpan: "portal-action span",
-  note: "portal-note",
-  noteInline: "portal-note inline",
-  formGrid: "portal-form-grid",
-  field: "portal-field",
-  formActions: "portal-form-actions",
-  toggle: "portal-toggle",
-  toggleInput: "portal-toggle input",
-  helpText: "portal-help-text",
-  timeline: "portal-timeline",
-  timelineItem: "portal-timeline-item",
-  timelineDot: "portal-timeline-dot",
-  surface: "portal-surface",
-  trialBanner: "portal-trial-banner",
-  trialBannerExpired: "portal-trial-banner expired",
-  trialStrong: "portal-trial-banner strong",
-  trialSpan: "portal-trial-banner span",
-  miniBtn: "portal-mini"
-};
-
 function shell(title, lead, options = {}) {
   const root = document.getElementById("portalRoot");
   if (!root) return;
   const currentPath = window.location.pathname;
   const currentRoute = `${window.location.pathname}${window.location.search}`;
-  const active = (href) => href.includes("?") ? (href === currentRoute ? cls.sidebarItemActive : cls.sidebarItem) : (href === currentPath ? cls.sidebarItemActive : cls.sidebarItem);
+  const active = (href) => href.includes("?") ? (href === currentRoute ? "active" : "") : (href === currentPath ? "active" : "");
   root.innerHTML = `
-    <div class="${cls.shell}">
-      <aside class="${cls.sidebar}">
+    <div class="portal-shell min-h-screen bg-slate-50">
+      <aside class="portal-sidebar border-r border-slate-200 bg-white">
         <div class="portal-brand">
-          <div class="${cls.brandCopyStrong}">JA Experiences &amp; Discovery</div>
-          <div class="${cls.brandCopySpan}">Customer portal</div>
-        </div>
-        <div class="${cls.person}">
-          <div class="${cls.avatar}" id="sidebarAvatar">JA</div>
-          <div class="portal-account-summary-copy">
-            <strong class="${cls.personStrong}" id="sidebarName">Customer account</strong>
-            <span class="${cls.personSpan}" id="sidebarEmail">Signed in securely</span>
+          <div class="portal-brand-copy">
+            <strong class="brand-wordmark" aria-label="JA Plan Studio"><span class="brand-ja" aria-hidden="true">JA</span><span class="brand-name" aria-hidden="true">Plan Studio</span></strong>
+            <span>Customer portal</span>
           </div>
-          <span class="${cls.statusPill}" id="sidebarStatus">Secure</span>
+        </div>
+        <div class="portal-person">
+          <div class="portal-avatar" id="sidebarAvatar">JA</div>
+          <div>
+            <strong id="sidebarName">Customer account</strong>
+            <span id="sidebarEmail">Signed in securely</span>
+          </div>
+          <span class="portal-status" id="sidebarStatus">Secure</span>
         </div>
         <nav class="portal-nav" aria-label="Customer portal navigation">
-          <div class="${cls.navGroup}">
-            <div class="${cls.navHeading}">Portal</div>
-            ${navItems.map(([href, label]) => `<a class="${active(href)}" href="${href}">${label}</a>`).join("")}
+          <div class="portal-nav-group">
+            <div class="portal-nav-heading">Portal</div>
+            ${navItems.map(([href, label]) => `<a class="portal-nav-link ${active(href)}" href="${href}">${label}</a>`).join("")}
           </div>
         </nav>
-        <div class="${cls.sidebarFooter}">
-          <a class="portal-button-secondary" href="/">Back to JA Experiences &amp; Discovery</a>
+        <div class="portal-sidebar-footer">
+          <a class="portal-button-secondary" href="/">Back to JA Plan Studio</a>
           <a class="portal-button-primary" href="/account/profile/">My Account</a>
           <a class="portal-button-secondary" href="/account/logout">Sign out</a>
         </div>
       </aside>
-      <main class="${cls.main}">
-        <div class="${options.centered ? cls.wrapCentered : cls.wrap}" id="portalContent"></div>
+      <main class="portal-main min-w-0">
+        <div class="portal-wrap mx-auto w-full ${options.centered ? "portal-wrap-centered max-w-3xl" : "max-w-7xl"}" id="portalContent"></div>
       </main>
     </div>`;
 
   const content = document.getElementById("portalContent");
   content.innerHTML = `
-    <section class="${cls.pageHeader}">
+    <section class="portal-page-header portal-hero">
       <div>
-        <span class="${cls.eyebrow}">Customer portal</span>
-        <h1 class="portal-page-header h1">${escapeHtml(title)}</h1>
-        <p class="${cls.lead}">${escapeHtml(lead)}</p>
+        <span class="portal-eyebrow">Customer portal</span>
+        <h1>${escapeHtml(title)}</h1>
+        <p class="portal-lead">${escapeHtml(lead)}</p>
       </div>
-      ${options.showStats === false ? "" : `<div class="${cls.heroPanel}">
-        <div class="${cls.heroEntry}"><span class="${cls.heroLabel}">Account</span><strong class="${cls.heroValue}" id="heroAccount">Loading…</strong></div>
-        <div class="${cls.heroEntry}"><span class="${cls.heroLabel}">Status</span><strong class="${cls.heroValue}" id="heroStatus">Loading…</strong></div>
-        <div class="${cls.heroEntry}"><span class="${cls.heroLabel}">Last sync</span><strong class="${cls.heroValue}" id="heroSync">Loading…</strong></div>
-        <div class="${cls.heroEntry}"><span class="${cls.heroLabel}">Notifications</span><strong class="${cls.heroValue}" id="heroNotifications">Loading…</strong></div>
+      ${options.showStats === false ? "" : `<div class="portal-hero-panel">
+        <div class="portal-entry"><span class="portal-label">Account</span><strong id="heroAccount">Loading…</strong></div>
+        <div class="portal-entry"><span class="portal-label">Status</span><strong id="heroStatus">Loading…</strong></div>
+        <div class="portal-entry"><span class="portal-label">Last sync</span><strong id="heroSync">Loading…</strong></div>
+        <div class="portal-entry"><span class="portal-label">Notifications</span><strong id="heroNotifications">Loading…</strong></div>
       </div>`}
     </section>
     <div id="portalTrialBanner"></div>
@@ -269,7 +179,7 @@ function formatDateOnly(value) {
 function renderTrialBanner(page) {
   const mount = document.getElementById("portalTrialBanner");
   if (!mount) return;
-  const visiblePages = new Set(["dashboard", "profile", "tokens", "builders", "saved", "membership"]);
+  const visiblePages = new Set(["dashboard", "account", "profile", "tokens", "membership"]);
   const summary = portalState.builders?.token_summary || {};
   const trial = summary.trial;
   const hasPaidPlan = Boolean(summary.subscription_active);
@@ -279,22 +189,22 @@ function renderTrialBanner(page) {
   }
   if (summary.trial_active) {
     mount.innerHTML = `
-      <section class="${cls.trialBanner}">
+      <section class="portal-trial-banner">
         <div>
-          <strong class="${cls.trialStrong}">FREE TRIAL — ENDS ON ${formatDateOnly(trial.expires_at)}</strong>
-          <span class="${cls.trialSpan}">30 Builder Usage Tokens included once only. ${escapeHtml(String(summary.remaining_tokens ?? 0))} Builder Usage Tokens remaining.</span>
+          <strong>FREE TRIAL — ENDS ON ${formatDateOnly(trial.expires_at)}</strong>
+          <span>30 Builder Usage Tokens included once only. ${escapeHtml(String(summary.remaining_tokens ?? 0))} Builder Usage Tokens remaining.</span>
         </div>
-        <a class="portal-button-secondary" href="/pricing/">View Plans / Upgrade</a>
+        <a class="portal-button-secondary" href="/pricing/">Subscription Plans / Upgrade</a>
       </section>`;
     return;
   }
   mount.innerHTML = `
-    <section class="${cls.trialBannerExpired}">
+    <section class="portal-trial-banner expired">
       <div>
-        <strong class="${cls.trialStrong}">Free trial expired</strong>
-        <span class="${cls.trialSpan}">Choose a paid plan to continue using saved builder outputs and Builder Usage Tokens.</span>
+        <strong>Free trial expired</strong>
+        <span>Choose a paid plan to continue using your membership token allowance.</span>
       </div>
-      <a class="portal-button-secondary" href="/pricing/">View Plans / Upgrade</a>
+      <a class="portal-button-secondary" href="/pricing/">Subscription Plans / Upgrade</a>
     </section>`;
 }
 
@@ -318,27 +228,27 @@ function timelineItems(profile = {}, requests = {}) {
 
 function timelineMarkup(items = []) {
   if (!items.length) {
-    return `<div class="${cls.noteInline}">No timeline activity yet.</div>`;
+    return '<div class="portal-note inline">No timeline activity yet.</div>';
   }
 
-  return `<div class="${cls.timeline}">${items.map((item) => `
-    <article class="${cls.timelineItem}">
-      <span class="${cls.timelineDot}" aria-hidden="true"></span>
+  return `<div class="portal-timeline">${items.map((item) => `
+    <article class="portal-timeline-item">
+      <span class="portal-timeline-dot" aria-hidden="true"></span>
       <div>
-        <strong class="portal-entry strong">${escapeHtml(item.label)}</strong>
-        <small class="${cls.entrySmall}">${escapeHtml(item.detail)}</small>
+        <strong>${escapeHtml(item.label)}</strong>
+        <small>${escapeHtml(item.detail)}</small>
       </div>
     </article>
   `).join("")}</div>`;
 }
 
 function portalTable(headers, rows = []) {
-  if (!rows.length) return `<div class="${cls.noteInline}">No records yet.</div>`;
+  if (!rows.length) return '<div class="portal-note inline">No records yet.</div>';
   return `
-    <div class="${cls.tableWrap}">
-      <table class="${cls.tableBase}">
-        <thead><tr>${headers.map((header) => `<th class="${cls.tableTh}">${escapeHtml(header)}</th>`).join("")}</tr></thead>
-        <tbody>${rows.map((row) => `<tr>${row.map((cell) => `<td class="${cls.tableTd}">${String(cell || "").startsWith("<") ? cell : escapeHtml(cell)}</td>`).join("")}</tr>`).join("")}</tbody>
+    <div class="portal-table-wrap">
+      <table class="portal-table">
+        <thead><tr>${headers.map((header) => `<th>${escapeHtml(header)}</th>`).join("")}</tr></thead>
+        <tbody>${rows.map((row) => `<tr>${row.map((cell) => `<td>${String(cell || "").startsWith("<") ? cell : escapeHtml(cell)}</td>`).join("")}</tr>`).join("")}</tbody>
       </table>
     </div>
   `;
@@ -347,9 +257,9 @@ function portalTable(headers, rows = []) {
 function emptyPortalState(title, body, actionHref = "", actionLabel = "") {
   return `
     <div class="portal-empty-state">
-      <h3>${escapeHtml(title)}</h3>
-      <p>${escapeHtml(body)}</p>
-      ${actionHref ? `<a class="portal-button-primary" href="${escapeHtml(actionHref)}">${escapeHtml(actionLabel)}</a>` : ""}
+      <strong>${escapeHtml(title)}</strong>
+      <span>${escapeHtml(body)}</span>
+      ${actionHref ? `<a class="portal-button" href="${escapeHtml(actionHref)}">${escapeHtml(actionLabel)}</a>` : ""}
     </div>
   `;
 }
@@ -403,19 +313,21 @@ document.addEventListener("DOMContentLoaded", async () => {
   const needsBilling = new Set(["membership", "downloads"]);
   const titleMap = {
     dashboard: ["Overview", "Live overview of your account activity, support and membership."],
-    profile: ["My Account", "Your account details and membership information"],
-    tokens: ["Builder Usage Tokens", "View your token balance, allowance, usage ledger and blocked attempts."],
+    account: ["My Account", "Your account identity, membership and connected services."],
+    profile: ["My Profile", "Review and update your connected customer profile."],
+    tokens: ["Tokens & Usage", "View your account token balance, allowance and usage ledger."],
     builders: ["My Builders", "Saved builder outputs, plans and self-service planning history."],
     settings: ["Settings", "Control preferences, accessibility and session behaviour."],
-    security: ["Security", "Manage sessions, sign-ins and support access settings."],
+    security: ["Security Settings", "Manage sessions, sign-ins and support access settings."],
     bookings: ["Bookings", "Your upcoming, past and cancelled bookings."],
-    membership: ["Membership", "Plan, benefits, Stripe status and billing history."],
+    membership: ["Plans & Billing", "Plan, benefits, Stripe status and billing history."],
     support: ["Support", "Tickets, enquiries, issues and conversation history."],
-    data: ["Data Protection", "Subject access, deletion and other privacy requests."],
+    data: ["My Data & Privacy", "Subject access, deletion and other privacy requests."],
     downloads: ["Downloads", "Invoices, receipts, exports and support documents."],
     saved: ["Saved Plans", "Saved builder outputs, saved experiences and planning items."],
     messages: ["Messages", "Notifications and conversations in one inbox."],
     notifications: ["Notifications", "System, support and membership notifications."]
+    ,help: ["Help Centre", "Guidance for accounts, billing, tokens, privacy and support."]
   };
 
   shell(...(titleMap[page] || ["Customer portal", "Secure customer account centre."]), { centered: page === "profile", showStats: page !== "profile" });
@@ -432,7 +344,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderTrialBanner(page);
     await renderPage(page);
   } catch (error) {
-    document.getElementById("portalPage").innerHTML = `<div class="${cls.noteInline}">${escapeHtml(error.message || "Unable to load account data.")}</div>`;
+    document.getElementById("portalPage").innerHTML = `<div class="portal-note inline">${escapeHtml(error.message || "Unable to load account data.")}</div>`;
   }
 });
 
@@ -445,47 +357,51 @@ async function renderPage(page) {
   if (page === "dashboard") {
     const builderData = portalState.builders || {};
     const tokenSummary = builderData.token_summary || {};
-    const outputs = Array.isArray(builderData.outputs) ? builderData.outputs : [];
+    const customerName = profile.givenName || profile.displayName || profile.verifiedName || profile.name || "Customer";
+    const membershipLabel = tokenSummary.plan_name || profile.currentPlan || profile.customerStatus || "Account";
     pageRoot.innerHTML = `
-      <section class="${cls.grid12}">
-        <article class="portal-card ${cls.span8}">
-          <h2 class="${cls.cardTitle}">Quick actions</h2>
-          <div class="${cls.quickActions}">
-            <a class="${cls.action}" href="/builders/"><strong class="${cls.actionStrong}">Open Builders</strong><span class="${cls.actionSpan}">Create a new self-service experience plan</span></a>
-            <a class="${cls.action}" href="/account/tokens/"><strong class="${cls.actionStrong}">Builder Usage Tokens</strong><span class="${cls.actionSpan}">${escapeHtml(String(tokenSummary.remaining_tokens ?? "0"))} remaining</span></a>
-            <a class="${cls.action}" href="/account/saved/"><strong class="${cls.actionStrong}">View Saved Plans</strong><span class="${cls.actionSpan}">Plans and saved experiences</span></a>
-            <a class="${cls.action}" href="/account/builders/"><strong class="${cls.actionStrong}">Continue My Builders</strong><span class="${cls.actionSpan}">Review saved builder outputs</span></a>
-            <a class="${cls.action}" href="/account/support/"><strong class="${cls.actionStrong}">Contact Support</strong><span class="${cls.actionSpan}">Tickets, enquiries and help</span></a>
-            <a class="${cls.action}" href="/account/subscription/"><strong class="${cls.actionStrong}">Manage Membership</strong><span class="${cls.actionSpan}">Plan, billing and invoices</span></a>
+      <section class="portal-welcome-panel">
+        <div><span>Welcome back,</span><h2>${escapeHtml(customerName)}</h2><p>Here is your account status at a glance.</p></div>
+        <strong>${escapeHtml(membershipLabel)}</strong>
+      </section>
+      <section class="portal-grid">
+        <article class="portal-card portal-span-8">
+          <h2>Quick actions</h2>
+          <div class="portal-quick-actions">
+            <a class="portal-action" href="/account/profile/"><strong>My Account</strong><span>Review your identity and account details</span></a>
+            <a class="portal-action" href="/account/tokens/"><strong>Tokens &amp; Usage</strong><span>${escapeHtml(String(tokenSummary.remaining_tokens ?? "0"))} available</span></a>
+            <a class="portal-action" href="/account/support/"><strong>Contact Support</strong><span>Tickets, enquiries and help</span></a>
+            <a class="portal-action" href="/account/subscription/"><strong>Plans &amp; Billing</strong><span>Plan, billing and invoices</span></a>
+            <a class="portal-action" href="/account/security/"><strong>Security Settings</strong><span>Sign-in and account protection</span></a>
+            <a class="portal-action" href="/account/data-protection/"><strong>My Data &amp; Privacy</strong><span>Privacy preferences and data requests</span></a>
           </div>
         </article>
-        <article class="portal-card ${cls.span4}">
-          <h2 class="${cls.cardTitle}">Membership summary</h2>
-          <div class="${cls.stack}">
-            <div class="${cls.entry}"><span class="portal-label">Plan</span><strong class="${cls.entryStrong}">${escapeHtml(tokenSummary.plan_name || profile.currentPlan || "No active plan detected")}</strong></div>
-            <div class="${cls.entry}"><span class="portal-label">Builder Usage Tokens</span><strong class="${cls.entryStrong}">${escapeHtml(String(tokenSummary.remaining_tokens ?? "0"))} remaining</strong></div>
-            <div class="${cls.entry}"><span class="portal-label">Saved builder outputs</span><strong class="${cls.entryStrong}">${escapeHtml(String(outputs.length))}</strong></div>
-            <div class="${cls.entry}"><span class="portal-label">Lifetime access</span><strong class="${cls.entryStrong}">${profile.lifetimeAccess ? "Enabled" : "Not enabled"}</strong></div>
-            <div class="${cls.entry}"><span class="portal-label">Stripe status</span><strong class="${cls.entryStrong}">${profile.stripeLinked ? "Linked" : "Not linked"}</strong></div>
+        <article class="portal-card portal-span-4">
+          <h2>Membership summary</h2>
+          <div class="portal-stack">
+            <div class="portal-entry"><span class="portal-label">Plan</span><strong>${escapeHtml(tokenSummary.plan_name || profile.currentPlan || "No active plan detected")}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Account tokens</span><strong>${escapeHtml(String(tokenSummary.remaining_tokens ?? "0"))} available</strong></div>
+            <div class="portal-entry"><span class="portal-label">Lifetime access</span><strong>${profile.lifetimeAccess ? "Enabled" : "Not enabled"}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Stripe status</span><strong>${profile.stripeLinked ? "Linked" : "Not linked"}</strong></div>
           </div>
         </article>
-        <article class="portal-card ${cls.span6}">
-          <h2 class="${cls.cardTitle}">Recent activity</h2>
+        <article class="portal-card portal-span-6">
+          <h2>Recent activity</h2>
           ${timelineMarkup(timelineItems(profile, requests).slice(0, 5))}
         </article>
-        <article class="portal-card ${cls.span6}">
-          <h2 class="${cls.cardTitle}">Latest support activity</h2>
-          <div class="${cls.stack}">
+        <article class="portal-card portal-span-6">
+          <h2>Latest support activity</h2>
+          <div class="portal-stack">
             ${(requests.dataProtectionRequests || []).slice(0, 2).map((request) => `
-              <div class="${cls.entry}"><strong class="${cls.entryStrong}">${escapeHtml(request.reference)}</strong><small class="${cls.entrySmall}">${escapeHtml(request.request_type || "Data request")} · ${escapeHtml(request.status || "New")}</small></div>
-            `).join("") || `<div class="${cls.noteInline}">No recent requests yet.</div>`}
+              <div class="portal-entry"><strong>${escapeHtml(request.reference)}</strong><small>${escapeHtml(request.request_type || "Data request")} · ${escapeHtml(request.status || "New")}</small></div>
+            `).join("") || '<div class="portal-note inline">No recent requests yet.</div>'}
           </div>
         </article>
       </section>`;
     return;
   }
 
-  if (page === "profile") {
+  if (page === "profile" || page === "account") {
     const builderData = portalState.builders || {};
     const tokenSummary = builderData.token_summary || {};
     const builderOutputs = Array.isArray(builderData.outputs) ? builderData.outputs : [];
@@ -494,13 +410,13 @@ async function renderPage(page) {
     const currentPlan = tokenSummary.plan_name || profile.currentPlan || "No active plan detected";
     const membershipStatus = profile.customerStatus || (tokenSummary.plan_active ? "Active" : "Not active");
     pageRoot.innerHTML = `
-      <section class="${cls.accountPage}">
-        <article class="portal-card ${cls.accountSummary}">
-          <div class="${cls.accountAvatar}">${escapeHtml(initials(displayName))}</div>
+      <section class="portal-account-page">
+        <article class="portal-card portal-account-summary">
+          <div class="portal-account-avatar">${escapeHtml(initials(displayName))}</div>
           <div class="portal-account-summary-copy">
-            <h2 class="portal-account-summary-copy h2">${escapeHtml(displayName)}</h2>
-            <p class="portal-account-summary-copy p">${escapeHtml(email)}</p>
-            <div class="${cls.badgeRow}">
+            <h2>${escapeHtml(displayName)}</h2>
+            <p>${escapeHtml(email)}</p>
+            <div class="portal-badge-row">
               <span class="portal-badge">${escapeHtml(profile.verificationStatus || "Verified")}</span>
               ${profile.lifetimeAccess ? '<span class="portal-badge">Lifetime access</span>' : ""}
               <span class="portal-badge">${escapeHtml(currentPlan)}</span>
@@ -509,104 +425,104 @@ async function renderPage(page) {
         </article>
 
         <article class="portal-card">
-          <div class="${cls.cardHeading}">
+          <div class="portal-card-heading">
             <div>
-              <h2 class="${cls.cardTitle}">Account Details</h2>
-              <p class="${cls.cardDesc}">Your primary customer account information.</p>
+              <h2>Account Details</h2>
+              <p class="portal-card-description">Your primary customer account information.</p>
             </div>
             <a class="portal-button-secondary" href="#editAccountDetails">Edit</a>
           </div>
-          <div class="${cls.stack}">
-            <div class="${cls.listRow}"><span class="portal-label">Full name</span><strong class="${cls.entryStrong}">${escapeHtml(displayName)}</strong></div>
-            <div class="${cls.listRow}"><span class="portal-label">Email address</span><strong class="${cls.entryStrong}">${escapeHtml(email)}</strong></div>
-            <div class="${cls.listRow}"><span class="portal-label">Account type</span><strong class="${cls.entryStrong}">${escapeHtml(profile.accountType || "Customer")}</strong></div>
-            <div class="${cls.listRow}"><span class="portal-label">Member since</span><strong class="${cls.entryStrong}">${escapeHtml(fmt(profile.createdAt))}</strong></div>
+          <div class="portal-stack">
+            <div class="portal-list-row"><span class="portal-label">Full name</span><strong>${escapeHtml(displayName)}</strong></div>
+            <div class="portal-list-row"><span class="portal-label">Email address</span><strong>${escapeHtml(email)}</strong></div>
+            <div class="portal-list-row"><span class="portal-label">Account type</span><strong>${escapeHtml(profile.accountType || "Customer")}</strong></div>
+            <div class="portal-list-row"><span class="portal-label">Member since</span><strong>${escapeHtml(fmt(profile.createdAt))}</strong></div>
           </div>
         </article>
 
         <article class="portal-card">
-          <div class="${cls.cardHeading}">
+          <div class="portal-card-heading">
             <div>
-              <h2 class="${cls.cardTitle}">Current Plan / Membership</h2>
-              <p class="${cls.cardDesc}">Membership and billing status for JA Experiences &amp; Discovery.</p>
+              <h2>Current Plan / Membership</h2>
+              <p class="portal-card-description">Membership and billing status for JA Plan Studio.</p>
             </div>
             <button class="portal-button-secondary" type="button" data-action="manage-stripe-billing">Manage</button>
           </div>
-          <div class="${cls.stack}">
-            <div class="${cls.listRow}"><span class="portal-label">Current plan</span><strong class="${cls.entryStrong}">${escapeHtml(currentPlan)}</strong></div>
-            <div class="${cls.listRow}"><span class="portal-label">Membership status</span><strong class="${cls.entryStrong}">${escapeHtml(membershipStatus)}</strong></div>
-            <div class="${cls.listRow}"><span class="portal-label">Billing status</span><strong class="${cls.entryStrong}">${profile.stripeLinked ? "Stripe linked" : "Not linked"}</strong></div>
+          <div class="portal-stack">
+            <div class="portal-list-row"><span class="portal-label">Current plan</span><strong>${escapeHtml(currentPlan)}</strong></div>
+            <div class="portal-list-row"><span class="portal-label">Membership status</span><strong>${escapeHtml(membershipStatus)}</strong></div>
+            <div class="portal-list-row"><span class="portal-label">Billing status</span><strong>${profile.stripeLinked ? "Stripe linked" : "Not linked"}</strong></div>
           </div>
         </article>
 
         <article class="portal-card">
-          <h2 class="${cls.cardTitle}">Builder Usage Tokens</h2>
-          <div class="${cls.gridMini}">
-            <div class="${cls.entry}"><span class="portal-label">Remaining tokens</span><strong class="${cls.entryStrong}">${escapeHtml(String(tokenSummary.remaining_tokens ?? 0))}</strong></div>
-            <div class="${cls.entry}"><span class="portal-label">Used tokens</span><strong class="${cls.entryStrong}">${escapeHtml(String(tokenSummary.used_tokens ?? 0))}</strong></div>
-            <div class="${cls.entry}"><span class="portal-label">Trial Builder Usage Tokens</span><strong class="${cls.entryStrong}">${escapeHtml(String(tokenSummary.trial_tokens ?? 0))}</strong></div>
-            <div class="${cls.entry}"><span class="portal-label">Purchased tokens</span><strong class="${cls.entryStrong}">${escapeHtml(String(tokenSummary.purchased_addon_tokens ?? 0))}</strong></div>
-            <div class="${cls.entry}"><span class="portal-label">Trial status</span><strong class="${cls.entryStrong}">${tokenSummary.trial_active ? "Active" : tokenSummary.trial ? "Used/expired" : "Not activated"}</strong></div>
-            <div class="${cls.entry}"><span class="portal-label">Saved outputs</span><strong class="${cls.entryStrong}">${escapeHtml(String(builderOutputs.length))}</strong></div>
+          <h2>Builder Usage Tokens</h2>
+          <div class="portal-grid mini">
+            <div class="portal-entry"><span class="portal-label">Remaining tokens</span><strong>${escapeHtml(String(tokenSummary.remaining_tokens ?? 0))}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Used tokens</span><strong>${escapeHtml(String(tokenSummary.used_tokens ?? 0))}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Trial Builder Usage Tokens</span><strong>${escapeHtml(String(tokenSummary.trial_tokens ?? 0))}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Purchased tokens</span><strong>${escapeHtml(String(tokenSummary.purchased_addon_tokens ?? 0))}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Trial status</span><strong>${tokenSummary.trial_active ? "Active" : tokenSummary.trial ? "Used/expired" : "Not activated"}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Saved outputs</span><strong>${escapeHtml(String(builderOutputs.length))}</strong></div>
           </div>
-          <p class="${cls.noteInline}">${escapeHtml(tokenSummary.deduction_rule || "Builder Usage Tokens are deducted only when a finished builder output is saved successfully. Opening, selecting, typing and previewing do not deduct tokens.")}</p>
-          <div class="${cls.formActions}">
+          <p class="portal-note inline">${escapeHtml(tokenSummary.deduction_rule || "Builder Usage Tokens are deducted only when a finished builder output is saved successfully. Opening, selecting, typing and previewing do not deduct tokens.")}</p>
+          <div class="portal-form-actions">
             <a class="portal-button-secondary" href="/account/tokens/">View token ledger</a>
-            <a class="portal-button-primary" href="/builders/">Open Experience Builders</a>
+            <a class="portal-button" href="/builders/">Open Experience Builders</a>
           </div>
         </article>
 
         <article class="portal-card">
-          <div class="${cls.cardHeading}">
+          <div class="portal-card-heading">
             <div>
-              <h2 class="${cls.cardTitle}">Security and JA Group Services ID</h2>
-              <p class="${cls.cardDesc}">Your sign-in is protected by Microsoft Entra External ID.</p>
+              <h2>Security and JA Group Services ID</h2>
+              <p class="portal-card-description">Your sign-in is protected by Microsoft Entra External ID.</p>
             </div>
             <a class="portal-button-secondary" href="/account/security/">Security</a>
           </div>
-          <div class="${cls.stack}">
-            <div class="${cls.listRow}"><span class="portal-label">Connection</span><strong class="${cls.entryStrong}">${profile.microsoftEmail || profile.microsoftObjectId ? "Connected" : "Not confirmed"}</strong></div>
-            <div class="${cls.listRow}"><span class="portal-label">Last sync</span><strong class="${cls.entryStrong}">${escapeHtml(fmt(profile.microsoftUpdatedAt || profile.updatedAt))}</strong></div>
-            <div class="${cls.listRow}"><span class="portal-label">Verification status</span><strong class="${cls.entryStrong}">${escapeHtml(profile.verificationStatus || "Not provided")}</strong></div>
+          <div class="portal-stack">
+            <div class="portal-list-row"><span class="portal-label">Connection</span><strong>${profile.microsoftEmail || profile.microsoftObjectId ? "Connected" : "Not confirmed"}</strong></div>
+            <div class="portal-list-row"><span class="portal-label">Last sync</span><strong>${escapeHtml(fmt(profile.microsoftUpdatedAt || profile.updatedAt))}</strong></div>
+            <div class="portal-list-row"><span class="portal-label">Verification status</span><strong>${escapeHtml(profile.verificationStatus || "Not provided")}</strong></div>
           </div>
         </article>
 
         <article class="portal-card">
-          <div class="${cls.cardHeading}">
+          <div class="portal-card-heading">
             <div>
-              <h2 class="${cls.cardTitle}">Privacy and data</h2>
-              <p class="${cls.cardDesc}">Manage privacy requests and consent preferences.</p>
+              <h2>Privacy and data</h2>
+              <p class="portal-card-description">Manage privacy requests and consent preferences.</p>
             </div>
           </div>
-          <div class="${cls.stack}">
-            <div class="${cls.listRow}"><span class="portal-label">Data protection</span><a class="portal-button-secondary" href="/account/data-protection/">Open</a></div>
-            <div class="${cls.listRow}"><span class="portal-label">Cookie Preferences</span><button class="portal-button-secondary" type="button" data-action="cookie-preferences">Manage</button></div>
-            <div class="${cls.listRow}"><span class="portal-label">Support notes</span><strong class="${cls.entryStrong}">${escapeHtml(profile.supportNotes || "No support notes saved")}</strong></div>
+          <div class="portal-stack">
+            <div class="portal-list-row"><span class="portal-label">Data protection</span><a class="portal-button-secondary" href="/account/data-protection/">Open</a></div>
+            <div class="portal-list-row"><span class="portal-label">Cookie Preferences</span><button class="portal-button-secondary" type="button" data-action="cookie-preferences">Manage</button></div>
+            <div class="portal-list-row"><span class="portal-label">Support notes</span><strong>${escapeHtml(profile.supportNotes || "No support notes saved")}</strong></div>
           </div>
         </article>
 
         <article class="portal-card" id="editAccountDetails">
           <details>
-            <summary class="portal-card-title"><strong>Edit account details</strong></summary>
-            <div class="${cls.formGrid}">
-              <label class="${cls.field}"><span class="portal-label">Display name</span><input class="portal-input" id="profileDisplayName" value="${escapeHtml(profile.displayName || "")}"></label>
-              <label class="${cls.field}"><span class="portal-label">Given name</span><input class="portal-input" id="profileGivenName" value="${escapeHtml(profile.microsoftGivenName || "")}"></label>
-              <label class="${cls.field}"><span class="portal-label">Surname</span><input class="portal-input" id="profileFamilyName" value="${escapeHtml(profile.microsoftFamilyName || "")}"></label>
-              <label class="${cls.field}"><span class="portal-label">Phone</span><input class="portal-input" id="profilePhone" value="${escapeHtml(profile.phone || "")}"></label>
-              <label class="${cls.field}"><span class="portal-label">Communication preference</span><select class="portal-input" id="profileComms"><option>Email</option><option>Phone</option><option>Email first, phone if urgent</option></select></label>
-              <label class="${cls.field}"><span class="portal-label">Preferred language</span><input class="portal-input" id="profilePreferredLanguage" value="${escapeHtml(profile.microsoftPreferredLanguage || "")}"></label>
-              <label class="${cls.field}"><span class="portal-label">Mobile phone</span><input class="portal-input" id="profileMobilePhone" value="${escapeHtml(profile.microsoftMobilePhone || "")}"></label>
-              <label class="${cls.field}"><span class="portal-label">Office location</span><input class="portal-input" id="profileOfficeLocation" value="${escapeHtml(profile.microsoftOfficeLocation || "")}"></label>
-              <label class="${cls.field}"><span class="portal-label">City</span><input class="portal-input" id="profileCity" value="${escapeHtml(profile.microsoftCity || "")}"></label>
-              <label class="${cls.field}"><span class="portal-label">State</span><input class="portal-input" id="profileState" value="${escapeHtml(profile.microsoftState || "")}"></label>
-              <label class="${cls.field}"><span class="portal-label">Country</span><input class="portal-input" id="profileCountry" value="${escapeHtml(profile.microsoftCountry || "")}"></label>
-              <label class="${cls.field}"><span class="portal-label">Postal code</span><input class="portal-input" id="profilePostalCode" value="${escapeHtml(profile.microsoftPostalCode || "")}"></label>
-              <label class="${cls.field}"><span class="portal-label">Street address</span><input class="portal-input" id="profileStreetAddress" value="${escapeHtml(profile.microsoftStreetAddress || "")}"></label>
-              <label class="${cls.field}"><span class="portal-label">Support notes</span><textarea class="portal-input" id="profileSupportNotes" style="min-height:118px;resize:vertical">${escapeHtml(profile.supportNotes || "")}</textarea></label>
+            <summary><strong>Edit account details</strong></summary>
+            <div class="portal-form-grid">
+              <label class="portal-field"><span class="portal-label">Display name</span><input class="portal-input" id="profileDisplayName" value="${escapeHtml(profile.displayName || "")}"></label>
+              <label class="portal-field"><span class="portal-label">Given name</span><input class="portal-input" id="profileGivenName" value="${escapeHtml(profile.microsoftGivenName || "")}"></label>
+              <label class="portal-field"><span class="portal-label">Surname</span><input class="portal-input" id="profileFamilyName" value="${escapeHtml(profile.microsoftFamilyName || "")}"></label>
+              <label class="portal-field"><span class="portal-label">Phone</span><input class="portal-input" id="profilePhone" value="${escapeHtml(profile.phone || "")}"></label>
+              <label class="portal-field"><span class="portal-label">Communication preference</span><select class="portal-select" id="profileComms"><option>Email</option><option>Phone</option><option>Email first, phone if urgent</option></select></label>
+              <label class="portal-field"><span class="portal-label">Preferred language</span><input class="portal-input" id="profilePreferredLanguage" value="${escapeHtml(profile.microsoftPreferredLanguage || "")}"></label>
+              <label class="portal-field"><span class="portal-label">Mobile phone</span><input class="portal-input" id="profileMobilePhone" value="${escapeHtml(profile.microsoftMobilePhone || "")}"></label>
+              <label class="portal-field"><span class="portal-label">Office location</span><input class="portal-input" id="profileOfficeLocation" value="${escapeHtml(profile.microsoftOfficeLocation || "")}"></label>
+              <label class="portal-field"><span class="portal-label">City</span><input class="portal-input" id="profileCity" value="${escapeHtml(profile.microsoftCity || "")}"></label>
+              <label class="portal-field"><span class="portal-label">State</span><input class="portal-input" id="profileState" value="${escapeHtml(profile.microsoftState || "")}"></label>
+              <label class="portal-field"><span class="portal-label">Country</span><input class="portal-input" id="profileCountry" value="${escapeHtml(profile.microsoftCountry || "")}"></label>
+              <label class="portal-field"><span class="portal-label">Postal code</span><input class="portal-input" id="profilePostalCode" value="${escapeHtml(profile.microsoftPostalCode || "")}"></label>
+              <label class="portal-field"><span class="portal-label">Street address</span><input class="portal-input" id="profileStreetAddress" value="${escapeHtml(profile.microsoftStreetAddress || "")}"></label>
+              <label class="portal-field"><span class="portal-label">Support notes</span><textarea class="portal-textarea" id="profileSupportNotes">${escapeHtml(profile.supportNotes || "")}</textarea></label>
             </div>
           </details>
-          <div class="${cls.formActions}">
-            <button class="portal-button-primary" type="button" id="saveProfileBtn">Save changes</button>
+          <div class="portal-form-actions">
+            <button class="portal-button" type="button" id="saveProfileBtn">Save changes</button>
           </div>
         </article>
       </section>`;
@@ -651,42 +567,42 @@ async function renderPage(page) {
 
   if (page === "settings") {
     pageRoot.innerHTML = `
-      <section class="${cls.grid12}">
-        <article class="portal-card ${cls.span6}">
-          <h2 class="${cls.cardTitle}">Display Name</h2>
-          <div class="${cls.formGrid}">
-            <label class="${cls.field}"><span class="portal-label">Display name</span><input class="portal-input" value="${escapeHtml(profile.displayName || "")}" placeholder="Your name"></label>
-            <label class="${cls.field}"><span class="portal-label">Email Address</span><input class="portal-input" value="${escapeHtml(profile.email || profile.microsoftEmail || "")}" disabled></label>
+      <section class="portal-grid">
+        <article class="portal-card portal-span-6">
+          <h2>Display Name</h2>
+          <div class="portal-form-grid">
+            <label class="portal-field"><span class="portal-label">Display name</span><input class="portal-input" value="${escapeHtml(profile.displayName || "")}" placeholder="Your name"></label>
+            <label class="portal-field"><span class="portal-label">Email Address</span><input class="portal-input" value="${escapeHtml(profile.email || profile.microsoftEmail || "")}" disabled></label>
           </div>
         </article>
-        <article class="portal-card ${cls.span6}">
-          <h2 class="${cls.cardTitle}">Personalisation</h2>
-          <div class="${cls.stack}">
-            <label class="${cls.toggle}"><span><strong class="portal-card-title">Compact dashboard widgets</strong><small class="${cls.helpText}">Show dense cards on the Overview page.</small></span><input type="checkbox" class="${cls.toggleInput}"></label>
-            <label class="${cls.toggle}"><span><strong class="portal-card-title">Reduced motion</strong><small class="${cls.helpText}">Limit non-essential transitions.</small></span><input type="checkbox" class="${cls.toggleInput}"></label>
-            <label class="${cls.toggle}"><span><strong class="portal-card-title">Accessibility-first layout</strong><small class="${cls.helpText}">Keep high contrast controls and clear labels.</small></span><input type="checkbox" checked class="${cls.toggleInput}"></label>
+        <article class="portal-card portal-span-6">
+          <h2>Personalisation</h2>
+          <div class="portal-stack">
+            <label class="portal-toggle"><span><strong>Compact dashboard widgets</strong><small class="portal-help-text">Show dense cards on the Overview page.</small></span><input type="checkbox"></label>
+            <label class="portal-toggle"><span><strong>Reduced motion</strong><small class="portal-help-text">Limit non-essential transitions.</small></span><input type="checkbox"></label>
+            <label class="portal-toggle"><span><strong>Accessibility-first layout</strong><small class="portal-help-text">Keep high contrast controls and clear labels.</small></span><input type="checkbox" checked></label>
           </div>
         </article>
-        <article class="portal-card ${cls.span6}">
-          <h2 class="${cls.cardTitle}">Notification Preferences</h2>
-          <div class="${cls.stack}">
-            <label class="${cls.toggle}"><span><strong class="portal-card-title">Account alerts</strong><small class="${cls.helpText}">Security, profile and sign-in updates.</small></span><input type="checkbox" checked class="${cls.toggleInput}"></label>
-            <label class="${cls.toggle}"><span><strong class="portal-card-title">Support updates</strong><small class="${cls.helpText}">Replies to tickets, enquiries and complaints.</small></span><input type="checkbox" checked class="${cls.toggleInput}"></label>
-            <label class="${cls.toggle}"><span><strong class="portal-card-title">Membership updates</strong><small class="${cls.helpText}">Billing, plan and token notices.</small></span><input type="checkbox" checked class="${cls.toggleInput}"></label>
+        <article class="portal-card portal-span-6">
+          <h2>Notification Preferences</h2>
+          <div class="portal-stack">
+            <label class="portal-toggle"><span><strong>Account alerts</strong><small class="portal-help-text">Security, profile and sign-in updates.</small></span><input type="checkbox" checked></label>
+            <label class="portal-toggle"><span><strong>Support updates</strong><small class="portal-help-text">Replies to tickets, enquiries and complaints.</small></span><input type="checkbox" checked></label>
+            <label class="portal-toggle"><span><strong>Membership updates</strong><small class="portal-help-text">Billing, plan and token notices.</small></span><input type="checkbox" checked></label>
           </div>
         </article>
-        <article class="portal-card ${cls.span6}">
-          <h2 class="${cls.cardTitle}">Telephone Support PIN</h2>
-          <div class="${cls.stack}">
-            <div class="${cls.entry}"><span class="portal-label">Verification</span><strong class="${cls.entryStrong}">Managed in Security</strong></div>
+        <article class="portal-card portal-span-6">
+          <h2>Telephone Support PIN</h2>
+          <div class="portal-stack">
+            <div class="portal-entry"><span class="portal-label">Verification</span><strong>Managed in Security</strong></div>
             <a class="portal-button-secondary" href="/account/security/">Open Security Settings</a>
           </div>
         </article>
-        <article class="portal-card ${cls.span12}">
-          <h2 class="${cls.cardTitle}">Danger Zone</h2>
-          <div class="${cls.alertWarning}">Closing an account requires support review so membership, billing, data protection and saved plans are handled correctly.</div>
-          <div class="${cls.formActions}">
-            <a class="portal-button-danger" style="background:linear-gradient(135deg,#dc2626,#ef4444);box-shadow:0 8px 24px rgba(220,38,38,.25),inset 0 1px 0 hsla(0,0%,100%,.15)" href="/account/support/">Close My Account</a>
+        <article class="portal-card portal-span-12">
+          <h2>Danger Zone</h2>
+          <div class="portal-note inline">Closing an account requires support review so membership, billing and data-protection obligations are handled correctly.</div>
+          <div class="portal-form-actions">
+            <a class="portal-button-danger" href="/account/support/">Close My Account</a>
           </div>
         </article>
       </section>`;
@@ -701,46 +617,46 @@ async function renderPage(page) {
     const securityQuestions = pins.security_questions || [];
     const activePinId = activePinList[0]?.id || activePinRecord?.id || "";
     pageRoot.innerHTML = `
-      <section class="${cls.grid12}">
-        <article class="portal-card ${cls.span6}">
-          <h2 class="${cls.cardTitle}">Microsoft Entra connection</h2>
-          <div class="${cls.stack}">
-            <div class="${cls.entry}"><span class="portal-label">Connected</span><strong class="${cls.entryStrong}">${profile.microsoftEmail ? "Yes" : "Unknown"}</strong></div>
-            <div class="${cls.entry}"><span class="portal-label">Last sign-in</span><strong class="${cls.entryStrong}">${escapeHtml(fmt(profile.microsoftUpdatedAt || profile.updatedAt))}</strong></div>
-            <div class="${cls.entry}"><span class="portal-label">Account verification</span><strong class="${cls.entryStrong}">${escapeHtml(profile.verificationStatus || "Not provided")}</strong></div>
+      <section class="portal-grid">
+        <article class="portal-card portal-span-6">
+          <h2>Microsoft Entra connection</h2>
+          <div class="portal-stack">
+            <div class="portal-entry"><span class="portal-label">Connected</span><strong>${profile.microsoftEmail ? "Yes" : "Unknown"}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Last sign-in</span><strong>${escapeHtml(fmt(profile.microsoftUpdatedAt || profile.updatedAt))}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Account verification</span><strong>${escapeHtml(profile.verificationStatus || "Not provided")}</strong></div>
           </div>
         </article>
-        <article class="portal-card ${cls.span6}">
-          <h2 class="${cls.cardTitle}">One-time PINs</h2>
-          <div class="${cls.alertInfo}">Support staff may request this PIN to verify identity before discussing the account. The backend stores only hashed PINs.</div>
-          <div class="${cls.surface}">
-            <div class="${cls.eyebrow}">One-time support PIN</div>
+        <article class="portal-card portal-span-6">
+          <h2>One-time PINs</h2>
+          <div class="portal-note inline">Support staff may request this PIN to verify identity before discussing the account. The backend stores only hashed PINs.</div>
+          <div class="portal-surface">
+            <div class="portal-eyebrow">One-time support PIN</div>
             <div class="portal-card-title">${activePinValue ? escapeHtml(activePinValue) : "No active support PIN available."}</div>
-            <div class="${cls.stack}" id="pinHistory">
-              ${activePinList.map((pin) => `<div class="${cls.entry}"><strong class="${cls.entryStrong}">${escapeHtml(pin.active_pin ? `PIN ending ${pin.active_pin.slice(-4)}` : pin.pin_last4 ? `PIN ending ${pin.pin_last4}` : `${pin.status || "Support"} PIN`)}</strong><small class="${cls.entrySmall}">Status: ${escapeHtml(pin.status || "Active")} · Created ${escapeHtml(fmt(pin.created_at))} · Expires ${escapeHtml(fmt(pin.expires_at))}</small></div>`).join("") || `<div class="${cls.noteInline}">Generate a support PIN when you need identity verification for a support conversation.</div>`}
+            <div class="portal-stack" id="pinHistory">
+              ${activePinList.map((pin) => `<div class="portal-entry"><strong>${escapeHtml(pin.active_pin ? `PIN ending ${pin.active_pin.slice(-4)}` : pin.pin_last4 ? `PIN ending ${pin.pin_last4}` : `${pin.status || "Support"} PIN`)}</strong><small>Status: ${escapeHtml(pin.status || "Active")} · Created ${escapeHtml(fmt(pin.created_at))} · Expires ${escapeHtml(fmt(pin.expires_at))}</small></div>`).join("") || `<div class="portal-note inline">Generate a support PIN when you need identity verification for a support conversation.</div>`}
             </div>
           </div>
-          <div class="${cls.quickActions}">
-            <button class="${cls.action}" type="button" data-pin-action="rotate"><strong class="${cls.actionStrong}">Rotate PIN</strong><span class="${cls.actionSpan}">Refresh the active PIN</span></button>
-            <button class="${cls.action}" type="button" data-pin-action="revoke"><strong class="${cls.actionStrong}">Revoke PIN</strong><span class="${cls.actionSpan}">Disable this PIN</span></button>
-            ${activePinValue ? '<button class="' + cls.action + '" type="button" data-pin-action="copy"><strong class="' + cls.actionStrong + '">Copy PIN</strong><span class="' + cls.actionSpan + '">Copy the active PIN to your clipboard</span></button>' : '<button class="' + cls.action + '" type="button" data-pin-action="generate"><strong class="' + cls.actionStrong + '">Generate PIN</strong><span class="' + cls.actionSpan + '">Create a new one-time support PIN</span></button>'}
+          <div class="portal-actions" style="margin-top:1rem">
+            <button class="portal-action" type="button" data-pin-action="rotate"><strong>Rotate PIN</strong><span>Refresh the active PIN</span></button>
+            <button class="portal-action" type="button" data-pin-action="revoke"><strong>Revoke PIN</strong><span>Disable this PIN</span></button>
+            ${activePinValue ? '<button class="portal-action" type="button" data-pin-action="copy"><strong>Copy PIN</strong><span>Copy the active PIN to your clipboard</span></button>' : '<button class="portal-action" type="button" data-pin-action="generate"><strong>Generate PIN</strong><span>Create a new one-time support PIN</span></button>'}
           </div>
         </article>
-        <article class="portal-card ${cls.span12}">
-          <h2 class="${cls.cardTitle}">Security Questions</h2>
-          <div class="${cls.alertInfo}">Configure recovery questions for support identity verification. Stored answers are hashed and are never displayed.</div>
-          <form class="${cls.stack}" id="securityQuestionsForm">
+        <article class="portal-card portal-span-12">
+          <h2>Security Questions</h2>
+          <div class="portal-note inline">Configure recovery questions for support identity verification. Stored answers are hashed and are never displayed.</div>
+          <form class="portal-stack" id="securityQuestionsForm">
             ${[0, 1, 2].map((index) => `
-              <div class="${cls.entry}">
-                <label class="${cls.field}">Question ${index + 1}<input class="portal-input" id="security_question_${index}" type="text" value="${escapeHtml(securityQuestions[index]?.question_label || "")}" autocomplete="off"></label>
-                <label class="${cls.field}">Answer ${index + 1}<input class="portal-input" id="security_answer_${index}" type="password" autocomplete="off"></label>
+              <div class="portal-entry">
+                <label>Question ${index + 1}<input id="security_question_${index}" type="text" value="${escapeHtml(securityQuestions[index]?.question_label || "")}" autocomplete="off"></label>
+                <label>Answer ${index + 1}<input id="security_answer_${index}" type="password" autocomplete="off"></label>
               </div>
             `).join("")}
-            <button class="portal-button-primary" type="submit">Save Security Questions</button>
+            <button class="portal-button" type="submit">Save Security Questions</button>
           </form>
         </article>
-        <article class="portal-card ${cls.span12}">
-          <h2 class="${cls.cardTitle}">Security history</h2>
+        <article class="portal-card portal-span-12">
+          <h2>Security history</h2>
           ${timelineMarkup(timelineItems(profile, requests).slice(0, 6))}
         </article>
       </section>`;
@@ -803,19 +719,19 @@ async function renderPage(page) {
     const ledger = Array.isArray(data.ledger) ? data.ledger : [];
     const attempts = Array.isArray(data.blocked_attempts) ? data.blocked_attempts : [];
     pageRoot.innerHTML = `
-      <section class="${cls.grid12}">
-        <article class="portal-card ${cls.span6}"><h2 class="${cls.cardTitle}">Token balance</h2><div class="${cls.stack}">
-          <div class="${cls.entry}"><span class="portal-label">Plan</span><strong class="${cls.entryStrong}">${escapeHtml(summary.plan_name || "Not available")}</strong></div>
-          <div class="${cls.entry}"><span class="portal-label">Monthly allowance</span><strong class="${cls.entryStrong}">${escapeHtml(String(summary.monthly_allowance ?? 0))}</strong></div>
-          <div class="${cls.entry}"><span class="portal-label">Remaining tokens</span><strong class="${cls.entryStrong}">${escapeHtml(String(summary.remaining_tokens ?? 0))}</strong></div>
-          <div class="${cls.entry}"><span class="portal-label">Used tokens</span><strong class="${cls.entryStrong}">${escapeHtml(String(summary.used_tokens ?? 0))}</strong></div>
-          <div class="${cls.entry}"><span class="portal-label">Purchased add-on tokens</span><strong class="${cls.entryStrong}">${escapeHtml(String(summary.purchased_addon_tokens ?? 0))}</strong></div>
-          <div class="${cls.entry}"><span class="portal-label">Trial expiry</span><strong class="${cls.entryStrong}">${escapeHtml(fmt(summary.trial?.expires_at))}</strong></div>
+      <section class="portal-grid">
+        <article class="portal-card"><h2>Token balance</h2><div class="portal-stack">
+          <div class="portal-entry"><span class="portal-label">Plan</span><strong>${escapeHtml(summary.plan_name || "Not available")}</strong></div>
+          <div class="portal-entry"><span class="portal-label">Monthly allowance</span><strong>${escapeHtml(String(summary.monthly_allowance ?? 0))}</strong></div>
+          <div class="portal-entry"><span class="portal-label">Remaining tokens</span><strong>${escapeHtml(String(summary.remaining_tokens ?? 0))}</strong></div>
+          <div class="portal-entry"><span class="portal-label">Used tokens</span><strong>${escapeHtml(String(summary.used_tokens ?? 0))}</strong></div>
+          <div class="portal-entry"><span class="portal-label">Purchased add-on tokens</span><strong>${escapeHtml(String(summary.purchased_addon_tokens ?? 0))}</strong></div>
+          <div class="portal-entry"><span class="portal-label">Trial expiry</span><strong>${escapeHtml(fmt(summary.trial?.expires_at))}</strong></div>
         </div></article>
-        <article class="portal-card ${cls.span6}"><h2 class="${cls.cardTitle}">How tokens work</h2><p class="portal-card-description">${escapeHtml(summary.deduction_rule || "Builder Usage Tokens are deducted only on completed saved outputs.")}</p><a class="portal-button-primary" href="/builders/">Open Experience Builders</a></article>
+        <article class="portal-card"><h2>How tokens work</h2><p>${escapeHtml(summary.deduction_rule || "Builder Usage Tokens are deducted only on completed saved outputs.")}</p><a class="portal-button" href="/builders/">Open Experience Builders</a></article>
       </section>
-      <section class="portal-card"><h2 class="${cls.cardTitle}">Token ledger</h2>${portalTable(["Date", "Amount", "Source", "Reason", "Balance"], ledger.map((item) => [fmt(item.created_at), item.amount, item.source, item.reason, item.balance_after]))}</section>
-      <section class="portal-card"><h2 class="${cls.cardTitle}">Blocked attempts</h2>${portalTable(["Date", "Builder", "Reason", "Available", "Required", "Action"], attempts.map((item) => [fmt(item.created_at), item.builder_name, item.reason, item.tokens_available, item.tokens_required, item.action_offered]))}</section>
+      <section class="portal-card"><h2>Token ledger</h2>${portalTable(["Date", "Amount", "Source", "Reason", "Balance"], ledger.map((item) => [fmt(item.created_at), item.amount, item.source, item.reason, item.balance_after]))}</section>
+      <section class="portal-card"><h2>Blocked attempts</h2>${portalTable(["Date", "Builder", "Reason", "Available", "Required", "Action"], attempts.map((item) => [fmt(item.created_at), item.builder_name, item.reason, item.tokens_available, item.tokens_required, item.action_offered]))}</section>
     `;
     return;
   }
@@ -824,66 +740,64 @@ async function renderPage(page) {
     const data = portalState.builders || await loadBuilders();
     const outputs = Array.isArray(data.outputs) ? data.outputs : [];
     pageRoot.innerHTML = `
-      <section class="portal-card"><h2 class="${cls.cardTitle}">Saved builder outputs and plans</h2>
-        ${outputs.length ? portalTable(["Created", "Builder", "Title", "Tokens used", "Status", "Action"], outputs.map((item) => [fmt(item.created_at), item.builder_name, item.title, item.token_cost, item.status, `<button class="portal-button-secondary" type="button" data-action="archive-builder-output" data-id="${escapeHtml(item.id)}">Archive</button>`])) : emptyPortalState("No builder outputs yet", "Open a builder and save a finished output to see it here.", "/builders/", "Open Experience Builders")}
+      <section class="portal-card"><h2>Saved builder outputs and plans</h2>
+        ${outputs.length ? portalTable(["Created", "Builder", "Title", "Tokens used", "Status", "Action"], outputs.map((item) => [fmt(item.created_at), item.builder_name, item.title, item.token_cost, item.status, `<button class="portal-button secondary" type="button" data-action="archive-builder-output" data-id="${escapeHtml(item.id)}">Archive</button>`])) : emptyPortalState("No builder outputs yet", "Open a builder and save a finished output to see it here.", "/builders/", "Open Experience Builders")}
       </section>
     `;
     return;
   }
 
   if (page === "membership") {
-    const saved = portalState.saved || { items: [] };
     const billing = portalState.billing || {};
     const subscription = billing.subscription;
-    const savedDestinations = (saved.items || []).filter((item) => item.item_type === "destination");
-    const savedExperiences = (saved.items || []).filter((item) => item.item_type === "experience");
     pageRoot.innerHTML = `
-      <section class="${cls.grid12}">
-        <article class="portal-card ${cls.span12}">
-          <div class="${cls.cardHeading}">
-            <div><h2 class="${cls.cardTitle}">Manage Membership</h2><p class="${cls.cardDesc}">Payments, invoices, billing details and subscription controls are securely managed by Stripe.</p></div>
-            <button class="portal-button-primary" type="button" data-action="manage-stripe-billing" ${billing.portalAvailable ? "" : "disabled"}>Manage Billing with Stripe</button>
+      <section class="portal-grid">
+        <article class="portal-card portal-span-12">
+          <div class="portal-card-heading">
+            <div><h2>Manage Membership</h2><p>Payments, invoices, billing details and subscription controls are securely managed by Stripe.</p></div>
+            <button class="portal-button" type="button" data-action="manage-stripe-billing" ${billing.portalAvailable ? "" : "disabled"}>Manage Billing with Stripe</button>
           </div>
-          ${billing.portalAvailable ? "" : `<div class="${cls.alertInfo}">No Stripe billing account is linked to this customer profile.</div>`}
+          ${billing.portalAvailable ? "" : '<div class="portal-note inline">No Stripe billing account is linked to this customer profile.</div>'}
         </article>
-        <article class="portal-card ${cls.span12}">
-          <h2 class="${cls.cardTitle}">JA Experiences membership plans</h2>
-          <div class="${cls.gridMini}">
-            <div class="${cls.entry}"><span class="portal-label">Trial</span><strong class="${cls.entryStrong}">14 days · 30 tokens once only</strong></div>
-            <div class="${cls.entry}"><span class="portal-label">JA Experience Builder Membership</span><strong class="${cls.entryStrong}">£19.99/month · 150 tokens/month</strong></div>
-            <div class="${cls.entry}"><span class="portal-label">JA Experience Builder Plus</span><strong class="${cls.entryStrong}">£29.99/month · 350 tokens/month</strong></div>
-            <div class="${cls.entry}"><span class="portal-label">JA Experience Builder Family</span><strong class="${cls.entryStrong}">£39.99/month · 750 tokens/month</strong></div>
-          </div>
-        </article>
-        <article class="portal-card ${cls.span6}">
-          <h2 class="${cls.cardTitle}">Live membership</h2>
-          <div class="${cls.stack}">
-            <div class="${cls.entry}"><span class="portal-label">Current plan</span><strong class="${cls.entryStrong}">${escapeHtml(subscription?.plan || profile.currentPlan || "Standard")}</strong></div>
-            <div class="${cls.entry}"><span class="portal-label">Membership status</span><strong class="${cls.entryStrong}">${escapeHtml(subscription?.membershipStatus || profile.customerStatus || "Not active")}</strong></div>
-            <div class="${cls.entry}"><span class="portal-label">Billing status</span><strong class="${cls.entryStrong}">${escapeHtml(subscription?.billingStatus || "Not available")}</strong></div>
-            <div class="${cls.entry}"><span class="portal-label">Billing interval</span><strong class="${cls.entryStrong}">${escapeHtml(subscription?.billingInterval || "Not available")}</strong></div>
-            <div class="${cls.entry}"><span class="portal-label">Renewal date</span><strong class="${cls.entryStrong}">${escapeHtml(fmt(subscription?.renewalDate))}</strong></div>
-            <div class="${cls.entry}"><span class="portal-label">Next payment date</span><strong class="${cls.entryStrong}">${escapeHtml(fmt(subscription?.nextPaymentDate))}</strong></div>
-            <div class="${cls.entry}"><span class="portal-label">Subscription start</span><strong class="${cls.entryStrong}">${escapeHtml(fmt(subscription?.subscriptionStartDate))}</strong></div>
-            <div class="${cls.entry}"><span class="portal-label">Subscription reference</span><strong class="${cls.entryStrong}">${escapeHtml(subscription?.subscriptionReference || "Not available")}</strong></div>
+        <article class="portal-card portal-span-6">
+          <h2>Live membership</h2>
+          <div class="portal-stack">
+            <div class="portal-entry"><span class="portal-label">Current plan</span><strong>${escapeHtml(subscription?.plan || profile.currentPlan || "Standard")}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Membership status</span><strong>${escapeHtml(subscription?.membershipStatus || profile.customerStatus || "Not active")}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Billing status</span><strong>${escapeHtml(subscription?.billingStatus || "Not available")}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Billing interval</span><strong>${escapeHtml(subscription?.billingInterval || "Not available")}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Renewal date</span><strong>${escapeHtml(fmt(subscription?.renewalDate))}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Next payment date</span><strong>${escapeHtml(fmt(subscription?.nextPaymentDate))}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Subscription start</span><strong>${escapeHtml(fmt(subscription?.subscriptionStartDate))}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Subscription reference</span><strong>${escapeHtml(subscription?.subscriptionReference || "Not available")}</strong></div>
           </div>
         </article>
-        <article class="portal-card ${cls.span6}">
-          <h2 class="${cls.cardTitle}">Billing details</h2>
-          <div class="${cls.stack}">
-            <div class="${cls.entry}"><span class="portal-label">Payment method</span><strong class="${cls.entryStrong}">${escapeHtml(subscription?.paymentMethod || "Not available")}</strong></div>
-            <div class="${cls.entry}"><span class="portal-label">Trial status</span><strong class="${cls.entryStrong}">${escapeHtml(subscription?.trialStatus || "No trial")}</strong></div>
-            <div class="${cls.entry}"><span class="portal-label">Trial end</span><strong class="${cls.entryStrong}">${escapeHtml(fmt(subscription?.trialEndDate))}</strong></div>
-            <div class="${cls.entry}"><span class="portal-label">Cancellation</span><strong class="${cls.entryStrong}">${escapeHtml(subscription?.cancellationStatus || "Not scheduled")}</strong></div>
-            <div class="${cls.entry}"><span class="portal-label">Scheduled cancellation</span><strong class="${cls.entryStrong}">${escapeHtml(fmt(subscription?.scheduledCancellationDate))}</strong></div>
-            <div class="${cls.entry}"><span class="portal-label">Saved destinations</span><strong class="${cls.entryStrong}">${savedDestinations.length}</strong></div>
-            <div class="${cls.entry}"><span class="portal-label">Saved experiences</span><strong class="${cls.entryStrong}">${savedExperiences.length}</strong></div>
+        <article class="portal-card portal-span-6">
+          <h2>Billing details</h2>
+          <div class="portal-stack">
+            <div class="portal-entry"><span class="portal-label">Payment method</span><strong>${escapeHtml(subscription?.paymentMethod || "Not available")}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Trial status</span><strong>${escapeHtml(subscription?.trialStatus || "No trial")}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Trial end</span><strong>${escapeHtml(fmt(subscription?.trialEndDate))}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Cancellation</span><strong>${escapeHtml(subscription?.cancellationStatus || "Not scheduled")}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Scheduled cancellation</span><strong>${escapeHtml(fmt(subscription?.scheduledCancellationDate))}</strong></div>
           </div>
         </article>
-        <article class="portal-card ${cls.span12}">
-          <h2 class="${cls.cardTitle}">Billing responsibility</h2>
-          <div class="${cls.alertInfo}">Stripe securely manages payment methods, invoices, billing details, subscription changes and cancellations. JA Experiences &amp; Discovery displays synchronised status only.</div>
+        <article class="portal-card portal-span-12">
+          <h2>Billing responsibility</h2>
+          <div class="portal-note inline">Stripe securely manages payment methods, invoices, billing details, subscription changes and cancellations. JA Plan Studio displays synchronised status only.</div>
         </article>
+      </section>`;
+    return;
+  }
+
+  if (page === "help") {
+    pageRoot.innerHTML = `
+      <section class="portal-grid">
+        <article class="portal-card portal-span-6"><h2>Account access</h2><p>Guidance for JA Group Services ID, profile details and sign-in security.</p><a class="portal-button-secondary" href="/account/security/">Security Settings</a></article>
+        <article class="portal-card portal-span-6"><h2>Plans and billing</h2><p>Review your connected membership and open Stripe for payment or invoice management.</p><a class="portal-button-secondary" href="/account/subscription/">Plans &amp; Billing</a></article>
+        <article class="portal-card portal-span-6"><h2>Tokens and usage</h2><p>Understand your account allowance, balance and connected usage ledger.</p><a class="portal-button-secondary" href="/account/tokens/">Tokens &amp; Usage</a></article>
+        <article class="portal-card portal-span-6"><h2>Privacy and data</h2><p>Review consent information and submit a data-protection request.</p><a class="portal-button-secondary" href="/account/data-protection/">My Data &amp; Privacy</a></article>
+        <article class="portal-card portal-span-12"><h2>Still need help?</h2><p>Open Support to view existing cases or create a new request.</p><a class="portal-button" href="/account/support/">Open Support</a></article>
       </section>`;
     return;
   }
@@ -891,35 +805,35 @@ async function renderPage(page) {
   if (page === "support") {
     const supportCases = requests.supportCases || [];
     pageRoot.innerHTML = `
-      <section class="${cls.grid12}">
-        <article class="portal-card ${cls.span6}">
-          <h2 class="${cls.cardTitle}">Search knowledge base</h2>
-          <div class="${cls.alertInfo}">Search support articles, travel help, payments, memberships, refunds, accessibility and account guidance.</div>
-          <div class="${cls.quickActions}">
-            <a class="${cls.action}" href="/enquiry/"><strong class="${cls.actionStrong}">Create request</strong><span class="${cls.actionSpan}">Open a new support case</span></a>
-            <a class="${cls.action}" href="/account/data-protection/"><strong class="${cls.actionStrong}">GDPR request</strong><span class="${cls.actionSpan}">Use the privacy centre</span></a>
+      <section class="portal-grid">
+        <article class="portal-card portal-span-6">
+          <h2>Search knowledge base</h2>
+          <div class="portal-note inline">Search support articles, travel help, payments, memberships, refunds, accessibility and account guidance.</div>
+          <div class="portal-actions">
+            <a class="portal-action" href="/enquiry/"><strong>Create request</strong><span>Open a new support case</span></a>
+            <a class="portal-action" href="/account/data-protection/"><strong>GDPR request</strong><span>Use the privacy centre</span></a>
           </div>
         </article>
-        <article class="portal-card ${cls.span6}">
-          <h2 class="${cls.cardTitle}">Tickets</h2>
-          <div class="${cls.stack}">
+        <article class="portal-card portal-span-6">
+          <h2>Tickets</h2>
+          <div class="portal-stack">
             ${supportCases.slice(0, 3).map((request) => `
-              <div class="${cls.entry}"><strong class="${cls.entryStrong}">${escapeHtml(request.reference)}</strong><small class="${cls.entrySmall}">Status: ${escapeHtml(request.status || "New")} · Team: ${escapeHtml(request.assigned_department || "Support")} · Updated ${escapeHtml(fmt(request.updated_at || request.created_at))}</small></div>
-            `).join("") || `<div class="${cls.noteInline}">No support tickets yet. Create a request and the team will respond here.</div>`}
+              <div class="portal-entry"><strong>${escapeHtml(request.reference)}</strong><small>Status: ${escapeHtml(request.status || "New")} · Team: ${escapeHtml(request.assigned_department || "Support")} · Updated ${escapeHtml(fmt(request.updated_at || request.created_at))}</small></div>
+            `).join("") || '<div class="portal-note inline">No support tickets yet. Create a request and the team will respond here.</div>'}
           </div>
         </article>
-        <article class="portal-card ${cls.span6}">
-          <h2 class="${cls.cardTitle}">Categories</h2>
-          <div class="${cls.stack}">
-            <div class="${cls.entry}"><span class="portal-label">Membership</span><strong class="${cls.entryStrong}">Plan help and entitlement questions</strong></div>
-            <div class="${cls.entry}"><span class="portal-label">Billing</span><strong class="${cls.entryStrong}">Stripe payments, invoices and receipts</strong></div>
-            <div class="${cls.entry}"><span class="portal-label">Technical</span><strong class="${cls.entryStrong}">Website errors and account issues</strong></div>
-            <div class="${cls.entry}"><span class="portal-label">Data Protection</span><strong class="${cls.entryStrong}">Privacy and rights requests</strong></div>
+        <article class="portal-card portal-span-6">
+          <h2>Categories</h2>
+          <div class="portal-stack">
+            <div class="portal-entry"><span class="portal-label">Membership</span><strong>Plan help and entitlement questions</strong></div>
+            <div class="portal-entry"><span class="portal-label">Billing</span><strong>Stripe payments, invoices and receipts</strong></div>
+            <div class="portal-entry"><span class="portal-label">Technical</span><strong>Website errors and account issues</strong></div>
+            <div class="portal-entry"><span class="portal-label">Data Protection</span><strong>Privacy and rights requests</strong></div>
           </div>
         </article>
-        <article class="portal-card ${cls.span12}">
-          <h2 class="${cls.cardTitle}">Conversation history</h2>
-          <div class="${cls.stack}">${timelineMarkup((requests.timeline || []).slice(0, 6))}</div>
+        <article class="portal-card portal-span-12">
+          <h2>Conversation history</h2>
+          <div class="portal-stack">${timelineMarkup((requests.timeline || []).slice(0, 6))}</div>
         </article>
       </section>`;
     return;
@@ -928,21 +842,21 @@ async function renderPage(page) {
   if (page === "messages") {
     const notifications = requests.notifications || [];
     pageRoot.innerHTML = `
-      <section class="${cls.grid12}">
-        <article class="portal-card ${cls.span6}">
-          <h2 class="${cls.cardTitle}">Messages</h2>
-          <div class="${cls.stack}">
+      <section class="portal-grid">
+        <article class="portal-card portal-span-6">
+          <h2>Messages</h2>
+          <div class="portal-stack">
             ${notifications.slice(0, 6).map((notification) => `
-              <div class="${cls.entry}"><div><strong class="${cls.entryStrong}">${escapeHtml(notification.title || "Account message")}</strong><small class="${cls.entrySmall}">${escapeHtml(notification.category || "Message")} · ${escapeHtml(notification.status || "Unread")} · ${escapeHtml(fmt(notification.created_at || notification.updated_at))}</small></div></div>
-            `).join("") || `<div class="${cls.noteInline}">No messages yet. Support replies and service notices will appear here.</div>`}
+              <div class="portal-entry"><div><strong>${escapeHtml(notification.title || "Account message")}</strong><small>${escapeHtml(notification.category || "Message")} · ${escapeHtml(notification.status || "Unread")} · ${escapeHtml(fmt(notification.created_at || notification.updated_at))}</small></div></div>
+            `).join("") || '<div class="portal-note inline">No messages yet. Support replies and service notices will appear here.</div>'}
           </div>
         </article>
-        <article class="portal-card ${cls.span6}">
-          <h2 class="${cls.cardTitle}">Enquiries</h2>
-          <div class="${cls.stack}">
+        <article class="portal-card portal-span-6">
+          <h2>Enquiries</h2>
+          <div class="portal-stack">
             ${(requests.supportCases || []).slice(0, 4).map((request) => `
-              <div class="${cls.entry}"><div><strong class="${cls.entryStrong}">${escapeHtml(request.reference || "Support enquiry")}</strong><small class="${cls.entrySmall}">${escapeHtml(request.status || "New")} · ${escapeHtml(request.assigned_department || "Support")}</small></div><a class="portal-button-secondary" href="/account/support/">Open Support</a></div>
-            `).join("") || `<div class="${cls.noteInline}">No open enquiries yet.</div>`}
+              <div class="portal-entry"><div><strong>${escapeHtml(request.reference || "Support enquiry")}</strong><small>${escapeHtml(request.status || "New")} · ${escapeHtml(request.assigned_department || "Support")}</small></div><a class="portal-button-secondary" href="/account/support/">Open Support</a></div>
+            `).join("") || '<div class="portal-note inline">No open enquiries yet.</div>'}
           </div>
         </article>
       </section>`;
@@ -951,26 +865,26 @@ async function renderPage(page) {
 
   if (page === "data") {
     pageRoot.innerHTML = `
-      <section class="${cls.grid12}">
-        <article class="portal-card ${cls.span6}">
-          <h2 class="${cls.cardTitle}">Information</h2>
-          <div class="${cls.alertInfo}">The Data Protection Act 2018 and UK GDPR give you rights over your personal information. JA Group Services Ltd and its trading names are registered with the ICO.</div>
+      <section class="portal-grid">
+        <article class="portal-card portal-span-6">
+          <h2>Information</h2>
+          <div class="portal-note inline">The Data Protection Act 2018 and UK GDPR give you rights over your personal information. JA Group Services Ltd and its trading names are registered with the ICO.</div>
         </article>
-        <article class="portal-card ${cls.span6}">
-          <h2 class="${cls.cardTitle}">Rights</h2>
-          <div class="${cls.stack}">
-            <div class="${cls.entry}"><span class="portal-label">Access</span><strong class="${cls.entryStrong}">Subject Access Request</strong></div>
-            <div class="${cls.entry}"><span class="portal-label">Rectification</span><strong class="${cls.entryStrong}">Request corrections to your details</strong></div>
-            <div class="${cls.entry}"><span class="portal-label">Erasure</span><strong class="${cls.entryStrong}">Request deletion where lawful</strong></div>
-            <div class="${cls.entry}"><span class="portal-label">Portability</span><strong class="${cls.entryStrong}">Request a portable copy of your data</strong></div>
+        <article class="portal-card portal-span-6">
+          <h2>Rights</h2>
+          <div class="portal-stack">
+            <div class="portal-entry"><span class="portal-label">Access</span><strong>Subject Access Request</strong></div>
+            <div class="portal-entry"><span class="portal-label">Rectification</span><strong>Request corrections to your details</strong></div>
+            <div class="portal-entry"><span class="portal-label">Erasure</span><strong>Request deletion where lawful</strong></div>
+            <div class="portal-entry"><span class="portal-label">Portability</span><strong>Request a portable copy of your data</strong></div>
           </div>
         </article>
-        <article class="portal-card ${cls.span12}">
-          <h2 class="${cls.cardTitle}">Request history</h2>
-          <div class="${cls.stack}">
+        <article class="portal-card portal-span-12">
+          <h2>Request history</h2>
+          <div class="portal-stack">
             ${(requests.dataProtectionRequests || []).map((request) => `
-              <div class="${cls.entry}"><strong class="${cls.entryStrong}">${escapeHtml(request.reference)}</strong><small class="${cls.entrySmall}">${escapeHtml(request.request_type || "Request")} · ${escapeHtml(request.status || "New")} · Due ${escapeHtml(fmt(request.due_at || request.updated_at))}</small></div>
-            `).join("") || `<div class="${cls.noteInline}">No privacy requests yet. Submit one through the support team when needed.</div>`}
+              <div class="portal-entry"><strong>${escapeHtml(request.reference)}</strong><small>${escapeHtml(request.request_type || "Request")} · ${escapeHtml(request.status || "New")} · Due ${escapeHtml(fmt(request.due_at || request.updated_at))}</small></div>
+            `).join("") || '<div class="portal-note inline">No privacy requests yet. Submit one through the support team when needed.</div>'}
           </div>
         </article>
       </section>`;
@@ -980,21 +894,21 @@ async function renderPage(page) {
   if (page === "notifications") {
     const notifications = requests.notifications || [];
     pageRoot.innerHTML = `
-      <section class="${cls.grid12}">
-        <article class="portal-card ${cls.span6}">
-          <h2 class="${cls.cardTitle}">Notification summary</h2>
-          <div class="${cls.stack}">
-            <div class="${cls.entry}"><span class="portal-label">Unread</span><strong class="${cls.entryStrong}">${notifications.filter((n) => n.status !== "Read").length}</strong></div>
-            <div class="${cls.entry}"><span class="portal-label">Read</span><strong class="${cls.entryStrong}">${notifications.filter((n) => n.status === "Read").length}</strong></div>
-            <div class="${cls.entry}"><span class="portal-label">Archived</span><strong class="${cls.entryStrong}">${notifications.filter((n) => n.status === "Archived").length}</strong></div>
+      <section class="portal-grid">
+        <article class="portal-card portal-span-6">
+          <h2>Notification summary</h2>
+          <div class="portal-stack">
+            <div class="portal-entry"><span class="portal-label">Unread</span><strong>${notifications.filter((n) => n.status !== "Read").length}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Read</span><strong>${notifications.filter((n) => n.status === "Read").length}</strong></div>
+            <div class="portal-entry"><span class="portal-label">Archived</span><strong>${notifications.filter((n) => n.status === "Archived").length}</strong></div>
           </div>
         </article>
-        <article class="portal-card ${cls.span6}">
-          <h2 class="${cls.cardTitle}">Notification inbox</h2>
-          <div class="${cls.stack}">
+        <article class="portal-card portal-span-6">
+          <h2>Notification inbox</h2>
+          <div class="portal-stack">
             ${(notifications.slice(0, 5).map((notification) => `
-              <div class="${cls.entry}"><strong class="${cls.entryStrong}">${escapeHtml(notification.title)}</strong><small class="${cls.entrySmall}">${escapeHtml(notification.category)} · ${escapeHtml(notification.priority || "Normal")} · ${escapeHtml(notification.status || "Unread")}</small></div>
-            `).join("")) || `<div class="${cls.noteInline}">No notifications yet.</div>`}
+              <div class="portal-entry"><strong>${escapeHtml(notification.title)}</strong><small>${escapeHtml(notification.category)} · ${escapeHtml(notification.priority || "Normal")} · ${escapeHtml(notification.status || "Unread")}</small></div>
+            `).join("")) || '<div class="portal-note inline">No notifications yet.</div>'}
           </div>
         </article>
       </section>`;
@@ -1008,24 +922,24 @@ async function renderPage(page) {
     const savedDestinations = (saved.items || []).filter((item) => item.item_type === "destination");
     const savedExperiences = (saved.items || []).filter((item) => item.item_type === "experience");
     pageRoot.innerHTML = `
-      <section class="${cls.grid12}">
-        <article class="portal-card ${cls.span12}">
-          <h2 class="${cls.cardTitle}">Saved Plans</h2>
-          <div class="${cls.stack}">
-            ${outputs.map((item) => `<div class="${cls.entry}"><div><strong class="${cls.entryStrong}">${escapeHtml(item.title || item.builder_name || "Saved plan")}</strong><small class="${cls.entrySmall}">${escapeHtml(item.builder_name || "Experience Builder")} · ${escapeHtml(fmt(item.created_at))}</small></div><a class="portal-button-secondary" href="/account/builders/">View</a></div>`).join("") || emptyPortalState("No saved plans yet", "When you save a finished builder output, it will appear here.", "/builders/", "Open Experience Builders")}
+      <section class="portal-grid">
+        <article class="portal-card portal-span-12">
+          <h2>Saved Plans</h2>
+          <div class="portal-stack">
+            ${outputs.map((item) => `<div class="portal-entry"><div><strong>${escapeHtml(item.title || item.builder_name || "Saved plan")}</strong><small>${escapeHtml(item.builder_name || "Experience Builder")} · ${escapeHtml(fmt(item.created_at))}</small></div><a class="portal-button-secondary" href="/account/builders/">View</a></div>`).join("") || emptyPortalState("No saved plans yet", "When you save a finished builder output, it will appear here.", "/builders/", "Open Experience Builders")}
             <a class="portal-button-secondary" href="/account/tokens/">View Builder Usage Tokens</a>
           </div>
         </article>
-        <article class="portal-card ${cls.span6}">
-          <h2 class="${cls.cardTitle}">Saved experiences</h2>
-          <div class="${cls.stack}">
-            ${savedExperiences.map((item) => `<div class="${cls.entry}"><div><strong class="${cls.entryStrong}">${escapeHtml(item.item_title)}</strong><small class="${cls.entrySmall}">${escapeHtml(item.category || item.source_page || "Experience")}</small></div><button class="${cls.miniBtn}" type="button" data-saved-remove="experience" data-item-key="${escapeHtml(item.item_key)}">Remove</button></div>`).join("") || `<div class="${cls.noteInline}">No saved experiences yet. Add experiences to keep them in one place.</div>`}
+        <article class="portal-card portal-span-6">
+          <h2>Saved experiences</h2>
+          <div class="portal-stack">
+            ${savedExperiences.map((item) => `<div class="portal-entry"><strong>${escapeHtml(item.item_title)}</strong><small>${escapeHtml(item.category || item.source_page || "Experience")}</small><button class="portal-mini" type="button" data-saved-remove="experience" data-item-key="${escapeHtml(item.item_key)}">Remove</button></div>`).join("") || '<div class="portal-note inline">No saved experiences yet. Add experiences to keep them in one place.</div>'}
           </div>
         </article>
-        <article class="portal-card ${cls.span6}">
-          <h2 class="${cls.cardTitle}">Saved destinations</h2>
-          <div class="${cls.stack}">
-            ${savedDestinations.map((item) => `<div class="${cls.entry}"><div><strong class="${cls.entryStrong}">${escapeHtml(item.item_title)}</strong><small class="${cls.entrySmall}">${escapeHtml(item.category || item.source_page || "Destination")}</small></div><button class="${cls.miniBtn}" type="button" data-saved-remove="destination" data-item-key="${escapeHtml(item.item_key)}">Remove</button></div>`).join("") || `<div class="${cls.noteInline}">No saved destinations yet.</div>`}
+        <article class="portal-card portal-span-6">
+          <h2>Saved destinations</h2>
+          <div class="portal-stack">
+            ${savedDestinations.map((item) => `<div class="portal-entry"><strong>${escapeHtml(item.item_title)}</strong><small>${escapeHtml(item.category || item.source_page || "Destination")}</small><button class="portal-mini" type="button" data-saved-remove="destination" data-item-key="${escapeHtml(item.item_key)}">Remove</button></div>`).join("") || '<div class="portal-note inline">No saved destinations yet.</div>'}
           </div>
         </article>
       </section>`;
@@ -1039,7 +953,7 @@ async function renderPage(page) {
             action: "remove",
             item_type: button.dataset.savedRemove,
             item_key: button.dataset.itemKey,
-            item_title: button.closest(".flex")?.querySelector("strong")?.textContent || button.dataset.itemKey
+            item_title: button.closest(".portal-entry")?.querySelector("strong")?.textContent || button.dataset.itemKey
           })
         });
         const data = await response.json().catch(() => ({}));
@@ -1056,17 +970,17 @@ async function renderPage(page) {
 
   if (page === "bookings") {
     pageRoot.innerHTML = `
-      <section class="${cls.grid12}">
-        <article class="portal-card ${cls.span6}">
-          <h2 class="${cls.cardTitle}">My travel planner</h2>
-          <div class="${cls.alertInfo}">Save trip ideas, favourite destinations, experiences and notes here while you plan your visit.</div>
+      <section class="portal-grid">
+        <article class="portal-card portal-span-6">
+          <h2>My travel planner</h2>
+          <div class="portal-note inline">Save trip ideas, favourite destinations, experiences and notes here while you plan your visit.</div>
         </article>
-        <article class="portal-card ${cls.span6}">
-          <h2 class="${cls.cardTitle}">Planning checklist</h2>
-          <div class="${cls.alertInfo}">No trips are saved yet. Add destinations and experiences to create a personal shortlist.</div>
+        <article class="portal-card portal-span-6">
+          <h2>Planning checklist</h2>
+          <div class="portal-note inline">No trips are saved yet. Add destinations and experiences to create a personal shortlist.</div>
         </article>
-        <article class="portal-card ${cls.span12}">
-          <h2 class="${cls.cardTitle}">Recent activity</h2>
+        <article class="portal-card portal-span-12">
+          <h2>Recent activity</h2>
           ${timelineMarkup(timelineItems(profile, requests).slice(0, 4))}
         </article>
       </section>`;
@@ -1077,28 +991,28 @@ async function renderPage(page) {
     const billing = portalState.billing || {};
     const invoices = Array.isArray(billing.invoices) ? billing.invoices : [];
     pageRoot.innerHTML = `
-      <section class="${cls.grid12}">
-        <article class="portal-card ${cls.span12}">
-          <div class="${cls.cardHeading}">
-            <div><h2 class="${cls.cardTitle}">Recent invoices</h2><p class="${cls.cardDesc}">Recent Stripe invoice references cached for your account.</p></div>
-            <button class="portal-button-primary" type="button" data-action="manage-stripe-billing" ${billing.portalAvailable ? "" : "disabled"}>View All Invoices in Stripe</button>
+      <section class="portal-grid">
+        <article class="portal-card portal-span-12">
+          <div class="portal-card-heading">
+            <div><h2>Recent invoices</h2><p>Recent Stripe invoice references cached for your account.</p></div>
+            <button class="portal-button" type="button" data-action="manage-stripe-billing" ${billing.portalAvailable ? "" : "disabled"}>View All Invoices in Stripe</button>
           </div>
-          <div class="${cls.stack}">
+          <div class="portal-stack">
             ${invoices.slice(0, 5).map((invoice) => `
-              <div class="${cls.entry}">
-                <div><strong class="${cls.entryStrong}">${escapeHtml(invoice.reference)}</strong><small class="${cls.entrySmall}">${escapeHtml(fmt(invoice.date))} · ${escapeHtml(invoice.status)}</small></div>
-                <strong class="${cls.entryStrong}">${escapeHtml(money(invoice.amountPaid ?? invoice.amountDue, invoice.currency))}</strong>
+              <div class="portal-entry">
+                <div><strong>${escapeHtml(invoice.reference)}</strong><small>${escapeHtml(fmt(invoice.date))} · ${escapeHtml(invoice.status)}</small></div>
+                <strong>${escapeHtml(money(invoice.amountPaid ?? invoice.amountDue, invoice.currency))}</strong>
               </div>
-            `).join("") || `<div class="${cls.noteInline}">No cached Stripe invoices are available.</div>`}
+            `).join("") || '<div class="portal-note inline">No cached Stripe invoices are available.</div>'}
           </div>
         </article>
-        <article class="portal-card ${cls.span12}">
-          <h2 class="${cls.cardTitle}">Other documents</h2>
-          <div class="${cls.alertInfo}">Customer data exports and support documents remain available through their relevant portal sections. Stripe remains the source of truth for invoices and receipts.</div>
+        <article class="portal-card portal-span-12">
+          <h2>Other documents</h2>
+          <div class="portal-note inline">Customer data exports and support documents remain available through their relevant portal sections. Stripe remains the source of truth for invoices and receipts.</div>
         </article>
       </section>`;
     return;
   }
 
-  pageRoot.innerHTML = `<div class="${cls.noteInline}">This section is not available right now.</div>`;
+  pageRoot.innerHTML = `<div class="portal-note inline">This section is not available right now.</div>`;
 }

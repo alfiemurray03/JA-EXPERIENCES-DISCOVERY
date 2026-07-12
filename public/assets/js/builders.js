@@ -49,7 +49,9 @@ const builderState = {
   saving: false,
   activatingTrial: false,
   filter: "all",
+  search: "",
   requestId: ""
+  ,wizardStep: 1
 };
 
 const $ = (id) => document.getElementById(id);
@@ -107,22 +109,25 @@ function renderBuilders() {
   const skeleton = $("builderSkeleton");
   const grid = $("builderGrid");
   if (skeleton) skeleton.hidden = true;
-  const filtered = builderState.builders.filter((builder) => builderState.filter === "all" || categoryGroup(builder) === builderState.filter);
+  const filtered = builderState.builders.filter((builder) => {
+    const categoryMatch = builderState.filter === "all" || categoryGroup(builder) === builderState.filter;
+    const haystack = `${builder.name} ${builder.description} ${builder.category} ${builder.builder_type}`.toLowerCase();
+    return categoryMatch && (!builderState.search || haystack.includes(builderState.search));
+  });
   grid.innerHTML = filtered.map((builder) => `
     <article class="builder-card">
       <div class="builder-card-top">
         <div class="builder-icon">${esc(iconText(builder))}</div>
         <div>
+          <span class="builder-card-category">${esc(categoryGroup(builder))}</span>
           <h3>${esc(builder.name)}</h3>
           <p>${esc(builder.description || "")}</p>
         </div>
       </div>
-      <div class="builder-card-badges">
-        <span class="builder-badge">${esc(builder.category || categoryGroup(builder))}</span>
-        <span class="builder-badge builder-badge-primary">${esc(String(builder.token_cost ?? 0))} Builder Usage Tokens</span>
-        <span class="builder-badge">${esc(builder.status || "Active")}</span>
-      </div>
-      <button class="builder-card-action" type="button" data-builder="${esc(builder.id)}">${builderState.signedIn ? "Open builder" : "Sign in to use"}</button>
+      <div class="builder-card-output"><small>You'll create</small><span>${esc(builder.description || "A practical personalised planning output.")}</span></div>
+      <div class="builder-card-meta"><span>◷ ${builder.token_cost >= 35 ? "10" : builder.token_cost >= 15 ? "7" : "5"} min</span><span>ϟ ${esc(String(builder.token_cost ?? 0))} tokens</span></div>
+      <div class="builder-card-badges"><span class="builder-badge ${builder.visibility === "trial" ? "builder-badge-success" : "builder-badge-primary"}">${builder.visibility === "trial" ? "Free Trial" : "Paid plan"}</span></div>
+      <button class="builder-card-action" type="button" data-builder="${esc(builder.id)}">Start Builder →</button>
     </article>
   `).join("");
   if (!filtered.length) {
@@ -176,7 +181,8 @@ async function loadAuthenticatedBuilders() {
   } catch (error) {
     builderState.signedIn = false;
     builderState.loadingAuth = false;
-    showStatus(error.message || "Builder account data could not be loaded.", "error");
+    builderState.builders = PUBLIC_BUILDERS;
+    showStatus("Browse the public builder catalogue. Sign in when you are ready to start and save an output.", "info");
   } finally {
     renderBuilders();
     renderSummary();
@@ -198,7 +204,24 @@ function selectBuilder(id) {
   $("selectedBuilderDescription").textContent = builder.description || "Complete the guided fields and preview before saving.";
   $("selectedBuilderCost").textContent = `${builder.token_cost ?? 0} Builder Usage Tokens`;
   $("builderFormStatus").textContent = "Builder opened. No tokens have been deducted.";
+  setWizardStep(1);
   $("builderEditor").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function setWizardStep(step) {
+  builderState.wizardStep = Math.max(1, Math.min(4, Number(step) || 1));
+  const fieldSteps = { builderTitle: 1, builderIdea: 1, builderTiming: 2, builderBudget: 2, builderSupport: 3, builderNotes: 3 };
+  Object.entries(fieldSteps).forEach(([id, fieldStep]) => {
+    const label = $(id)?.closest("label");
+    if (label) label.hidden = fieldStep !== builderState.wizardStep;
+  });
+  document.querySelectorAll("[data-wizard-marker]").forEach((marker) => marker.classList.toggle("is-active", Number(marker.dataset.wizardMarker) <= builderState.wizardStep));
+  $("builderBackButton").hidden = builderState.wizardStep === 1;
+  $("builderContinueButton").hidden = builderState.wizardStep === 4;
+  $("previewBuilderButton").hidden = builderState.wizardStep !== 4;
+  $("saveBuilderButton").hidden = builderState.wizardStep !== 4;
+  document.querySelector(".builder-preview-panel")?.classList.toggle("is-reviewing", builderState.wizardStep === 4);
+  if (builderState.wizardStep === 4) buildPreview();
 }
 
 function collectFields() {
@@ -333,6 +356,8 @@ async function saveOutput(event) {
 function bindEvents() {
   $("claimTrialButton")?.addEventListener("click", activateTrial);
   $("previewBuilderButton")?.addEventListener("click", buildPreview);
+  $("builderBackButton")?.addEventListener("click", () => setWizardStep(builderState.wizardStep - 1));
+  $("builderContinueButton")?.addEventListener("click", () => setWizardStep(builderState.wizardStep + 1));
   $("builderForm")?.addEventListener("submit", saveOutput);
   $("backToBuildersButton")?.addEventListener("click", () => $("builderGrid")?.scrollIntoView({ behavior: "smooth", block: "start" }));
   $("builderTabs")?.addEventListener("click", (event) => {
@@ -340,6 +365,10 @@ function bindEvents() {
     if (!tab) return;
     builderState.filter = tab.dataset.filter || "all";
     document.querySelectorAll(".builder-tab").forEach((button) => button.classList.toggle("is-active", button === tab));
+    renderBuilders();
+  });
+  $("builderSearch")?.addEventListener("input", (event) => {
+    builderState.search = String(event.target.value || "").trim().toLowerCase();
     renderBuilders();
   });
   $("builderGrid")?.addEventListener("click", (event) => {
@@ -350,6 +379,7 @@ function bindEvents() {
 
 function init() {
   bindEvents();
+  setWizardStep(1);
   if (new URLSearchParams(window.location.search).get("claim_trial") === "1") {
     $("claimIntentNotice").hidden = false;
   }

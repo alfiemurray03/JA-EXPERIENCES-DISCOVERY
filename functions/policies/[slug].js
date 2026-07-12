@@ -21,7 +21,7 @@ const REQUIRED_POLICY_FALLBACKS = {
   "terms-of-service": {
     slug: "terms-of-service",
     title: "Terms of Service",
-    content: "# Terms of Service\n\nThese terms explain the basis on which JA Experiences & Discovery provides discovery, planning and guidance services.\n\nJA Experiences & Discovery provides written guidance and planning support only. Customers remain responsible for their own travel bookings, provider checks, suitability decisions and travel arrangements.",
+    content: "# Terms of Service\n\nThese terms explain the basis on which JA Plan Studio provides discovery, planning and guidance services.\n\nJA Plan Studio provides written guidance and planning support only. Customers remain responsible for their own travel bookings, provider checks, suitability decisions and travel arrangements.",
     content_type: "markdown",
     version: "1.0",
     effective_date: "2026-06-21",
@@ -32,7 +32,7 @@ const REQUIRED_POLICY_FALLBACKS = {
   "privacy-notice": {
     slug: "privacy-notice",
     title: "Privacy Notice",
-    content: "# Privacy Notice\n\nThis notice explains how JA Experiences & Discovery handles customer account, enquiry and service information.\n\nJA Group Services Ltd acts as Data Controller for JA Experiences & Discovery customer information. We use personal data to respond to enquiries, provide requested services, manage customer accounts, maintain records and meet legal or regulatory duties.",
+    content: "# Privacy Notice\n\nThis notice explains how JA Plan Studio handles customer account, enquiry and service information.\n\nJA Group Services Ltd acts as Data Controller for JA Plan Studio customer information. We use personal data to respond to enquiries, provide requested services, manage customer accounts, maintain records and meet legal or regulatory duties.",
     content_type: "markdown",
     version: "1.0",
     effective_date: "2026-06-21",
@@ -175,7 +175,7 @@ function page(policy) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>${escapeHtml(title)} | JA Experiences & Discovery</title>
+  <title>${escapeHtml(title)} | JA Plan Studio</title>
   <meta name="robots" content="index,follow">
   <style>
     :root {
@@ -311,7 +311,7 @@ function page(policy) {
     <div class="topbar-inner">
       <a class="brand" href="/">
         <span class="logo">JA</span>
-        <span>JA Experiences & Discovery</span>
+        <span>JA Plan Studio</span>
       </a>
       <a class="back" href="/">Back to website</a>
     </div>
@@ -327,7 +327,7 @@ function page(policy) {
     </article>
   </main>
   <footer>
-    JA Experiences & Discovery is a service line of JA Group Services Ltd.
+    JA Plan Studio is a service line of JA Group Services Ltd.
   </footer>
 </body>
 </html>`;

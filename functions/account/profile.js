@@ -686,7 +686,7 @@ async function providerSettings(DB, env) {
     provider,
     apiKey,
     endpoint: stored.email_api_endpoint || env.EMAIL_API_ENDPOINT || "",
-    fromName: stored.smtp_from_name || "JA Experiences & Discovery",
+    fromName: stored.smtp_from_name || "JA Plan Studio",
     fromEmail: stored.smtp_from_email || env.ENQUIRY_FROM_EMAIL || "noreply@jagroupservices.co.uk",
     to: stored.admin_notification_email || env.ADMIN_NOTIFICATION_EMAIL || env.ENQUIRY_TO_EMAIL || ""
   };
@@ -770,9 +770,9 @@ async function notifyCustomerSignup(DB, env, identity, profile) {
 
   try {
     const sent = await sendProviderEmail(DB, env, {
-      subject: "New JA Experiences & Discovery customer signup",
+      subject: "New JA Plan Studio customer signup",
       text: [
-        "A new customer account has been created or first detected by JA Experiences & Discovery.",
+        "A new customer account has been created or first detected by JA Plan Studio.",
         "",
         `Customer name: ${customerName || "Not provided"}`,
         `Customer email: ${identity.email}`,
@@ -1330,7 +1330,7 @@ async function ensureStripeCustomer(DB, env, identity, profile) {
     body: new URLSearchParams({
       email: profile.contactEmail || identity.email,
       name: profile.displayName || profile.verifiedName || identity.verifiedName || identity.email,
-      "metadata[service_line]": "JA Experiences & Discovery",
+      "metadata[service_line]": "JA Plan Studio",
       "metadata[customer_email]": identity.email,
       "metadata[profile_email]": profile.contactEmail || identity.email
     }).toString()

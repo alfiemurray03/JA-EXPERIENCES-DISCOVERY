@@ -347,10 +347,10 @@ test("customer record renderer keeps identity verification and adds full profile
 
 test("System Settings uses the narrow reference workspace and icon tab structure", async () => {
   const client = await readFile(new URL("../public/assets/js/admin-control.js", import.meta.url), "utf8");
-  const css = await readFile(new URL("../public/admin/assets/admin-saas-v2.css", import.meta.url), "utf8");
+  const css = await readFile(new URL("../src/styles/tailwind.css", import.meta.url), "utf8");
   assert.match(client, /settings-page-head/);
   assert.match(client, /settings-page-icon/);
-  assert.match(client, /icon\(t\.icon\)/);
+  assert.match(client, /iconSvg\(t\.icon\)/);
   assert.match(css, /system-settings-shell[^}]+768px/s);
   assert.match(css, /settings-category-tabs[^}]+background: #f1f5f9/s);
 });

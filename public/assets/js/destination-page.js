@@ -213,8 +213,8 @@ function renderDestination() {
   const highlights = (profile.highlights || ["Major sights", "Local culture", "Food and neighbourhoods", "Day-trip options"]).map(item => `<li>${item}</li>`).join("");
   const plan = (profile.plan || []).map(item => `<li>${item}</li>`).join("");
   const tags = (destinationTags[slug] || ["culture", "attractions", "food", "day trips"]).map(tag => `<span>${tag}</span>`).join("");
-  document.title = `${name} Destination Guide | JA Experiences & Discovery`;
-  document.querySelector('meta[name="description"]')?.setAttribute("content", `Practical ${name} destination guidance, suggested trip structure and personalised research support from JA Experiences & Discovery.`);
+  document.title = `${name} Destination Guide | JA Plan Studio`;
+  document.querySelector('meta[name="description"]')?.setAttribute("content", `Practical ${name} destination guidance, suggested trip structure and personalised research support from JA Plan Studio.`);
 
   root.innerHTML = `
     <section class="destination-hero" style="--destination-image:url('${image}')">
