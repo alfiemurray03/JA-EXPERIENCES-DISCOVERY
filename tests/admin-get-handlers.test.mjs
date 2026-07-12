@@ -331,6 +331,67 @@ test("site status save rejects invalid values before changing D1", async () => {
   assert.equal(DB.siteStatus, "normal");
 });
 
+test("site status POST skips the full admin schema initialiser but other actions retain it", async () => {
+  const statusDB = new MockD1();
+  const statusRequest = new Request("https://experiences.example.com/admin/api?section=systemsettings", {
+    method: "POST",
+    headers: {
+      "Origin": "https://experiences.example.com",
+      "Content-Type": "application/json",
+      "x-ja-auth-email": "alfieholywoodmurray@jagroupservices.co.uk"
+    },
+    body: JSON.stringify({ action: "update_site_status", site_status: "normal" })
+  });
+  assert.equal((await adminApiOnRequest({ request: statusRequest, env: getMockEnv(statusDB) })).status, 200);
+  assert.equal(statusDB.preparedQueries.some((sql) => sql.includes("UPDATE company_branding")), false);
+  assert.equal(statusDB.preparedQueries.some((sql) => sql.includes("UPDATE policy_pages")), false);
+  assert.equal(statusDB.preparedQueries.some((sql) => sql.includes("CREATE TABLE IF NOT EXISTS site_settings")), false);
+  assert.equal(statusDB.preparedQueries.filter((sql) => sql.includes("PRAGMA table_info(site_settings)")).length, 1);
+
+  const otherDB = new MockD1();
+  const otherRequest = new Request("https://experiences.example.com/admin/api?section=systemsettings", {
+    method: "POST",
+    headers: {
+      "Origin": "https://experiences.example.com",
+      "Content-Type": "application/json",
+      "x-ja-auth-email": "alfieholywoodmurray@jagroupservices.co.uk"
+    },
+    body: JSON.stringify({ action: "update_general_settings", platform_name: "JA Plan Studio", default_builder: "experience" })
+  });
+  assert.equal((await adminApiOnRequest({ request: otherRequest, env: getMockEnv(otherDB) })).status, 200);
+  assert.equal(otherDB.preparedQueries.some((sql) => sql.includes("UPDATE company_branding")), true);
+});
+
+test("isolated site status POST still requires authentication and same-origin CSRF", async () => {
+  const unauthenticatedDB = new MockD1();
+  const unauthenticated = await adminApiOnRequest({
+    request: new Request("https://experiences.example.com/admin/api?section=systemsettings", {
+      method: "POST",
+      headers: { "Origin": "https://experiences.example.com", "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "update_site_status", site_status: "normal" })
+    }),
+    env: getMockEnv(unauthenticatedDB)
+  });
+  assert.equal(unauthenticated.status, 401);
+  assert.equal(unauthenticatedDB.siteStatus, "normal");
+
+  const csrfDB = new MockD1();
+  const invalidOrigin = await adminApiOnRequest({
+    request: new Request("https://experiences.example.com/admin/api?section=systemsettings", {
+      method: "POST",
+      headers: {
+        "Origin": "https://attacker.example",
+        "Content-Type": "application/json",
+        "x-ja-auth-email": "alfieholywoodmurray@jagroupservices.co.uk"
+      },
+      body: JSON.stringify({ action: "update_site_status", site_status: "normal" })
+    }),
+    env: getMockEnv(csrfDB)
+  });
+  assert.equal(invalidOrigin.status, 403);
+  assert.equal(csrfDB.siteStatus, "normal");
+});
+
 test("site status save reports the exact failing D1 stage without exposing exception details", async () => {
   const DB = new MockD1();
   const originalPrepare = DB.prepare.bind(DB);
@@ -339,9 +400,9 @@ test("site status save reports the exact failing D1 stage without exposing excep
     if (sql.includes("key = 'admin_schema_version'")) {
       statement.first = async () => ({ value: "2026-07-04-rc4.7-complete" });
     }
-    if (sql.includes("CREATE TABLE IF NOT EXISTS site_settings")) {
-      statement.run = async () => {
-        const error = new Error("D1_ERROR: diagnostic database failure in CREATE TABLE site_settings");
+    if (sql.includes("PRAGMA table_info(site_settings)")) {
+      statement.all = async () => {
+        const error = new Error("D1_ERROR: diagnostic database failure in PRAGMA table_info(site_settings)");
         error.code = "D1_DIAGNOSTIC_FAILURE";
         throw error;
       };
@@ -369,12 +430,12 @@ test("site status save reports the exact failing D1 stage without exposing excep
       success: false,
       message: "Site Status could not be saved.",
       correlation_id: "diagnostic-correlation-id",
-      stage: "schema_initialisation",
+      stage: "schema_verification",
       error_name: "Error",
       error_code: "D1_DIAGNOSTIC_FAILURE",
       error_message: "D1_ERROR: diagnostic database failure in [SQL detail removed]"
     });
-    assert.equal(logged[0].failing_stage, "schema_initialisation");
+    assert.equal(logged[0].failing_stage, "schema_verification");
     assert.equal(logged[0].error_code, "D1_DIAGNOSTIC_FAILURE");
     assert.doesNotMatch(JSON.stringify(payload), /CREATE TABLE|cookie|session|token|secret/i);
     assert.equal(DB.siteStatus, "normal");

@@ -3277,8 +3277,8 @@ async function getCustomerCrmList(DB) {
 
 export async function saveAuthoritativeSiteStatus(DB, siteStatus, reportStage = () => {}) {
   if (!["normal", "coming_soon", "maintenance"].includes(siteStatus)) throw new Error("Invalid site status.");
-  reportStage("schema_initialisation");
-  await ensureSiteSettingsSchema(DB);
+  reportStage("schema_verification");
+  await verifySiteSettingsSchema(DB);
   const values = { site_status: siteStatus, maintenance_enabled: "false", launchgateway_enabled: "false" };
   for (const [key, value] of Object.entries(values)) {
     reportStage(`write_${key}`);
@@ -3289,6 +3289,14 @@ export async function saveAuthoritativeSiteStatus(DB, siteStatus, reportStage = 
     `).bind(key, value).run();
   }
   return siteStatus;
+}
+
+export async function verifySiteSettingsSchema(DB) {
+  const result = await DB.prepare("PRAGMA table_info(site_settings)").all();
+  const columns = new Set((result.results || []).map((column) => column.name));
+  for (const requiredColumn of ["key", "value", "updated_at"]) {
+    if (!columns.has(requiredColumn)) throw new Error(`site_settings is missing the required ${requiredColumn} column.`);
+  }
 }
 
 export async function ensureSiteSettingsSchema(DB) {
@@ -3371,7 +3379,14 @@ export async function onRequest(context) {
   if (!env.DB) return json({ error: "Database binding DB is missing." }, 500);
 
   try {
-    await initialiseAdminSchema(env.DB, env);
+    const url = new URL(request.url);
+    const section = url.searchParams.get("section") || "overview";
+    let parsedPostBody = null;
+    if (request.method === "POST" && section === "systemsettings") {
+      parsedPostBody = await request.clone().json().catch(() => ({}));
+    }
+    const isolatedSiteStatusAction = parsedPostBody?.action === "update_site_status";
+    if (!isolatedSiteStatusAction) await initialiseAdminSchema(env.DB, env);
 
     const identity = getAccessIdentity(request);
     if (!identity.email) return json({ error: "Not signed in." }, 401);
@@ -3380,8 +3395,6 @@ export async function onRequest(context) {
     }
     const adminContext = await adminPayload(env.DB, identity, env);
 
-    const url = new URL(request.url);
-    const section = url.searchParams.get("section") || "overview";
     const ownerAccess = ownerBypass(adminContext.permissions, adminContext);
 
     if (request.method === "GET") {
@@ -3520,7 +3533,7 @@ export async function onRequest(context) {
 
     if (request.method === "POST") {
       if (!isSameOriginRequest(request)) return json({ error: "This request could not be verified." }, 403);
-      const body = await request.json().catch(() => ({}));
+      const body = parsedPostBody || await request.json().catch(() => ({}));
       if (section === "prefs") return json({ preferences: await saveAdminPreferences(env.DB, body, identity), saved: true });
       if (section === "builders") {
         if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_plans", "manage_pricing", "manage_crm"])) return json({ error: "Forbidden.", section }, 403);
