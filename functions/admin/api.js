@@ -3270,6 +3270,7 @@ async function getCustomerCrmList(DB) {
 
 export async function saveAuthoritativeSiteStatus(DB, siteStatus) {
   if (!["normal", "coming_soon", "maintenance"].includes(siteStatus)) throw new Error("Invalid site status.");
+  await ensureSiteSettingsSchema(DB);
   const values = { site_status: siteStatus, maintenance_enabled: "false", launchgateway_enabled: "false" };
   for (const [key, value] of Object.entries(values)) {
     await DB.prepare(`
@@ -3279,6 +3280,25 @@ export async function saveAuthoritativeSiteStatus(DB, siteStatus) {
     `).bind(key, value).run();
   }
   return siteStatus;
+}
+
+export async function ensureSiteSettingsSchema(DB) {
+  await DB.prepare(`
+    CREATE TABLE IF NOT EXISTS site_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
+
+  const result = await DB.prepare("PRAGMA table_info(site_settings)").all();
+  const columns = new Set((result.results || []).map((column) => column.name));
+  if (!columns.has("key") || !columns.has("value")) {
+    throw new Error("site_settings must contain key and value columns.");
+  }
+  if (!columns.has("updated_at")) {
+    await DB.prepare("ALTER TABLE site_settings ADD COLUMN updated_at TEXT").run();
+  }
 }
 
 async function readAuthoritativeSiteStatus(DB) {

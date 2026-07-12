@@ -3,7 +3,7 @@ import test from "node:test";
 import { onRequest as middleware } from "../functions/_middleware.js";
 import { onRequestGet as siteStatusApi } from "../functions/api/site-status.js";
 import { onRequestGet as comingSoonConfigApi } from "../functions/api/coming-soon-config.js";
-import { onRequest as adminApi, runSystemDiagnostics, saveAuthoritativeSiteStatus } from "../functions/admin/api.js";
+import { ensureSiteSettingsSchema, onRequest as adminApi, runSystemDiagnostics, saveAuthoritativeSiteStatus } from "../functions/admin/api.js";
 
 class StatusDatabase {
   constructor(status = "normal") { this.status = status; }
@@ -77,11 +77,34 @@ test("Coming Soon config preserves BST, winter GMT, blank, past and invalid date
 
 test("admin status save writes one authoritative mode and disables legacy overrides", async () => {
   const saved = new Map();
-  const DB = { prepare() { let bindings = []; return { bind(...values) { bindings = values; return this; }, async run() { saved.set(bindings[0], bindings[1]); } }; }, async batch(statements) { for (const statement of statements) await statement.run(); } };
+  const DB = { prepare(sql) { let bindings = []; return { bind(...values) { bindings = values; return this; }, async all() { return { results: [{ name: "key" }, { name: "value" }, { name: "updated_at" }] }; }, async run() { if (sql.includes("INSERT INTO")) saved.set(bindings[0], bindings[1]); } }; }, async batch(statements) { for (const statement of statements) await statement.run(); } };
   await saveAuthoritativeSiteStatus(DB, "coming_soon");
   assert.equal(saved.get("site_status"), "coming_soon");
   assert.equal(saved.get("maintenance_enabled"), "false");
   assert.equal(saved.get("launchgateway_enabled"), "false");
+});
+
+test("all valid site statuses save and persist through a subsequent read", async () => {
+  const saved = new Map();
+  const DB = { prepare(sql) { let bindings = []; return { bind(...values) { bindings = values; return this; }, async all() { return { results: [{ name: "key" }, { name: "value" }, { name: "updated_at" }] }; }, async first() { return { value: saved.get("site_status") }; }, async run() { if (sql.includes("INSERT INTO")) saved.set(bindings[0], bindings[1]); } }; }, async batch(statements) { for (const statement of statements) await statement.run(); } };
+  for (const status of ["normal", "coming_soon", "maintenance"]) {
+    await saveAuthoritativeSiteStatus(DB, status);
+    const response = await siteStatusApi({ env: { DB } });
+    assert.equal((await response.json()).status, status);
+  }
+  await assert.rejects(() => saveAuthoritativeSiteStatus(DB, "closed"), /Invalid site status/);
+});
+
+test("site status schema compatibility adds updated_at only when it is missing", async () => {
+  const statements = [];
+  const DB = { prepare(sql) { statements.push(sql.trim()); return { async run() {}, async all() { return { results: [{ name: "key" }, { name: "value" }] }; } }; } };
+  await ensureSiteSettingsSchema(DB);
+  assert.equal(statements.filter((sql) => sql.startsWith("ALTER TABLE")).length, 1);
+
+  statements.length = 0;
+  DB.prepare = (sql) => { statements.push(sql.trim()); return { async run() {}, async all() { return { results: [{ name: "key" }, { name: "value" }, { name: "updated_at" }] }; } }; };
+  await ensureSiteSettingsSchema(DB);
+  assert.equal(statements.some((sql) => sql.startsWith("ALTER TABLE")), false);
 });
 
 test("diagnostics endpoint rejects unauthenticated requests", async () => {

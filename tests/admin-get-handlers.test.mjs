@@ -81,6 +81,9 @@ class MockD1 {
             ]
           };
         }
+        if (sql.includes("table_info(site_settings)")) {
+          return { results: [{ name: "key" }, { name: "value" }, { name: "updated_at" }] };
+        }
         if (sql.includes("site_settings")) {
           return {
             results: [

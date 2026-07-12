@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", async () => {
+async function initialiseSiteShell() {
   const main = document.querySelector("main");
   const headerTarget = document.querySelector("#siteShellHeader, #site-header");
   const footerTarget = document.querySelector("#siteShellFooter, #site-footer");
@@ -238,4 +238,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     script.defer = true;
     document.body.appendChild(script);
   }
-});
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initialiseSiteShell, { once: true });
+} else {
+  initialiseSiteShell();
+}
