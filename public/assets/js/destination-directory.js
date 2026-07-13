@@ -86,8 +86,8 @@ function renderDestinations() {
   });
 
   grid.innerHTML = matches.length ? matches.map(destination => `
-    <a class="destination-card" href="/destinations/${escapeHtml(destination.slug)}/">
-      <img class="destination-card-image" src="${escapeHtml(destinationImage(destination))}" alt="" loading="lazy">
+    <article class="destination-card" data-destination-slug="${escapeHtml(destination.slug)}">
+      <img class="destination-card-image" src="${escapeHtml(destinationImage(destination))}" alt="${escapeHtml(destination.name)} destination scenery" loading="lazy">
       <div class="destination-card-body">
         <div class="destination-card-meta">
           <span>${escapeHtml(destination.type)}</span>
@@ -97,8 +97,11 @@ function renderDestinations() {
         <h3>${escapeHtml(destination.name)}</h3>
         <p>${escapeHtml(destination.description)}</p>
       </div>
-      <span class="destination-card-action">View guide →</span>
-    </a>`).join("") : `
+      <div class="destination-card-actions">
+        <a href="/destinations/${escapeHtml(destination.slug)}/">View guide</a>
+        <a class="btn btn-primary" href="/account/builders/?builder=holiday-planner&amp;destination=${encodeURIComponent(destination.slug)}">Build this plan</a>
+      </div>
+    </article>`).join("") : `
     <div class="saas-panel saas-empty">
       <h3>No destination boards found</h3>
       <p>Try a broader search term or switch back to the All filter.</p>

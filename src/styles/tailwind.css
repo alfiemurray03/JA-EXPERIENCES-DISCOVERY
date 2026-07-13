@@ -3413,6 +3413,40 @@ details summary { cursor: pointer; margin-bottom: 16px; }
   overflow: hidden;
 }
 
+.provider-widget iframe,
+.headout-gallery iframe {
+  display: block;
+  width: 100% !important;
+  max-width: 100%;
+  border: 0;
+}
+
+.provider-widget-fallback,
+.partner-empty {
+  width: 100%;
+  border: 1px solid var(--ja-line);
+  border-radius: .75rem;
+  background: #f8fafc;
+  padding: 1rem;
+  color: var(--ja-muted);
+  font-size: .9rem;
+  line-height: 1.55;
+}
+
+.partner-country-code {
+  display: inline-grid;
+  min-width: 2.25rem;
+  min-height: 2rem;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, .45);
+  border-radius: .5rem;
+  background: rgba(15, 23, 42, .68);
+  color: #fff;
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .08em;
+}
+
 .builder-stat-card::before {
   content: '';
   position: absolute;
@@ -5629,6 +5663,7 @@ body[data-page="how"] .page-hero{border:0;background:#102449;padding-block:4.5re
 .pricing-airo-hero{border:0;background:#102449;text-align:center;padding-block:4.5rem}.pricing-airo-hero .container{display:flex;flex-direction:column;align-items:center}.pricing-airo-hero .eyebrow{color:#60a5fa}.pricing-airo-hero h1{color:#fff}.pricing-airo-hero p{max-width:48rem;color:#dbeafe}.pricing-billing-toggle{display:flex;align-items:center;gap:1rem;margin-top:1.5rem;border-radius:.7rem;background:#263d63;padding:.3rem;color:#dbeafe;font-size:.85rem}.pricing-billing-toggle strong{border-radius:.5rem;background:#fff;padding:.5rem 1rem;color:#0f172a}.pricing-billing-toggle span{padding-right:.75rem}.pricing-live-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1.5rem;max-width:66rem;margin:0 auto}.pricing-live-card{position:relative;display:flex;flex-direction:column;min-height:27rem;border:1px solid #dfe5ec;border-radius:.8rem;background:#fff;padding:1.5rem;box-shadow:0 1px 2px rgba(15,23,42,.05)}.pricing-live-card.is-featured{border-color:#2563eb}.pricing-popular{position:absolute;left:50%;top:0;transform:translate(-50%,-50%);border-radius:999px;background:#2563eb;color:#fff;padding:.35rem .8rem;font-size:.75rem;font-weight:700}.pricing-live-features{display:grid;gap:.65rem;margin:1.25rem 0;padding:1rem 0 0;border-top:1px solid #e2e8f0;list-style:none;color:#334155;font-size:.88rem}.pricing-live-features li:before{content:'✓';margin-right:.6rem;color:#2563eb}.pricing-live-card .btn{margin-top:auto}@media(max-width:900px){.pricing-live-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:620px){.pricing-live-grid{grid-template-columns:1fr}.pricing-billing-toggle{align-items:stretch;flex-direction:column}.pricing-billing-toggle span{padding:.25rem .75rem .5rem}}
 
 body[data-page="destinations"] .saas-hero{border:0;background:#f8fafc;text-align:center}body[data-page="destinations"] .saas-hero .container{display:flex;flex-direction:column;align-items:center}body[data-page="destinations"] .saas-hero p{max-width:48rem}.destination-gallery-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}.destination-card{display:flex!important;min-height:0!important;overflow:hidden;padding:0!important;border:1px solid #dfe5ec!important;border-radius:.8rem!important;background:#fff!important;color:#0f172a!important}.destination-card-image{width:100%;aspect-ratio:16/9;object-fit:cover}.destination-card-body{padding:1rem 1rem .25rem}.destination-card-action{margin:0 1rem 1rem!important;color:#2563eb!important}.destination-card p{color:#64748b!important}.destination-card h3{color:#0f172a!important}@media(max-width:900px){.destination-gallery-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}@media(max-width:560px){.destination-gallery-grid{grid-template-columns:1fr!important}}
+.destination-card-actions{display:flex;flex-wrap:wrap;align-items:center;gap:.65rem;margin-top:auto;padding:.65rem 1rem 1rem}.destination-card-actions>a:not(.btn){color:#1d4ed8;font-size:.85rem;font-weight:600}.destination-card-actions .btn{margin-left:auto;min-height:2.4rem;padding:.6rem .85rem;font-size:.82rem}.destination-card{flex-direction:column}.destination-card-actions a:focus-visible{outline:2px solid #2563eb;outline-offset:3px}@media(max-width:560px){.destination-card-actions{align-items:stretch;flex-direction:column}.destination-card-actions .btn{width:100%;margin-left:0}}
 
 body[data-page="activities"] .experiences-hero{background:#f8fafc;text-align:center}body[data-page="activities"] .experiences-hero .container{display:flex;flex-direction:column;align-items:center}body[data-page="activities"] .experiences-hero p{max-width:48rem}body[data-page="activities"] .card-grid .card{border-radius:.8rem;box-shadow:0 1px 2px rgba(15,23,42,.05)}
 

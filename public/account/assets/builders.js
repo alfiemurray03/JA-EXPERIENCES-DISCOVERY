@@ -51,19 +51,17 @@ const builderState = {
   activatingTrial: false,
   filter: "all",
 
-  requestId: "",
-
   // Guided runner properties
   guidedRunnerActive: false,
   guidedQuestions: [],
   guidedAnswers: {},
   guidedStep: 0,
-  legacyFormHtml: ""
-=======
+  legacyFormHtml: "",
   search: "",
-  requestId: ""
-  ,wizardStep: 1
- main
+  requestId: "",
+  wizardStep: 1,
+  requestedDestination: null,
+  requestedDestinationInvalid: false
 };
 
 const $ = (id) => document.getElementById(id);
@@ -599,6 +597,7 @@ function selectBuilder(id) {
     builderState.guidedRunnerActive = true;
     builderState.guidedQuestions = parsedSchema;
     builderState.guidedAnswers = {};
+    if (builderState.requestedDestination) builderState.guidedAnswers.destination = builderState.requestedDestination;
     builderState.guidedStep = 0;
 
     // Load persistent draft if it exists in D1
@@ -616,6 +615,7 @@ function selectBuilder(id) {
           builderState.guidedStep = Number(data.draft.current_step || 0);
         }
       }
+      if (builderState.requestedDestination) builderState.guidedAnswers.destination = builderState.requestedDestination;
       renderGuidedStep();
     })
     .catch(() => {
@@ -847,6 +847,15 @@ function bindEvents() {
 }
 
 function init() {
+  const params = new URLSearchParams(window.location.search);
+  const destinationSlug = String(params.get("destination") || "").trim().toLocaleLowerCase("en-GB");
+  if (destinationSlug) {
+    const destination = Array.isArray(window.JA_DESTINATIONS)
+      ? window.JA_DESTINATIONS.find((item) => item.slug === destinationSlug)
+      : null;
+    builderState.requestedDestination = destination?.name || null;
+    builderState.requestedDestinationInvalid = !destination;
+  }
   bindEvents();
   setWizardStep(1);
   if (new URLSearchParams(window.location.search).get("claim_trial") === "1") {
@@ -855,9 +864,12 @@ function init() {
   renderSummary();
   loadAuthenticatedBuilders();
 
-  const autoBuilder = new URLSearchParams(window.location.search).get("builder");
+  const autoBuilder = params.get("builder");
   if (autoBuilder) {
     setTimeout(() => selectBuilder(autoBuilder), 800);
+  }
+  if (builderState.requestedDestinationInvalid) {
+    showStatus("The selected destination is not supported. Choose a destination from the public gallery.", "error");
   }
 }
 

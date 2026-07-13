@@ -91,6 +91,36 @@
     "Ireland|Sligo": "32408"
   };
 
+  const affiliateData = window.JA_AFFILIATE_WIDGET_DATA;
+  const widgetRecords = countries.flatMap(function (item) {
+    return item.destinations.map(function (destination) {
+      return {
+        countryName: item.name,
+        countryCode: item.code,
+        city: destination,
+        destinationName: destination,
+        destinationSlug: destination.toLocaleLowerCase("en-GB").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
+        widgetName: `${destination} activities`,
+        category: "activities attractions tours experiences",
+        searchKeywords: [item.description, "GetYourGuide", "tickets", "things to do"],
+        widgetCode: locationIds[`${item.name}|${destination}`] || "search-query",
+        affiliateLink: getSearchUrl(`${destination}, ${item.name}`),
+        availabilityStatus: "available"
+      };
+    });
+  }).concat(featuredWidgets.map(function (item) {
+    return {
+      countryName: item.country,
+      widgetName: item.title,
+      category: "featured activity tour experience",
+      searchKeywords: [item.text],
+      widgetCode: item.tourId,
+      affiliateLink: item.link,
+      availabilityStatus: "available"
+    };
+  }));
+  if (affiliateData) affiliateData.register("GetYourGuide", widgetRecords);
+
   const suggestions = ["London", "Paris", "Dubai", "New York", "Madeira", "Rome", "Barcelona", "Alicante", "Lanzarote", "Tenerife", "Lisbon", "Edinburgh", "Amsterdam", "Malaga", "Orlando", "Las Vegas", "Madrid", "Ibiza", "Porto", "Venice", "Florence", "Prague", "Berlin", "Vienna", "Bruges", "York", "Bath", "Windsor", "Stonehenge", "Abu Dhabi", "Singapore", "Bangkok", "Phuket", "Bali", "Cancun", "Marrakech", "Cape Town", "Dublin", "Galway", "Cork"];
 
   let selectedCountry = null;
@@ -104,10 +134,6 @@
     return String(value).replace(/[&<>"']/g, function (char) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char];
     });
-  }
-
-  function flagUrl(code) {
-    return `https://flagcdn.com/w80/${code.toLowerCase()}.png`;
   }
 
   function countryImage(name) {
@@ -176,13 +202,14 @@
   }
 
   let partnerScriptLoaded = false;
-  function loadPartnerScript(force) {
-    if (force) {
-      document.querySelectorAll('script[src="https://widget.getyourguide.com/dist/pa.umd.production.min.js"]').forEach(function (script) {
-        script.remove();
-      });
-      partnerScriptLoaded = false;
-    }
+  function showWidgetFailure() {
+    document.querySelectorAll(".provider-widget").forEach(function (widget) {
+      if (widget.querySelector(".provider-widget-fallback")) return;
+      widget.insertAdjacentHTML("beforeend", '<p class="provider-widget-fallback" role="status">Live GetYourGuide activities could not be loaded. Use the provider link to continue securely.</p>');
+    });
+  }
+
+  function loadPartnerScript() {
     if (partnerScriptLoaded || document.querySelector('script[src*="widget.getyourguide.com/dist/pa.umd.production.min.js"]')) return;
     partnerScriptLoaded = true;
     const script = document.createElement("script");
@@ -190,6 +217,10 @@
     script.defer = true;
     script.src = "https://widget.getyourguide.com/dist/pa.umd.production.min.js";
     script.setAttribute("data-gyg-partner-id", PARTNER_ID);
+    script.onerror = function () {
+      console.warn("GetYourGuide partner content could not be loaded.");
+      showWidgetFailure();
+    };
     document.body.appendChild(script);
   }
 
@@ -215,14 +246,17 @@
       back.classList.remove("show");
       const term = (filter || "").trim().toLowerCase();
       const list = countries.filter(function (item) {
-        return (`${item.name} ${item.code} ${item.destinations.join(" ")}`).toLowerCase().includes(term);
+        const records = widgetRecords.filter(function (record) { return record.countryName === item.name; });
+        return !term || records.some(function (record) {
+          return affiliateData ? affiliateData.matches(record, term) : (`${item.name} ${item.code} ${item.description} ${item.destinations.join(" ")} activities attractions tours experiences`).toLowerCase().includes(term);
+        });
       });
       setTitle(term ? "Search results" : "Countries", term ? `Showing matching countries and destinations for "${filter}".` : "Choose a country to view available destinations.");
       content.className = "partner-browser-grid";
       content.innerHTML = list.length ? list.map(function (item) {
         return `
           <button class="partner-browser-card" type="button" data-country="${escapeHtml(item.name)}" style="--partner-card-image:url('${escapeHtml(countryImage(item.name))}')">
-            <div class="partner-browser-card-top"><img src="${escapeHtml(flagUrl(item.code))}" alt="${escapeHtml(item.name)} flag" loading="lazy"><span>${item.destinations.length} ${item.destinations.length === 1 ? "destination" : "destinations"}</span></div>
+            <div class="partner-browser-card-top"><span class="partner-country-code" aria-label="Country code ${escapeHtml(item.code)}">${escapeHtml(item.code)}</span><span>${item.destinations.length} ${item.destinations.length === 1 ? "destination" : "destinations"}</span></div>
             <div class="partner-browser-card-copy"><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.description)}</p></div>
             <span class="partner-card-action">Open country</span>
           </button>`;
@@ -250,7 +284,7 @@
               <div class="partner-country-meta"><strong>${escapeHtml(meta[0])}</strong><div>${tags}</div></div>
               <div class="partner-why-visit"><h4>Why visit</h4><p>${escapeHtml(meta[2])}</p></div>
             </div>
-            <img src="${escapeHtml(flagUrl(country.code))}" alt="${escapeHtml(country.name)} flag" loading="lazy">
+            <img src="${escapeHtml(countryImage(country.name))}" alt="${escapeHtml(country.name)} destination scenery" loading="lazy">
           </div>
           <div class="partner-destination-tabs" aria-label="${escapeHtml(country.name)} destinations">
             ${country.destinations.map(function (item) {
@@ -287,7 +321,7 @@
             `}
           </div>
         </section>`;
-      if (selectedDestination) loadPartnerScript(true);
+      if (selectedDestination) loadPartnerScript();
     }
 
     content.addEventListener("click", function (event) {

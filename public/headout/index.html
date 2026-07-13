@@ -75,11 +75,17 @@
           <p>Select a country, then choose a city or area to load real Headout experiences.</p>
         </div>
 
+        <div class="partner-search-panel">
+          <label for="headoutDestinationSearch">Search Headout countries and destinations</label>
+          <input id="headoutDestinationSearch" class="partner-search-input" name="destination" type="search" placeholder="Try London, Madeira, attractions or tours" autocomplete="off">
+          <p id="headoutSearchStatus" class="muted" aria-live="polite">Showing all available Headout countries.</p>
+        </div>
+
         <div class="partner-browser-topbar">
           <div><h2 id="headoutBrowserTitle">Countries</h2><p id="headoutBrowserHelp">Choose a country to view available destinations.</p></div>
           <button id="headoutBrowserBack" class="button secondary partner-back-button" type="button">All countries</button>
         </div>
-        <div id="headoutWidgetGrid" class="partner-browser-grid headout-widget-grid"></div>
+        <div id="headoutWidgetGrid" class="partner-browser-grid headout-widget-grid" aria-live="polite"></div>
       </div>
     </section>
 
@@ -101,6 +107,7 @@
   </main>
   <div id="siteShellFooter"></div>
   <script data-cookieconsent="ignore" src="/assets/js/site-shell.js?v=20260711-airo-nav-1"></script>
+  <script src="/assets/js/affiliate-widget-data.js?v=20260713-1"></script>
   <script src="/assets/js/headout-widgets.js?v=20260620-6"></script>
 </body>
 </html>

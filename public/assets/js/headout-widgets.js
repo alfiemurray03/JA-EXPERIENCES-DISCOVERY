@@ -83,6 +83,27 @@
     country("BR", "Brazil", "Tours and experiences for selected Brazilian destinations.", ["sao-paulo"])
   ];
 
+  const affiliateData = window.JA_AFFILIATE_WIDGET_DATA;
+  const widgetRecords = headoutCountries.flatMap(function (item) {
+    return item.destinationSlugs.map(function (slug) {
+      const destination = getDestinationBySlug(slug);
+      return {
+        countryName: item.name,
+        countryCode: item.code,
+        city: destination?.name || slug,
+        destinationName: destination?.name || slug,
+        destinationSlug: slug,
+        widgetName: `${destination?.name || slug} Headout gallery`,
+        category: "activities attractions tours experiences tickets",
+        searchKeywords: [item.description, "Headout", "things to do"],
+        widgetCode: destination?.cityCode || "",
+        affiliateLink: slug === "madeira" ? madeiraLinks[0]?.href : "",
+        availabilityStatus: destination ? "available" : "unavailable"
+      };
+    });
+  });
+  if (affiliateData) affiliateData.register("Headout", widgetRecords);
+
   let selectedHeadoutCountry = null;
   let selectedHeadoutDestination = null;
 
@@ -107,10 +128,6 @@
       <div class="headout-gallery" data-headout-city="${escapeHtml(destination.cityCode)}">
         <div data-hawt="gallery" data-city="${escapeHtml(destination.cityCode)}" data-max-count="100" data-show-read-more="[object Object]"></div>
       </div>`;
-  }
-
-  function flagUrl(code) {
-    return `https://flagcdn.com/w80/${code.toLowerCase()}.png`;
   }
 
   function countryImage(name) {
@@ -169,6 +186,13 @@
         console.warn("Headout partner content could not be initialised.", error);
       }
     };
+    script.onerror = function () {
+      console.warn("Headout partner content could not be loaded.");
+      document.querySelectorAll(".headout-gallery").forEach(function (gallery) {
+        if (gallery.querySelector(".provider-widget-fallback")) return;
+        gallery.insertAdjacentHTML("beforeend", '<p class="provider-widget-fallback" role="status">Live Headout activities could not be loaded. Please try again later or use an available provider link.</p>');
+      });
+    };
     document.body.appendChild(script);
   }
 
@@ -222,26 +246,36 @@
   function renderHeadoutDirectory() {
     const grid = document.getElementById("headoutWidgetGrid");
     if (!grid) return false;
+    const search = document.getElementById("headoutDestinationSearch");
+    const searchStatus = document.getElementById("headoutSearchStatus");
     const title = document.getElementById("headoutBrowserTitle");
     const help = document.getElementById("headoutBrowserHelp");
     const back = document.getElementById("headoutBrowserBack");
 
-    function renderCountries() {
+    function renderCountries(filter) {
       selectedHeadoutCountry = null;
       selectedHeadoutDestination = null;
-      if (title) title.textContent = "Countries";
-      if (help) help.textContent = "Choose a country to view available destinations.";
+      const term = String(filter || "").trim().toLocaleLowerCase("en-GB");
+      const visibleCountries = headoutCountries.filter(function (item) {
+        const records = widgetRecords.filter(function (record) { return record.countryName === item.name; });
+        return !term || records.some(function (record) {
+          return affiliateData ? affiliateData.matches(record, term) : (`${item.name} ${item.code} ${item.description} ${item.destinationSlugs.join(" ")} activities attractions tours experiences`).toLowerCase().includes(term);
+        });
+      });
+      if (title) title.textContent = term ? "Search results" : "Countries";
+      if (help) help.textContent = term ? `Showing Headout countries and destinations matching "${String(filter).trim()}".` : "Choose a country to view available destinations.";
+      if (searchStatus) searchStatus.textContent = visibleCountries.length ? `${visibleCountries.length} ${visibleCountries.length === 1 ? "country" : "countries"} shown.` : "No matching Headout widgets found.";
       if (back) back.classList.remove("show");
       grid.className = "partner-browser-grid headout-widget-grid";
-      grid.innerHTML = headoutCountries.map(function (item) {
+      grid.innerHTML = visibleCountries.length ? visibleCountries.map(function (item) {
         const destinations = item.destinationSlugs.map(getDestinationBySlug).filter(Boolean);
         return `
           <button class="partner-browser-card" type="button" data-headout-country="${escapeHtml(item.name)}" style="--partner-card-image:url('${escapeHtml(countryImage(item.name))}')">
-            <div class="partner-browser-card-top"><img src="${escapeHtml(flagUrl(item.code))}" alt="${escapeHtml(item.name)} flag" loading="lazy"><span>${destinations.length} ${destinations.length === 1 ? "destination" : "destinations"}</span></div>
+            <div class="partner-browser-card-top"><span class="partner-country-code" aria-label="Country code ${escapeHtml(item.code)}">${escapeHtml(item.code)}</span><span>${destinations.length} ${destinations.length === 1 ? "destination" : "destinations"}</span></div>
             <div class="partner-browser-card-copy"><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.description)}</p></div>
             <span class="partner-card-action">Open country</span>
           </button>`;
-      }).join("");
+      }).join("") : '<div class="partner-empty" role="status"><h3>No Headout widgets found</h3><p>Try another country, city, attraction, activity or tour name.</p></div>';
     }
 
     function renderCountryPage(item, destinationSlug) {
@@ -265,7 +299,7 @@
               <div class="partner-country-meta"><strong>${escapeHtml(meta[0])}</strong><div>${tags}</div></div>
               <div class="partner-why-visit"><h4>Why visit</h4><p>${escapeHtml(meta[2])}</p></div>
             </div>
-            <img src="${escapeHtml(flagUrl(item.code))}" alt="${escapeHtml(item.name)} flag" loading="lazy">
+            <img src="${escapeHtml(countryImage(item.name))}" alt="${escapeHtml(item.name)} destination scenery" loading="lazy">
           </div>
           <div class="partner-destination-tabs" aria-label="${escapeHtml(item.name)} destinations">
             ${destinations.map(function (entry) {
@@ -306,10 +340,17 @@
     });
 
     if (back) {
-      back.addEventListener("click", renderCountries);
+      back.addEventListener("click", function () {
+        if (search) search.value = "";
+        renderCountries("");
+      });
     }
 
-    renderCountries();
+    search?.addEventListener("input", function () {
+      renderCountries(search.value);
+    });
+
+    renderCountries("");
     return true;
   }
 
