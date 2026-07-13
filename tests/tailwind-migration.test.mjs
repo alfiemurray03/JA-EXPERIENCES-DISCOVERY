@@ -69,7 +69,7 @@ test("shared public shell uses the JA Smart Profile Google Fonts typography", as
   assert.match(styles, /\.site-header\s*{[\s\S]*?font-family:\s*"Inter"/);
   assert.match(styles, /\.site-footer\s*{[\s\S]*?font-family:\s*"Inter"/);
   assert.match(styles, /\.brand-wordmark\s*{[\s\S]*?font-family:\s*"Plus Jakarta Sans"/);
-  assert.match(styles, /\.site-brand\.brand-wordmark\s*{[\s\S]*?font-size:\s*clamp\(1\.2rem,[\s\S]*?1\.35rem\)/);
+  assert.match(styles, /\.site-brand\.brand-wordmark\s*{[\s\S]*?font-size:\s*clamp\(1\.1rem,[\s\S]*?1\.25rem\)/);
   assert.doesNotMatch(styles, /Manrope Local|fontsource-variable\/manrope|assets\/fonts\/manrope/);
 });
 
