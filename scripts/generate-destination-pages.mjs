@@ -1,18 +1,33 @@
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { renderSeoHead } from "./site-seo.mjs";
 
 const root = process.cwd();
 const source = await readFile(path.join(root, "public/assets/js/destinations-data.js"), "utf8");
 const destinations = JSON.parse(source.match(/\[(.*)\]/s)[0]);
 
 for (const destination of destinations) {
+  const route = `/destinations/${destination.slug}/`;
+  const title = `${destination.name} Travel Planning Guide | JA Plan Studio`;
+  const description = `Practical ${destination.name} travel planning guidance and personalised research support from JA Plan Studio.`;
+  const seo = renderSeoHead({
+    route,
+    name: title,
+    description,
+    breadcrumbs: [
+      { name: "Home", route: "/" },
+      { name: "Destinations", route: "/destinations/" },
+      { name: destination.name, route }
+    ]
+  });
   const html = `<!doctype html>
 <html lang="en-GB">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>${destination.name} Travel Planning Guide | JA Plan Studio</title>
-  <meta name="description" content="Practical ${destination.name} travel planning guidance and personalised research support from JA Plan Studio.">
+  <title>${title}</title>
+  <meta name="description" content="${description}">
+  ${seo}
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
