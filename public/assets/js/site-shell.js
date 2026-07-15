@@ -184,23 +184,50 @@ async function initialiseSiteShell() {
   }
 
   async function setupAccountDropdown() {
-    const identity = nativeIdentity();
+    let identity = nativeIdentity();
     const actions = document.querySelector(".site-header-actions, .site-nav-actions");
+    let accountData = null;
+    if (!identity?.email) {
+      try {
+        const response = await fetch("/account/api/builders", {
+          credentials: "include",
+          cache: "no-store",
+          headers: { Accept: "application/json" }
+        });
+        if (response.ok) {
+          accountData = await response.json();
+          identity = { email: "signed-in-customer", name: "Your account" };
+        }
+      } catch {
+        return;
+      }
+    }
     if (!identity?.email || !actions) return;
-    const label = identity.name || identity.email;
+    const label = identity.name || (identity.email === "signed-in-customer" ? "Your account" : identity.email);
     actions.innerHTML = `
       <span class="site-account-name">${escapeHtml(label)}</span>
       <a class="site-button primary" href="/account/dashboard/">Dashboard</a>
     `;
 
+    document.querySelectorAll('.site-mobile-menu a[href="/login/"], .site-footer a[href="/login/"]').forEach((link) => {
+      link.href = "/account/dashboard/";
+      link.textContent = "Customer portal";
+    });
+    document.querySelectorAll('.site-mobile-menu a[href*="claim_trial"], .site-footer a[href="/pricing/#trial"]').forEach((link) => {
+      link.style.display = "none";
+    });
+
     try {
-      const response = await fetch("/account/api/builders", { headers: { Accept: "application/json" } });
-      if (response.ok) {
-        const data = await response.json();
+      if (!accountData) {
+        const response = await fetch("/account/api/builders", { credentials: "include", cache: "no-store", headers: { Accept: "application/json" } });
+        if (response.ok) accountData = await response.json();
+      }
+      if (accountData) {
+        const data = accountData;
         const hasTrial = data.token_summary?.trial;
-        if (hasTrial) {
+        if (hasTrial || data.token_summary?.subscription_active) {
           document.querySelectorAll("a, button").forEach((el) => {
-            if (el.textContent.toLowerCase().includes("free trial") || el.href.includes("claim_trial")) {
+            if (el.textContent.toLowerCase().includes("free trial") || el.href?.includes("claim_trial")) {
               el.style.display = "none";
             }
           });
