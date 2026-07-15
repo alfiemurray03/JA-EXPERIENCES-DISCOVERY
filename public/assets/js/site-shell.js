@@ -258,6 +258,17 @@ async function initialiseSiteShell() {
   await setupAccountDropdown();
   updateActiveLinks();
 
+  [
+    "/assets/js/accessibility.js?v=20260715-document-theme-1",
+    "/assets/js/support-chat.js?v=20260715-document-theme-1"
+  ].forEach((src) => {
+    if (document.querySelector(`script[src^="${src.split("?")[0]}"]`)) return;
+    const script = document.createElement("script");
+    script.src = src;
+    script.defer = true;
+    document.body.appendChild(script);
+  });
+
   // Load legacy scripts if needed
   if (!window.JAFreePlanVisibility) {
     const script = document.createElement("script");
