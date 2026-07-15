@@ -40,23 +40,27 @@ export function BuildersCatalogue() {
   return (
     <div>
       {/* Hero */}
-      <section className="py-16 bg-gradient-to-b from-brand-50 to-white">
-        <div className="max-w-6xl mx-auto px-4 text-center">
-          <span className="badge-primary mb-4">Experience Builders</span>
-          <h1 className="text-3xl md:text-4xl font-extrabold mb-4">Build your next experience</h1>
-          <p className="text-gray-600 max-w-2xl mx-auto">Choose a guided builder to create personalised, actionable plans. Preview for free — only use Builder Usage Tokens when you save.</p>
+      <section className="builder-hero">
+        <div className="shell-container text-center">
+          <span className="badge-primary mb-4">JA Plan Studio builders</span>
+          <h1>Build a plan that feels made for you</h1>
+          <p>Answer a few guided questions and turn your ideas into a clear, personalised plan you can return to whenever you need it.</p>
         </div>
       </section>
 
       {/* Filters */}
-      <section className="py-8">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="flex flex-wrap gap-2 mb-6">
+      <section className="builder-catalogue">
+        <div className="shell-container">
+          <div className="catalogue-heading">
+            <div><span className="eyebrow">Builder gallery</span><h2>Choose what you want to plan</h2></div>
+            <span className="catalogue-count">{filtered.length} {filtered.length === 1 ? "builder" : "builders"}</span>
+          </div>
+          <div className="filter-row" aria-label="Filter builders by category">
             {categories.map(cat => (
               <button
                 key={cat}
                 onClick={() => setFilter(cat)}
-                className={filter === cat ? "badge-primary" : "badge bg-gray-100 text-gray-500 border border-gray-200"}
+                className={filter === cat ? "filter-pill active" : "filter-pill"}
               >
                 {cat}
               </button>
@@ -70,29 +74,27 @@ export function BuildersCatalogue() {
               <p className="text-sm text-gray-500">Try a different category.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="builder-grid">
               {filtered.map(builder => (
-                <div key={builder.id} className="card-hover">
-                  <div className="flex items-start gap-3 mb-4">
-                    <span className="text-3xl">{builder.icon}</span>
+                <article key={builder.id} className="builder-card">
+                  <div className="builder-card-top">
+                    <span className="builder-icon">{builder.icon}</span>
                     <div>
-                      <h3 className="font-bold text-gray-900">{builder.name}</h3>
-                      <span className="badge bg-gray-100 text-gray-500 border border-gray-200">{builder.category}</span>
+                      <h3>{builder.name}</h3>
+                      <span className="builder-category">{builder.category}</span>
                     </div>
                     {builder.featured && <span className="badge-success ml-auto">Featured</span>}
                   </div>
-                  <p className="text-sm text-gray-600 mb-3">{builder.short_description}</p>
-                  <p className="text-xs text-gray-500 mb-4"><strong className="text-gray-700">You'll create:</strong> {builder.creates_description}</p>
-                  <div className="flex items-center justify-between text-xs text-gray-500 mb-4 pt-3 border-t border-gray-100">
+                  <p className="builder-summary">{builder.short_description}</p>
+                  <p className="builder-output"><strong>You'll create:</strong> {builder.creates_description}</p>
+                  <div className="builder-meta">
                     <span>~{builder.estimated_minutes} min</span>
-                    <span>{builder.token_cost} tokens</span>
-                    <span className="capitalize">{builder.min_plan} plan</span>
-                    {builder.trial_eligible && <span className="text-green-600">Trial OK</span>}
+                    <span className="capitalize">{builder.min_plan} access</span>
                   </div>
-                  <Link to={`/builders/${builder.slug}`} className="btn-primary w-full text-sm">
-                    Start Builder
+                  <Link to={`/builders/${builder.slug}`} className="builder-link">
+                    Open builder <span aria-hidden="true">→</span>
                   </Link>
-                </div>
+                </article>
               ))}
             </div>
           )}

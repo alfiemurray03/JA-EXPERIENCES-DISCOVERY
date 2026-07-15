@@ -36,7 +36,7 @@ export function SignUp() {
       <div className="max-w-md w-full">
         <div className="card-base">
           <h1 className="text-2xl font-extrabold mb-2">Create account</h1>
-          <p className="text-sm text-gray-500 mb-6">Start your 14-day free trial with 30 Builder Usage Tokens.</p>
+          <p className="text-sm text-gray-500 mb-6">Create your JA Plan Studio account and start building personalised plans.</p>
           {error && <div className="alert-error mb-4">{error}</div>}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
