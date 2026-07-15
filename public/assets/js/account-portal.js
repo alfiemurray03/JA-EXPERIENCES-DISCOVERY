@@ -386,7 +386,7 @@ async function renderPage(page) {
           <h2>Quick actions</h2>
           <div class="portal-quick-actions">
             <a class="portal-action" href="/account/profile/"><strong>My Account</strong><span>Review your identity and account details</span></a>
-            <a class="portal-action" href="/account/builders/"><strong>Open Experience Builders</strong><span>${escapeHtml(String(tokenSummary.remaining_tokens ?? "0"))} Builder Usage Tokens available</span></a>\n            <a class="portal-action" href="/account/tokens/"><strong>Tokens &amp; Usage</strong><span>Balance, allowance and usage ledger</span></a>
+            <a class="portal-action" href="/account/builders/"><strong>Open Experience Builders</strong><span>${tokenSummary.unlimited_builder_use ? "Unlimited with your paid plan" : `${escapeHtml(String(tokenSummary.remaining_tokens ?? "0"))} free-plan credits available`}</span></a>\n            <a class="portal-action" href="/account/tokens/"><strong>Tokens &amp; Usage</strong><span>Balance, allowance and usage ledger</span></a>
             <a class="portal-action" href="/account/support/"><strong>Contact Support</strong><span>Tickets, enquiries and help</span></a>
             <a class="portal-action" href="/account/subscription/"><strong>Plans &amp; Billing</strong><span>Plan, billing and invoices</span></a>
             <a class="portal-action" href="/account/security/"><strong>Security Settings</strong><span>Sign-in and account protection</span></a>
@@ -397,7 +397,7 @@ async function renderPage(page) {
           <h2>Membership summary</h2>
           <div class="portal-stack">
             <div class="portal-entry"><span class="portal-label">Plan</span><strong>${escapeHtml(tokenSummary.plan_name || profile.currentPlan || "No active plan detected")}</strong></div>
-            <div class="portal-entry"><span class="portal-label">Account tokens</span><strong>${escapeHtml(String(tokenSummary.remaining_tokens ?? "0"))} available</strong></div>
+            <div class="portal-entry"><span class="portal-label">Builder usage</span><strong>${tokenSummary.unlimited_builder_use ? "Unlimited" : `${escapeHtml(String(tokenSummary.remaining_tokens ?? "0"))} free-plan credits`}</strong></div>
             <div class="portal-entry"><span class="portal-label">Lifetime access</span><strong>${profile.lifetimeAccess ? "Enabled" : "Not enabled"}</strong></div>
             <div class="portal-entry"><span class="portal-label">Stripe status</span><strong>${profile.stripeLinked ? "Linked" : "Not linked"}</strong></div>
           </div>

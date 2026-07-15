@@ -262,6 +262,8 @@ async function tokenSummary(DB, email) {
   const activePlan = Boolean(subscription);
   return {
     wording: "Builder Usage Tokens",
+    usage_model: activePlan ? "unlimited" : "credits",
+    unlimited_builder_use: activePlan,
     remaining_tokens: Number(balanceRow?.balance || 0),
     used_tokens: Number(usedRow?.used || 0),
     purchased_addon_tokens: Number(addOnRow?.purchased || 0),
@@ -274,7 +276,9 @@ async function tokenSummary(DB, email) {
     subscription_active: activePlan,
     plan_active: Boolean(activeTrial || activePlan),
     plan_name: activeTrial ? "14-Day Free Trial" : activePlan ? (subscription.plan_name || "Active membership") : "No active self-service plan detected",
-    deduction_rule: "Tokens are deducted only when a finished builder output is created, saved, generated or completed. Opening or viewing a builder does not deduct tokens."
+    deduction_rule: activePlan
+      ? "Paid plans include unlimited use of the builders available on that plan. No credits are required or deducted."
+      : "Free-plan credits are deducted only when a finished builder output is saved. Opening or previewing a builder does not use credits."
   };
 }
 
@@ -508,8 +512,8 @@ export async function onRequest(context) {
       await blockAttempt(env.DB, identity.email, builder, "Builder is not included in the active plan.", summary.remaining_tokens, Number(builder.token_cost || 0));
       return json({ error: "This builder is not included in your current plan.", token_summary: summary }, 403);
     }
-    const cost = Math.max(0, Number(builder.token_cost || 0));
-    if (summary.remaining_tokens < cost) {
+    const cost = summary.subscription_active ? 0 : Math.max(0, Number(builder.token_cost || 0));
+    if (!summary.subscription_active && summary.remaining_tokens < cost) {
       await blockAttempt(env.DB, identity.email, builder, "Insufficient Builder Usage Tokens.", summary.remaining_tokens, cost);
       return json({ error: "Not enough Builder Usage Tokens to complete this builder.", token_summary: summary }, 402);
     }
