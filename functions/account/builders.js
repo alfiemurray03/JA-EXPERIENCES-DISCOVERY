@@ -398,8 +398,11 @@ export async function onRequest(context) {
   const { request, env } = context;
   const url = new URL(request.url);
   if (wantsPortalHtml(request, url.pathname)) {
-    if (env.ASSETS?.fetch) return env.ASSETS.fetch(portalAssetRequest(request, "/account/builders/index.html"));
+    // Continue to the real static /account/builders/index.html asset. Calling
+    // ASSETS.fetch for that protected path re-enters Cloudflare's directory
+    // routing and can bounce between /account/builders and its index file.
     if (typeof context.next === "function") return context.next();
+    if (env.ASSETS?.fetch) return env.ASSETS.fetch(portalAssetRequest(request, "/account/builders/index.html"));
     return new Response("Account builders page unavailable.", { status: 503, headers: { "Content-Type": "text/plain; charset=utf-8" } });
   }
   if (!env.DB) return json({ error: "Database unavailable." }, 500);
