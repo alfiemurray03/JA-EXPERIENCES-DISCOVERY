@@ -4,17 +4,28 @@
 @tailwind components;
 
 /* Retired JA Document Hub visual theme, rebranded for JA Plan Studio. */
-.site-header { background: #171c28 !important; border-color: rgba(255,255,255,.1) !important; }
+.site-header { background: rgba(255,255,255,.97) !important; border-color: #dce2eb !important; }
 .site-header-inner { min-height: 64px; }
-.document-theme-brand { display: inline-flex !important; align-items: center; gap: .65rem; color: #fff !important; }
+.document-theme-brand { display: inline-flex !important; align-items: center; gap: .65rem; color: #101827 !important; }
 .document-theme-brand > span:last-child { display: grid; line-height: 1.05; }
-.document-theme-brand strong { color: #fff; font-size: .95rem; }
+.document-theme-brand strong { color: #101827; font-size: .95rem; }
 .document-theme-brand small { margin-top: .2rem; color: #8d98ad; font-size: .74rem; font-weight: 500; }
 .document-theme-mark { display: grid; width: 2.35rem; height: 2.35rem; place-items: center; border-radius: .55rem; background: #418ce3; color: #fff; font-size: 1.3rem; font-weight: 900; }
-.site-nav a, .nav-dropdown-toggle, .site-login-link { color: #98a2b5 !important; }
-.site-nav a:hover, .site-nav a.active, .site-login-link:hover { color: #fff !important; background: transparent !important; }
+.site-nav a, .nav-dropdown-toggle { color: #59677d !important; }
+.site-login-link { color: #111827 !important; }
+.site-nav a:hover, .site-nav a.active, .site-login-link:hover { color: #194f88 !important; background: transparent !important; }
 .site-create-link { border-radius: .4rem !important; background: #418ce3 !important; color: #fff !important; box-shadow: none !important; }
-.site-menu-toggle { color: #fff !important; }
+.site-menu-toggle { color: #111827 !important; }
+.document-theme-toggle { display: grid; width: 2.2rem; height: 2.2rem; place-items: center; border: 1px solid #d9e0e9; border-radius: .45rem; background: #f5f7fa; color: #334155; cursor: pointer; }
+.document-theme-toggle .theme-moon { display: none; }
+[data-site-theme="dark"] .site-header { background: #171c28 !important; border-color: rgba(255,255,255,.1) !important; }
+[data-site-theme="dark"] .document-theme-brand,[data-site-theme="dark"] .document-theme-brand strong { color: #fff !important; }
+[data-site-theme="dark"] .site-nav a,[data-site-theme="dark"] .nav-dropdown-toggle,[data-site-theme="dark"] .site-login-link { color: #aab4c7 !important; }
+[data-site-theme="dark"] .site-nav a:hover,[data-site-theme="dark"] .site-nav a.active,[data-site-theme="dark"] .site-login-link:hover { color: #fff !important; }
+[data-site-theme="dark"] .site-menu-toggle { color: #fff !important; }
+[data-site-theme="dark"] .document-theme-toggle { border-color: #3a4252; background: #232a38; color: #fff; }
+[data-site-theme="dark"] .document-theme-toggle .theme-sun { display: none; }
+[data-site-theme="dark"] .document-theme-toggle .theme-moon { display: inline; }
 .document-theme-hero { position: relative; overflow: hidden; min-height: 520px; background-image: linear-gradient(105deg,rgba(38,124,213,.94),rgba(66,117,215,.78),rgba(96,91,205,.82)),url('/assets/images/destinations/travel.jpg'); background-position: center; background-size: cover; }
 .document-theme-hero .container { display: flex; align-items: center; min-height: 520px; padding-block: 4rem; }
 .document-theme-hero-copy { width: min(720px,100%); }
@@ -26,14 +37,20 @@
 .document-theme-primary { background: #fff; color: #307bd2; }
 .document-theme-secondary { border: 1px solid rgba(255,255,255,.55); color: #fff; background: rgba(255,255,255,.05); }
 .document-theme-note { margin-top: 1rem; color: rgba(255,255,255,.65) !important; font-size: .85rem !important; }
-.document-theme-stats { background: #1a1f2c; border-bottom: 1px solid #343b4b; color: #fff; }
+.document-theme-stats { background: #fff; border-bottom: 1px solid #dce2eb; color: #13233a; }
 .document-theme-stats .container > div > div { padding-block: 1.65rem; }
 .document-theme-stats .text-3xl { color: #418ce3; font-size: 1.75rem; }
-.document-theme-stats .text-3xl + div { color: #93a2bf; font-size: .84rem; }
-.document-theme-features { background: #121722; color: #fff; border-bottom: 1px solid #2b3241; }
-.document-theme-features h2,.document-theme-features h3 { color: #fff !important; }
-.document-theme-features p { color: #94a5c6 !important; }
-.document-theme-features .card { background: #1a202d !important; border-color: #303849 !important; }
+.document-theme-stats .text-3xl + div { color: #59677d; font-size: .84rem; }
+.document-theme-features { background: #f8fafc; color: #111827; border-bottom: 1px solid #dce2eb; }
+.document-theme-features h2,.document-theme-features h3 { color: #111827 !important; }
+.document-theme-features p { color: #64748b !important; }
+.document-theme-features .card { background: #fff !important; border-color: #dce2eb !important; }
+[data-site-theme="dark"] .document-theme-stats { background: #1a1f2c; border-color: #343b4b; color: #fff; }
+[data-site-theme="dark"] .document-theme-stats .text-3xl + div { color: #93a2bf; }
+[data-site-theme="dark"] .document-theme-features { background: #121722; color: #fff; border-color: #2b3241; }
+[data-site-theme="dark"] .document-theme-features h2,[data-site-theme="dark"] .document-theme-features h3 { color: #fff !important; }
+[data-site-theme="dark"] .document-theme-features p { color: #94a5c6 !important; }
+[data-site-theme="dark"] .document-theme-features .card { background: #1a202d !important; border-color: #303849 !important; }
 @media(max-width:760px){.document-theme-hero,.document-theme-hero .container{min-height:470px}.document-theme-primary,.document-theme-secondary{width:100%}.document-theme-brand small{display:none}}
 
 /* JA Plan Studio builder gallery — transferred from the retired Document Hub design system. */
