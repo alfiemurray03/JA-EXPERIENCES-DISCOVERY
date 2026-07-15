@@ -51,6 +51,8 @@ test("customer portal Builders navigation targets the protected hub", async () =
 
 test("working builder client is stored beneath the protected account route", async () => {
   await assert.rejects(readFile(path.join(root, "public/assets/js/builders.js"), "utf8"));
+  const protectedPage = await readFile(path.join(root, "public/account/builders/index.html"), "utf8");
   const protectedClient = await readFile(path.join(root, "public/account/assets/builders.js"), "utf8");
   assert.match(protectedClient, /Builder Usage Tokens/);
+  assert.match(protectedPage, /data-cookieconsent="ignore"[^>]+\/account\/assets\/builders\.js/);
 });
