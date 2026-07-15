@@ -348,6 +348,25 @@ test("insufficient tokens blocks creation and logs block attempt", async () => {
   assert.match(data.error, /Not enough Builder Usage Tokens/);
 });
 
+test("paid plans save outputs without a credit balance or deduction", async () => {
+  const DB = createMockDB({
+    ledger: [],
+    subscription: { plan_name: "Membership", plan_code: "membership", status: "active" }
+  });
+  const response = await accountOnRequest({
+    request: new Request("https://experiences.example.test/account/api/builders", {
+      method: "POST",
+      headers: { "x-ja-auth-email": "customer@example.test", "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "save_output", builder_id: "holiday-planner", fields: { destination: "Paris" } })
+    }),
+    env: { DB }
+  });
+  assert.equal(response.status, 200);
+  const data = await response.json();
+  assert.equal(data.token_summary.unlimited_builder_use, true);
+  assert.equal(data.token_summary.remaining_tokens, 0);
+});
+
 // 6. Token Safety and Idempotency
 test("idempotency protects against duplicate charges using request_id", async () => {
   const outputs = [
