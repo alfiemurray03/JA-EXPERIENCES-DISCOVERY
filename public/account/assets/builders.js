@@ -108,7 +108,9 @@ function showStatusHtml(html, kind = "info") {
 function renderSummary(summary = builderState.summary) {
   const active = summary?.trial_active;
   $("availableBuilderCount").textContent = String(builderState.builders.length);
-  $("tokensRemaining").textContent = builderState.signedIn ? String(summary?.remaining_tokens ?? 0) : "Sign in";
+  $("tokensRemaining").textContent = builderState.signedIn
+    ? (summary?.unlimited_builder_use ? "Unlimited" : String(summary?.remaining_tokens ?? 0))
+    : "Sign in";
   $("trialStatus").textContent = builderState.signedIn ? (active ? "Active" : summary?.trial ? "Expired/used" : "Not active") : "Not signed in";
   $("savedOutputCount").textContent = builderState.signedIn ? String(builderState.outputs.length) : "Sign in";
   const createAccountLink = $("createAccountTrialLink");
@@ -135,7 +137,7 @@ function renderBuilders() {
         </div>
       </div>
       <div class="builder-card-output"><small>You'll create</small><span>${esc(builder.description || "A practical personalised planning output.")}</span></div>
-      <div class="builder-card-meta"><span>◷ ${builder.token_cost >= 35 ? "10" : builder.token_cost >= 15 ? "7" : "5"} min</span><span>ϟ ${esc(String(builder.token_cost ?? 0))} tokens</span></div>
+      <div class="builder-card-meta"><span>◷ ${builder.token_cost >= 35 ? "10" : builder.token_cost >= 15 ? "7" : "5"} min</span><span>${builderState.summary?.unlimited_builder_use ? "Unlimited with your plan" : `ϟ ${esc(String(builder.token_cost ?? 0))} free-plan credits`}</span></div>
       <div class="builder-card-badges"><span class="builder-badge ${builder.visibility === "trial" ? "builder-badge-success" : "builder-badge-primary"}">${builder.visibility === "trial" ? "Free Trial" : "Paid plan"}</span></div>
       <button class="builder-card-action" type="button" data-builder="${esc(builder.id)}">Start Builder →</button>
     </article>
@@ -465,7 +467,7 @@ function renderGuidedReview() {
       </div>
 
       <div class="p-4 bg-primary-soft rounded-lg text-xs font-semibold text-primary">
-        Token Cost: ${builderState.selected.token_cost ?? 5} Builder Usage Tokens will be deducted upon final creation.
+        ${builderState.summary?.unlimited_builder_use ? "Included with your paid plan — no credits will be deducted." : `${builderState.selected.token_cost ?? 5} free-plan credits will be used when this output is saved.`}
       </div>
 
       <div id="guidedError" class="text-xs text-primary font-semibold" hidden></div>
@@ -537,7 +539,7 @@ async function submitGuidedOutput() {
         <div class="w-16 h-16 rounded-full bg-success/15 flex items-center justify-center mx-auto text-success text-2xl font-bold">✓</div>
         <div class="space-y-2">
           <h3 class="text-xl font-extrabold">Finished Plan Saved!</h3>
-          <p class="text-sm muted">Tokens were deducted. You can find your plan inside "My Builders" in your customer portal anytime.</p>
+          <p class="text-sm muted">${builderState.summary?.unlimited_builder_use ? "Saved with your paid plan. No credits were used." : "Free-plan credits were deducted."} You can find your plan inside "My Builders" in your customer portal anytime.</p>
         </div>
         <button class="btn btn-secondary w-full" id="startFreshGuidedBtn">Start a new fresh plan</button>
       </div>
@@ -577,8 +579,8 @@ function selectBuilder(id) {
   $("selectedBuilderIcon").textContent = iconText(builder);
   $("selectedBuilderName").textContent = builder.name;
   $("selectedBuilderDescription").textContent = builder.description || "Complete the guided fields and preview before saving.";
-  $("selectedBuilderCost").textContent = `${builder.token_cost ?? 0} Builder Usage Tokens`;
-  $("builderFormStatus").textContent = "Builder opened. No tokens have been deducted.";
+  $("selectedBuilderCost").textContent = builderState.summary?.unlimited_builder_use ? "Included with paid plan" : `${builder.token_cost ?? 0} free-plan credits`;
+  $("builderFormStatus").textContent = builderState.summary?.unlimited_builder_use ? "Builder opened. Paid-plan use is unlimited." : "Builder opened. No free-plan credits have been used.";
 
   // Store legacy template HTML once
   if (!builderState.legacyFormHtml) {
