@@ -3,6 +3,27 @@ import test from "node:test";
 import { onRequest as accountOnRequest } from "../functions/account/builders.js";
 import { onRequest as adminOnRequest } from "../functions/admin/api.js";
 
+test("protected builder document continues to the static asset without an ASSETS self-fetch", async () => {
+  let nextCalls = 0;
+  let assetCalls = 0;
+  const response = await accountOnRequest({
+    request: new Request("https://japlanstudio.jagroupservices.co.uk/account/builders/", {
+      headers: { Accept: "text/html" }
+    }),
+    env: {
+      ASSETS: { fetch: async () => { assetCalls += 1; return new Response("wrong"); } }
+    },
+    next: async () => {
+      nextCalls += 1;
+      return new Response("builder page", { headers: { "Content-Type": "text/html" } });
+    }
+  });
+
+  assert.equal(await response.text(), "builder page");
+  assert.equal(nextCalls, 1);
+  assert.equal(assetCalls, 0);
+});
+
 // Helper to create mock database context
 function createMockDB(options = {}) {
   const builders = options.builders || [
