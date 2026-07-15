@@ -105,6 +105,34 @@ function showStatusHtml(html, kind = "info") {
   status.innerHTML = html || "";
 }
 
+function previewFileName() {
+  const base = builderState.selected?.name || "JA Plan Studio output";
+  return `${base.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "plan-output"}.html`;
+}
+
+function enablePreviewDownload() {
+  const button = $("downloadBuilderPreview");
+  if (button) button.hidden = false;
+}
+
+function downloadPreview() {
+  const preview = $("builderPreview");
+  if (!preview || !preview.textContent.trim() || preview.querySelector(".builder-empty-state")) {
+    showStatus("Create a preview before downloading.", "error");
+    return;
+  }
+  const title = builderState.selected?.name || "JA Plan Studio output";
+  const documentHtml = `<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><style>body{max-width:850px;margin:40px auto;padding:0 24px;color:#0f172a;font:16px/1.6 Arial,sans-serif}h1,h2,h3,h4{color:#102449}li{margin:.35rem 0}</style></head><body><h1>${esc(title)}</h1>${preview.innerHTML}</body></html>`;
+  const url = URL.createObjectURL(new Blob([documentHtml], { type: "text/html;charset=utf-8" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = previewFileName();
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 function renderSummary(summary = builderState.summary) {
   const active = summary?.trial_active;
   $("availableBuilderCount").textContent = String(builderState.builders.length);
@@ -683,7 +711,8 @@ function buildPreview() {
     const access = builderState.guidedAnswers.has_accessibility ? esc(builderState.guidedAnswers.accessibility_details || "None") : "No requirements reported.";
     const dietary = builderState.guidedAnswers.has_dietary ? esc(builderState.guidedAnswers.dietary_details || "None") : "No requirements reported.";
 
-    $("builderPreview").innerHTML = `
+    enablePreviewDownload();
+  $("builderPreview").innerHTML = `
       <div class="builder-preview-page">
         <p class="builder-kicker">${esc(builderState.selected.name)} Preview</p>
         <h3 class="text-xl font-extrabold mb-1">Trip to: ${dest}</h3>
@@ -825,6 +854,8 @@ async function saveOutput(event) {
 }
 
 function bindEvents() {
+  $("downloadBuilderPreview")?.addEventListener("click", downloadPreview);
+
   $("claimTrialButton")?.addEventListener("click", activateTrial);
   $("previewBuilderButton")?.addEventListener("click", buildPreview);
   $("builderBackButton")?.addEventListener("click", () => setWizardStep(builderState.wizardStep - 1));
