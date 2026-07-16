@@ -439,6 +439,42 @@ export async function onRequest(context) {
     "/auth/callback", "/auth/callback/",
     "/account/login", "/account/login/", "/account/auth/callback", "/account/auth/callback/", "/account/logout", "/account/logout/"
   ]).has(path);
+
+  // Admin screens are client-side routes. Serve the application document first and
+  // let /api/admin/auth/me perform the authoritative session check inside React.
+  // Eagerly opening the D1 session in middleware made a transient lookup failure turn
+  // an otherwise healthy admin page into an unstyled plain-text 503 response.
+  const adminDocumentRequest = (request.method === "GET" || request.method === "HEAD")
+    && path.startsWith("/admin/")
+    && !publicAuthPath
+    && ((request.headers.get("Sec-Fetch-Dest") || "").toLowerCase() === "document"
+      || (request.headers.get("Accept") || "").toLowerCase().includes("text/html"));
+
+  if (adminDocumentRequest) {
+    const retiredProfileStudioRoutes = new Set([
+      "/admin/affiliate", "/admin/resellers", "/admin/signing", "/admin/pages",
+      "/admin/portal-nav", "/admin/stripe-diagnostics", "/admin/test-tools",
+      "/admin/password-resets", "/admin/legal"
+    ]);
+    const normalisedPath = path.endsWith("/") ? path.slice(0, -1) : path;
+    if (retiredProfileStudioRoutes.has(normalisedPath)) {
+      return new Response(null, {
+        status: 302,
+        headers: { Location: "/admin/dashboard", "Cache-Control": "no-store" }
+      });
+    }
+
+    const response = await next(request);
+    const headers = new Headers(response.headers);
+    headers.set("Cache-Control", "no-store");
+    headers.delete("Content-Length");
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers
+    });
+  }
+
   const realm = !rootLanding && (path.startsWith("/admin/") || path === "/admin/dashboard")
     ? "admin"
     : !rootLanding && (path.startsWith("/account/") || path === "/account/dashboard" || isCustomerPortalPath(path) || shouldGateCustomerDocument(request, path, publicAuthPath))

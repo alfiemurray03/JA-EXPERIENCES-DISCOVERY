@@ -146,6 +146,33 @@ test("middleware redirects an unauthenticated administrator and preserves the de
   assert.equal(response.headers.get("location"), "/admin/login?return_to=%2Fadmin%2Fapi%3Fsection%3Dcustomers");
 });
 
+test("admin SPA documents render even when middleware session lookup is unavailable", async () => {
+  const response = await onRequest({
+    request: new Request("https://experiences.example.test/admin/health", {
+      headers: { Accept: "text/html", "Sec-Fetch-Dest": "document" }
+    }),
+    env: {},
+    next: async () => new Response("<!doctype html><div id=\"root\"></div>", {
+      headers: { "Content-Type": "text/html; charset=utf-8" }
+    })
+  });
+  assert.equal(response.status, 200);
+  assert.match(await response.text(), /id="root"/);
+  assert.equal(response.headers.get("cache-control"), "no-store");
+});
+
+test("retired imported admin routes return to the focused dashboard", async () => {
+  const response = await onRequest({
+    request: new Request("https://experiences.example.test/admin/resellers", {
+      headers: { Accept: "text/html", "Sec-Fetch-Dest": "document" }
+    }),
+    env: {},
+    next: async () => { throw new Error("Retired route reached the application."); }
+  });
+  assert.equal(response.status, 302);
+  assert.equal(response.headers.get("location"), "/admin/dashboard");
+});
+
 test("authenticated users bypass the public administrator landing page", async () => {
   const response = await onRequest({
     request: new Request("https://experiences.example.test/admin/", {
