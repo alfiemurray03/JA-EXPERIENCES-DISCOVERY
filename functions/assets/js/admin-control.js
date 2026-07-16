@@ -4,16 +4,16 @@
  * Older Cloudflare deployments served a standalone administration document at
  * /admin/dashboard/. Browsers that still have that document retained request
  * this script. Move those sessions onto a cache-busted URL so Cloudflare serves
- * the current Profile Studio React administration portal instead.
+ * the current JA Plan Studio React administration portal instead.
  */
 export async function onRequest() {
   const source = `(() => {
     const current = new URL(window.location.href);
     if (!current.pathname.startsWith('/admin/dashboard')) return;
-    if (current.searchParams.get('portal') === 'profile-studio') return;
+    if (current.searchParams.get('portal') === 'ja-plan-studio') return;
     current.pathname = '/admin/dashboard/';
-    current.searchParams.set('portal', 'profile-studio');
-    current.searchParams.set('release', '20260716');
+    current.searchParams.set('portal', 'ja-plan-studio');
+    current.searchParams.set('release', '20260716-exact-profile-layout');
     window.location.replace(current.toString());
   })();`;
 
