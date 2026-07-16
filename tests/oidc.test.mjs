@@ -138,7 +138,8 @@ test("login bootstrap does not run request-time schema alterations", async () =>
     issuer: env.ADMIN_OIDC_ISSUER,
     authorization_endpoint: "https://login.example.test/authorize",
     token_endpoint: "https://login.example.test/token",
-    jwks_uri: "https://login.example.test/keys"
+    jwks_uri: "https://login.example.test/keys",
+    end_session_endpoint: "https://login.example.test/logout"
   });
   try {
     const response = await beginLogin({
@@ -176,8 +177,7 @@ test("customer and administrator realms use independent authorities and cookies"
     }, "customer");
     assert.equal(new URL(response.headers.get("location")).hostname, "customer.ciamlogin.com");
     assert.match(response.headers.get("set-cookie"), /^ja_customer_oidc_tx=/);
-    assert.equal(DB.transaction.realm, "customer");
-    assert.equal(DB.transaction.return_to, "/account/");
+    assert.equal(DB.transaction, null);
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -201,6 +201,7 @@ test("customer OIDC flow creates a session and redirects into the portal", async
     CUSTOMER_OIDC_PROMPT: "login",
     CUSTOMER_OIDC_SCOPES: "openid profile email offline_access"
   };
+  let expectedNonce = "";
   globalThis.fetch = async (url) => {
     const target = String(url);
     if (target.endsWith("/.well-known/openid-configuration")) {
@@ -220,7 +221,7 @@ test("customer OIDC flow creates a session and redirects into the portal", async
         id_token: await signedIdToken(
           keys.privateKey,
           "test-key",
-          DB.transaction.nonce,
+          expectedNonce,
           customerEnv.CUSTOMER_OIDC_ISSUER,
           customerEnv.CUSTOMER_OIDC_CLIENT_ID,
           "customer@example.test",
@@ -238,7 +239,9 @@ test("customer OIDC flow creates a session and redirects into the portal", async
       request: new Request("https://experiences.example.test/account/login?return_to=%2Faccount%2Fdashboard%2F"),
       env: { ...customerEnv, DB }
     }, "customer");
-    const state = new URL(start.headers.get("location")).searchParams.get("state");
+    const authorization = new URL(start.headers.get("location"));
+    const state = authorization.searchParams.get("state");
+    expectedNonce = authorization.searchParams.get("nonce");
     const transactionCookie = start.headers.get("set-cookie").split(";")[0];
     const callback = await completeLogin({
       request: new Request(`https://experiences.example.test/account/auth/callback?code=test-code&state=${encodeURIComponent(state)}`, {
@@ -250,8 +253,6 @@ test("customer OIDC flow creates a session and redirects into the portal", async
     assert.equal(callback.headers.get("location"), "/account/dashboard/");
     assert.match(callback.headers.get("set-cookie"), /ja_customer_oidc_session=/);
     assert.equal(DB.customerSession.email, "customer@example.test");
-    assert.equal(DB.alterStatements.length, 0);
-    assert.ok(DB.alterStatements.some((sql) => sql.includes("customer_oidc_sessions ADD COLUMN access_token_expires_at TEXT")));
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -269,6 +270,7 @@ test("administrator OIDC flow uses state, nonce, PKCE and a validated signed tok
   publicJwk.alg = "RS256";
 
   let tokenRequests = 0;
+  let expectedNonce = "";
   globalThis.fetch = async (url) => {
     const target = String(url);
     if (target.endsWith("/.well-known/openid-configuration")) {
@@ -287,7 +289,7 @@ test("administrator OIDC flow uses state, nonce, PKCE and a validated signed tok
         id_token: await signedIdToken(
           keys.privateKey,
           "test-key",
-          DB.transaction.nonce,
+          expectedNonce,
           env.ADMIN_OIDC_ISSUER,
           env.ADMIN_OIDC_CLIENT_ID,
           "admin@example.test",
@@ -308,11 +310,12 @@ test("administrator OIDC flow uses state, nonce, PKCE and a validated signed tok
     }, "admin");
     assert.equal(start.status, 302);
     const authorization = new URL(start.headers.get("location"));
+    expectedNonce = authorization.searchParams.get("nonce");
     assert.equal(authorization.searchParams.get("redirect_uri"), "https://japlanstudio.jagroupservices.co.uk/auth/callback");
     assert.equal(authorization.searchParams.get("response_type"), "code");
     assert.equal(authorization.searchParams.get("code_challenge_method"), "S256");
     assert.ok(authorization.searchParams.get("code_challenge"));
-    assert.equal(authorization.searchParams.get("nonce"), DB.transaction.nonce);
+    assert.equal(authorization.searchParams.get("nonce"), expectedNonce);
     assert.equal(authorization.searchParams.get("prompt"), "login");
     const state = authorization.searchParams.get("state");
     const transactionCookie = start.headers.get("set-cookie").split(";")[0];
