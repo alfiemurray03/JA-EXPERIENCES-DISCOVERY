@@ -1,5 +1,5 @@
 /**
- * /login — JA Plan Studio branded sign-in page.
+ * /sign-in — JA Plan Studio branded sign-in page.
  *
  * Always shows the branded sign-in UI. The "Sign in" button navigates to
  * /auth/oidc/start which handles the full authentication flow.
