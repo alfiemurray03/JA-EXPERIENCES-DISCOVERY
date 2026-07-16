@@ -1,23 +1,13 @@
-/**
- * AdminLayout — theme-aware (light/dark/system), clean professional design.
- * Light mode is the default. Grouped navigation with role-based filtering.
- */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ComponentType, type ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAdmin } from '@/lib/admin-context';
-import { useAdminTheme, type AdminTheme } from '@/lib/admin-theme-context';
-import { getAdminRoleLabel, getAdminRoleColor, hasPermission } from '@/lib/admin-types';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { hasPermission } from '@/lib/admin-types';
 import {
   LayoutDashboard, Users, CreditCard, Settings,
   ClipboardList, HeadphonesIcon, ShieldCheck, BarChart2, LogOut,
-  Menu, ChevronRight, Shield, Bell, Zap, Sun, Moon,
-  Monitor, Globe, Wrench, FileEdit, Palette,
-  ChevronDown, X, TestTube2, UserCheck, PenLine, Building2, Scale,
+  Menu, ChevronRight, Shield, Bell, Zap, Send,
+  Globe, Wrench, FileEdit, Palette,
+  X, TestTube2, UserCheck, PenLine, Building2, Scale, MoreHorizontal,
 } from 'lucide-react';
 
 // ── Nav structure ─────────────────────────────────────────────────────────────
@@ -25,7 +15,7 @@ import {
 interface NavItem {
   label: string;
   href: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: ComponentType<{ className?: string }>;
   section: string;
   badge?: string;
 }
@@ -88,54 +78,6 @@ const NAV_GROUPS: NavGroup[] = [
   },
 ];
 
-// ── Theme toggle ──────────────────────────────────────────────────────────────
-
-function ThemeToggle() {
-  const { theme, setTheme } = useAdminTheme();
-  const options: { value: AdminTheme; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-    { value: 'light',  label: 'Light',  icon: Sun },
-    { value: 'dark',   label: 'Dark',   icon: Moon },
-    { value: 'system', label: 'System', icon: Monitor },
-  ];
-  const current = options.find(o => o.value === theme) ?? options[0];
-  const CurrentIcon = current.icon;
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button className="flex items-center gap-1.5 text-xs px-2 py-1.5 rounded-md transition-colors
-          border border-transparent
-          text-gray-500 hover:text-gray-900 hover:bg-gray-100 hover:border-gray-200
-          dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-700 dark:hover:border-slate-600">
-          <CurrentIcon className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">{current.label}</span>
-          <ChevronDown className="w-3 h-3 opacity-50" />
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-36
-        bg-white border-gray-200 shadow-lg
-        dark:bg-slate-800 dark:border-slate-700">
-        {options.map(opt => {
-          const Icon = opt.icon;
-          return (
-            <DropdownMenuItem key={opt.value} onClick={() => setTheme(opt.value)}
-              className={`text-xs gap-2 cursor-pointer
-                ${theme === opt.value
-                  ? 'text-primary font-medium bg-primary/5 dark:bg-primary/10'
-                  : 'text-gray-700 dark:text-slate-300'
-                }
-                hover:bg-gray-50 dark:hover:bg-slate-700`}>
-              <Icon className="w-3.5 h-3.5" />
-              {opt.label}
-              {theme === opt.value && <span className="ml-auto text-primary">✓</span>}
-            </DropdownMenuItem>
-          );
-        })}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
 // ── Sidebar ───────────────────────────────────────────────────────────────────
 
 interface SidebarProps {
@@ -158,29 +100,23 @@ function Sidebar({ onClose }: SidebarProps) {
   })).filter(group => group.items.length > 0);
 
   return (
-    <div className="flex flex-col h-full border-r transition-colors
-      bg-white border-gray-200
-      dark:bg-slate-900 dark:border-slate-800">
+    <div className="flex flex-col h-full bg-white border-r border-slate-200">
 
       {/* Logo + close */}
-      <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200 dark:border-slate-800">
+      <div className="px-5 py-4 border-b border-slate-200 bg-slate-900">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0
-            bg-primary/10 border border-primary/20
-            dark:bg-primary/20 dark:border-primary/30">
-            <Shield className="w-4 h-4 text-primary" />
+          <div className="w-9 h-9 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center shrink-0">
+            <Shield className="w-5 h-5 text-white" />
           </div>
           <div className="min-w-0">
-            <p className="font-semibold text-sm leading-tight truncate text-gray-900 dark:text-white">
+            <p className="font-bold text-white text-sm leading-tight">
               Admin Portal
             </p>
-            <p className="text-[10px] truncate text-gray-400 dark:text-slate-500">JA Plan Studio</p>
+            <p className="text-xs text-slate-400">JA Plan Studio</p>
           </div>
         </div>
         {onClose && (
-          <button onClick={onClose} className="lg:hidden p-1 rounded
-            text-gray-400 hover:text-gray-700
-            dark:text-slate-400 dark:hover:text-white">
+          <button onClick={onClose} className="lg:hidden absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10">
             <X className="w-4 h-4" />
           </button>
         )}
@@ -188,33 +124,27 @@ function Sidebar({ onClose }: SidebarProps) {
 
       {/* Admin info */}
       {admin && (
-        <div className="px-4 py-3 border-b border-gray-200 dark:border-slate-800">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm font-bold
-              bg-primary/10 text-primary dark:bg-primary/20">
-              {admin.name.charAt(0)}
+        <div className="px-4 py-3 border-b border-slate-100 bg-slate-50">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+              <span className="text-primary font-bold text-xs">{admin.name.charAt(0)}</span>
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold truncate text-gray-900 dark:text-white">{admin.name}</p>
-              <p className="text-[10px] truncate text-gray-400 dark:text-slate-500">{admin.email}</p>
+              <p className="text-xs font-semibold text-slate-800 truncate">{admin.name}</p>
+              <p className="text-xs text-slate-500 truncate">{admin.email}</p>
             </div>
-          </div>
-          <div className="mt-2">
-            <span className={`inline-flex items-center text-[10px] px-2 py-0.5 rounded-full border font-medium
-              ${getAdminRoleColor(admin)}`}>
-              {getAdminRoleLabel(admin)}
+            <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-bold shrink-0 border border-primary/20 uppercase tracking-wide">
+              Admin
             </span>
           </div>
         </div>
       )}
 
       {/* Nav groups */}
-      <ScrollArea className="flex-1 py-3">
-        <nav className="px-3 space-y-4">
+      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-4">
           {visibleGroups.map((group) => (
             <div key={group.label}>
-              <p className="text-[10px] font-semibold uppercase tracking-wider px-2 mb-1
-                text-gray-400 dark:text-slate-600">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-1">
                 {group.label}
               </p>
               <div className="space-y-0.5">
@@ -227,50 +157,43 @@ function Sidebar({ onClose }: SidebarProps) {
                       key={item.href}
                       to={item.href}
                       onClick={onClose}
-                      className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm transition-colors group
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all group
                         ${isActive
                           ? 'bg-primary text-white shadow-sm'
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800'
+                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                         }`}
                     >
-                      <Icon className="w-4 h-4 shrink-0" />
-                      <span className="flex-1 truncate text-sm">{item.label}</span>
+                      <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-600'}`} />
+                      <span className="flex-1 truncate">{item.label}</span>
                       {item.badge && (
                         <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium
                           ${isActive ? 'bg-white/20 text-white' : 'bg-red-500 text-white'}`}>
                           {item.badge}
                         </span>
                       )}
-                      {isActive && <ChevronRight className="w-3 h-3 shrink-0 opacity-70" />}
+                      {isActive && <ChevronRight className="w-3.5 h-3.5 text-white/60 shrink-0" />}
                     </Link>
                   );
                 })}
               </div>
             </div>
           ))}
-        </nav>
-      </ScrollArea>
+      </nav>
 
       {/* Footer */}
-      <div className="p-3 border-t space-y-1 border-gray-200 dark:border-slate-800">
-        <a href="/" target="_blank" rel="noopener noreferrer"
-          className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs transition-colors
-            text-gray-400 hover:text-gray-600 hover:bg-gray-100
-            dark:text-slate-500 dark:hover:text-slate-300 dark:hover:bg-slate-800">
-          <Globe className="w-3.5 h-3.5" />
-          View Live Site
-        </a>
-        <Button
-          variant="ghost"
-          size="sm"
+      <div className="px-2 py-3 border-t border-slate-200 space-y-0.5">
+        <Link to="/dashboard" onClick={onClose}
+          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all">
+          <Users className="w-4 h-4 text-slate-400" />
+          Customer Dashboard
+        </Link>
+        <button
           onClick={handleLogout}
-          className="w-full justify-start gap-2 text-sm
-            text-gray-500 hover:text-red-600 hover:bg-red-50
-            dark:text-slate-400 dark:hover:text-red-400 dark:hover:bg-red-400/10"
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-all"
         >
           <LogOut className="w-4 h-4" />
           Sign Out
-        </Button>
+        </button>
       </div>
     </div>
   );
@@ -279,14 +202,35 @@ function Sidebar({ onClose }: SidebarProps) {
 // ── Layout wrapper (inner — has access to theme context) ──────────────────────
 
 interface AdminLayoutInnerProps {
-  children: React.ReactNode;
+  children: ReactNode;
   title?: string;
-  subtitle?: string;
 }
 
-function AdminLayoutInner({ children, title, subtitle }: AdminLayoutInnerProps) {
-  const { admin, isLoading } = useAdmin();
+function AdminLayoutInner({ children, title }: AdminLayoutInnerProps) {
+  const { admin, isLoading, logout } = useAdmin();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const visibleItems = NAV_GROUPS.flatMap(group => group.items)
+    .filter(item => admin && hasPermission(admin, item.section));
+  const currentItem = visibleItems.find(item =>
+    location.pathname === item.href ||
+    (item.href !== '/admin/dashboard' && location.pathname.startsWith(item.href))
+  );
+  const currentGroup = NAV_GROUPS.find(group =>
+    group.items.some(item => item.href === currentItem?.href)
+  );
+
+  async function handleLogout() {
+    await logout();
+    navigate('/admin', { replace: true });
+  }
+
+  // Profile Studio's administration portal is intentionally light-only.
+  useEffect(() => {
+    document.documentElement.classList.remove('dark');
+  }, []);
 
   // Redirect to admin login if session is gone (expired or never set)
   useEffect(() => {
@@ -300,8 +244,8 @@ function AdminLayoutInner({ children, title, subtitle }: AdminLayoutInnerProps) 
   // before we know whether the admin is authenticated.
   if (isLoading || !admin) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-slate-950">
-        <div className="flex flex-col items-center gap-3 text-gray-400 dark:text-slate-500">
+      <div className="flex h-screen items-center justify-center bg-slate-50">
+        <div className="flex flex-col items-center gap-3 text-slate-400">
           <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           <span className="text-sm">Loading admin portal…</span>
         </div>
@@ -310,96 +254,211 @@ function AdminLayoutInner({ children, title, subtitle }: AdminLayoutInnerProps) 
   }
 
   return (
-    <div
-      className="flex h-screen overflow-hidden transition-colors bg-gray-50 dark:bg-slate-950"
-    >
+    <div className="admin-portal min-h-screen bg-slate-50 flex">
 
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex flex-col w-60 shrink-0">
+      <aside className="hidden lg:flex w-60 xl:w-64 flex-col border-r border-slate-200 bg-white shrink-0 fixed inset-y-0 left-0 z-30 shadow-sm">
         <Sidebar />
       </aside>
 
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 flex">
-          <div className="fixed inset-0 bg-black/50" onClick={() => setSidebarOpen(false)} />
-          <aside className="relative w-60 flex flex-col z-10">
+        <div className="lg:hidden fixed inset-0 z-40 flex">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
+          <aside className="relative w-72 bg-white flex flex-col z-50 shadow-2xl">
             <Sidebar onClose={() => setSidebarOpen(false)} />
           </aside>
         </div>
       )}
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+      <div className="flex-1 lg:ml-60 xl:ml-64 flex flex-col min-h-screen">
         {/* Top bar */}
-        <header className="flex items-center justify-between px-4 py-3 border-b shrink-0 transition-colors
-          bg-white border-gray-200 shadow-sm
-          dark:bg-slate-900 dark:border-slate-800 dark:shadow-none">
-          <div className="flex items-center gap-3">
+        <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur-xl px-4 sm:px-6 py-0 flex items-center gap-4 shadow-sm h-14">
+          <div className="flex-1 flex items-center gap-2 min-w-0">
             <button
-              className="lg:hidden p-1.5 rounded-lg transition-colors
-                text-gray-500 hover:text-gray-900 hover:bg-gray-100
-                dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800"
+              className="lg:hidden p-2 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors"
               onClick={() => setSidebarOpen(true)}
               aria-label="Open navigation"
             >
               <Menu className="w-5 h-5" />
             </button>
-            {title && (
-              <div>
-                <h1 className="font-semibold text-sm leading-tight text-gray-900 dark:text-white">
-                  {title}
-                </h1>
-                {subtitle && (
-                  <p className="text-xs text-gray-500 dark:text-slate-400">{subtitle}</p>
-                )}
-              </div>
+            <span className="text-xs text-slate-400 hidden sm:block shrink-0">Admin</span>
+            {currentGroup && (
+              <>
+                <ChevronRight className="w-3.5 h-3.5 text-slate-300 hidden sm:block shrink-0" />
+                <span className="text-xs text-slate-400 hidden sm:block shrink-0">{currentGroup.label}</span>
+              </>
             )}
+            <ChevronRight className="w-3.5 h-3.5 text-slate-300 shrink-0" />
+            <span className="text-sm font-semibold text-slate-800 truncate">{currentItem?.label || title || 'Admin Portal'}</span>
           </div>
 
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            <button
-              className="relative p-1.5 rounded-lg transition-colors
-                text-gray-500 hover:text-gray-900 hover:bg-gray-100
-                dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800"
-              aria-label="Notifications"
-            >
+          <div className="flex items-center gap-1.5 shrink-0">
+            <Link to="/admin/support" className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors border border-slate-200">
+              <Send className="w-3.5 h-3.5" /> Support
+            </Link>
+            <button className="p-2 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors" aria-label="Notifications">
               <Bell className="w-4 h-4" />
-              <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-red-500 rounded-full" />
             </button>
-            <div className="hidden sm:flex items-center gap-2 pl-2 border-l border-gray-200 dark:border-slate-700">
-              <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold
-                bg-primary/10 text-primary dark:bg-primary/20">
+            <div className="hidden sm:flex items-center gap-2 pl-2 border-l border-slate-200 ml-1">
+              <div className="w-7 h-7 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center">
+                <span className="text-primary font-bold text-xs">
                 {admin?.name?.charAt(0) ?? 'A'}
+                </span>
               </div>
-              <span className="text-xs text-gray-700 dark:text-slate-300">{admin?.name}</span>
+              <span className="text-xs font-medium text-slate-700">{admin?.name?.split(' ')[0]}</span>
             </div>
           </div>
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-auto bg-gray-50 dark:bg-slate-950">
-          <div className="p-5 max-w-screen-2xl mx-auto">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-10">
+          <div key={location.pathname}>
             {children}
           </div>
         </main>
       </div>
+
+      <AdminMobileBottomNav
+        visibleItems={visibleItems}
+        pathname={location.pathname}
+        onLogout={handleLogout}
+      />
     </div>
+  );
+}
+
+// ── Mobile bottom nav ────────────────────────────────────────────────────────
+
+const MOBILE_PRIMARY_PATHS = [
+  '/admin/dashboard',
+  '/admin/users',
+  '/admin/builders',
+  '/admin/site-settings',
+];
+
+function AdminMobileBottomNav({
+  visibleItems,
+  pathname,
+  onLogout,
+}: {
+  visibleItems: NavItem[];
+  pathname: string;
+  onLogout: () => void;
+}) {
+  const [moreOpen, setMoreOpen] = useState(false);
+  const primary = MOBILE_PRIMARY_PATHS
+    .map(path => visibleItems.find(item => item.href === path))
+    .filter((item): item is NavItem => Boolean(item));
+  const more = visibleItems.filter(item => !MOBILE_PRIMARY_PATHS.includes(item.href));
+  const isActive = (item: NavItem) => pathname === item.href ||
+    (item.href !== '/admin/dashboard' && pathname.startsWith(item.href));
+  const isMoreActive = more.some(isActive);
+
+  return (
+    <>
+      <nav
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-30 border-t border-slate-200 bg-white/98 backdrop-blur-xl"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+      >
+        <div className="flex items-stretch">
+          {primary.map(item => {
+            const active = isActive(item);
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                to={item.href}
+                onClick={() => setMoreOpen(false)}
+                className={`flex-1 flex flex-col items-center justify-center gap-1 py-3 min-h-[60px] transition-colors ${
+                  active ? 'text-primary' : 'text-slate-400'
+                }`}
+                aria-current={active ? 'page' : undefined}
+              >
+                <Icon className="w-5 h-5" />
+                <span className="text-[10px] font-medium leading-none">{item.label}</span>
+              </Link>
+            );
+          })}
+          <button
+            onClick={() => setMoreOpen(open => !open)}
+            className={`flex-1 flex flex-col items-center justify-center gap-1 py-3 min-h-[60px] transition-colors ${
+              isMoreActive || moreOpen ? 'text-primary' : 'text-slate-400'
+            }`}
+            aria-label="More admin options"
+            aria-expanded={moreOpen}
+          >
+            {moreOpen ? <X className="w-5 h-5" /> : <MoreHorizontal className="w-5 h-5" />}
+            <span className="text-[10px] font-medium leading-none">More</span>
+          </button>
+        </div>
+      </nav>
+
+      {moreOpen && (
+        <div className="lg:hidden fixed inset-0 z-40 flex flex-col justify-end">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setMoreOpen(false)} />
+          <div
+            className="relative bg-white border-t border-slate-200 rounded-t-3xl shadow-2xl max-h-[78vh] flex flex-col"
+            style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 68px)' }}
+          >
+            <div className="flex justify-center pt-3 pb-1 shrink-0">
+              <div className="w-10 h-1 rounded-full bg-slate-200" />
+            </div>
+            <div className="px-5 pb-2 shrink-0 flex items-center justify-between">
+              <h2 className="text-sm font-bold text-slate-800">All Sections</h2>
+              <button onClick={() => setMoreOpen(false)} className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100" aria-label="Close all sections">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="overflow-y-auto flex-1 px-4 pb-2">
+              <div className="grid grid-cols-2 gap-2">
+                {more.map(item => {
+                  const active = isActive(item);
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.href}
+                      to={item.href}
+                      onClick={() => setMoreOpen(false)}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium transition-all ${
+                        active
+                          ? 'bg-primary text-white shadow-sm'
+                          : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-100'
+                      }`}
+                    >
+                      <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-white' : 'text-slate-400'}`} />
+                      <span className="flex-1 leading-tight text-xs">{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+              <button
+                onClick={() => { setMoreOpen(false); onLogout(); }}
+                className="mt-3 w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 transition-colors"
+              >
+                <LogOut className="w-4 h-4 shrink-0" />
+                Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
 // ── Public export ─────────────────────────────────────────────────────────────
 
 interface AdminLayoutProps {
-  children: React.ReactNode;
+  children: ReactNode;
   title?: string;
   subtitle?: string;
 }
 
-export default function AdminLayout({ children, title, subtitle }: AdminLayoutProps) {
+export default function AdminLayout({ children, title }: AdminLayoutProps) {
   return (
-    <AdminLayoutInner title={title} subtitle={subtitle}>
+    <AdminLayoutInner title={title}>
       {children}
     </AdminLayoutInner>
   );
