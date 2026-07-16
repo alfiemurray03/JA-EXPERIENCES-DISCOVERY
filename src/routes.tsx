@@ -16,10 +16,8 @@ const AuthCallbackPage = lazy(() => import('./pages/auth-callback'));
 const AuthLogoutPage   = lazy(() => import('./pages/auth-logout'));
 const AuthOidcStartPage = lazy(() => import('./pages/auth-oidc-start'));
 const DashboardPage = lazy(() => import('./pages/dashboard'));
-const DocumentsPage = lazy(() => import('./pages/documents'));
-const DocumentAuditPage = lazy(() => import('./pages/documents/audit'));
 const BuildersHubPage = lazy(() => import('./pages/builders-hub'));
-const DocumentViewPage = lazy(() => import('./pages/document-view'));
+const ExperienceBuilderPage = lazy(() => import('./pages/experience-builder'));
 const PricingPage = lazy(() => import('./pages/pricing'));
 const SettingsPage = lazy(() => import('./pages/settings'));
 const SupportPage = lazy(() => import('./pages/support'));
@@ -30,16 +28,6 @@ const CookiesPage = lazy(() => import('./pages/cookies'));
 const AcceptableUsePage = lazy(() => import('./pages/acceptable-use'));
 const ContactPage = lazy(() => import('./pages/contact'));
 const DiscoveryPage = lazy(() => import('./pages/discovery'));
-const LetterBuilderPage = lazy(() => import('./pages/letter-builder'));
-const EmailBuilderPage = lazy(() => import('./pages/email-builder'));
-const InvoiceBuilderPage = lazy(() => import('./pages/invoice-builder'));
-const ContractBuilderPage = lazy(() => import('./pages/contract-builder'));
-const PolicyBuilderPage = lazy(() => import('./pages/policy-builder'));
-const FormBuilderPage = lazy(() => import('./pages/form-builder'));
-const ReportBuilderPage = lazy(() => import('./pages/report-builder'));
-const MinutesBuilderPage = lazy(() => import('./pages/minutes-builder'));
-const ProposalBuilderPage = lazy(() => import('./pages/proposal-builder'));
-const ChecklistBuilderPage = lazy(() => import('./pages/checklist-builder'));
 
 // Plan detail pages
 
@@ -88,65 +76,6 @@ const ResellerResourcesPage = lazy(() => import('./pages/reseller/resources'));
 const ResellerSupportPage = lazy(() => import('./pages/reseller/support'));
 const ResellerSettingsPage = lazy(() => import('./pages/reseller/settings'));
 
-import BuilderPlaceholder from './pages/builders/placeholder';
-
-// Helper: wrap a placeholder builder page
-function builderPlaceholder(name: string) {
-  const El = () => <BuilderPlaceholder builderName={name} />;
-  El.displayName = `Placeholder_${name}`;
-  return El;
-}
-
-// Placeholder builder page components (lazy-loaded inline)
-const QuoteBuilderPage               = builderPlaceholder('Quote Builder');
-const EstimateBuilderPage            = builderPlaceholder('Estimate Builder');
-const PurchaseOrderBuilderPage       = builderPlaceholder('Purchase Order Builder');
-const BusinessPlanBuilderPage        = builderPlaceholder('Business Plan Builder');
-const ProjectPlanBuilderPage         = builderPlaceholder('Project Plan Builder');
-const ActionPlanBuilderPage          = builderPlaceholder('Action Plan Builder');
-const ServiceAgreementBuilderPage    = builderPlaceholder('Service Agreement Builder');
-const ConsultancyAgreementBuilderPage= builderPlaceholder('Consultancy Agreement Builder');
-const SupplierAgreementBuilderPage   = builderPlaceholder('Supplier Agreement Builder');
-const AgendaBuilderPage              = builderPlaceholder('Agenda Builder');
-const ResolutionBuilderPage          = builderPlaceholder('Resolution Builder');
-const MeetingNoticeBuilderPage       = builderPlaceholder('Meeting Notice Builder');
-const BoardMinutesBuilderPage        = builderPlaceholder('Board Minutes Builder');
-const BoardPackBuilderPage           = builderPlaceholder('Board Pack Builder');
-const ShareholderResolutionBuilderPage = builderPlaceholder('Shareholder Resolution Builder');
-const DirectorResolutionBuilderPage  = builderPlaceholder('Director Resolution Builder');
-const CompanyRecordBuilderPage       = builderPlaceholder('Company Record Builder');
-const JobDescriptionBuilderPage      = builderPlaceholder('Job Description Builder');
-const EmploymentContractBuilderPage  = builderPlaceholder('Employment Contract Builder');
-const OfferLetterBuilderPage         = builderPlaceholder('Offer Letter Builder');
-const StaffHandbookBuilderPage       = builderPlaceholder('Staff Handbook Builder');
-const RecruitmentPackBuilderPage     = builderPlaceholder('Recruitment Pack Builder');
-const AppraisalBuilderPage           = builderPlaceholder('Appraisal Builder');
-const TrainingRecordBuilderPage      = builderPlaceholder('Training Record Builder');
-const DisciplinaryLetterBuilderPage  = builderPlaceholder('Disciplinary Letter Builder');
-const GrievanceLetterBuilderPage     = builderPlaceholder('Grievance Letter Builder');
-const PrivacyPolicyBuilderPage       = builderPlaceholder('Privacy Policy Builder');
-const GdprBuilderPage                = builderPlaceholder('GDPR Builder');
-const DpiaBuilderPage                = builderPlaceholder('DPIA Builder');
-const RiskAssessmentBuilderPage      = builderPlaceholder('Risk Assessment Builder');
-const MethodStatementBuilderPage     = builderPlaceholder('Method Statement Builder');
-const IncidentReportBuilderPage      = builderPlaceholder('Incident Report Builder');
-const HealthSafetyPolicyBuilderPage  = builderPlaceholder('Health & Safety Policy Builder');
-const ComplaintsProcedureBuilderPage = builderPlaceholder('Complaints Procedure Builder');
-const EqualityPolicyBuilderPage      = builderPlaceholder('Equality Policy Builder');
-const CertificateBuilderPage         = builderPlaceholder('Certificate Builder');
-const AssessmentBuilderPage          = builderPlaceholder('Assessment Builder');
-const WorkbookBuilderPage            = builderPlaceholder('Workbook Builder');
-const LessonPlanBuilderPage          = builderPlaceholder('Lesson Plan Builder');
-const CourseBuilderPage              = builderPlaceholder('Course Builder');
-const CourseOutlineBuilderPage       = builderPlaceholder('Course Outline Builder');
-const TrainingCertificateBuilderPage = builderPlaceholder('Training Certificate Builder');
-const MembershipFormBuilderPage      = builderPlaceholder('Membership Form Builder');
-const MembershipCertificateBuilderPage = builderPlaceholder('Membership Certificate Builder');
-const VolunteerAgreementBuilderPage  = builderPlaceholder('Volunteer Agreement Builder');
-const TrusteeMinutesBuilderPage      = builderPlaceholder('Trustee Minutes Builder');
-const GrantApplicationBuilderPage    = builderPlaceholder('Grant Application Builder');
-const CharityPolicyBuilderPage       = builderPlaceholder('Charity Policy Builder');
-const EventPlanBuilderPage           = builderPlaceholder('Event Plan Builder');
 
 // Admin portal-nav management page
 const AdminPortalNavPage = lazy(() => import('./pages/admin/portal-nav'));
@@ -258,15 +187,15 @@ export const routes: RouteObject[] = [
   },
   {
     path: '/documents',
-    element: wrap(<RequireAuth><DocumentsPage /></RequireAuth>),
+    element: <Navigate to="/builders" replace />,
   },
   {
     path: '/documents/audit',
-    element: wrap(<RequireAuth><DocumentAuditPage /></RequireAuth>),
+    element: <Navigate to="/builders" replace />,
   },
   {
     path: '/documents/:docId',
-    element: wrap(<RequireAuth><DocumentViewPage /></RequireAuth>),
+    element: <Navigate to="/builders" replace />,
   },
   {
     path: '/builders',
@@ -276,107 +205,18 @@ export const routes: RouteObject[] = [
     path: '/templates',
     element: <Navigate to="/builders" replace />,
   },
-  {
-    path: '/letter-builder',
-    element: wrap(<RequireAuth><LetterBuilderPage /></RequireAuth>),
-  },
-  {
-    path: '/email-builder',
-    element: wrap(<RequireAuth><EmailBuilderPage /></RequireAuth>),
-  },
-  {
-    // Redirect old URL to new
-    path: '/email-templates',
-    element: wrap(<Navigate to="/email-builder" replace />),
-  },
-  {
-    path: '/invoice-builder',
-    element: wrap(<RequireAuth><InvoiceBuilderPage /></RequireAuth>),
-  },
-  {
-    path: '/contract-builder',
-    element: wrap(<RequireAuth><ContractBuilderPage /></RequireAuth>),
-  },
-  {
-    path: '/policy-builder',
-    element: wrap(<RequireAuth><PolicyBuilderPage /></RequireAuth>),
-  },
-  {
-    path: '/form-builder',
-    element: wrap(<RequireAuth><FormBuilderPage /></RequireAuth>),
-  },
-  {
-    path: '/report-builder',
-    element: wrap(<RequireAuth><ReportBuilderPage /></RequireAuth>),
-  },
-  {
-    path: '/minutes-builder',
-    element: wrap(<RequireAuth><MinutesBuilderPage /></RequireAuth>),
-  },
-  {
-    path: '/proposal-builder',
-    element: wrap(<RequireAuth><ProposalBuilderPage /></RequireAuth>),
-  },
-  {
-    path: '/checklist-builder',
-    element: wrap(<RequireAuth><ChecklistBuilderPage /></RequireAuth>),
-  },
-  // ── New builder routes (placeholder pages) ─────────────────────────
-  // Business builders
-  { path: '/builders/quote',               element: wrap(<RequireAuth><QuoteBuilderPage /></RequireAuth>) },
-  { path: '/builders/estimate',            element: wrap(<RequireAuth><EstimateBuilderPage /></RequireAuth>) },
-  { path: '/builders/purchase-order',      element: wrap(<RequireAuth><PurchaseOrderBuilderPage /></RequireAuth>) },
-  { path: '/builders/business-plan',       element: wrap(<RequireAuth><BusinessPlanBuilderPage /></RequireAuth>) },
-  { path: '/builders/project-plan',        element: wrap(<RequireAuth><ProjectPlanBuilderPage /></RequireAuth>) },
-  { path: '/builders/action-plan',         element: wrap(<RequireAuth><ActionPlanBuilderPage /></RequireAuth>) },
-  { path: '/builders/service-agreement',   element: wrap(<RequireAuth><ServiceAgreementBuilderPage /></RequireAuth>) },
-  { path: '/builders/consultancy-agreement', element: wrap(<RequireAuth><ConsultancyAgreementBuilderPage /></RequireAuth>) },
-  { path: '/builders/supplier-agreement',  element: wrap(<RequireAuth><SupplierAgreementBuilderPage /></RequireAuth>) },
-  // Governance builders
-  { path: '/builders/agenda',              element: wrap(<RequireAuth><AgendaBuilderPage /></RequireAuth>) },
-  { path: '/builders/resolution',          element: wrap(<RequireAuth><ResolutionBuilderPage /></RequireAuth>) },
-  { path: '/builders/meeting-notice',      element: wrap(<RequireAuth><MeetingNoticeBuilderPage /></RequireAuth>) },
-  { path: '/builders/board-minutes',       element: wrap(<RequireAuth><BoardMinutesBuilderPage /></RequireAuth>) },
-  { path: '/builders/board-pack',          element: wrap(<RequireAuth><BoardPackBuilderPage /></RequireAuth>) },
-  { path: '/builders/shareholder-resolution', element: wrap(<RequireAuth><ShareholderResolutionBuilderPage /></RequireAuth>) },
-  { path: '/builders/director-resolution', element: wrap(<RequireAuth><DirectorResolutionBuilderPage /></RequireAuth>) },
-  { path: '/builders/company-record',      element: wrap(<RequireAuth><CompanyRecordBuilderPage /></RequireAuth>) },
-  // HR builders
-  { path: '/builders/job-description',     element: wrap(<RequireAuth><JobDescriptionBuilderPage /></RequireAuth>) },
-  { path: '/builders/employment-contract', element: wrap(<RequireAuth><EmploymentContractBuilderPage /></RequireAuth>) },
-  { path: '/builders/offer-letter',        element: wrap(<RequireAuth><OfferLetterBuilderPage /></RequireAuth>) },
-  { path: '/builders/staff-handbook',      element: wrap(<RequireAuth><StaffHandbookBuilderPage /></RequireAuth>) },
-  { path: '/builders/recruitment-pack',    element: wrap(<RequireAuth><RecruitmentPackBuilderPage /></RequireAuth>) },
-  { path: '/builders/appraisal',           element: wrap(<RequireAuth><AppraisalBuilderPage /></RequireAuth>) },
-  { path: '/builders/training-record',     element: wrap(<RequireAuth><TrainingRecordBuilderPage /></RequireAuth>) },
-  { path: '/builders/disciplinary-letter', element: wrap(<RequireAuth><DisciplinaryLetterBuilderPage /></RequireAuth>) },
-  { path: '/builders/grievance-letter',    element: wrap(<RequireAuth><GrievanceLetterBuilderPage /></RequireAuth>) },
-  // Compliance builders
-  { path: '/builders/privacy-policy',      element: wrap(<RequireAuth><PrivacyPolicyBuilderPage /></RequireAuth>) },
-  { path: '/builders/gdpr',                element: wrap(<RequireAuth><GdprBuilderPage /></RequireAuth>) },
-  { path: '/builders/dpia',                element: wrap(<RequireAuth><DpiaBuilderPage /></RequireAuth>) },
-  { path: '/builders/risk-assessment',     element: wrap(<RequireAuth><RiskAssessmentBuilderPage /></RequireAuth>) },
-  { path: '/builders/method-statement',    element: wrap(<RequireAuth><MethodStatementBuilderPage /></RequireAuth>) },
-  { path: '/builders/incident-report',     element: wrap(<RequireAuth><IncidentReportBuilderPage /></RequireAuth>) },
-  { path: '/builders/health-safety-policy',element: wrap(<RequireAuth><HealthSafetyPolicyBuilderPage /></RequireAuth>) },
-  { path: '/builders/complaints-procedure',element: wrap(<RequireAuth><ComplaintsProcedureBuilderPage /></RequireAuth>) },
-  { path: '/builders/equality-policy',     element: wrap(<RequireAuth><EqualityPolicyBuilderPage /></RequireAuth>) },
-  // Education builders
-  { path: '/builders/certificate',         element: wrap(<RequireAuth><CertificateBuilderPage /></RequireAuth>) },
-  { path: '/builders/assessment',          element: wrap(<RequireAuth><AssessmentBuilderPage /></RequireAuth>) },
-  { path: '/builders/workbook',            element: wrap(<RequireAuth><WorkbookBuilderPage /></RequireAuth>) },
-  { path: '/builders/lesson-plan',         element: wrap(<RequireAuth><LessonPlanBuilderPage /></RequireAuth>) },
-  { path: '/builders/course',              element: wrap(<RequireAuth><CourseBuilderPage /></RequireAuth>) },
-  { path: '/builders/course-outline',      element: wrap(<RequireAuth><CourseOutlineBuilderPage /></RequireAuth>) },
-  { path: '/builders/training-certificate',element: wrap(<RequireAuth><TrainingCertificateBuilderPage /></RequireAuth>) },
-  // Charity & Membership builders
-  { path: '/builders/membership-form',        element: wrap(<RequireAuth><MembershipFormBuilderPage /></RequireAuth>) },
-  { path: '/builders/membership-certificate', element: wrap(<RequireAuth><MembershipCertificateBuilderPage /></RequireAuth>) },
-  { path: '/builders/volunteer-agreement',    element: wrap(<RequireAuth><VolunteerAgreementBuilderPage /></RequireAuth>) },
-  { path: '/builders/trustee-minutes',        element: wrap(<RequireAuth><TrusteeMinutesBuilderPage /></RequireAuth>) },
-  { path: '/builders/grant-application',      element: wrap(<RequireAuth><GrantApplicationBuilderPage /></RequireAuth>) },
-  { path: '/builders/charity-policy',         element: wrap(<RequireAuth><CharityPolicyBuilderPage /></RequireAuth>) },
-  { path: '/builders/event-plan',             element: wrap(<RequireAuth><EventPlanBuilderPage /></RequireAuth>) },
+  { path: '/letter-builder', element: <Navigate to="/builders" replace /> },
+  { path: '/email-builder', element: <Navigate to="/builders" replace /> },
+  { path: '/email-templates', element: <Navigate to="/builders" replace /> },
+  { path: '/invoice-builder', element: <Navigate to="/builders" replace /> },
+  { path: '/contract-builder', element: <Navigate to="/builders" replace /> },
+  { path: '/policy-builder', element: <Navigate to="/builders" replace /> },
+  { path: '/form-builder', element: <Navigate to="/builders" replace /> },
+  { path: '/report-builder', element: <Navigate to="/builders" replace /> },
+  { path: '/minutes-builder', element: <Navigate to="/builders" replace /> },
+  { path: '/proposal-builder', element: <Navigate to="/builders" replace /> },
+  { path: '/checklist-builder', element: <Navigate to="/builders" replace /> },
+  { path: '/builders/:builderId', element: wrap(<RequireAuth><ExperienceBuilderPage /></RequireAuth>) },
   {
     path: '/pricing',
     element: wrap(<PricingPage />),
