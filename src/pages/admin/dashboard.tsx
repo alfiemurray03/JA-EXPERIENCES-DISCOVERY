@@ -5,26 +5,13 @@ import { useState, useEffect, useCallback } from 'react';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import { Link } from 'react-router-dom';
 import AdminLayout from '@/components/AdminLayout';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { useAdmin } from '@/lib/admin-context';
 import {
-  Users, FileText, CreditCard, Activity,
-  CheckCircle2, Server, ShieldCheck,
-  FileCheck, MessageSquare, ArrowRight, RefreshCw,
-  Globe, HeadphonesIcon, PenLine, UserCheck, Building2,
-  FileEdit, LayoutDashboard, Settings, ClipboardList, Lock,
+  Users, CreditCard, Activity, Server, ShieldCheck,
+  MessageSquare, ArrowRight, RefreshCw, HeartPulse,
+  Settings, ClipboardList, AlertTriangle, UserCheck,
 } from 'lucide-react';
-
-interface AdminUser {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  isPlatformOwner: boolean;
-  isVerified: boolean;
-  createdAt: string;
-  lastLogin?: string;
-}
 
 interface PlatformStats {
   totalUsers: number;
@@ -45,32 +32,30 @@ interface TicketStats {
   total: number;
 }
 
-const systemServices = [
-  { service: 'Web Application',    status: 'operational' },
-  { service: 'Document Generation', status: 'operational' },
-  { service: 'PDF Export',          status: 'operational' },
-  { service: 'Authentication',      status: 'operational' },
-  { service: 'Storage',             status: 'operational' },
-];
+interface OperationalOverview {
+  customers: number;
+  lifetimeUsers: number;
+  activePlans: number;
+  supportTickets: number;
+  dataProtectionRequests: number;
+  systemReports: number;
+  openIssues: number;
+  admins: number;
+  launchGatewayStatus: string;
+  maintenanceStatus: string;
+}
 
 export default function AdminDashboard() {
   const { admin } = useAdmin();
 
-  const [adminUsers, setAdminUsers]     = useState<AdminUser[]>([]);
-  const [loadingUsers, setLoadingUsers] = useState(true);
   const [stats, setStats]               = useState<PlatformStats | null>(null);
   const [loadingStats, setLoadingStats] = useState(true);
   const [refreshing, setRefreshing]     = useState(false);
   const [ticketStats, setTicketStats]   = useState<TicketStats>({ open: 0, in_progress: 0, resolved: 0, closed: 0, urgent: 0, total: 0 });
+  const [overview, setOverview]         = useState<OperationalOverview | null>(null);
 
   const loadDashboard = useCallback((refresh = false) => {
     if (refresh) setRefreshing(true);
-
-    const usersRequest = fetch('/api/admin/users', { credentials: 'include' })
-      .then(r => r.json())
-      .then((d: { success: boolean; users: AdminUser[] }) => { if (d.success) setAdminUsers(d.users); })
-      .catch(() => {})
-      .finally(() => setLoadingUsers(false));
 
     const statsRequest = fetch('/api/admin/stats', { credentials: 'include' })
       .then(r => r.json())
@@ -87,7 +72,12 @@ export default function AdminDashboard() {
       })
       .catch(() => {});
 
-    Promise.allSettled([usersRequest, statsRequest, ticketsRequest])
+    const overviewRequest = fetch('/api/admin/section/overview', { credentials: 'include' })
+      .then(r => r.json())
+      .then((d: { success?: boolean; data?: OperationalOverview }) => { if (d.success && d.data) setOverview(d.data); })
+      .catch(() => {});
+
+    Promise.allSettled([statsRequest, ticketsRequest, overviewRequest])
       .finally(() => setRefreshing(false));
   }, []);
 
@@ -99,34 +89,30 @@ export default function AdminDashboard() {
 
   const now = new Date();
   const greeting = now.getHours() < 12 ? 'Good morning' : now.getHours() < 18 ? 'Good afternoon' : 'Good evening';
-  const freeUsers = stats ? (stats.totalUsers - stats.paidUsers) : 0;
+  const websiteStatus = overview?.maintenanceStatus === 'On'
+    ? 'Maintenance'
+    : overview?.launchGatewayStatus === 'On' ? 'Coming Soon' : 'Live';
 
   const statCards = [
-    { label: 'Total Customers', value: stats?.totalUsers ?? 0, icon: Users, color: 'text-blue-600', bg: 'bg-blue-100' },
-    { label: 'Generated Plans', value: stats?.totalDocuments ?? 0, icon: FileText, color: 'text-green-600', bg: 'bg-green-100' },
-    { label: 'Paid Subscribers', value: stats?.paidUsers ?? 0, icon: CreditCard, color: 'text-orange-600', bg: 'bg-orange-100' },
-    { label: 'Free Customers', value: freeUsers, icon: Activity, color: 'text-purple-600', bg: 'bg-purple-100' },
-    { label: 'Support Tickets', value: ticketStats.total, icon: MessageSquare, color: 'text-pink-600', bg: 'bg-pink-100' },
-    { label: 'Admin Accounts', value: adminUsers.length, icon: ShieldCheck, color: 'text-cyan-600', bg: 'bg-cyan-100' },
+    { label: 'Total Customers', value: overview?.customers ?? stats?.totalUsers ?? 0, note: 'All customer profiles', icon: Users, color: 'text-blue-600', bg: 'bg-blue-100' },
+    { label: 'Lifetime Members', value: overview?.lifetimeUsers ?? 0, note: 'Lifetime access enabled', icon: ShieldCheck, color: 'text-violet-600', bg: 'bg-violet-100' },
+    { label: 'Active Plans', value: overview?.activePlans ?? 0, note: 'Configured subscription plans', icon: CreditCard, color: 'text-indigo-600', bg: 'bg-indigo-100' },
+    { label: 'Revenue', value: 'Not connected', note: 'No revenue API is connected', icon: Activity, color: 'text-slate-600', bg: 'bg-slate-100' },
+    { label: 'Pending Data Requests', value: overview?.dataProtectionRequests ?? 0, note: 'Requests needing attention', icon: ClipboardList, color: 'text-amber-600', bg: 'bg-amber-100' },
+    { label: 'Support Tickets', value: overview?.supportTickets ?? ticketStats.total, note: 'Customer support records', icon: MessageSquare, color: 'text-pink-600', bg: 'bg-pink-100' },
+    { label: 'Website Status', value: websiteStatus, note: 'Saved public website mode', icon: HeartPulse, color: 'text-green-600', bg: 'bg-green-100' },
+    { label: 'Worker Status', value: 'Online', note: 'Admin API responded successfully', icon: Settings, color: 'text-cyan-600', bg: 'bg-cyan-100' },
   ];
 
   const quickLinks = [
-    { to: '/admin/users', label: 'Customers & CRM', desc: 'Customer records, access and subscriptions', icon: Users },
-    { to: '/admin/builders', label: 'Builder Manager', desc: 'Configure planning builders and templates', icon: FileText },
-    { to: '/admin/subscriptions', label: 'Plans & Pricing', desc: 'Configure subscriptions and entitlements', icon: CreditCard },
-    { to: '/admin/support', label: 'Support Centre', desc: 'Customer tickets and threaded replies', icon: HeadphonesIcon },
-    { to: '/admin/signing', label: 'Document Signing', desc: 'Signing requests, configuration and audit', icon: PenLine },
-    { to: '/admin/affiliate', label: 'Affiliate Programme', desc: 'Affiliates, referrals and conversions', icon: UserCheck },
-    { to: '/admin/resellers', label: 'Reseller Programme', desc: 'Resellers, commissions and resources', icon: Building2 },
-    { to: '/admin/pages', label: 'Website Pages', desc: 'Manage public JA Plan Studio pages', icon: Globe },
-    { to: '/admin/content', label: 'Content Manager', desc: 'Edit platform content and messaging', icon: FileEdit },
-    { to: '/admin/portal-nav', label: 'Portal Navigation', desc: 'Configure the customer portal navigation', icon: LayoutDashboard },
-    { to: '/admin/site-settings', label: 'Site Settings', desc: 'Platform identity and website controls', icon: Settings },
-    { to: '/admin/system', label: 'System Configuration', desc: 'Platform services and configuration', icon: Server },
+    { to: '/admin/health', label: 'Production Health', desc: 'Verified platform, database and integration signals', icon: HeartPulse },
+    { to: '/admin/status', label: 'Status Centre', desc: 'Live services, incidents and operational notices', icon: Activity },
+    { to: '/admin/site-settings', label: 'Live Website Status', desc: `Current public mode: ${websiteStatus}`, icon: Settings },
+    { to: '/admin/users', label: 'Customer Operations', desc: 'Customer records, access and subscriptions', icon: Users },
+    { to: '/admin/system-reports', label: 'System Reports', desc: 'Reported platform issues and resolution status', icon: AlertTriangle },
     { to: '/admin/audit', label: 'Audit Log', desc: 'Full record of administration actions', icon: ClipboardList },
-    { to: '/admin/security', label: 'Security', desc: 'Administration access and security events', icon: Lock },
-    { to: '/admin/gdpr', label: 'GDPR & SAR', desc: 'Data requests and compliance operations', icon: ShieldCheck },
-    { to: '/admin/legal', label: 'Legal Policies', desc: 'Terms, privacy and cookie policies', icon: FileCheck },
+    { to: '/admin/subscriptions', label: 'Membership', desc: 'Plans, lifetime access and entitlements', icon: UserCheck },
+    { to: '/admin/builders', label: 'Experience Builders', desc: 'Builder templates, usage and configuration', icon: Server },
   ];
 
   return (
@@ -160,7 +146,7 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             {statCards.map((stat) => {
               const Icon = stat.icon;
               return (
@@ -170,7 +156,8 @@ export default function AdminDashboard() {
                       <div className="flex items-start justify-between">
                         <div>
                           <p className="text-xs text-muted-foreground mb-1">{stat.label}</p>
-                          <p className="text-2xl font-bold text-foreground">{Number(stat.value).toLocaleString()}</p>
+                          <p className="text-2xl font-bold text-foreground">{typeof stat.value === 'number' ? stat.value.toLocaleString('en-GB') : stat.value}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{stat.note}</p>
                         </div>
                         <div className={`w-9 h-9 rounded-xl ${stat.bg} flex items-center justify-center flex-shrink-0`}>
                           <Icon className={`w-4 h-4 ${stat.color}`} />
@@ -183,10 +170,10 @@ export default function AdminDashboard() {
             })}
           </div>
 
-          <div className="grid lg:grid-cols-3 gap-6 mb-8">
-            <div className="lg:col-span-2">
+          <div className="mb-8">
+            <div>
               <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Quick Access</h2>
-              <div className="grid sm:grid-cols-2 gap-3">
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {quickLinks.map(link => {
                   const Icon = link.icon;
                   return (
@@ -208,54 +195,7 @@ export default function AdminDashboard() {
                 })}
               </div>
             </div>
-
-            <div>
-              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Admin Accounts</h2>
-              <Card className="bg-card border-border">
-                <CardContent className="p-4">
-                  {loadingUsers ? <div className="h-32 rounded animate-pulse bg-slate-100" /> : (
-                    <div className="space-y-3">
-                      {adminUsers.slice(0, 6).map(user => (
-                        <div key={user.id} className="flex items-center gap-2.5">
-                          <div className="w-7 h-7 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-                            <span className="text-red-600 text-xs font-bold">{(user.name || user.email || '?').charAt(0)}</span>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-medium text-foreground truncate">{user.name}</p>
-                            <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-                          </div>
-                        </div>
-                      ))}
-                      {!adminUsers.length && <p className="text-xs text-muted-foreground text-center py-4">No admin accounts found</p>}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
           </div>
-
-          <Card className="bg-card border-border">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Server className="w-4 h-4 text-red-500" />
-                <h2 className="text-base font-semibold">Platform Services</h2>
-              </div>
-              <Link to="/admin/system" className="text-xs text-muted-foreground hover:text-foreground">View system</Link>
-            </CardHeader>
-            <CardContent>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {systemServices.map(service => (
-                  <div key={service.service} className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 border border-border/50">
-                    <CheckCircle2 className="w-4 h-4 text-green-500" />
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{service.service}</p>
-                      <p className="text-xs text-muted-foreground">Operational</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </AdminLayout>
     </>

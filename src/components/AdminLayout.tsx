@@ -5,9 +5,9 @@ import { hasPermission } from '@/lib/admin-types';
 import {
   LayoutDashboard, Users, CreditCard, Settings,
   ClipboardList, HeadphonesIcon, ShieldCheck, BarChart2, LogOut,
-  Menu, ChevronRight, Shield, Bell, Zap, Send,
-  Globe, Wrench, FileEdit, Palette,
-  X, TestTube2, UserCheck, PenLine, Building2, Scale, MoreHorizontal,
+  Menu, ChevronRight, Shield, Bell, Send,
+  Globe, Wrench, FileEdit, Palette, Activity, FileText, HeartPulse,
+  X, UserCog, Clock, Mail, AlertTriangle, CircleDollarSign, PackagePlus, MoreHorizontal,
 } from 'lucide-react';
 
 // ── Nav structure ─────────────────────────────────────────────────────────────
@@ -27,53 +27,57 @@ interface NavGroup {
 
 const NAV_GROUPS: NavGroup[] = [
   {
-    label: 'Overview',
+    label: 'Dashboard',
     items: [
       { label: 'Dashboard',       href: '/admin/dashboard',   icon: LayoutDashboard, section: 'dashboard' },
+      { label: 'Production Health', href: '/admin/health',     icon: HeartPulse,      section: 'health' },
+      { label: 'Operations',      href: '/admin/operations',  icon: Activity,        section: 'operations' },
       { label: 'Analytics',       href: '/admin/analytics',   icon: BarChart2,       section: 'analytics' },
+      { label: 'Reports',         href: '/admin/reports',     icon: FileText,        section: 'reports' },
+      { label: 'Status Centre',   href: '/admin/status',      icon: HeartPulse,      section: 'status' },
+      { label: 'Audit Log',       href: '/admin/audit',       icon: ClipboardList,   section: 'audit' },
+    ],
+  },
+  {
+    label: 'Customer Operations',
+    items: [
+      { label: 'Customers',       href: '/admin/users',       icon: Users,           section: 'customers' },
+      { label: 'Membership',      href: '/admin/subscriptions', icon: CreditCard,    section: 'membership' },
+      { label: 'Security',        href: '/admin/security',    icon: ShieldCheck,     section: 'security' },
+      { label: 'Notifications',   href: '/admin/notifications', icon: Mail,          section: 'notifications' },
+      { label: 'Data Protection Requests', href: '/admin/gdpr', icon: Shield,        section: 'datarequests' },
+      { label: 'System Reports',  href: '/admin/system-reports', icon: AlertTriangle, section: 'systemreports' },
+      { label: 'Closure Requests', href: '/admin/closure-requests', icon: Shield,     section: 'closures' },
+      { label: 'Contact Enquiries', href: '/admin/enquiries', icon: Mail,            section: 'enquiries' },
+      { label: 'Support',         href: '/admin/support',     icon: HeadphonesIcon,  section: 'support' },
     ],
   },
   {
     label: 'Platform',
     items: [
-      { label: 'Users',           href: '/admin/users',       icon: Users,           section: 'users' },
-      { label: 'Subscriptions',   href: '/admin/subscriptions', icon: CreditCard,    section: 'subscriptions' },
-      { label: 'Affiliate Programme', href: '/admin/affiliate', icon: UserCheck,     section: 'affiliate' },
-      { label: 'Reseller Programme',  href: '/admin/resellers', icon: Building2,      section: 'resellers' },
-      { label: 'Document Signing',    href: '/admin/signing',   icon: PenLine,        section: 'signing' },
-      { label: 'Support Centre',  href: '/admin/support',     icon: HeadphonesIcon,  section: 'support' },
+      { label: 'Admin Users',     href: '/admin/admin-users', icon: UserCog,         section: 'admins' },
+      { label: 'Roles',           href: '/admin/roles',       icon: Users,           section: 'roles' },
+      { label: 'Sessions',        href: '/admin/sessions',    icon: Clock,           section: 'sessions' },
+      { label: 'Experience Builders', href: '/admin/builders', icon: Wrench,         section: 'builders' },
+      { label: 'Subscription Plans', href: '/admin/plans',        icon: CreditCard, section: 'plans' },
+      { label: 'Builder Usage Tokens', href: '/admin/credits', icon: CircleDollarSign, section: 'credits' },
+      { label: 'Customer Usage',  href: '/admin/usage',       icon: BarChart2,       section: 'usage' },
+      { label: 'Paid Add-Ons',    href: '/admin/addons',      icon: PackagePlus,     section: 'addons' },
+      { label: 'System',          href: '/admin/system',      icon: AlertTriangle,   section: 'system' },
     ],
   },
   {
     label: 'Content',
     items: [
-      { label: 'Website Pages',   href: '/admin/pages',       icon: Globe,           section: 'pages' },
-      { label: 'Content Manager', href: '/admin/content',     icon: FileEdit,        section: 'content' },
-      { label: 'Legal Pages',     href: '/admin/legal',       icon: Scale,           section: 'legal' },
-      { label: 'Builder Manager', href: '/admin/builders',    icon: Wrench,          section: 'builders' },
-      { label: 'Portal Navigation', href: '/admin/portal-nav', icon: LayoutDashboard, section: 'portal-nav' },
+      { label: 'Branding',        href: '/admin/branding',      icon: Palette,       section: 'branding' },
+      { label: 'Website CMS',     href: '/admin/content',     icon: FileEdit,        section: 'cms' },
+      { label: 'Affiliate Content', href: '/admin/affiliate-content', icon: Globe,   section: 'affiliate' },
     ],
   },
   {
-    label: 'Configuration',
+    label: 'System Settings',
     items: [
-      { label: 'Site Settings',   href: '/admin/site-settings', icon: Palette,       section: 'site-settings' },
-      { label: 'System Config',   href: '/admin/system',      icon: Settings,        section: 'system' },
-      { label: 'Stripe Management', href: '/admin/stripe-diagnostics', icon: Zap,   section: 'stripe-diagnostics' },
-    ],
-  },
-  {
-    label: 'Security & Logs',
-    items: [
-      { label: 'Audit Logs',      href: '/admin/audit',       icon: ClipboardList,   section: 'audit' },
-      { label: 'Security',        href: '/admin/security',    icon: ShieldCheck,     section: 'security' },
-      { label: 'GDPR / SAR',      href: '/admin/gdpr',        icon: Shield,          section: 'gdpr' },
-    ],
-  },
-  {
-    label: 'Developer',
-    items: [
-      { label: 'Test Tools',      href: '/admin/test-tools',  icon: TestTube2,       section: 'test-tools' },
+      { label: 'System Settings', href: '/admin/site-settings', icon: Settings,      section: 'systemsettings' },
     ],
   },
 ];
