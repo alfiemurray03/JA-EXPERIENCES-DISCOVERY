@@ -79,10 +79,10 @@ export default function Header() {
 
             <>
                 <Button variant="ghost" size="sm" asChild>
-                  <a href="/account/login?return_to=%2Fdashboard">Sign in</a>
+                  <Link to="/login">Sign in</Link>
                 </Button>
                 <Button size="sm" asChild>
-                  <a href="/account/login?return_to=%2Fdashboard">Get Started Free</a>
+                  <Link to="/login">Get Started Free</Link>
                 </Button>
               </>
             }
@@ -133,10 +133,10 @@ export default function Header() {
 
           <>
               <Button variant="outline" size="sm" asChild>
-                <a href="/account/login?return_to=%2Fdashboard" onClick={() => setMobileOpen(false)}>Sign in</a>
+                <Link to="/login" onClick={() => setMobileOpen(false)}>Sign in</Link>
               </Button>
               <Button size="sm" asChild>
-                <a href="/account/login?return_to=%2Fdashboard" onClick={() => setMobileOpen(false)}>Get Started Free</a>
+                <Link to="/login" onClick={() => setMobileOpen(false)}>Get Started Free</Link>
               </Button>
             </>
           }
