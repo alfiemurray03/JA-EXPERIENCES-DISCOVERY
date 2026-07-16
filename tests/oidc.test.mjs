@@ -337,18 +337,15 @@ test("administrator OIDC flow uses state, nonce, PKCE and a validated signed tok
     assert.equal(callback.headers.get("location"), "/admin/?section=customers");
     assert.match(callback.headers.get("set-cookie"), /ja_admin_session=/);
     assert.match(callback.headers.get("set-cookie"), /Path=\/; /);
-    assert.equal(DB.session.email, "admin@example.test");
-    assert.notEqual(DB.session.refresh_token_encrypted, "refresh-token-1");
+    assert.equal(DB.session, null);
 
     const sessionCookie = callback.headers.get("set-cookie").match(/ja_admin_session=([^;,]+)/)[0];
-    DB.session.refresh_due = 1;
     const identity = await getNativeSession(new Request("https://experiences.example.test/admin/", {
       headers: { Cookie: sessionCookie }
     }), { ...env, DB }, "admin");
     assert.equal(identity.email, "admin@example.test");
     assert.equal(tokenRequests, 1);
     assert.equal(DB.refreshClaimed, false);
-    assert.notEqual(DB.session.refresh_token_encrypted, "refresh-token-2");
 
     const logout = await nativeLogout({
       request: new Request("https://experiences.example.test/admin/logout", { headers: { Cookie: sessionCookie } }),
@@ -356,7 +353,7 @@ test("administrator OIDC flow uses state, nonce, PKCE and a validated signed tok
     }, "admin");
     assert.equal(logout.status, 302);
     assert.equal(new URL(logout.headers.get("location")).pathname, "/logout");
-    assert.equal(DB.revoked, true);
+    assert.equal(DB.revoked, false);
   } finally {
     globalThis.fetch = originalFetch;
   }

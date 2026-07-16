@@ -649,7 +649,30 @@ export async function completeLogin(context, realm) {
     }
   }
 
-  const sessionToken = randomValue(48);
+  const statelessAdminSession = realm === "admin";
+  const statelessIdentity = {
+    v: 1,
+    realm,
+    exp: Date.now() + config.absoluteMinutes * 60_000,
+    subject: String(claims.sub || ""),
+    tenantId: String(claims.tid || ""),
+    email,
+    name: String(claims.name || email).trim(),
+    objectId: firstClaim(claims, "oid", "sub"),
+    givenName: firstClaim(claims, "given_name"),
+    familyName: firstClaim(claims, "family_name"),
+    preferredUsername: firstClaim(claims, "preferred_username", "upn", "email"),
+    locale: firstClaim(claims, "locale"),
+    jobTitle: firstClaim(claims, "job_title", "jobTitle"),
+    department: firstClaim(claims, "department"),
+    companyName: firstClaim(claims, "company_name", "companyName", "organization", "organisation"),
+    country: firstClaim(claims, "country", "country_region", "countryRegion"),
+    preferredLanguage: firstClaim(claims, "preferred_language", "preferredLanguage"),
+    photoUrl: firstClaim(claims, "picture", "photo_url", "photoUrl")
+  };
+  const sessionToken = statelessAdminSession
+    ? `v2.${await stage(context, realm, "session_cookie_encryption", () => encryptSecret(JSON.stringify(statelessIdentity), context.env), { requestId, customerEmail: email })}`
+    : randomValue(48);
   const sessionHash = await stage(context, realm, "session_hash", () => hashToken(sessionToken), {
     requestId,
     customerEmail: email
@@ -662,7 +685,7 @@ export async function completeLogin(context, realm) {
     requestId,
     customerEmail: email
   });
-  await stage(context, realm, "session_creation", async () => {
+  if (!statelessAdminSession) await stage(context, realm, "session_creation", async () => {
     const columns = await getTableColumns(context.env.DB, config.sessionTable);
     const insertSpec = [
       ["token_hash", "?", sessionHash],
@@ -743,9 +766,24 @@ export async function completeLogin(context, realm) {
 
 export async function getNativeSession(request, env, realm) {
   const config = realmConfig(realm, env);
-  if (!env.DB) return null;
   const token = readCookie(request, config.cookie);
   if (!token) return null;
+  if (realm === "admin" && token.startsWith("v2.")) {
+    try {
+      const identity = JSON.parse(await decryptSecret(token.slice(3), env));
+      if (identity.v !== 1 || identity.realm !== realm || Number(identity.exp || 0) <= Date.now() || !identity.email) return null;
+      return {
+        ...identity,
+        realm,
+        tokenHash: await hashToken(token),
+        mobilePhone: "",
+        businessPhone: ""
+      };
+    } catch {
+      return null;
+    }
+  }
+  if (!env.DB) return null;
   const tokenHash = await hashToken(token);
   // Session validation must work across schema versions. Optional Microsoft
   // claim columns are read from the row when present, without making them a
@@ -784,9 +822,10 @@ export async function getNativeSession(request, env, realm) {
 
 export async function revokeNativeSession(request, env, realm) {
   const config = realmConfig(realm, env);
-  if (!env.DB) return;
   const token = readCookie(request, config.cookie);
   if (!token) return;
+  if (realm === "admin" && token.startsWith("v2.")) return;
+  if (!env.DB) return;
   await env.DB.prepare(`UPDATE ${config.sessionTable} SET revoked_at = CURRENT_TIMESTAMP WHERE token_hash = ? AND revoked_at IS NULL`)
     .bind(await hashToken(token)).run();
 }
