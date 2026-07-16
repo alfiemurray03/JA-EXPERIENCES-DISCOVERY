@@ -53,7 +53,7 @@ export default function BuildersHubPage() {
 
   // Auth guard
   useEffect(() => {
-    if (!isLoading && !user) navigate('/login?redirect=/builders', { replace: true });
+    if (!isLoading && !user) navigate('/sign-in?redirect=/builders', { replace: true });
   }, [user, isLoading, navigate]);
 
   // Fetch live builder summary from API
