@@ -42,11 +42,6 @@ const ProposalBuilderPage = lazy(() => import('./pages/proposal-builder'));
 const ChecklistBuilderPage = lazy(() => import('./pages/checklist-builder'));
 
 // Plan detail pages
-const PlanPersonalPage         = lazy(() => import('./pages/plans/personal'));const PlanStandardPage        = lazy(() => import('./pages/plans/standard'));
-const PlanProfessionalPage    = lazy(() => import('./pages/plans/professional'));
-const PlanOrgStarterPage      = lazy(() => import('./pages/plans/org-starter'));
-const PlanOrgGrowthPage       = lazy(() => import('./pages/plans/org-growth'));
-const PlanOrgProfessionalPage = lazy(() => import('./pages/plans/org-professional'));
 
 // Org pages
 const OrgMembersPage = lazy(() => import('./pages/org/members'));
@@ -392,31 +387,31 @@ export const routes: RouteObject[] = [
   },
   {
     path: '/plans/personal',
-    element: wrap(<PlanPersonalPage />),
+    element: <Navigate to="/pricing" replace />,
   },
   {
     path: '/plans/standard',
-    element: wrap(<PlanStandardPage />),
+    element: <Navigate to="/pricing" replace />,
   },
   {
     path: '/plans/professional',
-    element: wrap(<PlanProfessionalPage />),
+    element: <Navigate to="/pricing" replace />,
   },
   {
     path: '/plans/organisation',
-    element: <Navigate to="/plans/org-starter" replace />,
+    element: <Navigate to="/pricing" replace />,
   },
   {
     path: '/plans/org-starter',
-    element: wrap(<PlanOrgStarterPage />),
+    element: <Navigate to="/pricing" replace />,
   },
   {
     path: '/plans/org-growth',
-    element: wrap(<PlanOrgGrowthPage />),
+    element: <Navigate to="/pricing" replace />,
   },
   {
     path: '/plans/org-professional',
-    element: wrap(<PlanOrgProfessionalPage />),
+    element: <Navigate to="/pricing" replace />,
   },
   {
     path: '/settings',

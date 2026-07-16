@@ -1,11 +1,8 @@
 const DEFAULT_PLANS = [
-  ["free_discovery_enquiry", "Free Discovery Enquiry", "Free", "£0", 0, "", "", "1 to 3 working days", "Initial review and recommendation", "A no-cost starting point for questions and support route guidance.", "Start a free enquiry", 1, 0, 0],
-  ["destination_discovery_standard", "Destination Discovery Plan", "Standard", "£49", 4900, "prod_destination_discovery", "price_1TkZu2DZzb3r6Q3cuhKd6KTt", "3-5 working days", "1 minor revision", "A focused destination discovery plan for early-stage trip ideas.", "Buy now securely", 1, 1, 10],
-  ["itinerary_experience_standard", "Itinerary and Experience Planning Plan", "Standard", "£89", 8900, "prod_itinerary_experience", "price_1TkZuJDZzb3r6Q3c9cEy41Iw", "5-7 working days", "1 minor revision", "A structured itinerary and experience planning service.", "Buy now securely", 1, 1, 20],
-  ["complete_planning_standard", "Complete Discovery and Planning Guidance Plan", "Standard", "£149", 14900, "prod_complete_planning", "price_1TkZucDZzb3r6Q3cGVNcyvIF", "7-10 working days", "2 minor revisions", "A complete discovery and planning guidance package.", "Buy now securely", 1, 1, 30],
-  ["destination_discovery_social", "Destination Discovery Social Tariff", "Social tariff", "£29", 2900, "prod_destination_social", "price_1TkZuuDZzb3r6Q3c2C6jQuvo", "3-5 working days", "1 minor revision", "Reduced-rate destination discovery plan.", "Buy now securely", 1, 0, 40],
-  ["itinerary_experience_social", "Itinerary Planning Social Tariff", "Social tariff", "£55", 5500, "prod_itinerary_social", "price_1TkZv0DZzb3r6Q3cOh6tjkIM", "5-7 working days", "1 minor revision", "Reduced-rate itinerary and experience planning service.", "Buy now securely", 1, 0, 50],
-  ["complete_planning_social", "Complete Planning Social Tariff", "Social tariff", "£95", 9500, "prod_complete_social", "price_1TkZvDDZzb3r6Q3csGxh4vSL", "7-10 working days", "2 minor revisions", "Reduced-rate complete planning guidance package.", "Buy now securely", 1, 0, 60]
+  ["personal", "JA Plan Studio – Explore", "Monthly subscription", "£5.99", 599, "", "", "Essential planning builders", "Save and revisit your plans", "A simple starting point for exploring ideas and building clear, practical plans.", "Subscribe to Explore", 1, 0, 10],
+  ["standard", "JA Plan Studio – Plan", "Monthly subscription", "£7.99", 799, "", "", "More builders and planning tools", "Download your finished plans", "For regularly creating detailed destination, itinerary, experience and everyday plans.", "Subscribe to Plan", 1, 1, 20],
+  ["professional", "JA Plan Studio – Complete", "Monthly subscription", "£14.99", 1499, "", "", "Full planning-builder access", "Enhanced planning and outputs", "Complete access for building and managing more comprehensive personalised plans.", "Subscribe to Complete", 1, 0, 30],
+  ["org_starter", "JA Plan Studio – Together", "Monthly subscription", "£39.99", 3999, "", "", "Shared planning for groups", "All builders and collaborative tools", "Shared planning for households, families and groups who want to build plans together.", "Subscribe to Together", 1, 0, 40]
 ];
 
 export async function onRequestGet(context) {
@@ -42,6 +39,8 @@ async function createCheckoutSession(planCode, env) {
     return jsonResponse({ error: "Missing STRIPE_SECRET_KEY in Cloudflare." }, 500);
   }
 
+  await syncServicePlans(env.DB);
+
   const selectedPlan = await env.DB.prepare(`
     SELECT id, plan_name, plan_type, price_label, price_pence, stripe_price_id, is_active
     FROM service_plans
@@ -60,9 +59,10 @@ async function createCheckoutSession(planCode, env) {
     }, 403);
   }
 
-  if (!selectedPlan.stripe_price_id) {
+  const priceId = await resolveStripePriceId(selectedPlan, env);
+  if (!priceId) {
     return jsonResponse({
-      error: "This plan is not connected to Stripe yet.",
+      error: "This subscription could not be matched to an active recurring Stripe price.",
       planCode,
       planName: selectedPlan.plan_name
     }, 409);
@@ -70,20 +70,20 @@ async function createCheckoutSession(planCode, env) {
 
   const siteUrl = getSiteUrl(env);
   const params = new URLSearchParams();
-  params.append("mode", "payment");
-  params.append("line_items[0][price]", selectedPlan.stripe_price_id);
+  params.append("mode", "subscription");
+  params.append("line_items[0][price]", priceId);
   params.append("line_items[0][quantity]", "1");
-  params.append("customer_creation", "always");
   params.append("billing_address_collection", "auto");
+  params.append("allow_promotion_codes", "true");
   params.append("success_url", siteUrl + "/payment-success/?session_id={CHECKOUT_SESSION_ID}");
   params.append("cancel_url", siteUrl + "/pricing/?payment=cancelled");
   params.append("metadata[service_line]", "JA Plan Studio");
   params.append("metadata[plan_code]", selectedPlan.id);
   params.append("metadata[plan_name]", selectedPlan.plan_name || selectedPlan.id);
   params.append("metadata[plan_type]", selectedPlan.plan_type || "");
-  params.append("payment_intent_data[metadata][service_line]", "JA Plan Studio");
-  params.append("payment_intent_data[metadata][plan_code]", selectedPlan.id);
-  params.append("payment_intent_data[metadata][plan_name]", selectedPlan.plan_name || selectedPlan.id);
+  params.append("subscription_data[metadata][service_line]", "JA Plan Studio");
+  params.append("subscription_data[metadata][plan_code]", selectedPlan.id);
+  params.append("subscription_data[metadata][plan_name]", selectedPlan.plan_name || selectedPlan.id);
 
   const stripeResponse = await fetch("https://api.stripe.com/v1/checkout/sessions", {
     method: "POST",
@@ -122,7 +122,7 @@ async function createCheckoutSession(planCode, env) {
   return redirectTo(session.url);
 }
 
-async function ensureServicePlans(DB) {
+async function syncServicePlans(DB) {
   await DB.prepare(`
     CREATE TABLE IF NOT EXISTS service_plans (
       id TEXT PRIMARY KEY,
@@ -144,15 +144,58 @@ async function ensureServicePlans(DB) {
 
   await safeAlter(DB, `ALTER TABLE service_plans ADD COLUMN stripe_product_id TEXT`);
 
+  const currentIds = DEFAULT_PLANS.map((plan) => plan[0]);
+  const placeholders = currentIds.map(() => "?").join(", ");
+  await DB.prepare(`DELETE FROM service_plans WHERE id NOT IN (${placeholders})`).bind(...currentIds).run();
+
   for (const plan of DEFAULT_PLANS) {
     await DB.prepare(`
       INSERT INTO service_plans (
         id, plan_name, plan_type, price_label, price_pence, stripe_product_id, stripe_price_id,
         delivery_time, revisions, description, button_label, is_active, is_featured, sort_order
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT(id) DO NOTHING
+      ON CONFLICT(id) DO UPDATE SET
+        plan_name = excluded.plan_name,
+        plan_type = excluded.plan_type,
+        price_label = excluded.price_label,
+        price_pence = excluded.price_pence,
+        delivery_time = excluded.delivery_time,
+        revisions = excluded.revisions,
+        description = excluded.description,
+        button_label = excluded.button_label,
+        is_active = excluded.is_active,
+        is_featured = excluded.is_featured,
+        sort_order = excluded.sort_order,
+        updated_at = CURRENT_TIMESTAMP
     `).bind(...plan).run();
   }
+}
+
+async function resolveStripePriceId(plan, env) {
+  const secretByPlan = {
+    personal: "STRIPE_PRICE_EXPLORE",
+    standard: "STRIPE_PRICE_PLAN",
+    professional: "STRIPE_PRICE_COMPLETE",
+    org_starter: "STRIPE_PRICE_TOGETHER"
+  };
+  const configured = env[secretByPlan[plan.id]];
+  if (configured) return String(configured);
+
+  const response = await fetch("https://api.stripe.com/v1/prices?active=true&type=recurring&limit=100&expand[]=data.product", {
+    headers: { "Authorization": "Bearer " + env.STRIPE_SECRET_KEY }
+  });
+  if (!response.ok) return "";
+  const catalogue = await response.json();
+  const expectedName = String(plan.plan_name || "").trim().toLowerCase();
+  const match = (catalogue.data || []).find((price) => {
+    const product = price && typeof price.product === "object" ? price.product : null;
+    return product && product.active !== false
+      && String(product.name || "").trim().toLowerCase() === expectedName
+      && String(price.currency || "").toLowerCase() === "gbp"
+      && Number(price.unit_amount || 0) === Number(plan.price_pence || 0)
+      && price.recurring && price.recurring.interval === "month";
+  });
+  return match && match.id ? String(match.id) : "";
 }
 
 async function safeAlter(DB, sql) {

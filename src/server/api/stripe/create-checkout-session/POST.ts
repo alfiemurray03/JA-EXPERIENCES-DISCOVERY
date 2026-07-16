@@ -70,7 +70,30 @@ export default async function handler(req: Request, res: Response) {
     return res.status(400).json({ success: false, error: 'No Stripe price configured for this plan.' });
   }
 
-  const priceId = getSecret(priceSecretKey) as string | null;
+  const stripe = new Stripe(secretKey, { apiVersion: '2026-05-27.dahlia' });
+  let priceId = getSecret(priceSecretKey) as string | null;
+  if (!priceId) {
+    try {
+      const expectedPence: Partial<Record<PlanId, number>> = {
+        personal: 599,
+        standard: 799,
+        professional: 1499,
+        org_starter: 3999,
+      };
+      const catalogue = await stripe.prices.list({ active: true, type: 'recurring', limit: 100, expand: ['data.product'] });
+      const match = catalogue.data.find((price) => {
+        const product = typeof price.product === 'object' && !price.product.deleted ? price.product : null;
+        return product?.active !== false
+          && product?.name?.trim().toLowerCase() === PLAN_LABELS[planId].trim().toLowerCase()
+          && price.currency.toLowerCase() === 'gbp'
+          && price.unit_amount === expectedPence[planId]
+          && price.recurring?.interval === 'month';
+      });
+      priceId = match?.id ?? null;
+    } catch (error) {
+      console.error('stripe.price-resolution.error', error);
+    }
+  }
   if (!priceId) {
     return res.status(503).json({
       success: false,
@@ -79,7 +102,6 @@ export default async function handler(req: Request, res: Response) {
   }
 
   try {
-    const stripe = new Stripe(secretKey, { apiVersion: '2026-05-27.dahlia' });
     const origin = `${req.protocol}://${req.get('host')}`;
 
     // Pre-fill customer email if user is logged in
