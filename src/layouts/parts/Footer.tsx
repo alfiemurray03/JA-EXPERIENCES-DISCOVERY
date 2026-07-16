@@ -71,8 +71,8 @@ export default function Footer() {
                 { label: 'Builders', href: '/builders', external: false },
                 { label: 'Pricing', href: '/pricing', external: false },
                 { label: 'Partners', href: '/partners', external: false },
-                { label: 'Sign In', href: '/login', external: false },
-                { label: 'Create Account', href: '/login', external: false },
+                { label: 'Sign In', href: '/sign-in', external: false },
+                { label: 'Create Account', href: '/sign-in', external: false },
               ].map((link) => (
                 <li key={link.label}>
                   {link.external ? (

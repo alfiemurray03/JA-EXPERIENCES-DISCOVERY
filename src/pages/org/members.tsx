@@ -112,7 +112,7 @@ export default function OrgMembersPage() {
   const [actionMsg, setActionMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
-    if (!isLoading && !user) navigate('/login?redirect=/org/members', { replace: true });
+    if (!isLoading && !user) navigate('/sign-in?redirect=/org/members', { replace: true });
     if (!isLoading && user && !isOrgPlan(user.plan as PlanId)) navigate('/dashboard', { replace: true });
   }, [user, isLoading, navigate]);
 

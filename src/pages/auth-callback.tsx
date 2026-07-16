@@ -3,7 +3,7 @@
  *
  * The actual OIDC callback processing happens entirely server-side at
  * GET /auth/callback (Express handler). The server validates the code,
- * creates the session, and issues a redirect to /dashboard or /login?error=…
+ * creates the session, and issues a redirect to /dashboard or /sign-in?error=…
  *
  * This React page is only rendered if the server-side handler somehow
  * falls through to the SPA (e.g. during local dev with Vite proxy). In
@@ -24,12 +24,12 @@ export default function AuthCallbackPage() {
     const error = searchParams.get('error');
 
     if (error) {
-      navigate(`/login?error=oidc_callback_failed`, { replace: true });
+      navigate(`/sign-in?error=oidc_callback_failed`, { replace: true });
     } else if (code) {
       // Server should have handled this — reload to trigger server-side processing
       window.location.reload();
     } else {
-      navigate('/login', { replace: true });
+      navigate('/sign-in', { replace: true });
     }
   }, [navigate, searchParams]);
 

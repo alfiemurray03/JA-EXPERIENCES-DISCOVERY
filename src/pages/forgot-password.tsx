@@ -100,7 +100,7 @@ export default function ForgotPasswordPage() {
                     Reset credentials expire after 24 hours and can only be used once.
                   </p>
 
-                  <Link to="/login">
+                  <Link to="/sign-in">
                     <Button variant="outline" className="w-full border-slate-600 text-slate-300 hover:bg-slate-700">
                       <ArrowLeft className="w-4 h-4 mr-2" />
                       Back to Login
@@ -145,7 +145,7 @@ export default function ForgotPasswordPage() {
                     {loading ? 'Submitting...' : 'Submit Reset Request'}
                   </Button>
 
-                  <Link to="/login">
+                  <Link to="/sign-in">
                     <Button variant="ghost" className="w-full text-slate-400 hover:text-slate-300 hover:bg-slate-700/50">
                       <ArrowLeft className="w-4 h-4 mr-2" />
                       Back to Login

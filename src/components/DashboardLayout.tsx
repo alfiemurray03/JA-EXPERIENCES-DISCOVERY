@@ -405,7 +405,7 @@ export default function DashboardLayout({ children, noPadding: _noPadding }: Das
   // Redirect unauthenticated users to login
   useEffect(() => {
     if (!isLoading && !user) {
-      navigate(`/login?next=${encodeURIComponent(location.pathname)}`, { replace: true });
+      navigate(`/sign-in?next=${encodeURIComponent(location.pathname)}`, { replace: true });
     }
   }, [isLoading, user, navigate, location.pathname]);
 

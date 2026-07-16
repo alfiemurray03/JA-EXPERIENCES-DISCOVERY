@@ -18,6 +18,7 @@ const STANDALONE_PATHS = [
   '/settings',
   '/pricing',
   '/login',
+  '/sign-in',
   '/register',
   '/forgot-password',
 ];

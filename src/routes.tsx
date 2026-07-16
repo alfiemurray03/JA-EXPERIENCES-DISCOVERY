@@ -174,7 +174,7 @@ function RequireAuth({ children }: { children: React.ReactElement }) {
   const { user, isLoading } = useAuth();
   if (typeof window === 'undefined') return children;
   if (isLoading) return <SpinnerFallback />;
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) return <Navigate to="/sign-in" replace />;
   return children;
 }
 
@@ -231,11 +231,15 @@ export const routes: RouteObject[] = [
   ].map((path) => ({ path, element: wrap(<DiscoveryPage />) })),
   {
     path: '/login',
+    element: <Navigate to="/" replace />,
+  },
+  {
+    path: '/sign-in',
     element: wrap(<RedirectIfAuth><LoginPage /></RedirectIfAuth>),
   },
   {
     path: '/register',
-    element: <Navigate to="/login" replace />,
+    element: <Navigate to="/sign-in" replace />,
   },
   // OIDC start — server intercepts this in production; React page is a
   // client-side fallback that fires the hard redirect immediately.
@@ -431,11 +435,11 @@ export const routes: RouteObject[] = [
   },
   {
     path: '/forgot-password',
-    element: <Navigate to="/login" replace />,
+    element: <Navigate to="/sign-in" replace />,
   },
   {
     path: '/reset-password',
-    element: <Navigate to="/login" replace />,
+    element: <Navigate to="/sign-in" replace />,
   },
   {
     path: '/terms',
@@ -646,6 +650,7 @@ export const resellerRoutes: RouteObject[] = [
 export type Path =
   | '/'
   | '/login'
+  | '/sign-in'
   | '/register'
   | '/dashboard'
   | '/documents'

@@ -14,7 +14,7 @@
  *  5. Always update: displayName, firstName, lastName, tenantId, photoUrl, lastLogin, updatedAt.
  *  6. Create a ja_session cookie and redirect to /dashboard.
  *
- * On any failure the user is redirected to /login?error=<code> so the branded
+ * On any failure the user is redirected to /sign-in?error=<code> so the branded
  * error page can display a human-readable message.
  *
  * Claims captured:
@@ -62,7 +62,7 @@ export default async function handler(req: Request, res: Response) {
 
   if (!rawCookie) {
     console.warn('oidc.callback: missing state cookie');
-    return res.redirect('/login?error=oidc_state_missing');
+    return res.redirect('/sign-in?error=oidc_state_missing');
   }
 
   let storedState: string;
@@ -77,7 +77,7 @@ export default async function handler(req: Request, res: Response) {
     storedNonce = parsed.nonce;
   } catch {
     console.warn('oidc.callback: invalid state cookie');
-    return res.redirect('/login?error=oidc_state_invalid');
+    return res.redirect('/sign-in?error=oidc_state_invalid');
   }
 
   // ── 2. Exchange authorisation code for tokens ─────────────────────────────
@@ -162,7 +162,7 @@ export default async function handler(req: Request, res: Response) {
 
     if (!email || !email.includes('@')) {
       console.warn('oidc.callback: no usable email found in id_token or userinfo', { sub });
-      return res.redirect('/login?error=oidc_no_email');
+      return res.redirect('/sign-in?error=oidc_no_email');
     }
 
     const displayName = strClaim(claims, 'name') ?? '';
@@ -195,7 +195,7 @@ export default async function handler(req: Request, res: Response) {
       // Block suspended accounts before creating a session
       if (bySubRow.accountStatus === 'suspended') {
         console.warn('oidc.callback: suspended account attempted login', { sub, email });
-        return res.redirect('/login?error=account_suspended');
+        return res.redirect('/sign-in?error=account_suspended');
       }
 
       await db.update(ja_users)
@@ -222,7 +222,7 @@ export default async function handler(req: Request, res: Response) {
       if (byEmailRow) {
         if (byEmailRow.accountStatus === 'suspended') {
           console.warn('oidc.callback: suspended account attempted login', { sub, email });
-          return res.redirect('/login?error=account_suspended');
+          return res.redirect('/sign-in?error=account_suspended');
         }
 
         userId = byEmailRow.id;
@@ -314,6 +314,6 @@ export default async function handler(req: Request, res: Response) {
 
   } catch (err) {
     console.error('oidc.callback.error', err);
-    return res.redirect('/login?error=oidc_callback_failed');
+    return res.redirect('/sign-in?error=oidc_callback_failed');
   }
 }

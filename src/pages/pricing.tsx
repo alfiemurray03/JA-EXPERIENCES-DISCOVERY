@@ -287,7 +287,7 @@ function PlanCard({ plan, onCheckout, checkoutLoading, isLoggedIn, paymentsEnabl
       return;
     }
     if (!isLoggedIn) {
-      window.location.href = '/login';
+      window.location.href = '/sign-in';
       return;
     }
     onCheckout(plan.id);
@@ -560,7 +560,7 @@ export default function PricingPage() {
             </Button>
           ) : (
             <Button asChild variant="outline" className="shrink-0 gap-2">
-              <Link to="/login">
+              <Link to="/sign-in">
                 Get Started <ArrowRight className="w-4 h-4" />
               </Link>
             </Button>

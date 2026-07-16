@@ -53,6 +53,6 @@ export default async function handler(req: Request, res: Response) {
     return res.redirect(authUrl);
   } catch (err) {
     console.error('oidc.start.error', err);
-    return res.redirect('/login?error=oidc_unavailable');
+    return res.redirect('/sign-in?error=oidc_unavailable');
   }
 }

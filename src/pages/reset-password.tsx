@@ -77,7 +77,7 @@ export default function ResetPasswordPage() {
 
       if (data.success) {
         setSuccess(true);
-        setTimeout(() => void navigate('/login'), 3000);
+        setTimeout(() => void navigate('/sign-in'), 3000);
       } else {
         setError(data.error ?? 'Failed to reset password. Please try again.');
       }
@@ -135,7 +135,7 @@ export default function ResetPasswordPage() {
                       </p>
                     </div>
                   </div>
-                  <Link to="/login">
+                  <Link to="/sign-in">
                     <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
                       Go to Login
                     </Button>
@@ -260,7 +260,7 @@ export default function ResetPasswordPage() {
                     {loading ? 'Updating Password...' : 'Set New Password'}
                   </Button>
 
-                  <Link to="/login">
+                  <Link to="/sign-in">
                     <Button variant="ghost" className="w-full text-slate-400 hover:text-slate-300 hover:bg-slate-700/50">
                       <ArrowLeft className="w-4 h-4 mr-2" />
                       Back to Login

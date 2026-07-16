@@ -573,6 +573,8 @@ export async function onRequest(context) {
     path.startsWith("/account/") ||
     path === "/login" ||
     path.startsWith("/login/") ||
+    path === "/sign-in" ||
+    path.startsWith("/sign-in/") ||
     path.startsWith("/legal/") ||
     path === "/accessibility-support" ||
     path === "/accessibility-support/" ||

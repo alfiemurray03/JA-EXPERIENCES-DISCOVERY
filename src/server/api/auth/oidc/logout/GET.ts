@@ -6,7 +6,7 @@
  * session is also terminated.
  *
  * After Entra completes logout it redirects to OIDC_POST_LOGOUT_REDIRECT_URI
- * (configured as https://japlanstudio.jagroupservices.co.uk/login).
+ * (configured as https://japlanstudio.jagroupservices.co.uk/sign-in).
  */
 import type { Request, Response } from 'express';
 import { getOidcClient } from '../_client.js';
@@ -32,7 +32,7 @@ export default async function handler(req: Request, res: Response) {
   // 3. Build Entra end-session URL
   try {
     const client              = await getOidcClient();
-    const postLogoutRedirect  = String(getSecret('OIDC_POST_LOGOUT_REDIRECT_URI') ?? '/login');
+    const postLogoutRedirect  = String(getSecret('OIDC_POST_LOGOUT_REDIRECT_URI') ?? '/sign-in');
 
     const endSessionUrl = client.endSessionUrl({
       post_logout_redirect_uri: postLogoutRedirect,
@@ -42,7 +42,7 @@ export default async function handler(req: Request, res: Response) {
   } catch (err) {
     // If OIDC client is unavailable just redirect locally
     console.error('oidc.logout: end-session url error', err);
-    const postLogoutRedirect = String(getSecret('OIDC_POST_LOGOUT_REDIRECT_URI') ?? '/login');
+    const postLogoutRedirect = String(getSecret('OIDC_POST_LOGOUT_REDIRECT_URI') ?? '/sign-in');
     return res.redirect(postLogoutRedirect);
   }
 }

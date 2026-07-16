@@ -78,7 +78,7 @@ export default function AffiliateDashboardPage() {
               <AlertTriangle className="w-10 h-10 text-amber-500 mx-auto mb-4" />
               <h2 className="text-xl font-semibold text-foreground mb-2">Sign in required</h2>
               <p className="text-muted-foreground mb-6">Please sign in to access your affiliate dashboard.</p>
-              <Link to="/login">
+              <Link to="/sign-in">
                 <Button>Sign in</Button>
               </Link>
             </CardContent>
