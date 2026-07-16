@@ -3,6 +3,7 @@ import { Helmet } from '@dr.pogodin/react-helmet';
 import { motion } from 'motion/react';
 import { useState, useEffect, useLayoutEffect } from 'react';
 import InstallAppBanner from '@/components/InstallAppBanner';
+import { JA_PLAN_STUDIO_SUBSCRIPTIONS, type ServicePlan as ApiPlan } from '@/lib/service-plans';
 
 /**
  * When the app is running as an installed PWA (standalone display mode),
@@ -223,37 +224,12 @@ const HOMEPAGE_DEFAULTS: HomepageContent = {
   announcement_link_label: 'Learn more',
 };
 
-/* ─── Plan types ─────────────────────────────────────────────────────────── */
-interface ApiPlan {
-  id: string;
-  plan_name: string;
-  plan_type: string;
-  price_label: string;
-  price_pence: number;
-  delivery_time: string;
-  revisions: string;
-  description: string;
-  button_label: string;
-  is_featured: number;
-  payment_available?: boolean;
-}
-
-const SERVICE_PLANS: ApiPlan[] = [
-  { id: 'free_discovery_enquiry', plan_name: 'Free Discovery Enquiry', plan_type: 'Free', price_label: '£0', price_pence: 0, delivery_time: '1 to 3 working days', revisions: 'Initial review and recommendation', description: 'A no-cost starting point for questions and support-route guidance.', button_label: 'Start a free enquiry', is_featured: 0 },
-  { id: 'destination_discovery_standard', plan_name: 'Destination Discovery Plan', plan_type: 'Standard', price_label: '£49', price_pence: 4900, delivery_time: '3–5 working days', revisions: '1 minor revision', description: 'A focused destination discovery plan for early-stage trip ideas.', button_label: 'Buy now securely', is_featured: 1 },
-  { id: 'itinerary_experience_standard', plan_name: 'Itinerary and Experience Planning Plan', plan_type: 'Standard', price_label: '£89', price_pence: 8900, delivery_time: '5–7 working days', revisions: '1 minor revision', description: 'A structured itinerary and experience planning service.', button_label: 'Buy now securely', is_featured: 1 },
-  { id: 'complete_planning_standard', plan_name: 'Complete Discovery and Planning Guidance Plan', plan_type: 'Standard', price_label: '£149', price_pence: 14900, delivery_time: '7–10 working days', revisions: '2 minor revisions', description: 'A complete discovery and planning guidance package.', button_label: 'Buy now securely', is_featured: 1 },
-  { id: 'destination_discovery_social', plan_name: 'Destination Discovery Social Tariff', plan_type: 'Social tariff', price_label: '£29', price_pence: 2900, delivery_time: '3–5 working days', revisions: '1 minor revision', description: 'Reduced-rate destination discovery planning.', button_label: 'Buy now securely', is_featured: 0 },
-  { id: 'itinerary_experience_social', plan_name: 'Itinerary Planning Social Tariff', plan_type: 'Social tariff', price_label: '£55', price_pence: 5500, delivery_time: '5–7 working days', revisions: '1 minor revision', description: 'Reduced-rate itinerary and experience planning.', button_label: 'Buy now securely', is_featured: 0 },
-  { id: 'complete_planning_social', plan_name: 'Complete Planning Social Tariff', plan_type: 'Social tariff', price_label: '£95', price_pence: 9500, delivery_time: '7–10 working days', revisions: '2 minor revisions', description: 'Reduced-rate complete planning guidance.', button_label: 'Buy now securely', is_featured: 0 },
-];
-
 /* ═══════════════════════════════════════════════════════════════════════════
    PAGE
 ═══════════════════════════════════════════════════════════════════════════ */
 export default function HomePage() {
   usePwaRedirect();
-  const [plans, setPlans] = useState<ApiPlan[]>(SERVICE_PLANS);
+  const [plans, setPlans] = useState<ApiPlan[]>(JA_PLAN_STUDIO_SUBSCRIPTIONS);
   const [plansLoading, setPlansLoading] = useState(true);
   const [hpContent, setHpContent] = useState<HomepageContent>(HOMEPAGE_DEFAULTS);
 
@@ -277,7 +253,7 @@ export default function HomePage() {
       .then(r => r.ok ? r.json() : Promise.reject(new Error('Plans unavailable')))
       .then(data => {
         if (!Array.isArray(data.plans)) return;
-        const recognised = new Set(SERVICE_PLANS.map(plan => plan.id));
+        const recognised = new Set(JA_PLAN_STUDIO_SUBSCRIPTIONS.map(plan => plan.id));
         const currentPlans = data.plans.filter((plan: ApiPlan) => recognised.has(plan.id));
         if (currentPlans.length) setPlans(currentPlans);
       })
@@ -689,7 +665,7 @@ export default function HomePage() {
               Simple, transparent pricing
             </h2>
             <p className="text-muted-foreground text-base">
-              Choose free discovery support or a one-off planning package from JA Plan Studio's own catalogue.
+              Choose Explore, Plan, Complete or Together. Every option is a monthly JA Plan Studio subscription.
             </p>
           </motion.div>
 
@@ -700,11 +676,9 @@ export default function HomePage() {
           ) : (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch mb-4">
-                {plans.filter(plan => plan.plan_type !== 'Social tariff').map((plan, i) => {
+                {plans.map((plan, i) => {
                   const highlighted = Boolean(plan.is_featured);
-                  const href = plan.price_pence === 0
-                    ? `/contact?plan=${encodeURIComponent(plan.id)}`
-                    : `/create-checkout-session?plan=${encodeURIComponent(plan.id)}`;
+                  const href = `/create-checkout-session?plan=${encodeURIComponent(plan.id)}`;
                   return (
                     <motion.div
                       key={plan.id}
@@ -717,7 +691,7 @@ export default function HomePage() {
                       {highlighted && (
                         <div className="px-5 pt-4 pb-0">
                           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/20 text-white">
-                            Featured planning package
+                            Most popular subscription
                           </span>
                         </div>
                       )}
@@ -729,11 +703,12 @@ export default function HomePage() {
                             {plan.plan_name}
                           </h3>
                           <span className={`text-3xl font-extrabold ${highlighted ? 'text-white' : 'text-foreground'}`}>{plan.price_label}</span>
+                          <span className={`ml-1 text-xs ${highlighted ? 'text-blue-100' : 'text-muted-foreground'}`}>/month</span>
                         </div>
 
                         <p className={`text-xs leading-relaxed ${highlighted ? 'text-blue-100' : 'text-muted-foreground'}`}>{plan.description}</p>
                         <div className={`rounded-lg px-3 py-2 text-xs font-semibold ${highlighted ? 'bg-white/15 text-white' : 'bg-primary/8 text-primary border border-primary/20'}`}>
-                          Built in {plan.delivery_time}
+                          {plan.delivery_time}
                         </div>
                         <div className={`flex items-start gap-1.5 text-xs ${highlighted ? 'text-blue-100' : 'text-muted-foreground'}`}>
                           <Check className="w-3.5 h-3.5 mt-0.5 shrink-0" /> {plan.revisions}
@@ -752,7 +727,7 @@ export default function HomePage() {
               </div>
 
               <p className="text-center text-xs text-muted-foreground mt-5">
-                Social-tariff options are also available. <Link to="/pricing" className="text-primary font-semibold hover:underline">View every JA Plan Studio plan and full details.</Link>
+                All subscriptions are billed monthly. <Link to="/pricing" className="text-primary font-semibold hover:underline">Compare every JA Plan Studio subscription.</Link>
               </p>
             </>
           )}

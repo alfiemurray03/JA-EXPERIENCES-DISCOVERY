@@ -67,24 +67,24 @@ export const ORG_BASE_SEATS: Record<PlanId, number> = {
 
 /** Human-readable plan labels */
 export const PLAN_LABELS: Record<PlanId, string> = {
-  free:             'Free',
-  personal:         'Personal',
-  standard:         'Standard',
-  professional:     'Professional',
-  org_starter:      'Organisation Starter',
-  org_growth:       'Organisation Growth',
-  org_professional: 'Organisation Professional',
+  free:             'No subscription',
+  personal:         'JA Plan Studio – Explore',
+  standard:         'JA Plan Studio – Plan',
+  professional:     'JA Plan Studio – Complete',
+  org_starter:      'JA Plan Studio – Together',
+  org_growth:       'Legacy organisation growth',
+  org_professional: 'Legacy organisation professional',
 };
 
 /** Short labels for badges */
 export const PLAN_SHORT_LABELS: Record<PlanId, string> = {
-  free:             'Free',
-  personal:         'Personal',
-  standard:         'Standard',
-  professional:     'Professional',
-  org_starter:      'Org Starter',
-  org_growth:       'Org Growth',
-  org_professional: 'Org Pro',
+  free:             'None',
+  personal:         'Explore',
+  standard:         'Plan',
+  professional:     'Complete',
+  org_starter:      'Together',
+  org_growth:       'Legacy',
+  org_professional: 'Legacy',
 };
 
 /** Pricing display */
@@ -93,7 +93,7 @@ export const PLAN_PRICE_DISPLAY: Record<PlanId, string> = {
   personal:         '£5.99',
   standard:         '£7.99',
   professional:     '£14.99',
-  org_starter:      '£29.99',
+  org_starter:      '£39.99',
   org_growth:       '£59.99',
   org_professional: '£99.99',
 };
@@ -101,9 +101,9 @@ export const PLAN_PRICE_DISPLAY: Record<PlanId, string> = {
 /** Whether plan has a 14-day trial */
 export const PLAN_HAS_TRIAL: Record<PlanId, boolean> = {
   free:             false,
-  personal:         true,
-  standard:         true,
-  professional:     true,
+  personal:         false,
+  standard:         false,
+  professional:     false,
   org_starter:      false,
   org_growth:       false,
   org_professional: false,
@@ -148,10 +148,10 @@ export function canAccessBuilderTemplate(plan: PlanId, planRequired: string): bo
  * separately but not used for checkout — org_starter uses STRIPE_PRICE_ORG_STARTER.
  */
 export const PLAN_STRIPE_SECRET_KEY: Partial<Record<PlanId, string>> = {
-  personal:         'STRIPE_PRICE_PERSONAL',
-  standard:         'STRIPE_PRICE_STANDARD',
-  professional:     'STRIPE_PRICE_PROFESSIONAL',
-  org_starter:      'STRIPE_PRICE_ORG_STARTER',
+  personal:         'STRIPE_PRICE_EXPLORE',
+  standard:         'STRIPE_PRICE_PLAN',
+  professional:     'STRIPE_PRICE_COMPLETE',
+  org_starter:      'STRIPE_PRICE_TOGETHER',
   org_growth:       'STRIPE_PRICE_ORG_GROWTH',
   org_professional: 'STRIPE_PRICE_ORG_PROFESSIONAL',
 };
@@ -161,18 +161,15 @@ export const PLAN_STRIPE_SECRET_KEY: Partial<Record<PlanId, string>> = {
  * Used by admin diagnostics/verify-prices to show the full picture.
  */
 export const ALL_STRIPE_PRICE_SECRETS: Array<{ secretKey: string; label: string; planId?: PlanId }> = [
-  { secretKey: 'STRIPE_PRICE_PERSONAL',         label: 'Personal',                 planId: 'personal' },
-  { secretKey: 'STRIPE_PRICE_STANDARD',         label: 'Standard',                 planId: 'standard' },
-  { secretKey: 'STRIPE_PRICE_PROFESSIONAL',     label: 'Professional',             planId: 'professional' },
-  { secretKey: 'STRIPE_PRICE_ORG_STARTER',      label: 'Organisation Starter',     planId: 'org_starter' },
-  { secretKey: 'STRIPE_PRICE_ORG',              label: 'Organisation (legacy)',     planId: undefined },
-  { secretKey: 'STRIPE_PRICE_ORG_GROWTH',       label: 'Organisation Growth',      planId: 'org_growth' },
-  { secretKey: 'STRIPE_PRICE_ORG_PROFESSIONAL', label: 'Organisation Professional', planId: 'org_professional' },
+  { secretKey: 'STRIPE_PRICE_EXPLORE',  label: 'Explore',  planId: 'personal' },
+  { secretKey: 'STRIPE_PRICE_PLAN',     label: 'Plan',     planId: 'standard' },
+  { secretKey: 'STRIPE_PRICE_COMPLETE', label: 'Complete', planId: 'professional' },
+  { secretKey: 'STRIPE_PRICE_TOGETHER', label: 'Together', planId: 'org_starter' },
 ];
 
 /** All paid plans in order */
 export const PAID_PLANS: PlanId[] = [
-  'personal', 'standard', 'professional', 'org_starter', 'org_growth', 'org_professional',
+  'personal', 'standard', 'professional', 'org_starter',
 ];
 
 /** Plan upgrade order for comparison */
