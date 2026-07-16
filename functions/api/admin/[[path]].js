@@ -513,6 +513,21 @@ async function generic(context, identity, parts) {
   return json({ success: true, ...data });
 }
 
+const OPERATIONAL_SECTIONS = new Set([
+  "overview", "health", "operations", "reports", "status", "notifications",
+  "systemreports", "closures", "enquiries", "admins", "roles", "sessions",
+  "credits", "usage", "addons", "plans", "branding", "affiliate"
+]);
+
+async function operationalSection(context, identity, parts) {
+  const section = String(parts[1] || "").toLowerCase();
+  if (!OPERATIONAL_SECTIONS.has(section)) return json({ success: false, error: "Unknown administration section." }, 404);
+  const body = context.request.method === "GET" ? undefined : await bodyOf(context.request);
+  const result = await legacyData(context, identity, section, { body });
+  const payload = result[section] ?? result.overview ?? result.platform ?? result;
+  return json({ success: true, section, data: payload, admin: result.admin || null });
+}
+
 export async function onRequest(context) {
   if (!context.env.DB) return json({ success: false, error: "Database binding is unavailable." }, 503);
   let identity;
@@ -544,6 +559,7 @@ export async function onRequest(context) {
     if (parts[0] === "audit" || parts[0] === "action-log") return auditRoutes(context, identity, parts);
     if (parts[0] === "lifetime") return lifetime(context, identity);
     if (parts[0] === "portal-nav") return portalNav(context);
+    if (parts[0] === "section") return operationalSection(context, identity, parts);
     return generic(context, identity, parts);
   } catch (error) {
     console.error(JSON.stringify({ event: "admin_compatibility_route_failed", path: parts.join("/"), message: error instanceof Error ? error.message : "Unknown error" }));

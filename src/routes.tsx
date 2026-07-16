@@ -79,6 +79,7 @@ const AdminTestToolsPage = lazy(() => import('./pages/admin/test-tools'));
 const AdminAffiliatePage = lazy(() => import('./pages/admin/affiliate'));
 const AdminSigningPage = lazy(() => import('./pages/admin/signing'));
 const AdminResellersPage = lazy(() => import('./pages/admin/resellers'));
+const AdminOperationalSectionPage = lazy(() => import('./pages/admin/operational-section'));
 
 // Partners + Reseller pages
 const PartnersPage = lazy(() => import('./pages/partners/index'));
@@ -609,6 +610,16 @@ export const adminRoutes: RouteObject[] = [
     path: '/admin/portal-nav',
     element: wrap(<RequireAdmin><AdminPortalNavPage /></RequireAdmin>),
   },
+  ...[
+    '/admin/health', '/admin/operations', '/admin/reports', '/admin/status',
+    '/admin/notifications', '/admin/system-reports', '/admin/closure-requests',
+    '/admin/enquiries', '/admin/admin-users', '/admin/roles', '/admin/sessions',
+    '/admin/credits', '/admin/usage', '/admin/addons', '/admin/plans',
+    '/admin/branding', '/admin/affiliate-content',
+  ].map(path => ({
+    path,
+    element: wrap(<RequireAdmin><AdminOperationalSectionPage /></RequireAdmin>),
+  })),
 ];
 
 // Reseller portal routes — outside RootLayout, own auth guard
