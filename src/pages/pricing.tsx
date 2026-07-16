@@ -45,17 +45,17 @@ const PLANS: PlanDef[] = [
     bgColor: 'bg-slate-100',
     highlight: false,
     badge: null,
-    description: 'Try the platform with no commitment. One free template demo — no saving, no sign-up required.',
+    description: 'Try one guided planning builder with no commitment.',
     features: [
-      '1 free template (demo only)',
-      'PDF export',
-      'No account required to preview',
+      'Try 1 guided planning builder',
+      'Preview your personalised plan',
+      'Browse all planning builders',
     ],
     notIncluded: [
-      'Save drafts',
-      'Standard or Professional templates',
-      'Custom branding',
-      'Document Signing',
+      'Save plans',
+      'Save plans',
+      'Full builder access',
+      'Organisation workspaces',
     ],
     cta: 'Try for Free',
     ctaVariant: 'outline',
@@ -69,18 +69,16 @@ const PLANS: PlanDef[] = [
     bgColor: 'bg-emerald-50',
     highlight: false,
     badge: null,
-    description: 'For individuals who need to save their work and access more templates.',
+    description: 'For individuals who need core builders and a few active plans.',
     features: [
-      'Free + Standard templates',
-      'Save up to 3 drafts',
-      'Drafts kept for 14 days',
-      'PDF export',
-      'Custom branding & logo',
+      'Core planning builders',
+      'Save up to 3 active plans',
+      'Plans kept for 14 days',
+      'Download, print and share',
     ],
     notIncluded: [
-      'Professional templates',
-      'Multiple branding profiles',
-      'Document Signing',
+      'Advanced planning builders',
+      'Organisation workspace',
     ],
     cta: 'Start Free Trial',
     ctaVariant: 'outline',
@@ -93,18 +91,16 @@ const PLANS: PlanDef[] = [
     bgColor: 'bg-blue-50',
     highlight: false,
     badge: null,
-    description: 'For freelancers and sole traders who create documents regularly.',
+    description: 'For people who plan regularly and need more builders and capacity.',
     features: [
-      'Free + Standard templates',
-      'Save up to 5 drafts',
-      'Drafts kept for 14 days',
-      'PDF export',
-      'Custom branding & logo',
+      'Expanded planning builder library',
+      'Save up to 5 active plans',
+      'Plans kept for 14 days',
+      'Download, print and share',
     ],
     notIncluded: [
-      'Professional templates',
-      'Multiple branding profiles',
-      'Document Signing',
+      'Every advanced builder',
+      'Organisation workspace',
     ],
     cta: 'Start Free Trial',
     ctaVariant: 'outline',
@@ -117,18 +113,15 @@ const PLANS: PlanDef[] = [
     bgColor: 'bg-primary/10',
     highlight: true,
     badge: 'Most Popular',
-    description: 'For businesses and professionals needing premium templates and document signing.',
+    description: 'For people who need every builder and more active plans.',
     features: [
-      'Free + Standard + Professional templates',
-      'Save up to 10 drafts',
-      'Drafts kept for 30 days',
-      'PDF export + premium layouts',
-      'Multiple branding profiles',
-      'Advanced editing tools',
-      'Document Signing (up to 20 requests)',
+      'Every planning builder',
+      'Save up to 10 active plans',
+      'Plans kept for 30 days',
+      'Advanced planning tools',
+      'Download, print and share',
     ],
     notIncluded: [
-      'Organisation templates',
       'Multi-user accounts',
     ],
     cta: 'Start Free Trial',
@@ -142,14 +135,13 @@ const PLANS: PlanDef[] = [
     bgColor: 'bg-purple-50',
     highlight: false,
     badge: null,
-    description: 'For small teams getting started with shared document creation.',
+    description: 'For small teams getting started with shared planning.',
     features: [
-      'All templates including Organisation tier',
+      'Every planning builder',
       '2 user seats included',
-      'Save up to 10 drafts (shared)',
-      'Drafts kept for 30 days',
-      'Shared branding profile',
-      'Document Signing (up to 50 requests)',
+      'Save up to 10 shared plans',
+      'Plans kept for 30 days',
+      'Shared planning workspace',
     ],
     notIncluded: [
       'Audit history',
@@ -173,7 +165,7 @@ const PLANS: PlanDef[] = [
       'Shared workspace',
       'Audit history',
       'Additional seats purchasable',
-      'Document Signing (up to 150 requests)',
+      'Team planning controls',
     ],
     notIncluded: [
       'Advanced permissions',
@@ -196,7 +188,7 @@ const PLANS: PlanDef[] = [
       'Advanced permissions',
       'Reporting tools',
       'Additional seats purchasable',
-      'Document Signing (up to 500 requests)',
+      'Advanced organisation controls',
     ],
     notIncluded: [],
     cta: 'Get Started',
@@ -215,27 +207,27 @@ interface CompRow {
 }
 
 const COMPARISON: CompRow[] = [
-  { section: 'Templates', label: '',
+  { section: 'Planning builders', label: '',
     free: false, personal: false, standard: false, professional: false, org_starter: false, org_growth: false, org_professional: false },
   { label: 'Browse full catalogue',    free: true,           personal: true,          standard: true,          professional: true,          org_starter: true,          org_growth: true,          org_professional: true },
-  { label: 'Free templates',           free: '1 demo',       personal: true,          standard: true,          professional: true,          org_starter: true,          org_growth: true,          org_professional: true },
-  { label: 'Standard templates',       free: false,          personal: true,          standard: true,          professional: true,          org_starter: true,          org_growth: true,          org_professional: true },
-  { label: 'Professional templates',   free: false,          personal: false,         standard: false,         professional: true,          org_starter: true,          org_growth: true,          org_professional: true },
-  { label: 'Organisation templates',   free: false,          personal: false,         standard: false,         professional: false,         org_starter: true,          org_growth: true,          org_professional: true },
-  { section: 'Drafts & Storage', label: '',
+  { label: 'Guided builder demo',      free: '1 builder',    personal: true,          standard: true,          professional: true,          org_starter: true,          org_growth: true,          org_professional: true },
+  { label: 'Core planning builders',   free: false,          personal: true,          standard: true,          professional: true,          org_starter: true,          org_growth: true,          org_professional: true },
+  { label: 'Expanded builder library', free: false,          personal: false,         standard: true,          professional: true,          org_starter: true,          org_growth: true,          org_professional: true },
+  { label: 'Advanced planning tools',  free: false,          personal: false,         standard: false,         professional: true,          org_starter: true,          org_growth: true,          org_professional: true },
+  { section: 'Saved Plans', label: '',
     free: false, personal: false, standard: false, professional: false, org_starter: false, org_growth: false, org_professional: false },
-  { label: 'Save drafts',              free: false,          personal: '3 drafts',    standard: '5 drafts',    professional: '10 drafts',   org_starter: '10 (shared)', org_growth: '10 (shared)', org_professional: '10 (shared)' },
-  { label: 'Draft retention',          free: 'None',         personal: '14 days',     standard: '14 days',     professional: '30 days',     org_starter: '30 days',     org_growth: '30 days',     org_professional: '30 days' },
+  { label: 'Save active plans',        free: false,          personal: '3 plans',     standard: '5 plans',     professional: '10 plans',    org_starter: '10 (shared)', org_growth: '10 (shared)', org_professional: '10 (shared)' },
+  { label: 'Plan retention',           free: 'None',         personal: '14 days',     standard: '14 days',     professional: '30 days',     org_starter: '30 days',     org_growth: '30 days',     org_professional: '30 days' },
   { label: 'PDF export',               free: true,           personal: true,          standard: true,          professional: true,          org_starter: true,          org_growth: true,          org_professional: true },
-  { section: 'Branding', label: '',
+  { section: 'Planning and sharing', label: '',
     free: false, personal: false, standard: false, professional: false, org_starter: false, org_growth: false, org_professional: false },
-  { label: 'Custom branding',          free: false,          personal: true,          standard: true,          professional: true,          org_starter: true,          org_growth: true,          org_professional: true },
+  { label: 'Download, print and share',free: false,          personal: true,          standard: true,          professional: true,          org_starter: true,          org_growth: true,          org_professional: true },
   { label: 'Logo uploads',             free: false,          personal: true,          standard: true,          professional: true,          org_starter: true,          org_growth: true,          org_professional: true },
-  { label: 'Brand profiles',           free: false,          personal: '1',           standard: '1',           professional: 'Multiple',    org_starter: 'Shared',      org_growth: 'Shared',      org_professional: 'Shared' },
+  { label: 'Active plans',             free: false,          personal: '3',           standard: '5',           professional: '10',          org_starter: '10 shared',  org_growth: '10 shared',  org_professional: '10 shared' },
   { label: 'Advanced layouts',         free: false,          personal: false,         standard: false,         professional: true,          org_starter: true,          org_growth: true,          org_professional: true },
-  { section: 'Document Signing', label: '',
+  { section: 'Organisation workspace', label: '',
     free: false, personal: false, standard: false, professional: false, org_starter: false, org_growth: false, org_professional: false },
-  { label: 'Document Signing',         free: false,          personal: false,         standard: false,         professional: '20 requests', org_starter: '50 requests', org_growth: '150 requests', org_professional: '500 requests' },
+  { label: 'Shared planning',          free: false,          personal: false,         standard: false,         professional: false,         org_starter: true,          org_growth: true,          org_professional: true },
   { label: 'Max signers per doc',      free: false,          personal: false,         standard: false,         professional: '5',           org_starter: '10',          org_growth: '20',           org_professional: '50' },
   { label: 'Audit certificate',        free: false,          personal: false,         standard: false,         professional: true,          org_starter: true,          org_growth: true,           org_professional: true },
   { section: 'Team & Organisation', label: '',
@@ -249,14 +241,14 @@ const COMPARISON: CompRow[] = [
 ];
 
 const FAQS_STATIC = [
-  { q: 'Is there a free plan?', a: 'Yes. The Free plan lets you try one template as a demo and export to PDF — no account required. To save drafts, access more templates, or use Document Signing, sign up for a paid plan.' },
+  { q: 'Is there a free plan?', a: 'Yes. The Free plan lets you try one guided planning builder. Paid plans let you save plans and unlock more builders.' },
   { q: 'Is there a free trial?', a: 'Personal, Standard, and Professional plans include a 14-day free trial with no credit card required. Organisation plans do not include a trial.' },
-  { q: 'What happens to my drafts when my plan expires?', a: 'Drafts are automatically deleted when they reach their retention period (14 days for Personal and Standard, 30 days for Professional and Organisation plans). Always export your documents before the retention period ends.' },
-  { q: 'Is there permanent document storage?', a: 'No. Saved drafts are temporary working copies only. The maximum retention period is 30 days. There is no archive, recovery, or permanent storage. Export your documents to keep them.' },
+  { q: 'What happens to my saved plans when my subscription expires?', a: 'Plans are automatically deleted when they reach their retention period (14 days for Personal and Standard, 30 days for Professional and Organisation plans). Download anything you need to keep.' },
+  { q: 'Is there permanent plan storage?', a: 'No. Saved plans are temporary working copies. The maximum retention period is 30 days, so download plans you need to keep.' },
   { q: 'Can I cancel at any time?', a: 'Yes. Cancel from your account settings at any time. You keep access until the end of your billing period.' },
   { q: 'What are additional seats?', a: 'Organisation plans include a base number of user seats. You can purchase additional User, Manager, or Admin seats separately through your account settings.' },
   { q: 'Can I upgrade or downgrade?', a: 'Yes. Change your plan at any time from account settings. Changes take effect at the next billing period.' },
-  { q: 'Is my data secure?', a: 'We operate in compliance with UK GDPR. Your documents and personal data are handled in accordance with our Privacy Policy.' },
+  { q: 'Is my data secure?', a: 'We operate in compliance with UK GDPR. Your plans and personal data are handled in accordance with our Privacy Policy.' },
 ];
 
 function CellValue({ value }: { value: CellVal }) {
@@ -339,15 +331,15 @@ function PlanCard({ plan, onCheckout, checkoutLoading, isLoggedIn, paymentsEnabl
       <div className="flex flex-wrap gap-2 mb-4">
         {plan.id === 'free' ? (
           <span className="inline-flex items-center gap-1 text-xs bg-muted text-muted-foreground rounded-full px-2 py-0.5">
-            <FileText className="w-3 h-3" /> 1 demo template
+            <FileText className="w-3 h-3" /> 1 builder demo
           </span>
         ) : draftLimit > 0 ? (
           <span className="inline-flex items-center gap-1 text-xs bg-muted text-muted-foreground rounded-full px-2 py-0.5">
-            <FileText className="w-3 h-3" /> {draftLimit} drafts
+            <FileText className="w-3 h-3" /> {draftLimit} active plans
           </span>
         ) : (
           <span className="inline-flex items-center gap-1 text-xs bg-muted text-muted-foreground rounded-full px-2 py-0.5">
-            <FileText className="w-3 h-3" /> No draft saving
+            <FileText className="w-3 h-3" /> No saved plans
           </span>
         )}
         {retentionDays && (
@@ -414,7 +406,7 @@ export default function PricingPage() {
 
   const FAQS = [
     ...FAQS_STATIC,
-    { q: 'Who owns my documents?', a: `You own all content you create. ${siteName} provides the tools — the content is entirely yours.` },
+    { q: 'Who owns my plans?', a: `You own the planning content you create. ${siteName} provides the tools — the content is entirely yours.` },
   ];
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const [checkoutError, setCheckoutError] = useState('');
@@ -452,7 +444,7 @@ export default function PricingPage() {
     <>
       <Helmet>
         <title>Pricing — {siteName}</title>
-        <meta name="description" content="Choose the right plan for your document needs. Free, Personal, Standard, Professional, and Organisation tiers with clear limits and no hidden fees." />
+        <meta name="description" content="Choose the right JA Plan Studio subscription for your planning needs, with clear builder access, saved-plan limits and organisation options." />
       </Helmet>
 
       <div className="min-h-screen bg-background">
@@ -461,7 +453,7 @@ export default function PricingPage() {
           <Badge variant="outline" className="mb-4 text-xs">Transparent Pricing</Badge>
           <h1 className="text-4xl font-extrabold text-foreground mb-4">Simple, honest pricing</h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-6">
-            Start free with one demo template. Upgrade to save drafts, access more templates, and unlock Document Signing.
+            Start free with one guided builder. Upgrade to save plans and unlock more planning tools.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3 mt-2">
             <div className="inline-flex items-center gap-2 bg-green-50 border border-green-200 text-green-800 rounded-lg px-5 py-3 text-sm font-medium">
@@ -470,7 +462,7 @@ export default function PricingPage() {
             </div>
             <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-800 rounded-lg px-4 py-3 text-sm font-medium">
               <AlertTriangle className="w-4 h-4 shrink-0" />
-              Max draft retention: 30 days. Always export to keep documents.
+              Max saved-plan retention: 30 days. Download plans you need to keep.
             </div>
           </div>
         </section>
@@ -504,7 +496,7 @@ export default function PricingPage() {
           {/* Individual plans */}
           <div className="mb-16">
             <h2 className="text-2xl font-bold text-foreground mb-2 text-center">Individual Plans</h2>
-            <p className="text-muted-foreground text-center mb-8">For freelancers, sole traders, and professionals</p>
+            <p className="text-muted-foreground text-center mb-8">For individuals and anyone planning for everyday life</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {individualPlans.map(plan => (
                 <PlanCard
@@ -522,7 +514,7 @@ export default function PricingPage() {
           {/* Organisation plans */}
           <div className="mb-16">
             <h2 className="text-2xl font-bold text-foreground mb-2 text-center">Organisation Plans</h2>
-            <p className="text-muted-foreground text-center mb-4">For teams and businesses — shared workspace, multiple users</p>
+            <p className="text-muted-foreground text-center mb-4">For teams and groups — shared planning with multiple users</p>
             <div className="inline-flex items-center gap-2 bg-blue-50 border border-blue-200 text-blue-800 rounded-lg px-4 py-2 text-sm mb-8 mx-auto flex justify-center">
               <Info className="w-4 h-4 shrink-0" />
               Additional User, Manager, and Admin seats can be purchased separately from your account settings.
@@ -541,15 +533,15 @@ export default function PricingPage() {
             </div>
           </div>
 
-          {/* Document Signing callout */}
+          {/* Planning workspace callout */}
           <div className="bg-primary/5 border border-primary/20 rounded-2xl p-6 mb-16 flex flex-col sm:flex-row items-start sm:items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
               <PenLine className="w-6 h-6 text-primary" />
             </div>
             <div className="flex-1">
-              <h3 className="font-bold text-foreground mb-1">Document Signing included from Professional</h3>
+              <h3 className="font-bold text-foreground mb-1">Every planning builder is included from Professional</h3>
               <p className="text-sm text-muted-foreground">
-                Send documents for secure online signing with a full audit trail and tamper-evident completion certificate. Available on Professional, Org Starter, Org Growth, and Org Professional plans.
+                Use the complete builder library, advanced planning tools and longer saved-plan retention. Organisation subscriptions add shared workspaces and managed seats.
               </p>
             </div>
             {user ? (
@@ -567,20 +559,20 @@ export default function PricingPage() {
           )}
           </div>
 
-          {/* Draft & retention notice */}
+          {/* Plan retention notice */}
           <div className="bg-muted/50 border border-border rounded-2xl p-6 mb-16">
             <h3 className="font-bold text-foreground mb-3 flex items-center gap-2">
               <Clock className="w-5 h-5 text-amber-500" />
-              About Saved Drafts
+              About Saved Plans
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-muted-foreground">
               <div>
-                <p className="font-medium text-foreground mb-1">Drafts are temporary working copies</p>
-                <p>Saved drafts exist for your convenience while working on a document. They are not permanent storage. Always export and save your own copy.</p>
+                <p className="font-medium text-foreground mb-1">Saved plans are temporary working copies</p>
+                <p>Saved plans let you return to planning in progress. They are not permanent storage, so download anything you need to keep.</p>
               </div>
               <div>
                 <p className="font-medium text-foreground mb-1">Automatic deletion</p>
-                <p>Drafts are permanently deleted when they reach their retention period. There is no archive, no recovery, and no exceptions. Deleted means deleted.</p>
+                <p>Plans are permanently deleted when they reach their retention period. There is no archive or recovery after deletion.</p>
               </div>
             </div>
           </div>
