@@ -54,14 +54,14 @@ const SEED_CONTENT: ContentItem[] = [
   {
     id: 'c-001', title: 'Homepage Hero',       slug: 'homepage-hero',
     type: 'marketing', status: 'published',
-    body: 'Create professional documents in minutes. JA Plan Studio gives you 1,000+ templates for every business need — from contracts to letters, invoices to policies.',
+    body: 'Build personalised plans step by step. JA Plan Studio provides guided builders for destinations, itineraries, experiences, budgets, accessibility and practical travel preparation.',
     excerpt: 'Main homepage hero text',
     lastUpdated: '2026-06-02', updatedBy: 'Platform Owner', version: 3,
   },
   {
     id: 'c-002', title: 'Homepage Features Section', slug: 'homepage-features',
     type: 'marketing', status: 'published',
-    body: 'Over 1,000 professionally drafted templates. Export to PDF or Word. Secure cloud storage. Organisation accounts with team management.',
+    body: 'Guided planning builders, personalised outputs, secure saved plans, discovery tools and practical planning support.',
     excerpt: 'Feature highlights on homepage',
     lastUpdated: '2026-06-02', updatedBy: 'Platform Owner', version: 2,
   },
