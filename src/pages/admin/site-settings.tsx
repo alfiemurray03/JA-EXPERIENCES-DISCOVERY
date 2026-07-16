@@ -15,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Plus, Trash2, Save, CheckCircle2, AlertTriangle,
   Palette, ToggleLeft, ToggleRight, GripVertical,
-  Building2, Navigation, Footprints, Accessibility,
+  Building2, Navigation, Footprints, Accessibility, Globe,
 } from 'lucide-react';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -35,6 +35,11 @@ interface A11yConfig {
 }
 
 interface SiteConfig {
+  siteStatus: 'normal' | 'coming_soon' | 'maintenance';
+  comingSoonHeadline: string;
+  comingSoonSubtext: string;
+  comingSoonLaunchDate: string;
+  comingSoonCountdownEnabled: boolean;
   siteName: string;
   brandName: string;       // public-facing brand — "JA Group Services"
   tagline: string;
@@ -62,6 +67,11 @@ interface SiteConfig {
 // ── Seed ──────────────────────────────────────────────────────────────────────
 
 const DEFAULT_CONFIG: SiteConfig = {
+  siteStatus: 'normal',
+  comingSoonHeadline: 'Coming Soon',
+  comingSoonSubtext: 'We are putting the finishing touches on something great.',
+  comingSoonLaunchDate: '',
+  comingSoonCountdownEnabled: false,
   siteName:    'JA Plan Studio',
   brandName:   'JA Group Services',
   tagline:     'Professional Documents, Generated in Minutes',
@@ -115,14 +125,34 @@ async function apiGetSettings(): Promise<Record<string, string>> {
 }
 
 async function apiSaveSettings(settings: Record<string, string>): Promise<void> {
-  await fetch('/api/admin/site-settings', {
+  const response = await fetch('/api/admin/site-settings', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
     body: JSON.stringify({ settings }),
   });
+  const data = await response.json().catch(() => ({})) as { success?: boolean; error?: string };
+  if (!response.ok || !data.success) throw new Error(data.error || 'Settings could not be saved.');
   // Also persist to localStorage as cache
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(settings)); } catch { /* ignore */ }
+}
+
+async function apiGetSiteStatus(): Promise<SiteConfig['siteStatus'] | null> {
+  const response = await fetch('/admin/api/site-status', { credentials: 'include' });
+  const data = await response.json().catch(() => ({})) as { success?: boolean; site_status?: SiteConfig['siteStatus'] };
+  return response.ok && data.success && ['normal', 'coming_soon', 'maintenance'].includes(String(data.site_status))
+    ? data.site_status ?? null : null;
+}
+
+async function apiSaveSiteStatus(siteStatus: SiteConfig['siteStatus']): Promise<void> {
+  const response = await fetch('/admin/api/site-status', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ site_status: siteStatus }),
+  });
+  const data = await response.json().catch(() => ({})) as { success?: boolean; message?: string };
+  if (!response.ok || !data.success) throw new Error(data.message || 'Site status could not be saved.');
 }
 
 function loadConfig(): SiteConfig {
@@ -137,8 +167,18 @@ function loadConfig(): SiteConfig {
 }
 
 function settingsToConfig(s: Record<string, string>): SiteConfig {
+  const savedStatus = ['normal', 'coming_soon', 'maintenance'].includes(s['site_status'])
+    ? s['site_status'] as SiteConfig['siteStatus']
+    : s['maintenance_enabled'] === 'true' || s['maintenance_mode'] === 'true'
+      ? 'maintenance'
+      : s['launchgateway_enabled'] === 'true' ? 'coming_soon' : 'normal';
   return {
     ...DEFAULT_CONFIG,
+    siteStatus: savedStatus,
+    comingSoonHeadline: s['coming_soon_headline'] ?? DEFAULT_CONFIG.comingSoonHeadline,
+    comingSoonSubtext: s['coming_soon_subtext'] ?? DEFAULT_CONFIG.comingSoonSubtext,
+    comingSoonLaunchDate: s['coming_soon_launch_date'] ?? '',
+    comingSoonCountdownEnabled: s['coming_soon_countdown_enabled'] === 'true',
     siteName:            s['site_name']            ?? DEFAULT_CONFIG.siteName,
     brandName:           s['brand_name']           ?? DEFAULT_CONFIG.brandName,
     tagline:             s['tagline']              ?? DEFAULT_CONFIG.tagline,
@@ -152,7 +192,7 @@ function settingsToConfig(s: Record<string, string>): SiteConfig {
     accentColor:         s['accent_color']         ?? DEFAULT_CONFIG.accentColor,
     logoUrl:             s['logo_url']             ?? DEFAULT_CONFIG.logoUrl,
     faviconUrl:          s['favicon_url']          ?? DEFAULT_CONFIG.faviconUrl,
-    maintenanceMode:     s['maintenance_mode']     === 'true',
+    maintenanceMode:     savedStatus === 'maintenance',
     maintenanceMessage:  s['maintenance_message']  ?? DEFAULT_CONFIG.maintenanceMessage,
     registrationEnabled: s['registration_enabled'] !== 'false',
     freeTrialEnabled:    s['free_trial_enabled']   !== 'false',
@@ -166,6 +206,13 @@ function settingsToConfig(s: Record<string, string>): SiteConfig {
 
 function configToSettings(cfg: SiteConfig): Record<string, string> {
   return {
+    site_status:          cfg.siteStatus,
+    maintenance_enabled: String(cfg.siteStatus === 'maintenance'),
+    launchgateway_enabled: String(cfg.siteStatus === 'coming_soon'),
+    coming_soon_headline: cfg.comingSoonHeadline,
+    coming_soon_subtext: cfg.comingSoonSubtext,
+    coming_soon_launch_date: cfg.comingSoonLaunchDate ? new Date(cfg.comingSoonLaunchDate).toISOString() : '',
+    coming_soon_countdown_enabled: String(cfg.comingSoonCountdownEnabled),
     site_name:            cfg.siteName,
     brand_name:           cfg.brandName,
     tagline:              cfg.tagline,
@@ -179,7 +226,7 @@ function configToSettings(cfg: SiteConfig): Record<string, string> {
     accent_color:         cfg.accentColor,
     logo_url:             cfg.logoUrl,
     favicon_url:          cfg.faviconUrl,
-    maintenance_mode:     String(cfg.maintenanceMode),
+    maintenance_mode:     String(cfg.siteStatus === 'maintenance'),
     maintenance_message:  cfg.maintenanceMessage,
     registration_enabled: String(cfg.registrationEnabled),
     free_trial_enabled:   String(cfg.freeTrialEnabled),
@@ -240,6 +287,7 @@ export default function AdminSiteSettings() {
   const [cfg, setCfg]           = useState<SiteConfig>(loadConfig);
   const [a11y, setA11y]         = useState<A11yConfig>(() => loadA11y());
   const [savedMsg, setSavedMsg] = useState('');
+  const [saveFailed, setSaveFailed] = useState(false);
   const [dirty, setDirty]       = useState(false);
   const [saving, setSaving]     = useState(false);
   const [a11ySaving, setA11ySaving] = useState(false);
@@ -247,8 +295,9 @@ export default function AdminSiteSettings() {
 
   // Load from DB on mount
   useEffect(() => {
-    apiGetSettings().then(s => {
-      if (Object.keys(s).length > 0) setCfg(settingsToConfig(s));
+    Promise.all([apiGetSettings(), apiGetSiteStatus().catch(() => null)]).then(([settings, status]) => {
+      const loaded = Object.keys(settings).length > 0 ? settingsToConfig(settings) : DEFAULT_CONFIG;
+      setCfg({ ...loaded, ...(status ? { siteStatus: status, maintenanceMode: status === 'maintenance' } : {}) });
     }).catch(() => {});
   }, []);
 
@@ -263,13 +312,19 @@ export default function AdminSiteSettings() {
 
   async function handleSave() {
     setSaving(true);
+    setSaveFailed(false);
     try {
+      if (cfg.siteStatus === 'coming_soon' && cfg.comingSoonCountdownEnabled && !cfg.comingSoonLaunchDate) {
+        throw new Error('Choose a launch date when the countdown is enabled.');
+      }
+      await apiSaveSiteStatus(cfg.siteStatus);
       await apiSaveSettings(configToSettings(cfg));
       setDirty(false);
       setSavedMsg('Settings saved successfully.');
       setTimeout(() => setSavedMsg(''), 3000);
-    } catch {
-      setSavedMsg('Save failed. Please try again.');
+    } catch (error) {
+      setSaveFailed(true);
+      setSavedMsg(error instanceof Error ? `Save failed: ${error.message}` : 'Save failed. Please try again.');
       setTimeout(() => setSavedMsg(''), 4000);
     } finally {
       setSaving(false);
@@ -290,14 +345,7 @@ export default function AdminSiteSettings() {
         ['a11y_feat_links',     String(a11y.featLinks)],
         ['a11y_feat_grayscale', String(a11y.featGrayscale)],
       ];
-      for (const [key, value] of keys) {
-        await fetch('/api/admin/system-config', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ key, value }),
-        });
-      }
+      await apiSaveSettings(Object.fromEntries(keys));
       saveA11y(a11y);
       setA11ySaved('Accessibility settings saved.');
       setTimeout(() => setA11ySaved(''), 3000);
@@ -388,8 +436,10 @@ export default function AdminSiteSettings() {
 
           {savedMsg && (
             <div className={`flex items-center gap-2 text-sm rounded-lg px-4 py-2.5 border
-              ${'text-emerald-700 bg-emerald-50 border-emerald-200 dark:text-emerald-400 dark:bg-emerald-900/20 dark:border-emerald-700/40'}`}>
-              <CheckCircle2 className="w-4 h-4" /> {savedMsg}
+              ${saveFailed
+                ? 'text-red-700 bg-red-50 border-red-200 dark:text-red-400 dark:bg-red-900/20 dark:border-red-700/40'
+                : 'text-emerald-700 bg-emerald-50 border-emerald-200 dark:text-emerald-400 dark:bg-emerald-900/20 dark:border-emerald-700/40'}`}>
+              {saveFailed ? <AlertTriangle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />} {savedMsg}
             </div>
           )}
 
@@ -403,8 +453,9 @@ export default function AdminSiteSettings() {
             </Button>
           </div>
 
-          <Tabs defaultValue="branding">
+          <Tabs defaultValue="status">
             <TabsList className={`border flex-wrap h-auto gap-1 ${tabsCls}`}>
+              <TabsTrigger value="status"         className="gap-1.5 text-xs"><Globe className="w-3.5 h-3.5" /> Site Status</TabsTrigger>
               <TabsTrigger value="branding"       className="gap-1.5 text-xs"><Palette className="w-3.5 h-3.5" /> Branding</TabsTrigger>
               <TabsTrigger value="company"        className="gap-1.5 text-xs"><Building2 className="w-3.5 h-3.5" /> Company</TabsTrigger>
               <TabsTrigger value="navigation"     className="gap-1.5 text-xs"><Navigation className="w-3.5 h-3.5" /> Navigation</TabsTrigger>
@@ -412,6 +463,68 @@ export default function AdminSiteSettings() {
               <TabsTrigger value="features"       className="gap-1.5 text-xs"><ToggleLeft className="w-3.5 h-3.5" /> Features</TabsTrigger>
               <TabsTrigger value="accessibility"  className="gap-1.5 text-xs"><Accessibility className="w-3.5 h-3.5" /> Accessibility</TabsTrigger>
             </TabsList>
+
+            {/* ── Site Status ── */}
+            <TabsContent value="status" className="mt-4 space-y-4">
+              <div className={sectionCls}>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900">Public Website Status</h3>
+                  <p className={`text-xs mt-1 ${muted}`}>Choose exactly what visitors see. Administrators can continue to access this portal in every mode.</p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  {([
+                    ['normal', 'Live', 'The public JA Plan Studio website is available normally.'],
+                    ['coming_soon', 'Coming Soon', 'Show the launch gate while the website is prepared.'],
+                    ['maintenance', 'Maintenance', 'Temporarily take the public website offline.'],
+                  ] as const).map(([value, label, description]) => {
+                    const selected = cfg.siteStatus === value;
+                    return (
+                      <button key={value} type="button" onClick={() => update({ siteStatus: value, maintenanceMode: value === 'maintenance' })}
+                        className={`text-left rounded-xl border p-4 transition-all ${selected ? 'border-primary bg-primary/5 ring-2 ring-primary/15' : 'border-slate-200 bg-white hover:border-slate-300'}`}>
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-sm font-semibold text-slate-900">{label}</span>
+                          <span className={`w-4 h-4 rounded-full border flex items-center justify-center ${selected ? 'border-primary bg-primary' : 'border-slate-300'}`}>
+                            {selected && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-2 leading-relaxed">{description}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {cfg.siteStatus === 'coming_soon' && (
+                <div className={sectionCls}>
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900">Coming Soon Launch Gate</h3>
+                    <p className={`text-xs mt-1 ${muted}`}>These details are displayed on the public launch page.</p>
+                  </div>
+                  <Field label="Headline">
+                    <Input value={cfg.comingSoonHeadline} onChange={e => update({ comingSoonHeadline: e.target.value })} className={`h-9 ${inputCls}`} />
+                  </Field>
+                  <Field label="Supporting text">
+                    <Textarea value={cfg.comingSoonSubtext} onChange={e => update({ comingSoonSubtext: e.target.value })} rows={3} className={`resize-none text-sm ${inputCls}`} />
+                  </Field>
+                  <Toggle checked={cfg.comingSoonCountdownEnabled} onChange={v => update({ comingSoonCountdownEnabled: v })}
+                    label="Show launch countdown" description="Display a live countdown to the launch date below." />
+                  {cfg.comingSoonCountdownEnabled && (
+                    <Field label="Launch date and time">
+                      <Input type="datetime-local" value={cfg.comingSoonLaunchDate.slice(0, 16)}
+                        onChange={e => update({ comingSoonLaunchDate: e.target.value })} className={`h-9 ${inputCls}`} />
+                    </Field>
+                  )}
+                </div>
+              )}
+
+              {cfg.siteStatus === 'maintenance' && (
+                <div className={sectionCls}>
+                  <h3 className="text-sm font-semibold text-gray-900">Maintenance Message</h3>
+                  <Textarea value={cfg.maintenanceMessage} onChange={e => update({ maintenanceMessage: e.target.value })}
+                    rows={3} className={`resize-none text-sm ${inputCls}`} />
+                </div>
+              )}
+            </TabsContent>
 
             {/* ── Branding ── */}
             <TabsContent value="branding" className="mt-4 space-y-4">
@@ -609,7 +722,7 @@ export default function AdminSiteSettings() {
               <div className={`${sectionCls} divide-y ${divider}`}>
                 <h3 className={`text-sm font-semibold pb-3 ${'text-gray-900 dark:text-white'}`}>Maintenance Mode</h3>
                 <div className="py-4">
-                  <Toggle checked={cfg.maintenanceMode} onChange={v => update({ maintenanceMode: v })}
+                  <Toggle checked={cfg.siteStatus === 'maintenance'} onChange={v => update({ maintenanceMode: v, siteStatus: v ? 'maintenance' : 'normal' })}
                     label="Enable Maintenance Mode"
                     description="Displays a maintenance page to all non-admin visitors. Use with caution." />
                 </div>
