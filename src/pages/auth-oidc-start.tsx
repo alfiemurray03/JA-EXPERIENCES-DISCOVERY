@@ -66,7 +66,7 @@ export default function AuthOidcStartPage() {
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
 
-      {/* Full-screen dark branded layout — matches /login */}
+      {/* Full-screen dark branded layout — matches /sign-in */}
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#0d1b2e] px-4 relative overflow-hidden">
 
         {/* Background orbs */}
@@ -159,7 +159,7 @@ export default function AuthOidcStartPage() {
                     asChild
                     className="w-full h-10 text-sm text-white/50 hover:text-white hover:bg-white/5"
                   >
-                    <Link to="/login">
+                    <Link to="/sign-in">
                       Back to sign-in page
                     </Link>
                   </Button>
