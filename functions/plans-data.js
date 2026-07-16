@@ -15,15 +15,19 @@ export async function onRequestGet(context) {
     return json({ error: "Plan database binding DB is missing.", plans: [] }, 500);
   }
 
-  await ensureServicePlans(env.DB);
-
-  const result = await env.DB.prepare(`
-    SELECT id, plan_name, plan_type, price_label, price_pence, delivery_time, revisions,
-      description, button_label, is_active, is_featured, sort_order,
-      CASE WHEN stripe_price_id IS NOT NULL AND stripe_price_id != '' THEN 1 ELSE 0 END AS has_stripe_price
-    FROM service_plans
-    ORDER BY sort_order ASC, plan_name ASC
-  `).all();
+  let result;
+  try {
+    result = await env.DB.prepare(`
+      SELECT id, plan_name, plan_type, price_label, price_pence, delivery_time, revisions,
+        description, button_label, is_active, is_featured, sort_order,
+        CASE WHEN stripe_price_id IS NOT NULL AND stripe_price_id != '' THEN 1 ELSE 0 END AS has_stripe_price
+      FROM service_plans
+      ORDER BY sort_order ASC, plan_name ASC
+    `).all();
+  } catch (error) {
+    console.error("Plan catalogue read failed:", error instanceof Error ? error.message : String(error));
+    return json({ plans: defaultPlanPayload(), source: "fallback" });
+  }
 
   const plans = (result.results || [])
     .filter((plan) => Number(plan.is_active || 0) === 1)
@@ -34,8 +38,16 @@ export async function onRequestGet(context) {
       payment_available: Number(plan.has_stripe_price || 0) === 1
     }));
 
-  return json({ plans });
+  return json({ plans: plans.length ? plans : defaultPlanPayload(), source: plans.length ? "database" : "fallback" });
 };
+
+function defaultPlanPayload() {
+  return DEFAULT_PLANS.map((plan) => ({
+    id: plan[0], plan_name: plan[1], plan_type: plan[2], price_label: plan[3], price_pence: plan[4],
+    delivery_time: plan[7], revisions: plan[8], description: plan[9], button_label: plan[10],
+    is_active: plan[11], is_featured: plan[12], sort_order: plan[13], payment_available: Boolean(plan[6])
+  }));
+}
 
 async function ensureServicePlans(DB) {
   await DB.prepare(`
