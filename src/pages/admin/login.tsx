@@ -2,8 +2,8 @@
  * /admin — Platform Administration Sign In
  *
  * Matches the customer login split-panel layout.
- * Auto-redirects to Microsoft OIDC immediately unless an error is present.
- * No "Sign in with Microsoft" text — just a clean "Access portal" button.
+ * The login screen remains visible until the administrator chooses to sign in.
+ * Microsoft OIDC is started by the Cloudflare admin login endpoint.
  */
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
@@ -74,7 +74,7 @@ export default function AdminLoginPage() {
 
   function handleSignIn() {
     setIsRedirecting(true);
-    window.location.href = '/auth/admin/oidc/start';
+    window.location.href = '/admin/login?return_to=%2Fadmin%2Fdashboard%2F';
   }
 
   return (
