@@ -610,6 +610,12 @@ export async function onRequest(context) {
     path.startsWith("/api/status/") ||
     path === "/api/enquiries" ||
     path.startsWith("/api/enquiries/") ||
+    path === "/plans-data" ||
+    path === "/plans-data/" ||
+    path === "/create-checkout-session" ||
+    path === "/create-checkout-session/" ||
+    path === "/payment-success" ||
+    path === "/payment-success/" ||
     path === "/api" ||
     path.startsWith("/api/") ||
     path === "/health" ||
