@@ -1,121 +1,170 @@
 import { Link } from 'react-router-dom';
-import { FileText, Sun, Moon, Monitor } from 'lucide-react';
-import { useSiteSettings } from '@/lib/site-settings-context';
-import { useTheme } from '@/lib/theme-context';
+import { ExternalLink } from 'lucide-react';
+import { useBranding } from '@/lib/branding';
+import { openInstallModal } from '@/components/InstallAppModal';
 
-function ThemeToggle() {
-  const { theme, setTheme } = useTheme();
-  const options: Array<{ value: typeof theme; icon: React.ComponentType<{ className?: string }>; label: string }> = [
-    { value: 'light',  icon: Sun,     label: 'Light' },
-    { value: 'dark',   icon: Moon,    label: 'Dark' },
-    { value: 'system', icon: Monitor, label: 'System' },
-  ];
+export interface FooterLink {
+  label: string;
+  href: string;
+  external?: boolean;
+}
+
+export interface FooterColumn {
+  heading: string;
+  links: FooterLink[];
+}
+
+export const DEFAULT_FOOTER_COLUMNS: FooterColumn[] = [
+  {
+    heading: 'Product',
+    links: [
+      { label: 'Builders',    href: '/#features' },
+      { label: 'Pricing',     href: '/#pricing' },
+      { label: 'FAQ',         href: '/#faq' },
+      { label: 'Help Centre', href: '/support' },
+      { label: 'Install App', href: '__install__' },
+    ],
+  },
+  {
+    heading: 'Support',
+    links: [
+      { label: 'Contact Support',  href: '/support' },
+      { label: 'Report an Issue',  href: '/support' },
+      { label: 'Service Status',   href: '/status' },
+      { label: 'Help Centre',      href: '/support' },
+      { label: 'JA Group Services Ltd', href: 'https://jagroupservices.co.uk', external: true },
+    ],
+  },
+  {
+    heading: 'Legal',
+    links: [
+      { label: 'Terms of Service',    href: '/terms' },
+      { label: 'Privacy Policy',      href: '/privacy' },
+      { label: 'Cookie Policy',       href: '/cookies' },
+      { label: 'Acceptable Use',      href: '/acceptable-use' },
+      { label: 'Refund Information',  href: '/pricing' },
+      { label: 'Complaints',          href: '/contact' },
+      { label: 'Report an Issue',     href: '/support' },
+      { label: 'Security & Privacy',  href: '/privacy-settings' },
+      { label: 'Accessibility',       href: '/accessibility-support' },
+      { label: 'Eligibility',         href: '/terms' },
+      { label: 'Data Retention',      href: '/privacy' },
+      { label: 'Data Subject Rights', href: '/privacy' },
+    ],
+  },
+];
+
+function InstallAppLink({ label }: { label: string }) {
   return (
-    <div className="flex items-center gap-1 rounded-lg border border-border bg-muted/40 p-0.5">
-      {options.map(opt => {
-        const Icon = opt.icon;
-        const isActive = theme === opt.value;
-        return (
-          <button
-            key={opt.value}
-            onClick={() => setTheme(opt.value)}
-            title={opt.label}
-            aria-label={`Switch to ${opt.label} theme`}
-            className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs transition-colors ${
-              isActive
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <Icon className="w-3 h-3" />
-            <span className="hidden sm:inline">{opt.label}</span>
-          </button>
-        );
-      })}
-    </div>
+    <button
+      onClick={openInstallModal}
+      className="text-sm text-muted-foreground hover:text-foreground transition-colors text-left"
+    >
+      {label}
+    </button>
+  );
+}
+
+function FooterLinkItem({ link }: { link: FooterLink }) {
+  if (link.href === '__install__') {
+    return <InstallAppLink label={link.label} />;
+  }
+  if (link.external || link.href.startsWith('http')) {
+    return (
+      <a
+        href={link.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-sm text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1"
+      >
+        {link.label} <ExternalLink className="w-3 h-3 shrink-0" />
+      </a>
+    );
+  }
+  return (
+    <Link to={link.href} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+      {link.label}
+    </Link>
   );
 }
 
 export default function Footer() {
-  const { siteName, brandName } = useSiteSettings();
+  const branding = useBranding();
+  const year = new Date().getFullYear();
+
+  // Parse footer_links from branding; fall back to defaults
+  let columns: FooterColumn[] = DEFAULT_FOOTER_COLUMNS;
+  if (branding.footer_links) {
+    try {
+      const parsed = JSON.parse(branding.footer_links);
+      if (Array.isArray(parsed) && parsed.length > 0) columns = parsed;
+    } catch { /* use defaults */ }
+  }
+
   return (
-    <footer className="bg-card border-t border-border">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {/* Brand */}
-          <div className="md:col-span-2">
-            <Link to="/" className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <FileText className="w-4 h-4 text-primary-foreground" />
-              </div>
-              <span className="font-bold text-foreground">{siteName}</span>
+    <footer className="border-t border-border bg-card" role="contentinfo">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+        <div
+          className="grid grid-cols-1 sm:grid-cols-2 gap-10"
+          style={{ gridTemplateColumns: `1fr repeat(${columns.length}, minmax(0, 1fr))` }}
+        >
+          {/* Brand column */}
+          <div className="sm:col-span-1">
+            <Link to="/" className="inline-block mb-4">
+              {branding.platform_logo_url ? (
+                <img
+                  src={branding.platform_logo_url}
+                  alt={branding.platform_name || 'JA Plan Studio'}
+                  className="h-9 w-auto object-contain"
+                />
+              ) : (
+                <span className="font-extrabold text-lg text-foreground">
+                  JA <span className="text-primary">Plan Studio</span>
+                </span>
+              )}
             </Link>
-            <p className="text-sm text-muted-foreground max-w-xs">
-              Professional document builder for businesses and individuals. Operated by {brandName}.
+            <p className="text-sm text-muted-foreground leading-relaxed mb-3">
+              {branding.platform_description || 'Create letters, contracts, invoices, policies, forms, reports and more from one secure JA Plan Studio account.'}
             </p>
-            <p className="text-xs text-muted-foreground mt-3">
-              <strong>Disclaimer:</strong> Documents are templates only and do not constitute legal advice.
-            </p>
-            {/* Theme toggle */}
-            <div className="mt-4 flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">Theme:</span>
-              <ThemeToggle />
+            {branding.support_email && (
+              <a
+                href={`mailto:${branding.support_email}`}
+                className="text-sm text-primary hover:underline transition-colors font-medium break-all leading-relaxed inline-block max-w-full"
+                style={{ wordBreak: 'break-all', overflowWrap: 'anywhere' }}
+              >
+                {branding.support_email}
+              </a>
+            )}
+          </div>
+
+          {/* Dynamic columns */}
+          {columns.map((col) => (
+            <div key={col.heading}>
+              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-4">
+                {col.heading}
+              </h4>
+              <ul className="space-y-2.5">
+                {col.links.map((link) => (
+                  <li key={link.href + link.label}>
+                    <FooterLinkItem link={link} />
+                  </li>
+                ))}
+              </ul>
             </div>
-          </div>
-
-          {/* Product */}
-          <div>
-            <h4 className="font-semibold text-foreground text-sm mb-3">Product</h4>
-            <ul className="space-y-2">
-              {[
-                { label: 'Builders', href: '/builders', external: false },
-                { label: 'Pricing', href: '/pricing', external: false },
-                { label: 'Partners', href: '/partners', external: false },
-                { label: 'Sign In', href: '/sign-in', external: false },
-                { label: 'Create Account', href: '/sign-in', external: false },
-              ].map((link) => (
-                <li key={link.label}>
-                  {link.external ? (
-                    <a href={link.href} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                      {link.label}
-                    </a>
-                  ) : (
-                    <Link to={link.href} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                      {link.label}
-                    </Link>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Support & Legal */}
-          <div>
-            <h4 className="font-semibold text-foreground text-sm mb-3">Support & Legal</h4>
-            <ul className="space-y-2">
-              {[
-                { label: 'Contact Us', href: '/contact' },
-                { label: 'Privacy Policy', href: '/privacy' },
-                { label: 'Terms of Service', href: '/terms' },
-                { label: 'Cookie Policy', href: '/cookies' },
-                { label: 'Acceptable Use', href: '/acceptable-use' },
-              ].map((link) => (
-                <li key={link.href}>
-                  <Link to={link.href} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+          ))}
         </div>
 
-        <div className="border-t border-border mt-8 pt-6 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} {siteName}. Operated by {brandName}. All rights reserved.
+        {/* Bottom bar */}
+        <div className="border-t border-border mt-12 pt-6 space-y-2">
+          <p className="text-sm text-muted-foreground">
+            © {year} {branding.platform_name || 'JA Plan Studio'}. All rights reserved.
+            {branding.footer_tagline ? ` ${branding.footer_tagline}.` : ''}
+          </p>
+          <p className="text-xs text-muted-foreground leading-relaxed max-w-3xl">
+            JA Plan Studio is a service brand operated by JA Group Services Ltd, a company registered in England and Wales. The service provides professional document-building tools for individuals and organisations.
           </p>
           <p className="text-xs text-muted-foreground">
-            Templates are provided for informational purposes only.
+            Separate terms may apply to electronic-signing, payment or other connected services where used.
           </p>
         </div>
       </div>
