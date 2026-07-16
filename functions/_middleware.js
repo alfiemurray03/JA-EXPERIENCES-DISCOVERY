@@ -23,17 +23,6 @@ async function isAdminRequest(request, env) {
   if (!env.DB) return configured;
 
   try {
-    await env.DB.prepare(`
-      CREATE TABLE IF NOT EXISTS admin_users (
-        email TEXT PRIMARY KEY,
-        name TEXT,
-        source TEXT DEFAULT 'portal',
-        created_by TEXT,
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-      )
-    `).run();
-
     const admin = await env.DB.prepare(`SELECT * FROM admin_users WHERE lower(email) = lower(?)`).bind(email).first();
     const status = String(admin?.status || "Active").trim().toLowerCase();
     if (admin && ["blocked", "closed", "disabled", "inactive", "suspended"].includes(status)) return false;

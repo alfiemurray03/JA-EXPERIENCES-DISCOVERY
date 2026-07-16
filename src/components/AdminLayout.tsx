@@ -75,9 +75,9 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: 'System Settings',
+    label: 'Site Status & Settings',
     items: [
-      { label: 'System Settings', href: '/admin/site-settings', icon: Settings,      section: 'systemsettings' },
+      { label: 'Site Status & Settings', href: '/admin/site-settings', icon: Settings, section: 'systemsettings' },
     ],
   },
 ];

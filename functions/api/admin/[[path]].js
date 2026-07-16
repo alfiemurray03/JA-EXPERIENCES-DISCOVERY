@@ -26,6 +26,11 @@ async function all(DB, sql, bindings = []) {
   return result.results || [];
 }
 
+async function tableHasColumn(DB, table, column) {
+  const rows = await all(DB, `PRAGMA table_info(${table})`);
+  return rows.some((row) => row.name === column);
+}
+
 function parse(value, fallback) {
   if (value === null || value === undefined || value === "") return fallback;
   try { return JSON.parse(value); } catch { return fallback; }
@@ -46,10 +51,6 @@ function splitName(name, email) {
 }
 
 async function audit(DB, identity, action, entityType, entityId, summary, metadata = {}) {
-  await DB.prepare(`CREATE TABLE IF NOT EXISTS admin_audit_log (
-    id TEXT PRIMARY KEY, actor_email TEXT, action TEXT, entity_type TEXT,
-    entity_id TEXT, summary TEXT, metadata TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP
-  )`).run();
   await DB.prepare(`INSERT INTO admin_audit_log
     (id, actor_email, action, entity_type, entity_id, summary, metadata)
     VALUES (?, ?, ?, ?, ?, ?, ?)`)
@@ -191,7 +192,6 @@ async function patchCustomer(context, identity, email) {
 
 async function settings(context) {
   const DB = context.env.DB;
-  await DB.prepare(`CREATE TABLE IF NOT EXISTS site_settings (key TEXT PRIMARY KEY, value TEXT, updated_at TEXT DEFAULT CURRENT_TIMESTAMP)`).run();
   if (context.request.method === "GET") {
     const rows = await all(DB, "SELECT key,value FROM site_settings ORDER BY key");
     return json({ success: true, settings: Object.fromEntries(rows.map((row) => [row.key, row.value])), config: Object.fromEntries(rows.map((row) => [row.key, row.value])) });
@@ -202,24 +202,33 @@ async function settings(context) {
     : body.key ? { [body.key]: body.value } : body;
   const entries = Object.entries(values).filter(([key]) => /^[a-zA-Z0-9_.-]{1,100}$/.test(key));
   if (!entries.length) return json({ success: false, error: "No valid settings were supplied." }, 400);
-  await DB.batch(entries.map(([key, value]) => DB.prepare(`INSERT INTO site_settings (key,value,updated_at) VALUES (?,?,CURRENT_TIMESTAMP)
-    ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=CURRENT_TIMESTAMP`).bind(key, typeof value === "string" ? value : JSON.stringify(value))));
+  const hasUpdatedAt = await tableHasColumn(DB, "site_settings", "updated_at");
+  const sql = hasUpdatedAt
+    ? `INSERT INTO site_settings (key,value,updated_at) VALUES (?,?,CURRENT_TIMESTAMP) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=CURRENT_TIMESTAMP`
+    : `INSERT INTO site_settings (key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value`;
+  await DB.batch(entries.map(([key, value]) => DB.prepare(sql).bind(key, typeof value === "string" ? value : JSON.stringify(value))));
   return json({ success: true, saved: entries.length });
 }
 
-async function stats(context, identity) {
-  const [analyticsData, overviewData] = await Promise.all([
-    legacyData(context, identity, "analytics", { method: "GET" }),
-    legacyData(context, identity, "overview", { method: "GET" })
+async function stats(context) {
+  const DB = context.env.DB;
+  const safeFirst = (sql) => DB.prepare(sql).first().catch(() => ({ count: 0 }));
+  const safeAll = (sql) => all(DB, sql).catch(() => []);
+  const [users, documents, paid, recentDocuments, recentUsers] = await Promise.all([
+    safeFirst("SELECT COUNT(*) AS count FROM profiles"),
+    safeFirst("SELECT COUNT(*) AS count FROM builder_outputs WHERE archived_at IS NULL"),
+    safeFirst("SELECT COUNT(*) AS count FROM profiles WHERE lower(COALESCE(admin_customer_status,'free')) NOT IN ('free','standard')"),
+    safeAll("SELECT id AS uuid,title,builder_id AS templateId,status,created_at AS createdAt,updated_at AS updatedAt FROM builder_outputs WHERE archived_at IS NULL ORDER BY created_at DESC LIMIT 8"),
+    safeAll("SELECT email AS id,email,COALESCE(display_name,verified_name,email) AS displayName,created_at AS createdAt FROM profiles ORDER BY created_at DESC LIMIT 8")
   ]);
-  const a = analyticsData.analytics || {};
-  const o = overviewData.overview || {};
   return json({ success: true, stats: {
-    totalUsers: Number(a.totalUsers ?? o.customers ?? 0),
-    totalDocuments: Number(a.totalBuilderOutputs ?? a.builderOutputs ?? 0),
-    paidUsers: Number(a.paidUsers ?? o.activePlans ?? 0),
-    recentDocuments: a.recentOutputs || [], recentUsers: o.latestCustomers || [],
-    planBreakdown: a.planBreakdown || [], usageBreakdown: a.usageBreakdown || [], ...a
+    totalUsers: Number(users?.count || 0),
+    totalDocuments: Number(documents?.count || 0),
+    paidUsers: Number(paid?.count || 0),
+    recentDocuments,
+    recentUsers,
+    planBreakdown: [],
+    usageBreakdown: []
   }});
 }
 
@@ -287,7 +296,6 @@ function templateValue(key, value) {
 
 async function builderTemplates(context, identity, parts) {
   const DB = context.env.DB;
-  await ensureBuilderTemplates(DB);
   const id = parts[1] ? Number(parts[1]) : null;
   if (context.request.method === "GET") {
     const url = new URL(context.request.url);
@@ -351,11 +359,6 @@ function ticketRow(row, index = 0) {
 
 async function support(context, identity, parts) {
   const DB = context.env.DB;
-  await DB.prepare(`CREATE TABLE IF NOT EXISTS support_ticket_messages (
-    id INTEGER PRIMARY KEY AUTOINCREMENT, ticket_id TEXT NOT NULL, sender_type TEXT NOT NULL,
-    sender_name TEXT, sender_email TEXT, message TEXT NOT NULL, is_internal INTEGER DEFAULT 0,
-    read_by_admin INTEGER DEFAULT 0, read_by_customer INTEGER DEFAULT 0, created_at TEXT DEFAULT CURRENT_TIMESTAMP
-  )`).run();
   const data = await legacyData(context, identity, "support", { method: "GET" });
   const tickets = (data.support || []).map(ticketRow);
   const ticketId = parts[2];
@@ -402,7 +405,7 @@ function contentRow(row) {
 }
 
 async function pageContent(context, identity, parts) {
-  const DB = context.env.DB; await ensurePageContent(DB);
+  const DB = context.env.DB;
   if (context.request.method === "GET") {
     const rows = await all(DB, "SELECT * FROM page_content ORDER BY updated_at DESC");
     return json({ success: true, items: rows.map(contentRow) });
@@ -480,28 +483,32 @@ const GENERIC_SECTIONS = {
 
 async function portalNav(context) {
   const DB = context.env.DB;
-  await DB.prepare(`CREATE TABLE IF NOT EXISTS site_settings (key TEXT PRIMARY KEY, value TEXT, updated_at TEXT DEFAULT CURRENT_TIMESTAMP)`).run();
   if (context.request.method === "GET") {
     const row = await DB.prepare("SELECT value FROM site_settings WHERE key='portal_nav_config'").first();
     return json({ success: true, sections: [], overrides: parse(row?.value, { visibility: {} }) });
   }
   const body = await bodyOf(context.request);
   const overrides = { visibility: body.visibility && typeof body.visibility === "object" ? body.visibility : {} };
-  await DB.prepare(`INSERT INTO site_settings (key,value,updated_at) VALUES ('portal_nav_config',?,CURRENT_TIMESTAMP)
-    ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=CURRENT_TIMESTAMP`).bind(JSON.stringify(overrides)).run();
+  const hasUpdatedAt = await tableHasColumn(DB, "site_settings", "updated_at");
+  const sql = hasUpdatedAt
+    ? `INSERT INTO site_settings (key,value,updated_at) VALUES ('portal_nav_config',?,CURRENT_TIMESTAMP) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=CURRENT_TIMESTAMP`
+    : `INSERT INTO site_settings (key,value) VALUES ('portal_nav_config',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value`;
+  await DB.prepare(sql).bind(JSON.stringify(overrides)).run();
   return json({ success: true, overrides });
 }
 
-async function ensureCustomerCompatibility(DB) {
-  const columns = await all(DB, "PRAGMA table_info(profiles)");
-  const names = new Set(columns.map((column) => column.name));
-  const additions = {
-    company: "TEXT", usage_type: "TEXT DEFAULT 'both'", app_role: "TEXT DEFAULT 'user'",
-    assigned_plan: "TEXT DEFAULT 'free'", plan_expires_at: "TEXT", photo_url: "TEXT",
-    oidc_sub: "TEXT", tenant_id: "TEXT", auth_method: "TEXT DEFAULT 'microsoft'"
-  };
-  for (const [name, type] of Object.entries(additions)) {
-    if (!names.has(name)) await DB.prepare(`ALTER TABLE profiles ADD COLUMN ${name} ${type}`).run();
+function configuredAdmins(env) {
+  return String(env.ADMIN_EMAILS || env.ADMIN_EMAIL || "alfieholywoodmurray@jagroupservices.co.uk")
+    .split(",").map((email) => email.trim().toLowerCase()).filter(Boolean);
+}
+
+async function isAuthorisedAdmin(DB, identity, env) {
+  if (configuredAdmins(env).includes(String(identity.email || "").toLowerCase())) return true;
+  try {
+    const row = await DB.prepare("SELECT status FROM admin_users WHERE lower(email)=lower(?)").bind(identity.email).first();
+    return Boolean(row) && !["blocked", "closed", "disabled", "inactive", "suspended"].includes(String(row.status || "active").toLowerCase());
+  } catch {
+    return false;
   }
 }
 
@@ -541,11 +548,10 @@ export async function onRequest(context) {
   if (!assertSameOrigin(context.request)) return json({ success: false, error: "The request origin could not be verified." }, 403);
   const parts = pathParts(context);
   try {
-    // The established D1 admin API remains the source of truth for authorisation and schema migrations.
-    // Running this preflight prevents an authenticated but unapproved Entra user from reaching direct adapters.
-    await legacyData(context, identity, "overview", { method: "GET" });
-    await ensureCustomerCompatibility(context.env.DB);
-    if (parts[0] === "stats") return stats(context, identity);
+    if (!(await isAuthorisedAdmin(context.env.DB, identity, context.env))) {
+      return json({ success: false, error: "This account is not authorised for the admin portal." }, 403);
+    }
+    if (parts[0] === "stats") return stats(context);
     if (parts[0] === "users") return users(context, identity);
     if (parts[0] === "customers" && parts.length === 1 && context.request.method === "GET") return getCustomers(context, identity);
     if (parts[0] === "customers" && parts.length === 1 && context.request.method === "POST") return createCustomer(context, identity);
@@ -562,7 +568,9 @@ export async function onRequest(context) {
     if (parts[0] === "section") return operationalSection(context, identity, parts);
     return generic(context, identity, parts);
   } catch (error) {
-    console.error(JSON.stringify({ event: "admin_compatibility_route_failed", path: parts.join("/"), message: error instanceof Error ? error.message : "Unknown error" }));
-    return json({ success: false, error: error instanceof Error ? error.message : "Administration request failed." }, Number(error?.status || 500));
+    const reference = String(context.request.headers.get("cf-ray") || crypto.randomUUID()).slice(0, 80);
+    console.error(JSON.stringify({ event: "admin_compatibility_route_failed", path: parts.join("/"), reference, message: error instanceof Error ? error.message : "Unknown error" }));
+    const status = Number(error?.status || 500);
+    return json({ success: false, error: status >= 500 ? "Administration data could not be loaded. Please retry." : error.message, reference }, status);
   }
 }

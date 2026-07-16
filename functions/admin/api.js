@@ -1013,6 +1013,24 @@ async function all(DB, sql, bindings = []) {
   return result.results || [];
 }
 
+async function safeAll(DB, sql, bindings = []) {
+  try {
+    return await all(DB, sql, bindings);
+  } catch (error) {
+    console.warn("Optional admin data is unavailable:", error instanceof Error ? error.message : String(error));
+    return [];
+  }
+}
+
+async function safeFirst(statement, fallback = null) {
+  try {
+    return await statement.first();
+  } catch (error) {
+    console.warn("Optional admin summary is unavailable:", error instanceof Error ? error.message : String(error));
+    return fallback;
+  }
+}
+
 async function getRoleDefaultPermissions(DB, role) {
   const roleRows = await DB.prepare(`SELECT permission_code FROM role_permissions WHERE role_name = ? ORDER BY permission_code ASC`).bind(canonicalRoleName(role)).all();
   return normalisePermissionList((roleRows.results || []).map((row) => row.permission_code));
@@ -1276,27 +1294,27 @@ async function seedDefaults(DB) {
 async function getOverview(DB) {
   const [customers, plans, activePlans, policies, tickets, openIssues, admins, dpr, systemReports, closures, lifetime] = await Promise.all([
     DB.prepare(`SELECT COUNT(*) AS count FROM profiles`).first().catch(() => ({ count: 0 })),
-    DB.prepare(`SELECT COUNT(*) AS count FROM service_plans`).first(),
-    DB.prepare(`SELECT COUNT(*) AS count FROM service_plans WHERE is_active = 1`).first(),
-    DB.prepare(`SELECT COUNT(*) AS count FROM policy_pages`).first(),
-    DB.prepare(`SELECT COUNT(*) AS count FROM support_tickets`).first(),
-    DB.prepare(`SELECT COUNT(*) AS count FROM system_events WHERE lower(status) NOT IN ('resolved', 'closed')`).first(),
-    DB.prepare(`SELECT COUNT(*) AS count FROM admin_users`).first(),
-    DB.prepare(`SELECT COUNT(*) AS count FROM data_protection_requests WHERE lower(status) NOT IN ('completed', 'closed', 'refused / not applicable')`).first(),
-    DB.prepare(`SELECT COUNT(*) AS count FROM system_reports WHERE lower(status) NOT IN ('resolved', 'rejected', 'fixed', 'closed', 'duplicate / not reproducible')`).first(),
-    DB.prepare(`SELECT COUNT(*) AS count FROM closure_requests WHERE lower(status) NOT IN ('completed', 'rejected')`).first(),
-    DB.prepare(`SELECT COUNT(*) AS count FROM profiles WHERE admin_lifetime = 1`).first()
+    safeFirst(DB.prepare(`SELECT COUNT(*) AS count FROM service_plans`), { count: 0 }),
+    safeFirst(DB.prepare(`SELECT COUNT(*) AS count FROM service_plans WHERE is_active = 1`), { count: 0 }),
+    safeFirst(DB.prepare(`SELECT COUNT(*) AS count FROM policy_pages`), { count: 0 }),
+    safeFirst(DB.prepare(`SELECT COUNT(*) AS count FROM support_tickets`), { count: 0 }),
+    safeFirst(DB.prepare(`SELECT COUNT(*) AS count FROM system_events WHERE lower(status) NOT IN ('resolved', 'closed')`), { count: 0 }),
+    safeFirst(DB.prepare(`SELECT COUNT(*) AS count FROM admin_users`), { count: 0 }),
+    safeFirst(DB.prepare(`SELECT COUNT(*) AS count FROM data_protection_requests WHERE lower(status) NOT IN ('completed', 'closed', 'refused / not applicable')`), { count: 0 }),
+    safeFirst(DB.prepare(`SELECT COUNT(*) AS count FROM system_reports WHERE lower(status) NOT IN ('resolved', 'rejected', 'fixed', 'closed', 'duplicate / not reproducible')`), { count: 0 }),
+    safeFirst(DB.prepare(`SELECT COUNT(*) AS count FROM closure_requests WHERE lower(status) NOT IN ('completed', 'rejected')`), { count: 0 }),
+    safeFirst(DB.prepare(`SELECT COUNT(*) AS count FROM profiles WHERE admin_lifetime = 1`), { count: 0 })
   ]);
 
   const launchgateway = await getLaunchGateway(DB);
   const maintenance = await getMaintenance(DB);
   const [recentAudit, latestCustomers, latestSupport, latestReports, sessions, activeAdmins] = await Promise.all([
-    all(DB, `SELECT action, actor_email, entity_type, entity_id, summary, metadata, created_at FROM admin_audit_log ORDER BY created_at DESC LIMIT 8`),
-    all(DB, `SELECT email, verified_name, display_name, contact_email, updated_at FROM profiles ORDER BY updated_at DESC, created_at DESC LIMIT 6`),
-    all(DB, `SELECT id, subject, status, priority, updated_at FROM support_tickets ORDER BY updated_at DESC, created_at DESC LIMIT 6`),
-    all(DB, `SELECT id, issue_type AS title, status, updated_at FROM system_reports ORDER BY updated_at DESC, created_at DESC LIMIT 6`),
-    all(DB, `SELECT token_hash, email AS admin_email, created_at, absolute_expires_at AS expires_at, revoked_at, last_seen_at AS last_used_at FROM admin_oidc_sessions ORDER BY COALESCE(last_seen_at, created_at) DESC LIMIT 6`),
-    all(DB, `SELECT email, name, role, status, updated_at FROM admin_users WHERE COALESCE(status, 'Active') = 'Active' ORDER BY updated_at DESC LIMIT 12`)
+    safeAll(DB, `SELECT action, actor_email, entity_type, entity_id, summary, metadata, created_at FROM admin_audit_log ORDER BY created_at DESC LIMIT 8`),
+    safeAll(DB, `SELECT email, verified_name, display_name, contact_email, updated_at FROM profiles ORDER BY updated_at DESC, created_at DESC LIMIT 6`),
+    safeAll(DB, `SELECT id, subject, status, priority, updated_at FROM support_tickets ORDER BY updated_at DESC, created_at DESC LIMIT 6`),
+    safeAll(DB, `SELECT id, issue_type AS title, status, updated_at FROM system_reports ORDER BY updated_at DESC, created_at DESC LIMIT 6`),
+    safeAll(DB, `SELECT token_hash, email AS admin_email, created_at, absolute_expires_at AS expires_at, revoked_at, last_seen_at AS last_used_at FROM admin_oidc_sessions ORDER BY COALESCE(last_seen_at, created_at) DESC LIMIT 6`),
+    safeAll(DB, `SELECT email, name, role, status, updated_at FROM admin_users WHERE COALESCE(status, 'Active') = 'Active' ORDER BY updated_at DESC LIMIT 12`)
   ]);
 
   return {
@@ -1404,9 +1422,9 @@ async function getMembership(DB) {
 
 async function getSecurity(DB) {
   const [pins, sessions, history] = await Promise.all([
-    all(DB, `SELECT email, status, expires_at, used_at, revoked_at, last_used_at, updated_at, created_at FROM customer_support_pins ORDER BY updated_at DESC LIMIT 100`),
-    all(DB, `SELECT email AS admin_email, created_at, absolute_expires_at AS expires_at, revoked_at, last_seen_at AS last_used_at FROM admin_oidc_sessions ORDER BY COALESCE(last_seen_at, created_at) DESC LIMIT 50`),
-    all(DB, `SELECT action, entity_type, entity_id, summary, created_at FROM admin_audit_log WHERE action LIKE '%session%' OR action LIKE '%pin%' ORDER BY created_at DESC LIMIT 50`)
+    safeAll(DB, `SELECT email, status, expires_at, used_at, revoked_at, last_used_at, updated_at, created_at FROM customer_support_pins ORDER BY updated_at DESC LIMIT 100`),
+    safeAll(DB, `SELECT email AS admin_email, created_at, absolute_expires_at AS expires_at, revoked_at, last_seen_at AS last_used_at FROM admin_oidc_sessions ORDER BY COALESCE(last_seen_at, created_at) DESC LIMIT 50`),
+    safeAll(DB, `SELECT action, entity_type, entity_id, summary, created_at FROM admin_audit_log WHERE action LIKE '%session%' OR action LIKE '%pin%' ORDER BY created_at DESC LIMIT 50`)
   ]);
   return { pins, sessions, history };
 }
@@ -2830,13 +2848,16 @@ async function getAdminActivity(DB, email) {
 }
 
 async function adminPayload(DB, identity, env = {}) {
-  const admin = await DB.prepare(`SELECT email, name, role, status, permissions, favourites, source, created_by, created_at, updated_at FROM admin_users WHERE lower(email) = lower(?)`).bind(identity.email).first();
+  const admin = await safeFirst(DB.prepare(`SELECT email, name, role, status, permissions, favourites, source, created_by, created_at, updated_at FROM admin_users WHERE lower(email) = lower(?)`).bind(identity.email));
   const storedRole = admin?.role || "Auditor";
   const ownerEmail = configuredAdmins(env).includes(identity.email);
   const role = ownerEmail ? "Platform Owner" : canonicalRoleName(storedRole);
   const effectiveAdmin = admin || { email: identity.email, role, permissions: "[\"*\"]", favourites: "[]" };
-  const permissions = ownerEmail ? ["*"] : await getEffectivePermissions(DB, effectiveAdmin);
-  const preferences = await getAdminPreferences(DB, identity);
+  const permissions = ownerEmail ? ["*"] : await getEffectivePermissions(DB, effectiveAdmin).catch(() => ["view_only"]);
+  const preferences = await getAdminPreferences(DB, identity).catch(() => ({
+    favourites: [], dashboard_preferences: {}, notification_preferences: {}, recently_used: [],
+    preferred_landing_page: "overview", sidebar_collapsed: false, theme_preference: "system"
+  }));
   const defaultLanding = defaultLandingPageForRole(role, permissions);
   return {
     email: identity.email,
@@ -2851,9 +2872,9 @@ async function adminPayload(DB, identity, env = {}) {
       preferred_landing_page: preferences.preferred_landing_page || defaultLanding,
       widget_layout: preferences.dashboard_preferences?.widget_layout || widgetSetForRole(role, permissions).map((widget) => widget.id)
     },
-    roles: await getRoles(DB),
+    roles: await getRoles(DB).catch(() => []),
     permission_catalog: PERMISSION_CATALOG,
-    login_history: await getLoginHistory(DB, identity.email),
+    login_history: await getLoginHistory(DB, identity.email).catch(() => []),
     workspace: {
       default_landing_page: defaultLanding,
       widgets: widgetSetForRole(role, permissions)
@@ -3143,7 +3164,6 @@ async function ensureBuilderPlatformTables(DB) {
 }
 
 async function getBuilderPlatform(DB) {
-  await ensureBuilderPlatformTables(DB);
   const [builders, outputs, ledger, attempts, addons, trials, manual_adjustments] = await Promise.all([
     all(DB, `SELECT * FROM experience_builders ORDER BY category, token_cost, name`),
     all(DB, `SELECT * FROM builder_outputs ORDER BY created_at DESC LIMIT 250`),
@@ -3157,7 +3177,6 @@ async function getBuilderPlatform(DB) {
 }
 
 async function saveBuilderAdmin(DB, body, identity) {
-  await ensureBuilderPlatformTables(DB);
   const name = clean(body.name, 160);
   const category = clean(body.category, 120);
   const tokenCost = Number(body.token_cost ?? body.credits ?? 15);
@@ -3214,7 +3233,6 @@ async function saveBuilderAdmin(DB, body, identity) {
 }
 
 async function saveManualTokenAdjustment(DB, body, identity) {
-  await ensureBuilderPlatformTables(DB);
   const email = cleanEmail(body.email);
   const amount = Number(body.amount);
   const reason = clean(body.reason, 500);
@@ -3339,7 +3357,9 @@ export async function onRequest(context) {
   if (!env.DB) return json({ error: "Database binding DB is missing." }, 500);
 
   try {
-    await initialiseAdminSchema(env.DB, env);
+    // Production schema is owned by versioned D1 migrations. Running schema
+    // creation and dozens of ALTER statements inside every admin request
+    // overloads D1 and causes opaque internal-error references in the portal.
     const url = new URL(request.url);
     const section = url.searchParams.get("section") || "overview";
 
