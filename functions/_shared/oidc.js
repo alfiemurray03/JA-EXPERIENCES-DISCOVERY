@@ -501,27 +501,20 @@ export function nativeOidcEnabled(env) {
 
 export async function beginLogin(context, realm) {
   const config = realmConfig(realm, context.env);
-  if (!context.env.DB) throw new Error("D1 is required for native authentication.");
-  // Authentication tables are provisioned by migrations/0001_native_oidc.sql.
-  // DDL must not run in the interactive login request because it can exhaust
-  // the Cloudflare request budget before the Microsoft redirect is returned.
-  try {
-    await context.env.DB.prepare(`DELETE FROM oidc_login_transactions WHERE datetime(expires_at) <= datetime('now') OR datetime(created_at) < datetime('now', '-1 day')`).run();
-  } catch (error) {
-    console.error(JSON.stringify({ event: "oidc_transaction_cleanup_failed", realm, message: error instanceof Error ? error.message : "Unknown error" }));
-  }
   const metadata = await stage(context, realm, "login_discovery", () => discover(config), { function: "beginLogin" });
   const requestUrl = new URL(context.request.url);
-  const returnTo = safeReturnPath(requestUrl.searchParams.get("return_to"), realm);
+  const returnTo = safeReturnPath(requestUrl.searchParams.get("return_to"), realm).slice(0, 1500);
   const state = randomValue(32);
   const nonce = randomValue(32);
   const verifier = randomValue(64);
   const challenge = base64Url(await sha256Bytes(verifier));
-  const stateHash = await hashToken(state);
-  await stage(context, realm, "login_transaction", () => context.env.DB.prepare(`
-      INSERT INTO oidc_login_transactions (state_hash, realm, nonce, code_verifier, return_to, expires_at)
-      VALUES (?, ?, ?, ?, ?, datetime('now', '+10 minutes'))
-    `).bind(stateHash, realm, nonce, verifier, returnTo).run(), { function: "beginLogin" });
+  const transactionCookie = await stage(context, realm, "login_transaction_cookie", () => encryptSecret(JSON.stringify({
+    state,
+    nonce,
+    code_verifier: verifier,
+    return_to: returnTo,
+    issued_at: Date.now()
+  }), context.env), { function: "beginLogin" });
 
   const redirectUri = `${requestUrl.origin}${config.callbackPath}`;
   const authorization = new URL(metadata.authorization_endpoint);
@@ -540,7 +533,7 @@ export async function beginLogin(context, realm) {
     status: 302,
     headers: {
       Location: authorization.toString(),
-      "Set-Cookie": secureCookie(config.transactionCookie, state, { path: config.callbackPath, maxAge: 600 }),
+      "Set-Cookie": secureCookie(config.transactionCookie, transactionCookie, { path: config.callbackPath, maxAge: 600 }),
       "Cache-Control": "no-store",
       "Referrer-Policy": "no-referrer"
     }
@@ -552,24 +545,20 @@ export async function completeLogin(context, realm) {
   const url = new URL(context.request.url);
   const requestId = requestCorrelationId(context.request);
   const state = url.searchParams.get("state") || "";
-  const cookieState = readCookie(context.request, config.transactionCookie);
-  if (!state || !cookieState || state !== cookieState) throw new Error("Authentication state validation failed.");
+  const cookieValue = readCookie(context.request, config.transactionCookie);
+  let transaction;
+  try {
+    transaction = JSON.parse(await decryptSecret(cookieValue, context.env));
+  } catch {
+    throw new Error("Authentication state validation failed.");
+  }
+  const transactionAge = Date.now() - Number(transaction.issued_at || 0);
+  if (!state || state !== transaction.state || transactionAge < 0 || transactionAge > 600_000) {
+    throw new Error("Authentication state validation failed.");
+  }
   if (url.searchParams.get("error")) throw new Error(`${realm === "customer" ? "JA Group Services ID" : "Microsoft"} authentication failed: ${url.searchParams.get("error")}.`);
   const code = url.searchParams.get("code") || "";
   if (!code) throw new Error(`${realm === "customer" ? "JA Group Services ID" : "Microsoft"} did not return an authorisation code.`);
-  const stateHash = await stage(context, realm, "state_hash", () => hashToken(state), { requestId });
-  const transaction = await stage(context, realm, "transaction_lookup", async () => {
-    const row = await context.env.DB.prepare(`
-      SELECT state_hash, nonce, code_verifier, return_to FROM oidc_login_transactions
-      WHERE state_hash = ? AND realm = ? AND used_at IS NULL AND datetime(expires_at) > datetime('now')
-    `).bind(stateHash, realm).first();
-    return row;
-  }, { requestId, stateHash });
-  if (!transaction) throw new Error("The authentication transaction is invalid or expired.");
-
-  await stage(context, realm, "transaction_mark_used", async () => {
-    await context.env.DB.prepare(`UPDATE oidc_login_transactions SET used_at = CURRENT_TIMESTAMP WHERE state_hash = ?`).bind(stateHash).run();
-  }, { requestId, stateHash });
 
   const metadata = await stage(context, realm, "discovery", () => discover(config), { requestId });
   const redirectUri = `${url.origin}${config.callbackPath}`;
