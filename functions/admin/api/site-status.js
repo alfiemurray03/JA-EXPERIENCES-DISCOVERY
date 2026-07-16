@@ -65,12 +65,15 @@ async function readStatusValues(DB) {
 }
 
 async function writeStatusValues(DB, values) {
+  const columns = await DB.prepare("PRAGMA table_info(site_settings)").all();
+  const hasUpdatedAt = (columns.results || []).some((column) => column.name === "updated_at");
   for (const key of ["site_status", "maintenance_enabled", "launchgateway_enabled"]) {
-    await DB.prepare(`
-      INSERT INTO site_settings (key, value, updated_at)
-      VALUES (?, ?, CURRENT_TIMESTAMP)
-      ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP
-    `).bind(key, values[key]).run();
+    const sql = hasUpdatedAt
+      ? `INSERT INTO site_settings (key, value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)
+         ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP`
+      : `INSERT INTO site_settings (key, value) VALUES (?, ?)
+         ON CONFLICT(key) DO UPDATE SET value = excluded.value`;
+    await DB.prepare(sql).bind(key, values[key]).run();
   }
 }
 
