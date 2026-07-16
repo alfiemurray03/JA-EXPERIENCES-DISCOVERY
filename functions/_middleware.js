@@ -540,12 +540,13 @@ export async function onRequest(context) {
     }
 
     const response = await next(request);
-    if (!env.DB || !(response.headers.get("Content-Type") || "").includes("text/html")) return response;
-    const settings = await getSiteSettings(env.DB);
+    if (!(response.headers.get("Content-Type") || "").includes("text/html")) return response;
     const headers = new Headers(response.headers);
     headers.set("Cache-Control", "no-store");
     headers.delete("Content-Length");
-    return new Response(injectAccessibility(injectNativeIdentity(injectTheme(await response.text(), settings), requestIdentitySnapshot(request))), {
+    // The Profile Studio administration portal is intentionally light-only.
+    // Do not inject the public website's saved theme into the admin document.
+    return new Response(injectAccessibility(injectNativeIdentity(await response.text(), requestIdentitySnapshot(request))), {
       status: response.status,
       statusText: response.statusText,
       headers
