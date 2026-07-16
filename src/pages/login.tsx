@@ -15,8 +15,8 @@ import { Helmet } from '@dr.pogodin/react-helmet';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
-  AlertTriangle, ShieldCheck, FileText, ArrowRight,
-  CheckCircle2, Zap, Users,
+  AlertTriangle, ShieldCheck, Compass, ArrowRight,
+  CheckCircle2, MapPinned, CalendarDays, Accessibility,
 } from 'lucide-react';
 import { useSiteSettings } from '@/lib/site-settings-context';
 
@@ -50,10 +50,10 @@ const OIDC_ERRORS: Record<string, { title: string; body: string }> = {
 };
 
 const FEATURES = [
-  { icon: FileText,     text: '146 professional document templates' },
-  { icon: Zap,          text: 'Create and download documents in minutes' },
-  { icon: Users,        text: 'Built for individuals and organisations' },
-  { icon: ShieldCheck,  text: 'Secure, cloud-based, always available' },
+  { icon: CalendarDays, text: 'Guided builders for days out, holidays and occasions' },
+  { icon: MapPinned,    text: 'Keep itineraries, budgets and booking details organised' },
+  { icon: Accessibility,text: 'Plan around accessibility, family and support needs' },
+  { icon: ShieldCheck,  text: 'Save and manage supported plans in one secure account' },
 ];
 
 // ── Page ──────────────────────────────────────────────────────────────────────
@@ -91,7 +91,7 @@ export default function LoginPage() {
           <div className="relative z-10">
             <Link to="/" className="inline-flex items-center gap-3 group">
               <div className="w-10 h-10 bg-[#1B4F8A] rounded-xl flex items-center justify-center shadow-lg group-hover:bg-[#1B4F8A]/80 transition-colors">
-                <FileText className="w-5 h-5 text-white" />
+                <Compass className="w-5 h-5 text-white" />
               </div>
               <div>
                 <p className="text-white font-bold text-lg leading-tight">{siteName}</p>
@@ -103,12 +103,12 @@ export default function LoginPage() {
           {/* Hero copy */}
           <div className="relative z-10 space-y-6">
             <h1 className="text-4xl xl:text-5xl font-bold text-white leading-tight">
-              Professional documents,<br />
-              <span className="text-[#4A90D9]">generated in minutes.</span>
+              Personalised plans,<br />
+              <span className="text-[#4A90D9]">built around you.</span>
             </h1>
             <p className="text-white/60 text-lg max-w-md leading-relaxed">
-              Create letters, contracts, invoices, reports and more —
-              all from one secure account.
+              Build practical plans for everyday experiences, travel,
+              accessibility and special occasions in one secure place.
             </p>
 
             <ul className="space-y-3">
@@ -122,20 +122,11 @@ export default function LoginPage() {
               ))}
             </ul>
 
-            {/* Social proof */}
-            <div className="flex items-center gap-2 pt-2">
-              <div className="flex -space-x-2">
-                {['#1B4F8A', '#1e1b8a', '#8a561b', '#2a7a4f'].map((c, i) => (
-                  <div
-                    key={i}
-                    className="w-7 h-7 rounded-full border-2 border-[#0d1b2e] flex items-center justify-center text-white text-[10px] font-bold"
-                    style={{ background: c }}
-                  >
-                    {['JA', 'SM', 'KL', 'RP'][i]}
-                  </div>
-                ))}
-              </div>
-              <p className="text-white/50 text-xs">Trusted by professionals across the UK</p>
+            <div className="flex flex-wrap items-center gap-2 pt-2 text-xs text-white/60">
+              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5">Everyday</span>
+              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5">Travel</span>
+              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5">Accessibility</span>
+              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5">Family</span>
             </div>
           </div>
 
@@ -154,7 +145,7 @@ export default function LoginPage() {
           <div className="lg:hidden mb-8 text-center">
             <Link to="/" className="inline-flex flex-col items-center gap-2">
               <div className="w-12 h-12 bg-[#1B4F8A] rounded-2xl flex items-center justify-center shadow-md">
-                <FileText className="w-6 h-6 text-white" />
+                <Compass className="w-6 h-6 text-white" />
               </div>
               <p className="font-bold text-[#0d1b2e] text-lg">{siteName}</p>
               <p className="text-gray-400 text-xs">by {brandName}</p>
@@ -165,9 +156,9 @@ export default function LoginPage() {
 
             {/* Heading */}
             <div>
-              <h2 className="text-2xl font-bold text-[#0d1b2e]">Welcome back</h2>
+              <h2 className="text-2xl font-bold text-[#0d1b2e]">Welcome to {siteName}</h2>
               <p className="text-gray-500 text-sm mt-1">
-                Sign in to your account to continue.
+                Sign in with JA Group Services ID to open your planning account.
               </p>
             </div>
 
@@ -189,7 +180,7 @@ export default function LoginPage() {
               className="w-full h-12 gap-2 font-semibold text-sm"
               onClick={() => { window.location.href = '/account/login?return_to=%2Fdashboard'; }}
             >
-              Sign in
+              Continue to secure sign-in
               <ArrowRight className="w-4 h-4" />
             </Button>
 
@@ -211,25 +202,25 @@ export default function LoginPage() {
               className="w-full h-11 text-sm font-medium gap-2"
               onClick={() => { window.location.href = '/account/login?return_to=%2Fdashboard'; }}
             >
-              Sign up — it's free
+              Create a free account
             </Button>
 
             {/* Trust note */}
             <div className="flex items-start gap-2.5 rounded-xl bg-blue-50 border border-blue-100 px-4 py-3">
               <ShieldCheck className="w-4 h-4 text-[#1B4F8A] mt-0.5 shrink-0" />
               <p className="text-xs text-blue-700 leading-relaxed">
-                Your account is secured with enterprise-grade authentication.
-                No passwords to remember.
+                Secure single sign-on is provided through JA Group Services ID.
+                This customer account does not provide access to internal company systems.
               </p>
             </div>
 
             {/* What you get on sign-up */}
             <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 space-y-2">
-              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Free account includes</p>
+              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Start planning for free</p>
               {[
-                '1 free template demo — try before you buy',
-                'PDF export and download',
-                'Browse the full template catalogue',
+                '30 one-time builder credits',
+                'Preview builders without using credits',
+                'Browse destinations, activities and planning ideas',
               ].map(item => (
                 <div key={item} className="flex items-center gap-2 text-xs text-gray-600">
                   <CheckCircle2 className="w-3.5 h-3.5 text-green-500 shrink-0" />
@@ -238,7 +229,7 @@ export default function LoginPage() {
               ))}
               <div className="pt-1 border-t border-gray-200 mt-1">
                 <p className="text-[11px] text-gray-400">
-                  Saving, branding &amp; more templates require a paid plan.{' '}
+                  Paid plans include unlimited use of their eligible builders.{' '}
                   <a href="/pricing" className="text-[#1B4F8A] hover:underline">See plans →</a>
                 </p>
               </div>
