@@ -19,7 +19,7 @@ export const DEFAULT_FOOTER_COLUMNS: FooterColumn[] = [
     heading: 'Product',
     links: [
       { label: 'Builders',    href: '/#features' },
-      { label: 'Pricing',     href: '/#pricing' },
+      { label: 'Pricing',     href: '/pricing' },
       { label: 'FAQ',         href: '/#faq' },
       { label: 'Help Centre', href: '/support' },
       { label: 'Install App', href: '__install__' },

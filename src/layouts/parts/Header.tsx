@@ -19,7 +19,7 @@ export default function SiteNavHeader() {
 
   const navItems = [
     { href: '#features', label: 'Features', homeOnly: true },
-    { href: '#pricing',  label: 'Pricing',  homeOnly: true },
+    { href: '/pricing',  label: 'Pricing',  homeOnly: false, isLink: true },
     { href: '#faq',      label: 'FAQ',      homeOnly: true },
     { href: '/support',  label: 'Help',     homeOnly: false, isLink: true },
     { href: '/status',   label: 'Status',   homeOnly: false, isLink: true },
