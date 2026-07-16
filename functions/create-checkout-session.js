@@ -42,8 +42,6 @@ async function createCheckoutSession(planCode, env) {
     return jsonResponse({ error: "Missing STRIPE_SECRET_KEY in Cloudflare." }, 500);
   }
 
-  await ensureServicePlans(env.DB);
-
   const selectedPlan = await env.DB.prepare(`
     SELECT id, plan_name, plan_type, price_label, price_pence, stripe_price_id, is_active
     FROM service_plans
