@@ -1,6 +1,6 @@
 // @refresh reset
 // v8 — paired with RootLayout v8; imported directly as SiteNavHeader
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Menu, X, LayoutDashboard, LogOut, User, ChevronDown } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useBranding } from '@/lib/branding';
@@ -9,20 +9,23 @@ import ThemeToggle from '@/components/ThemeToggle';
 import { useAuth } from '@/lib/auth-context';
 
 export default function SiteNavHeader() {
-  const location = useLocation();
   const branding = useBranding();
   const { user, isLoading: loading, logout } = useAuth();
   const [open, setOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const isHome = location.pathname === '/';
 
-  const navItems = [
-    { href: '#features', label: 'Features', homeOnly: true },
-    { href: '/pricing',  label: 'Pricing',  homeOnly: false, isLink: true },
-    { href: '#faq',      label: 'FAQ',      homeOnly: true },
-    { href: '/support',  label: 'Help',     homeOnly: false, isLink: true },
-    { href: '/status',   label: 'Status',   homeOnly: false, isLink: true },
+  const navGroups = [
+    { label: 'Discover', links: [
+      { href: '/activities', label: 'Activities' }, { href: '/experiences', label: 'Experiences' },
+      { href: '/headout', label: 'Headout' }, { href: '/getyourguide', label: 'GetYourGuide' },
+    ]},
+    { label: 'Plan', links: [
+      { href: '/builders', label: 'Experience Builders' }, { href: '/#features', label: 'How it works' }, { href: '/pricing', label: 'Pricing' },
+    ]},
+    { label: 'Help', links: [
+      { href: '/#faq', label: 'FAQs' }, { href: '/support', label: 'Support' }, { href: '/status', label: 'Service status' },
+    ]},
   ];
 
   useEffect(() => {
@@ -59,19 +62,14 @@ export default function SiteNavHeader() {
 
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-1" aria-label="Main navigation">
-            {navItems.filter(i => !i.homeOnly || isHome).map(item =>
-              item.isLink ? (
-                <Link key={item.href} to={item.href}
-                  className="px-3.5 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-150">
-                  {item.label}
-                </Link>
-              ) : (
-                <a key={item.href} href={item.href}
-                  className="px-3.5 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-150">
-                  {item.label}
-                </a>
-              )
-            )}
+            {navGroups.map(group => <div key={group.label} className="relative group/nav">
+              <button className="px-3.5 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-all inline-flex items-center gap-1">{group.label}<ChevronDown className="w-3.5 h-3.5" /></button>
+              <div className="absolute left-0 top-full pt-2 w-56 hidden group-hover/nav:block group-focus-within/nav:block">
+                <div className="rounded-2xl border border-border bg-card shadow-xl p-2">
+                  {group.links.map(link => <Link key={link.href} to={link.href} className="block px-3 py-2.5 rounded-xl text-sm text-foreground hover:bg-muted transition-colors">{link.label}</Link>)}
+                </div>
+              </div>
+            </div>)}
           </nav>
 
           {/* Desktop right */}
@@ -105,9 +103,9 @@ export default function SiteNavHeader() {
                       className="flex items-center gap-2.5 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors">
                       <LayoutDashboard className="w-4 h-4 text-primary" /> Dashboard
                     </Link>
-                    <Link to="/documents" onClick={() => setDropdownOpen(false)}
+                    <Link to="/builders" onClick={() => setDropdownOpen(false)}
                       className="flex items-center gap-2.5 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors">
-                      <User className="w-4 h-4 text-primary" /> My Plans
+                      <User className="w-4 h-4 text-primary" /> Experience Builders
                     </Link>
                     <div className="border-t border-border mt-1 pt-1">
                       <button
@@ -161,21 +159,7 @@ export default function SiteNavHeader() {
       {open && (
         <div id="mobile-menu" className="md:hidden border-t border-border bg-card px-4 py-4 space-y-1"
           style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
-          {navItems.filter(i => !i.homeOnly || isHome).map(item =>
-            item.isLink ? (
-              <Link key={item.href} to={item.href}
-                className="flex items-center px-4 py-3.5 rounded-xl text-sm font-medium text-foreground hover:bg-muted transition-colors min-h-[48px]"
-                onClick={() => setOpen(false)}>
-                {item.label}
-              </Link>
-            ) : (
-              <a key={item.href} href={item.href}
-                className="flex items-center px-4 py-3.5 rounded-xl text-sm font-medium text-foreground hover:bg-muted transition-colors min-h-[48px]"
-                onClick={() => setOpen(false)}>
-                {item.label}
-              </a>
-            )
-          )}
+          {navGroups.map(group => <div key={group.label} className="py-1"><p className="px-4 pt-2 pb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{group.label}</p>{group.links.map(link => <Link key={link.href} to={link.href} className="flex items-center px-4 py-2.5 rounded-xl text-sm font-medium text-foreground hover:bg-muted" onClick={() => setOpen(false)}>{link.label}</Link>)}</div>)}
 
           {!loading && (
             <div className="pt-3 border-t border-border space-y-2">
@@ -190,9 +174,9 @@ export default function SiteNavHeader() {
                       <LayoutDashboard className="w-4 h-4" /> Dashboard
                     </Button>
                   </Link>
-                  <Link to="/documents" onClick={() => setOpen(false)}>
+                  <Link to="/builders" onClick={() => setOpen(false)}>
                     <Button variant="outline" className="w-full justify-start gap-2 min-h-[48px] text-sm font-medium">
-                      <User className="w-4 h-4" /> My Plans
+                      <User className="w-4 h-4" /> Experience Builders
                     </Button>
                   </Link>
                   <Button variant="ghost"

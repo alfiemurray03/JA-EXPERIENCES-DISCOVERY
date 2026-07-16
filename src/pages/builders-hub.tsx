@@ -1,184 +1,82 @@
-/**
- * Builders Hub — /builders
- *
- * Displays all 10 document builders. Builder metadata (name, description,
- * template counts) is fetched from /api/builders/summary which merges the
- * static code defaults with any DB overrides saved via the Admin Portal.
- * Nothing on this page is hardcoded — all content is driven by the API.
- */
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from '@dr.pogodin/react-helmet';
+import { ArrowRight, Clock3, Compass, MapPinned, Sparkles } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { useAuth } from '@/lib/auth-context';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Mail, Receipt, FileSignature, Shield, ClipboardList,
-  BarChart2, Users, Briefcase, CheckSquare, PenLine,
-  ChevronRight, Zap, AlertTriangle,
-} from 'lucide-react';
 
-// Icon map — keyed by builder id
-const BUILDER_ICONS: Record<string, React.ElementType> = {
-  letter:    PenLine,
-  email:     Mail,
-  invoice:   Receipt,
-  contract:  FileSignature,
-  policy:    Shield,
-  form:      ClipboardList,
-  report:    BarChart2,
-  minutes:   Users,
-  proposal:  Briefcase,
-  checklist: CheckSquare,
-};
-
-interface BuilderSummary {
-  id: string;
-  label: string;
-  description: string;
-  href: string;
-  accentColor: string;
-  activeCount: number;
-  popularCount: number;
+export interface ExperienceBuilder {
+  id: string; name: string; category: string; description: string; icon?: string;
+  estimated_minutes?: number; featured?: number; form_schema?: string; token_cost?: number;
 }
+
+interface BuilderData {
+  builders: ExperienceBuilder[];
+  drafts: Array<{ id: string; builder_id: string; builder_name: string; last_saved_at: string }>;
+  outputs: Array<{ id: string; builder_id: string; title: string; created_at: string }>;
+  token_summary?: { plan_name?: string; plan_active?: boolean; trial_active?: boolean };
+  error?: string;
+}
+
+const categoryIcon = (category: string) => category.includes('Trips') ? MapPinned : category.includes('Accessible') ? Compass : Sparkles;
 
 export default function BuildersHubPage() {
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
-
-  const [builders, setBuilders] = useState<BuilderSummary[]>([]);
-  const [fetching, setFetching] = useState(true);
+  const [data, setData] = useState<BuilderData | null>(null);
   const [error, setError] = useState('');
 
-  // Auth guard
-  useEffect(() => {
-    if (!isLoading && !user) navigate('/sign-in?redirect=/builders', { replace: true });
-  }, [user, isLoading, navigate]);
-
-  // Fetch live builder summary from API
+  useEffect(() => { if (!isLoading && !user) navigate('/sign-in?redirect=/builders', { replace: true }); }, [user, isLoading, navigate]);
   useEffect(() => {
     if (!user) return;
-    setFetching(true);
-    fetch('/api/builders/summary', { credentials: 'include' })
-      .then(r => r.json() as Promise<{ success: boolean; builders?: BuilderSummary[]; error?: string }>)
-      .then(data => {
-        if (data.success && data.builders) {
-          setBuilders(data.builders);
-        } else {
-          setError(data.error ?? 'Failed to load builders.');
-        }
+    fetch('/account/api/builders', { credentials: 'include' })
+      .then(async response => {
+        const body = await response.json() as BuilderData;
+        if (!response.ok) throw new Error(body.error || 'Experience builders could not be loaded.');
+        setData(body);
       })
-      .catch(() => setError('Network error loading builders.'))
-      .finally(() => setFetching(false));
+      .catch(reason => setError(reason instanceof Error ? reason.message : 'Experience builders could not be loaded.'));
   }, [user]);
 
-  const totalActive = builders.reduce((s, b) => s + b.activeCount, 0);
+  const groups = useMemo(() => {
+    const map = new Map<string, ExperienceBuilder[]>();
+    for (const builder of data?.builders || []) map.set(builder.category, [...(map.get(builder.category) || []), builder]);
+    return [...map.entries()];
+  }, [data]);
 
-  return (
-    <>
-      <Helmet>
-        <title>Document Builders — JA Plan Studio</title>
-        <meta
-          name="description"
-          content="Choose from 10 professional document builders — letters, invoices, contracts, policies, forms, reports, and more."
-        />
-      </Helmet>
-      <DashboardLayout>
-        <div className="p-6 max-w-7xl mx-auto">
-
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold text-foreground">Document Builders</h1>
-            <p className="text-muted-foreground mt-1 text-sm">
-              {fetching
-                ? 'Loading builders…'
-                : `${builders.length} builders · ${totalActive} active templates`
-              }
-            </p>
+  return <>
+    <Helmet><title>Experience Builders — JA Plan Studio</title><meta name="description" content="Build practical plans for days out, occasions, activities, trips and accessible experiences." /></Helmet>
+    <DashboardLayout>
+      <main className="max-w-7xl mx-auto px-6 py-10 space-y-10">
+        <section className="rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-7 sm:p-9 flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+          <div className="max-w-2xl">
+            <div className="inline-flex items-center gap-2 text-blue-700 text-sm font-semibold mb-3"><Compass className="w-4 h-4" /> Experience planning</div>
+            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-950">Build an experience worth looking forward to</h1>
+            <p className="mt-3 text-slate-600 leading-relaxed">Choose a guided builder for your day out, occasion, trip or accessible experience. Save your progress and return whenever you like.</p>
           </div>
+          {data?.token_summary && <div className="rounded-2xl bg-white border border-slate-200 px-5 py-4 min-w-56"><p className="text-xs uppercase tracking-wide text-slate-500">Your access</p><p className="mt-1 font-semibold text-slate-900">{data.token_summary.plan_name || 'JA Plan Studio'}</p></div>}
+        </section>
 
-          {/* Error state */}
-          {error && (
-            <div className="flex items-center gap-2 p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm mb-6">
-              <AlertTriangle className="w-4 h-4 shrink-0" />
-              {error}
+        {error && <div className="rounded-2xl border border-red-200 bg-red-50 p-5 text-red-700">{error}</div>}
+        {!data && !error && <div className="grid md:grid-cols-3 gap-5">{[1,2,3,4,5,6].map(i => <div key={i} className="h-48 rounded-2xl bg-slate-100 animate-pulse" />)}</div>}
+
+        {groups.map(([category, builders]) => {
+          const Icon = categoryIcon(category);
+          return <section key={category}>
+            <div className="flex items-center gap-3 mb-5"><div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center"><Icon className="w-5 h-5" /></div><div><h2 className="text-xl font-bold text-slate-950">{category}</h2><p className="text-sm text-slate-500">{builders.length} guided planning {builders.length === 1 ? 'builder' : 'builders'}</p></div></div>
+            <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
+              {builders.map(builder => <Link key={builder.id} to={`/builders/${builder.id}`} className="group rounded-2xl border border-slate-200 bg-white p-6 hover:border-blue-300 hover:shadow-lg hover:shadow-blue-950/5 transition-all flex flex-col min-h-52">
+                <div className="flex items-start justify-between"><span className="text-2xl" aria-hidden>{builder.icon || '✨'}</span>{builder.featured ? <span className="rounded-full bg-blue-50 text-blue-700 px-2.5 py-1 text-xs font-semibold">Popular</span> : null}</div>
+                <h3 className="mt-5 text-lg font-bold text-slate-950 group-hover:text-blue-700">{builder.name}</h3>
+                <p className="mt-2 text-sm text-slate-600 leading-relaxed flex-1">{builder.description}</p>
+                <div className="mt-5 flex items-center justify-between text-sm"><span className="text-slate-500 flex items-center gap-1.5"><Clock3 className="w-4 h-4" /> About {builder.estimated_minutes || 10} min</span><span className="text-blue-700 font-semibold flex items-center gap-1">Start planning <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" /></span></div>
+              </Link>)}
             </div>
-          )}
+          </section>;
+        })}
 
-          {/* Loading skeleton */}
-          {fetching && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-              {Array.from({ length: 10 }).map((_, i) => (
-                <div key={i} className="p-5 rounded-2xl border border-border bg-card space-y-3">
-                  <div className="flex items-start gap-3">
-                    <Skeleton className="w-11 h-11 rounded-xl shrink-0" />
-                    <div className="flex-1 space-y-2">
-                      <Skeleton className="h-4 w-32" />
-                      <Skeleton className="h-3 w-full" />
-                      <Skeleton className="h-3 w-3/4" />
-                    </div>
-                  </div>
-                  <Skeleton className="h-3 w-24" />
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Builder grid */}
-          {!fetching && builders.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-              {builders.map((b) => {
-                const Icon = BUILDER_ICONS[b.id] ?? PenLine;
-                const bg = b.accentColor + '18';
-
-                return (
-                  <Link
-                    key={b.id}
-                    to={b.href}
-                    className="group flex flex-col gap-4 p-5 rounded-2xl border border-border bg-card hover:border-primary/40 hover:shadow-md transition-all"
-                  >
-                    {/* Icon + title row */}
-                    <div className="flex items-start gap-3">
-                      <div
-                        className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform"
-                        style={{ background: bg }}
-                      >
-                        <Icon className="w-5 h-5" style={{ color: b.accentColor }} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">
-                            {b.label}
-                          </span>
-                          <Badge variant="outline" className="text-[10px] h-4 px-1.5 shrink-0">
-                            {b.activeCount} template{b.activeCount !== 1 ? 's' : ''}
-                          </Badge>
-                          {b.popularCount > 0 && (
-                            <Badge variant="secondary" className="text-[10px] h-4 px-1.5 gap-0.5 shrink-0">
-                              <Zap className="w-2.5 h-2.5" />
-                              {b.popularCount} popular
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1 leading-relaxed line-clamp-2">
-                          {b.description}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Arrow */}
-                    <div className="flex items-center justify-end">
-                      <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          )}
-
-        </div>
-      </DashboardLayout>
-    </>
-  );
+        {(data?.drafts?.length || 0) > 0 && <section><h2 className="text-xl font-bold text-slate-950 mb-4">Continue planning</h2><div className="grid md:grid-cols-2 gap-4">{data!.drafts.slice(0,4).map(draft => <Link key={draft.id} to={`/builders/${draft.builder_id}`} className="rounded-2xl border border-slate-200 bg-white p-5 flex items-center justify-between hover:border-blue-300"><div><p className="font-semibold text-slate-900">{draft.builder_name}</p><p className="text-sm text-slate-500 mt-1">Draft saved {new Date(draft.last_saved_at).toLocaleDateString('en-GB')}</p></div><ArrowRight className="w-5 h-5 text-blue-600" /></Link>)}</div></section>}
+      </main>
+    </DashboardLayout>
+  </>;
 }

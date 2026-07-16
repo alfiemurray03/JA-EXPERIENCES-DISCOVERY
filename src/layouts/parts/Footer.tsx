@@ -16,9 +16,18 @@ export interface FooterColumn {
 
 export const DEFAULT_FOOTER_COLUMNS: FooterColumn[] = [
   {
+    heading: 'Discover',
+    links: [
+      { label: 'Activities', href: '/activities' },
+      { label: 'Experiences', href: '/experiences' },
+      { label: 'Headout', href: '/headout' },
+      { label: 'GetYourGuide', href: '/getyourguide' },
+    ],
+  },
+  {
     heading: 'Product',
     links: [
-      { label: 'Builders',    href: '/#features' },
+      { label: 'Experience Builders', href: '/builders' },
       { label: 'Pricing',     href: '/pricing' },
       { label: 'FAQ',         href: '/#faq' },
       { label: 'Help Centre', href: '/support' },
@@ -99,6 +108,11 @@ export default function Footer() {
       const parsed = JSON.parse(branding.footer_links);
       if (Array.isArray(parsed) && parsed.length > 0) columns = parsed;
     } catch { /* use defaults */ }
+  }
+  // Discovery remains part of the public navigation even when an older
+  // database-managed footer configuration is present.
+  if (!columns.some(column => column.links?.some(link => link.href === '/activities'))) {
+    columns = [DEFAULT_FOOTER_COLUMNS[0], ...columns];
   }
 
   return (

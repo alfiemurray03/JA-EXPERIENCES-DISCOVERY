@@ -3176,7 +3176,10 @@ async function ensureBuilderPlatformTables(DB) {
   await DB.prepare(`CREATE TABLE IF NOT EXISTS token_addon_packages (id TEXT PRIMARY KEY, name TEXT NOT NULL, price_pence INTEGER NOT NULL, token_amount INTEGER NOT NULL DEFAULT 0, package_type TEXT NOT NULL DEFAULT 'tokens', status TEXT NOT NULL DEFAULT 'Configuration Ready', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`).run();
   await DB.prepare(`CREATE TABLE IF NOT EXISTS manual_token_adjustments (id TEXT PRIMARY KEY, email TEXT NOT NULL, amount INTEGER NOT NULL, reason TEXT NOT NULL, adjustment_type TEXT NOT NULL, admin_email TEXT NOT NULL, ledger_id TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`).run();
 
-  for (const row of DEFAULT_PLATFORM_BUILDERS) {
+  const experienceOnlyIds = new Set(["day-trip","family-day-out","school-holiday","occasion","local-discovery","budget-experience","rainy-day","date-night","birthday-plan","travel-itinerary","travel-checklist","destination-board","holiday-planner","accessible-travel-checklist","accessible-destination","accessible-venue-questions"]);
+  const allowedBuilderIds = [...experienceOnlyIds];
+  await DB.prepare(`DELETE FROM experience_builders WHERE id NOT IN (${allowedBuilderIds.map(() => '?').join(',')})`).bind(...allowedBuilderIds).run();
+  for (const row of DEFAULT_PLATFORM_BUILDERS.filter(item => experienceOnlyIds.has(item[0]))) {
     const [id, name, builder_type, category, token_cost, plan_inclusion, visibility, description] = row;
     const exists = await DB.prepare(`SELECT id FROM experience_builders WHERE id = ?`).bind(id).first();
     if (!exists) {

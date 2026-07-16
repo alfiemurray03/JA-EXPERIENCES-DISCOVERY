@@ -25,36 +25,22 @@ function getAccessIdentity(request) {
 }
 
 export const DEFAULT_BUILDERS = [
-  ["day-trip", "Day Trip Builder", "Small", "Everyday experiences", 10, "trial,membership,plus,family", "trial", "Build a practical day trip outline with timings, budget prompts and checklist notes."],
-  ["family-day-out", "Family Day Out Builder", "Standard", "Everyday experiences", 15, "trial,membership,plus,family", "trial", "Plan a family day out with pace, facilities, accessibility and weather alternatives."],
-  ["school-holiday", "School Holiday Planner", "Standard", "Everyday experiences", 15, "membership,plus,family", "paid", "Organise school holiday ideas across dates, budgets and family priorities."],
-  ["occasion", "Occasion Planner", "Standard", "Everyday experiences", 15, "membership,plus,family", "paid", "Plan a birthday, anniversary or special occasion with tasks and provider checks."],
-  ["local-discovery", "Local Discovery Builder", "Small", "Everyday experiences", 10, "trial,membership,plus,family", "trial", "Create a local discovery shortlist with suitability checks."],
-  ["budget-experience", "Budget Experience Builder", "Small", "Everyday experiences", 10, "membership,plus,family", "paid", "Shape ideas around a realistic budget and priority list."],
-  ["rainy-day", "Rainy Day Plan Builder", "Small", "Everyday experiences", 10, "membership,plus,family", "paid", "Prepare an indoor or weather-resilient plan."],
-  ["date-night", "Date Night Builder", "Small", "Everyday experiences", 10, "membership,plus,family", "paid", "Build a date-night plan with timings, budget and booking prompts."],
-  ["birthday-plan", "Birthday Plan Builder", "Standard", "Everyday experiences", 15, "membership,plus,family", "paid", "Create a birthday plan with guests, venue checks and tasks."],
-  ["travel-itinerary", "Travel Itinerary Builder", "Travel", "Travel experiences", 35, "plus,family", "paid", "Create a self-service travel itinerary outline and checklist."],
-  ["country-brief", "Country Travel Brief Builder", "Travel", "Travel experiences", 35, "plus,family", "paid", "Summarise official-source checks a member should complete before travel."],
-  ["europe-entry", "Europe Entry Readiness Builder", "Travel", "Travel experiences", 35, "plus,family", "paid", "Organise Europe entry-readiness prompts without immigration advice."],
-  ["travel-checklist", "Travel Checklist Builder", "Travel", "Travel experiences", 35, "membership,plus,family", "paid", "Build a travel checklist for documents, packing, operator checks and responsibilities."],
-  ["tube-notes", "Tube Planning Notes Builder", "Travel", "Travel experiences", 35, "plus,family", "paid", "Create general Tube planning notes; customers must check operators before travel."],
-  ["bus-notes", "Bus Planning Notes Builder", "Travel", "Travel experiences", 35, "plus,family", "paid", "Create general bus planning notes; customers must check operators before travel."],
-  ["destination-board", "Destination Board Builder", "Travel", "Travel experiences", 35, "membership,plus,family", "paid", "Create a destination board with ideas, notes and provider checks."],
-  ["airport-assistance", "Airport Assistance Request Builder", "Accessibility/support", "Accessibility and support", 40, "plus,family", "paid", "Prepare general assistance request notes for the customer to check with providers."],
-  ["accessible-travel-checklist", "Accessible Travel Checklist", "Accessibility/support", "Accessibility and support", 35, "plus,family", "paid", "Build a general accessible travel planning checklist."],
-  ["mobility-equipment", "Mobility Equipment Planner", "Accessibility/support", "Accessibility and support", 40, "plus,family", "paid", "Organise mobility equipment planning prompts without medical or safety advice."],
-  ["hidden-disabilities", "Hidden Disabilities Support Planner", "Accessibility/support", "Accessibility and support", 40, "plus,family", "paid", "Prepare general hidden-disability support planning notes."],
-  ["accessible-destination", "Accessible Destination Checklist", "Accessibility/support", "Accessibility and support", 35, "plus,family", "paid", "Create accessibility checks for destinations and providers."],
-  ["accessible-venue-questions", "Accessible Venue Questions Builder", "Accessibility/support", "Accessibility and support", 35, "plus,family", "paid", "Prepare questions to ask venues directly."],
-  ["support-confirmation", "Support Confirmation Tracker", "Accessibility/support", "Accessibility and support", 35, "plus,family", "paid", "Track support confirmations and follow-up tasks."],
-  ["my-plans", "My Plans", "Organisation", "Organisation tools", 0, "trial,membership,plus,family", "trial", "View and organise saved plans."],
-  ["my-discovery-boards", "My Discovery Boards", "Organisation", "Organisation tools", 0, "trial,membership,plus,family", "trial", "View and organise discovery boards."],
-  ["saved-experiences", "Saved Experiences", "Organisation", "Organisation tools", 0, "trial,membership,plus,family", "trial", "View saved experiences."],
-  ["budget-planner", "Budget Planner", "Small", "Organisation tools", 10, "membership,plus,family", "paid", "Create a simple budget planning output."],
-  ["booking-tracker", "Booking Tracker", "Small", "Organisation tools", 10, "membership,plus,family", "paid", "Create a booking tracker output for member-managed bookings."],
-  ["checklists", "Checklists", "Small", "Organisation tools", 10, "trial,membership,plus,family", "trial", "Create a reusable checklist."],
-  ["holiday-planner", "Holiday Planner", "Travel", "Travel", 5, "trial,membership,plus,family", "paid", "Organise holiday ideas, budgets and family priorities into a complete travel plan."]
+  ["day-trip", "Day Trip Builder", "Everyday", "Days out & occasions", 10, "trial,personal,standard,professional,org-starter", "trial", "Build a practical day trip with timings, activities, budget and a weather backup."],
+  ["family-day-out", "Family Day Out Builder", "Everyday", "Days out & occasions", 15, "trial,personal,standard,professional,org-starter", "trial", "Plan a family day out around ages, pace, facilities and accessibility."],
+  ["school-holiday", "School Holiday Planner", "Everyday", "Days out & occasions", 15, "personal,standard,professional,org-starter", "paid", "Turn school holiday dates and interests into an organised experience plan."],
+  ["occasion", "Occasion Planner", "Everyday", "Days out & occasions", 15, "personal,standard,professional,org-starter", "paid", "Plan a celebration or special occasion with activities, timings and booking checks."],
+  ["local-discovery", "Local Discovery Builder", "Everyday", "Days out & occasions", 10, "trial,personal,standard,professional,org-starter", "trial", "Create a shortlist of experiences near you and compare what suits your group."],
+  ["budget-experience", "Budget Experience Builder", "Everyday", "Days out & occasions", 10, "personal,standard,professional,org-starter", "paid", "Build an enjoyable experience plan around a clear total budget."],
+  ["rainy-day", "Rainy Day Plan Builder", "Everyday", "Days out & occasions", 10, "personal,standard,professional,org-starter", "paid", "Create an indoor or weather-resilient experience plan."],
+  ["date-night", "Date Night Builder", "Everyday", "Days out & occasions", 10, "personal,standard,professional,org-starter", "paid", "Plan a date night with activities, food, timings and budget."],
+  ["birthday-plan", "Birthday Experience Builder", "Everyday", "Days out & occasions", 15, "personal,standard,professional,org-starter", "paid", "Build a birthday experience around the guest list, interests and venue needs."],
+  ["travel-itinerary", "Travel Itinerary Builder", "Travel", "Trips & holidays", 25, "standard,professional,org-starter", "paid", "Create a flexible day-by-day travel itinerary with practical checks."],
+  ["travel-checklist", "Travel Experience Checklist", "Travel", "Trips & holidays", 15, "personal,standard,professional,org-starter", "paid", "Organise the bookings, packing and experience checks for a trip."],
+  ["destination-board", "Destination Ideas Board", "Travel", "Trips & holidays", 15, "personal,standard,professional,org-starter", "paid", "Compare destinations, activities and provider options in one plan."],
+  ["holiday-planner", "Holiday Planner", "Travel", "Trips & holidays", 25, "trial,personal,standard,professional,org-starter", "trial", "Organise your destination, itinerary, activities, budget and practical needs."],
+  ["accessible-travel-checklist", "Accessible Experience Planner", "Accessible", "Accessible experiences", 15, "standard,professional,org-starter", "paid", "Plan an experience around access requirements and provider confirmations."],
+  ["accessible-destination", "Accessible Destination Planner", "Accessible", "Accessible experiences", 20, "standard,professional,org-starter", "paid", "Compare destination access, transport, venues and facilities."],
+  ["accessible-venue-questions", "Venue Accessibility Questions", "Accessible", "Accessible experiences", 10, "standard,professional,org-starter", "paid", "Prepare the right access questions to confirm directly with a venue."]
 ];
 
 const ADDONS = [
@@ -121,6 +107,28 @@ const HOLIDAY_PLANNER_SCHEMA = [
   { "id": "additional_notes", "type": "long_text", "label": "Additional notes", "required": false, "placeholder": "Any other details..." }
 ];
 
+const EXPERIENCE_PLANNER_SCHEMA = [
+  { id: "plan_title", type: "short_text", label: "Plan name", required: true, placeholder: "e.g. Saturday in Manchester" },
+  { id: "location", type: "short_text", label: "Location or destination", required: true },
+  { id: "experience_date", type: "date", label: "Date", required: false },
+  { id: "participants", type: "short_text", label: "Who is this for?", required: true, help: "Include group size and ages where useful." },
+  { id: "budget", type: "short_text", label: "Total budget", required: false },
+  { id: "interests", type: "multiple_choice", label: "Interests", required: true, options: [
+    { label: "Food & drink", value: "food and drink" }, { label: "Culture & history", value: "culture and history" },
+    { label: "Shows & entertainment", value: "shows and entertainment" }, { label: "Outdoors & nature", value: "outdoors and nature" },
+    { label: "Family activities", value: "family activities" }, { label: "Adventure", value: "adventure" }
+  ] },
+  { id: "preferred_pace", type: "single_choice", label: "Preferred pace", required: true, options: [
+    { label: "Relaxed", value: "relaxed" }, { label: "Balanced", value: "balanced" }, { label: "Full day", value: "full" }
+  ] },
+  { id: "must_do", type: "long_text", label: "Must-do activities or ideas", required: false },
+  { id: "accessibility_details", type: "long_text", label: "Accessibility requirements", required: false, help: "Add mobility, sensory, seating or other access needs to confirm with providers." },
+  { id: "dietary_details", type: "long_text", label: "Dietary requirements", required: false },
+  { id: "booking_notes", type: "long_text", label: "Bookings or provider notes", required: false },
+  { id: "backup_plan", type: "long_text", label: "Weather or backup option", required: false },
+  { id: "additional_notes", type: "long_text", label: "Anything else?", required: false }
+];
+
 async function ensureTables(DB) {
   await DB.prepare(`CREATE TABLE IF NOT EXISTS experience_builders (id TEXT PRIMARY KEY, name TEXT NOT NULL, builder_type TEXT NOT NULL, category TEXT NOT NULL, token_cost INTEGER NOT NULL DEFAULT 15, plan_inclusion TEXT NOT NULL DEFAULT 'trial,membership,plus,family', status TEXT NOT NULL DEFAULT 'Active', visibility TEXT NOT NULL DEFAULT 'paid', description TEXT, form_schema TEXT NOT NULL DEFAULT '[]', usage_count INTEGER NOT NULL DEFAULT 0, blocked_attempts INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`).run();
 
@@ -162,17 +170,20 @@ async function ensureTables(DB) {
 }
 
 async function seedDefaults(DB) {
+  const allowedIds = DEFAULT_BUILDERS.map(row => row[0]);
+  const placeholders = allowedIds.map(() => "?").join(",");
+  await DB.prepare(`DELETE FROM experience_builders WHERE id NOT IN (${placeholders})`).bind(...allowedIds).run();
   for (const row of DEFAULT_BUILDERS) {
     const [id, name, builder_type, category, token_cost, plan_inclusion, visibility, description] = row;
 
-    let form_schema = '[]';
-    let creates_description = null;
-    let icon = '📋';
-    let estimated_minutes = 10;
-    let trial_eligible = 1;
-    let featured = 0;
-    let display_order = 100;
-    let output_instructions = '';
+    let form_schema = JSON.stringify(EXPERIENCE_PLANNER_SCHEMA);
+    let creates_description = `A structured ${name.toLowerCase()} with activities, timings and practical checks.`;
+    let icon = category === "Trips & holidays" ? '✈️' : category === "Accessible experiences" ? '♿' : '✨';
+    let estimated_minutes = builder_type === "Travel" ? 15 : 10;
+    let trial_eligible = plan_inclusion.includes("trial") ? 1 : 0;
+    let featured = ["day-trip", "family-day-out", "holiday-planner"].includes(id) ? 1 : 0;
+    let display_order = DEFAULT_BUILDERS.findIndex(item => item[0] === id) + 1;
+    let output_instructions = 'Create a clear experience plan using the supplied preferences.';
 
     if (id === 'holiday-planner') {
       form_schema = JSON.stringify(HOLIDAY_PLANNER_SCHEMA);
@@ -185,33 +196,24 @@ async function seedDefaults(DB) {
       output_instructions = "Generate a personalized day-by-day vacation planning document.";
     }
 
-    const exists = await first(DB, `SELECT id FROM experience_builders WHERE id = ?`, [id]);
-    if (!exists) {
-      await DB.prepare(`
+    await DB.prepare(`
         INSERT INTO experience_builders (
           id, name, builder_type, category, token_cost, plan_inclusion, status, visibility, description,
           slug, icon, creates_description, estimated_minutes, trial_eligible, featured, display_order, output_instructions, form_schema
         ) VALUES (?, ?, ?, ?, ?, ?, 'Active', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(id) DO UPDATE SET
+          name=excluded.name, builder_type=excluded.builder_type, category=excluded.category,
+          token_cost=excluded.token_cost, plan_inclusion=excluded.plan_inclusion, status='Active',
+          visibility=excluded.visibility, description=excluded.description, slug=excluded.slug,
+          icon=excluded.icon, creates_description=excluded.creates_description,
+          estimated_minutes=excluded.estimated_minutes, trial_eligible=excluded.trial_eligible,
+          featured=excluded.featured, display_order=excluded.display_order,
+          output_instructions=excluded.output_instructions, form_schema=excluded.form_schema,
+          updated_at=CURRENT_TIMESTAMP
       `).bind(
         id, name, builder_type, category, token_cost, plan_inclusion, visibility, description,
         id, icon, creates_description, estimated_minutes, trial_eligible, featured, display_order, output_instructions, form_schema
       ).run();
-    } else {
-      // Safely set slug = id if not set, and setup Holiday Planner schema
-      await DB.prepare(`
-        UPDATE experience_builders SET
-          slug = COALESCE(slug, id),
-          icon = CASE WHEN id = 'holiday-planner' THEN '✈️' ELSE icon END,
-          creates_description = CASE WHEN id = 'holiday-planner' THEN ? ELSE creates_description END,
-          estimated_minutes = CASE WHEN id = 'holiday-planner' THEN 15 ELSE estimated_minutes END,
-          trial_eligible = CASE WHEN id = 'holiday-planner' THEN 1 ELSE trial_eligible END,
-          featured = CASE WHEN id = 'holiday-planner' THEN 1 ELSE featured END,
-          display_order = CASE WHEN id = 'holiday-planner' THEN 1 ELSE display_order END,
-          output_instructions = CASE WHEN id = 'holiday-planner' THEN ? ELSE output_instructions END,
-          form_schema = CASE WHEN id = 'holiday-planner' THEN ? ELSE form_schema END
-        WHERE id = ?
-      `).bind(creates_description, output_instructions, form_schema, id).run();
-    }
   }
 
   for (const row of ADDONS) {
@@ -235,7 +237,7 @@ async function tokenBalance(DB, email) {
 
 async function activeSubscription(DB, email) {
   return await first(DB, `
-    SELECT plan_name, status, current_period_end, trial_end
+    SELECT *
     FROM stripe_subscriptions
     WHERE lower(customer_email) = lower(?)
       AND lower(COALESCE(status, '')) IN ('active', 'trialing')
@@ -508,7 +510,14 @@ export async function onRequest(context) {
     }
     const accessCode = summary.trial_active ? "trial" : clean(summary.subscription?.plan_code || summary.subscription?.plan_name, 80).toLowerCase().replace(/[^a-z0-9]+/g, "-");
     const includedPlans = String(builder.plan_inclusion || "").toLowerCase().split(",").map((item) => item.trim()).filter(Boolean);
-    if (includedPlans.length && !includedPlans.some((plan) => accessCode === plan || accessCode.includes(plan))) {
+    const currentPlanAliases = {
+      explore: ["explore", "trial"],
+      plan: ["plan", "personal"],
+      complete: ["complete", "standard"],
+      together: ["together", "professional", "org-starter"]
+    };
+    const accessCodes = currentPlanAliases[accessCode] || [accessCode];
+    if (includedPlans.length && !includedPlans.some((plan) => accessCodes.some(code => code === plan || code.includes(plan)))) {
       await blockAttempt(env.DB, identity.email, builder, "Builder is not included in the active plan.", summary.remaining_tokens, Number(builder.token_cost || 0));
       return json({ error: "This builder is not included in your current plan.", token_summary: summary }, 403);
     }

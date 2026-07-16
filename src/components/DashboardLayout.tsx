@@ -171,8 +171,8 @@ function usePortalNav() {
     fetch('/api/portal-nav', { credentials: 'include' })
       .then(r => r.json() as Promise<{ success: boolean; sections?: PortalNavSection[]; overrides?: PortalNavOverrides }>)
       .then(data => {
-        if (data.success && data.sections) {
-          setSections(data.sections);
+        if (data.success && data.overrides) {
+          setSections(applyPortalNavOverrides(DEFAULT_PORTAL_NAV, data.overrides));
         }
       })
       .catch(() => {
