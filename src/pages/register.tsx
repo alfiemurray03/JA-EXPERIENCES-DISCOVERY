@@ -15,8 +15,8 @@ import { ArrowRight, CheckCircle2, FileText, Shield, Zap } from 'lucide-react';
 import { useSiteSettings } from '@/lib/site-settings-context';
 
 const PERKS = [
-  { icon: FileText, text: 'Access 100+ professional document templates' },
-  { icon: Zap,      text: 'Create and download documents in minutes' },
+  { icon: FileText, text: 'Use guided builders for everyday and travel plans' },
+  { icon: Zap,      text: 'Build and organise personalised plans step by step' },
   { icon: Shield,   text: 'Secure, UK-focused, always available' },
   { icon: CheckCircle2, text: 'Free plan — no credit card required' },
 ];
@@ -29,7 +29,7 @@ export default function RegisterPage() {
         <title>Create a Free Account — {siteName}</title>
         <meta
           name="description"
-          content={`Sign up for ${siteName} and start creating professional documents in minutes. Free plan available, no credit card required.`}
+          content={`Sign up for ${siteName} and start building personalised plans with guided tools.`}
         />
       </Helmet>
 
@@ -43,11 +43,11 @@ export default function RegisterPage() {
                 Free to get started
               </span>
               <h1 className="text-3xl sm:text-4xl font-bold text-foreground leading-tight">
-                Create professional documents in minutes
+                Build personalised plans step by step
               </h1>
               <p className="text-muted-foreground mt-3 text-base leading-relaxed">
-                Join {siteName} and get instant access to over 100 UK-focused
-                document templates — letters, contracts, invoices, policies and more.
+                Join {siteName} and use guided builders for day trips, destinations,
+                itineraries, budgets, accessibility and practical travel preparation.
               </p>
             </div>
 
