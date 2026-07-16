@@ -1,7 +1,7 @@
 /**
  * JA Plan Studio admin dashboard — Profile Studio layout with live Plan Studio data.
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import { Link } from 'react-router-dom';
 import AdminLayout from '@/components/AdminLayout';
@@ -10,7 +10,9 @@ import { useAdmin } from '@/lib/admin-context';
 import {
   Users, FileText, CreditCard, Activity,
   CheckCircle2, Server, ShieldCheck,
-  FileCheck, MessageSquare, ChevronRight,
+  FileCheck, MessageSquare, ArrowRight, RefreshCw,
+  Globe, HeadphonesIcon, PenLine, UserCheck, Building2,
+  FileEdit, LayoutDashboard, Settings, ClipboardList, Lock,
 } from 'lucide-react';
 
 interface AdminUser {
@@ -58,22 +60,25 @@ export default function AdminDashboard() {
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [stats, setStats]               = useState<PlatformStats | null>(null);
   const [loadingStats, setLoadingStats] = useState(true);
+  const [refreshing, setRefreshing]     = useState(false);
   const [ticketStats, setTicketStats]   = useState<TicketStats>({ open: 0, in_progress: 0, resolved: 0, closed: 0, urgent: 0, total: 0 });
 
-  useEffect(() => {
-    fetch('/api/admin/users', { credentials: 'include' })
+  const loadDashboard = useCallback((refresh = false) => {
+    if (refresh) setRefreshing(true);
+
+    const usersRequest = fetch('/api/admin/users', { credentials: 'include' })
       .then(r => r.json())
       .then((d: { success: boolean; users: AdminUser[] }) => { if (d.success) setAdminUsers(d.users); })
       .catch(() => {})
       .finally(() => setLoadingUsers(false));
 
-    fetch('/api/admin/stats', { credentials: 'include' })
+    const statsRequest = fetch('/api/admin/stats', { credentials: 'include' })
       .then(r => r.json())
       .then((d: { success: boolean; stats?: PlatformStats }) => { if (d.success && d.stats) setStats(d.stats); })
       .catch(() => {})
       .finally(() => setLoadingStats(false));
 
-    fetch('/api/admin/support/tickets', { credentials: 'include' })
+    const ticketsRequest = fetch('/api/admin/support/tickets', { credentials: 'include' })
       .then(r => r.json())
       .then((d: { success: boolean; stats?: TicketStats }) => {
         if (d.success) {
@@ -81,7 +86,16 @@ export default function AdminDashboard() {
         }
       })
       .catch(() => {});
+
+    Promise.allSettled([usersRequest, statsRequest, ticketsRequest])
+      .finally(() => setRefreshing(false));
   }, []);
+
+  useEffect(() => {
+    loadDashboard(false);
+    const interval = window.setInterval(() => loadDashboard(true), 30_000);
+    return () => window.clearInterval(interval);
+  }, [loadDashboard]);
 
   const now = new Date();
   const greeting = now.getHours() < 12 ? 'Good morning' : now.getHours() < 18 ? 'Good afternoon' : 'Good evening';
@@ -97,11 +111,21 @@ export default function AdminDashboard() {
   ];
 
   const quickLinks = [
-    { to: '/admin/users', label: 'Manage Customers', desc: 'Customer records, access and subscriptions', icon: Users },
+    { to: '/admin/users', label: 'Customers & CRM', desc: 'Customer records, access and subscriptions', icon: Users },
     { to: '/admin/builders', label: 'Builder Manager', desc: 'Configure planning builders and templates', icon: FileText },
     { to: '/admin/subscriptions', label: 'Plans & Pricing', desc: 'Configure subscriptions and entitlements', icon: CreditCard },
-    { to: '/admin/site-settings', label: 'System Settings', desc: 'Platform configuration and site controls', icon: ShieldCheck },
-    { to: '/admin/audit', label: 'Audit Log', desc: 'Full record of administration actions', icon: Activity },
+    { to: '/admin/support', label: 'Support Centre', desc: 'Customer tickets and threaded replies', icon: HeadphonesIcon },
+    { to: '/admin/signing', label: 'Document Signing', desc: 'Signing requests, configuration and audit', icon: PenLine },
+    { to: '/admin/affiliate', label: 'Affiliate Programme', desc: 'Affiliates, referrals and conversions', icon: UserCheck },
+    { to: '/admin/resellers', label: 'Reseller Programme', desc: 'Resellers, commissions and resources', icon: Building2 },
+    { to: '/admin/pages', label: 'Website Pages', desc: 'Manage public JA Plan Studio pages', icon: Globe },
+    { to: '/admin/content', label: 'Content Manager', desc: 'Edit platform content and messaging', icon: FileEdit },
+    { to: '/admin/portal-nav', label: 'Portal Navigation', desc: 'Configure the customer portal navigation', icon: LayoutDashboard },
+    { to: '/admin/site-settings', label: 'Site Settings', desc: 'Platform identity and website controls', icon: Settings },
+    { to: '/admin/system', label: 'System Configuration', desc: 'Platform services and configuration', icon: Server },
+    { to: '/admin/audit', label: 'Audit Log', desc: 'Full record of administration actions', icon: ClipboardList },
+    { to: '/admin/security', label: 'Security', desc: 'Administration access and security events', icon: Lock },
+    { to: '/admin/gdpr', label: 'GDPR & SAR', desc: 'Data requests and compliance operations', icon: ShieldCheck },
     { to: '/admin/legal', label: 'Legal Policies', desc: 'Terms, privacy and cookie policies', icon: FileCheck },
   ];
 
@@ -114,14 +138,25 @@ export default function AdminDashboard() {
       <AdminLayout title="Dashboard" subtitle="JA Plan Studio Administration">
         <div className="max-w-6xl mx-auto pb-20 lg:pb-0">
           <div className="mb-8">
-            <div className="flex items-center gap-3 mb-1">
-              <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center">
-                <ShieldCheck className="w-5 h-5 text-red-600" />
+            <div className="flex items-center justify-between gap-3 mb-1">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center">
+                  <ShieldCheck className="w-5 h-5 text-red-600" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-foreground">{greeting}, {(admin?.name || 'Admin').split(' ')[0]}</h1>
+                  <p className="text-muted-foreground text-sm">Here&apos;s what&apos;s happening on your platform today</p>
+                </div>
               </div>
-              <div>
-                <h1 className="text-2xl font-bold text-foreground">{greeting}, {(admin?.name || 'Admin').split(' ')[0]}</h1>
-                <p className="text-muted-foreground text-sm">Here&apos;s what&apos;s happening on your platform today</p>
-              </div>
+              <button
+                onClick={() => loadDashboard(true)}
+                disabled={refreshing || loadingStats}
+                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5 rounded-lg hover:bg-muted border border-border"
+                title="Refresh dashboard"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+                Refresh
+              </button>
             </div>
           </div>
 
@@ -165,7 +200,7 @@ export default function AdminDashboard() {
                             <p className="text-sm font-medium text-foreground">{link.label}</p>
                             <p className="text-xs text-muted-foreground truncate">{link.desc}</p>
                           </div>
-                          <ChevronRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-red-600 transition-colors flex-shrink-0" />
+                          <ArrowRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-red-600 transition-colors flex-shrink-0" />
                         </CardContent>
                       </Card>
                     </Link>

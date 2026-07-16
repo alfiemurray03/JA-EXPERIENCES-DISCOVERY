@@ -115,11 +115,6 @@ function Sidebar({ onClose }: SidebarProps) {
             <p className="text-xs text-slate-400">JA Plan Studio</p>
           </div>
         </div>
-        {onClose && (
-          <button onClick={onClose} className="lg:hidden absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10">
-            <X className="w-4 h-4" />
-          </button>
-        )}
       </div>
 
       {/* Admin info */}
@@ -266,6 +261,13 @@ function AdminLayoutInner({ children, title }: AdminLayoutInnerProps) {
         <div className="lg:hidden fixed inset-0 z-40 flex">
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
           <aside className="relative w-72 bg-white flex flex-col z-50 shadow-2xl">
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 z-10"
+              aria-label="Close navigation"
+            >
+              <X className="w-5 h-5" />
+            </button>
             <Sidebar onClose={() => setSidebarOpen(false)} />
           </aside>
         </div>
@@ -275,14 +277,15 @@ function AdminLayoutInner({ children, title }: AdminLayoutInnerProps) {
       <div className="flex-1 lg:ml-60 xl:ml-64 flex flex-col min-h-screen">
         {/* Top bar */}
         <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur-xl px-4 sm:px-6 py-0 flex items-center gap-4 shadow-sm h-14">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="lg:hidden p-2 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors"
+            aria-label="Open menu"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+
           <div className="flex-1 flex items-center gap-2 min-w-0">
-            <button
-              className="lg:hidden p-2 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors"
-              onClick={() => setSidebarOpen(true)}
-              aria-label="Open navigation"
-            >
-              <Menu className="w-5 h-5" />
-            </button>
             <span className="text-xs text-slate-400 hidden sm:block shrink-0">Admin</span>
             {currentGroup && (
               <>
@@ -314,9 +317,7 @@ function AdminLayoutInner({ children, title }: AdminLayoutInnerProps) {
 
         {/* Page content */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-10">
-          <div key={location.pathname}>
-            {children}
-          </div>
+          {children}
         </main>
       </div>
 
