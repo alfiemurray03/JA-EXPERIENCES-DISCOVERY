@@ -50,8 +50,8 @@ const glassStrong = [
 
 const glassHover = 'hover:-translate-y-1 hover:shadow-[0_12px_40px_-8px_rgba(37,99,235,0.20)] dark:hover:shadow-[0_12px_40px_-8px_rgba(37,99,235,0.35)] transition-all duration-300';
 
-/* ─── Demo document card ─────────────────────────────────────────────────── */
-function DemoProfileCard() {
+/* ─── Demo plan card ─────────────────────────────────────────────────────── */
+function DemoPlanCard() {
   return (
     <div className="relative mx-auto w-full max-w-[320px]">
       <div className="absolute inset-0 rounded-3xl bg-blue-500/20 dark:bg-blue-500/30 blur-3xl scale-110 pointer-events-none" />
@@ -63,7 +63,7 @@ function DemoProfileCard() {
             <div className="w-2.5 h-2.5 rounded-full bg-green-400/70" />
           </div>
           <div className="flex-1 mx-2 bg-black/6 dark:bg-white/10 rounded-md px-2.5 py-1 text-[10px] text-muted-foreground font-mono truncate">
-            japlanstudio.jagroupservices.co.uk/documents/<span className="text-primary">business-proposal</span>
+            japlanstudio.jagroupservices.co.uk/plans/<span className="text-primary">day-trip</span>
           </div>
         </div>
         <div className="px-5 py-5">
@@ -71,15 +71,15 @@ function DemoProfileCard() {
             <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-400 to-blue-700 flex items-center justify-center text-white text-lg font-bold mb-2.5 ring-4 ring-blue-500/20 shadow-lg shadow-blue-500/25">
               JA
             </div>
-            <h3 className="text-foreground font-bold text-sm">Business Proposal</h3>
-            <p className="text-primary text-xs mt-0.5 font-medium">Professional template</p>
-            <p className="text-muted-foreground text-[10px] mt-0.5">Ready to customise</p>
+            <h3 className="text-foreground font-bold text-sm">Brighton Day Trip</h3>
+            <p className="text-primary text-xs mt-0.5 font-medium">Day Trip Builder</p>
+            <p className="text-muted-foreground text-[10px] mt-0.5">Saturday · 4 travellers</p>
           </div>
           <div className="space-y-2 mb-4">
             {[
-              { icon: <FileText className="w-3 h-3" />, label: 'Executive summary' },
-              { icon: <Briefcase className="w-3 h-3" />, label: 'Scope and deliverables' },
-              { icon: <Check className="w-3 h-3" />, label: 'Terms and approval' },
+              { icon: <Globe className="w-3 h-3" />, label: 'Travel and arrival plan' },
+              { icon: <Users className="w-3 h-3" />, label: 'Activities for everyone' },
+              { icon: <Check className="w-3 h-3" />, label: 'Budget and checklist ready' },
             ].map(item => (
               <div key={item.label} className="flex items-center gap-2 bg-muted rounded-xl px-3 py-2 border border-border">
                 <span className="text-primary flex-shrink-0">{item.icon}</span>
@@ -89,10 +89,10 @@ function DemoProfileCard() {
           </div>
           <div className="flex gap-2">
             <div className="flex-1 bg-blue-600 rounded-xl py-2 text-center text-white text-[10px] font-semibold shadow-sm shadow-blue-600/30">
-              Edit Document
+              Edit Plan
             </div>
             <div className="flex-1 bg-muted rounded-xl py-2 text-center text-muted-foreground text-[10px] font-semibold border border-border">
-              Export PDF
+              View Itinerary
             </div>
           </div>
         </div>
@@ -101,8 +101,8 @@ function DemoProfileCard() {
   );
 }
 
-/* ─── Demo business documents card ─────────────────────────────────────────── */
-function DemoBusinessCard() {
+/* ─── Demo checklist card ─────────────────────────────────────────────────── */
+function DemoChecklistCard() {
   return (
     <div className={`relative ${glassStrong} overflow-hidden w-full max-w-[300px]`}>
       <div className="absolute inset-0 bg-gradient-to-br from-blue-600/8 via-transparent to-purple-600/6 pointer-events-none" />
@@ -110,15 +110,15 @@ function DemoBusinessCard() {
         <div className="flex items-center gap-3 mb-4">
           <div className="w-12 h-12 rounded-xl bg-blue-600/80 flex items-center justify-center text-white font-bold text-sm shadow-sm flex-shrink-0">JA</div>
           <div>
-            <p className="text-foreground font-bold text-sm leading-tight">Employment Contract</p>
-            <p className="text-primary text-[10px] mt-0.5">Contract Builder</p>
+            <p className="text-foreground font-bold text-sm leading-tight">Travel Checklist</p>
+            <p className="text-primary text-[10px] mt-0.5">6 of 8 complete</p>
           </div>
         </div>
         <div className="space-y-1.5 mb-4">
           {[
-            { icon: <Users className="w-3 h-3" />, label: 'Employer and employee details' },
-            { icon: <Briefcase className="w-3 h-3" />, label: 'Role, pay and working hours' },
-            { icon: <Shield className="w-3 h-3" />, label: 'Terms and signatures' },
+            { icon: <Check className="w-3 h-3" />, label: 'Tickets and confirmations' },
+            { icon: <Check className="w-3 h-3" />, label: 'Accessibility arrangements' },
+            { icon: <Shield className="w-3 h-3" />, label: 'Emergency details' },
           ].map(item => (
             <div key={item.label} className="flex items-center gap-2 text-[10px] text-muted-foreground">
               <span className="text-primary">{item.icon}</span>
@@ -128,10 +128,10 @@ function DemoBusinessCard() {
         </div>
         <div className="flex gap-2">
           <div className="flex-1 bg-blue-600 rounded-lg py-1.5 text-center text-white text-[10px] font-semibold">
-            View Document
+            Open Checklist
           </div>
           <div className="flex-1 bg-muted rounded-lg py-1.5 text-center text-muted-foreground text-[10px] font-semibold border border-border">
-            Download PDF
+            Share Plan
           </div>
         </div>
       </div>
@@ -208,14 +208,13 @@ interface HomepageContent {
 }
 
 const HOMEPAGE_DEFAULTS: HomepageContent = {
-  hero_badge:              'Professional document builders',
-  hero_title_line1:        'Professional documents,',
-  hero_title_highlight:    'generated in minutes',
-  hero_subtitle:           'Create letters, contracts, invoices, policies, forms, reports and more from one secure JA Plan Studio account.',
+  hero_badge:              'Guided planning builders',
+  hero_title_line1:        'Your plans,',
+  hero_title_highlight:    'made simple',
+  hero_subtitle:           'Create personalised day trips, family days out, travel itineraries, accessibility checklists, budgets and occasions from one secure account.',
   hero_cta_primary:        'Explore Builders',
   hero_cta_secondary:      'See how it works',
   stats_users:             '',
-  stats_profiles:          '',
   stats_countries:         '',
   stats_uptime:            '',
   announcement_enabled:    false,
@@ -229,8 +228,8 @@ interface ApiPlan {
   id: number; name: string; slug: string;
   price_monthly: number; price_yearly: number;
   is_lifetime: boolean;
-  max_profiles: number;
-  max_org_profiles: number;
+  max_plans: number;
+  max_org_workspaces: number;
   max_seats: number;
   core_features: string[];
   included_features: string[];
@@ -239,9 +238,9 @@ interface ApiPlan {
 
 const PLAN_META: Record<string, { badge: string | null; highlight: boolean; cta: string; note: string; contactUs?: boolean }> = {
   free:             { badge: null,               highlight: false, cta: 'Create Free Account',  note: 'Free forever. No credit card required.' },
-  personal:         { badge: '14-day free trial', highlight: false, cta: 'Start Free Trial',    note: 'For personal document creation.' },
-  standard:         { badge: '14-day free trial', highlight: false, cta: 'Start Free Trial',    note: 'More builders and branding tools.' },
-  professional:     { badge: 'Most popular',      highlight: true,  cta: 'Start Free Trial',    note: 'All builders, templates and signing.' },
+  personal:         { badge: '14-day free trial', highlight: false, cta: 'Start Free Trial',    note: 'For personal planning.' },
+  standard:         { badge: '14-day free trial', highlight: false, cta: 'Start Free Trial',    note: 'More builders and saved plans.' },
+  professional:     { badge: 'Most popular',      highlight: true,  cta: 'Start Free Trial',    note: 'Every planning builder and advanced tools.' },
   org_starter:      { badge: 'For teams',         highlight: false, cta: 'Choose Plan',         note: 'Organisation workspace with 3 seats.' },
   org_growth:       { badge: 'Growing teams',     highlight: false, cta: 'Choose Plan',         note: 'Organisation workspace with 10 seats.' },
   org_professional: { badge: 'Advanced',          highlight: false, cta: 'Choose Plan',         note: 'Organisation workspace with 25 seats.' },
@@ -255,13 +254,13 @@ export default function HomePage() {
   usePwaRedirect();
   const navigate = useNavigate();
   const [plans] = useState<ApiPlan[]>([
-    { id: 1, name: 'Free', slug: 'free', price_monthly: 0, price_yearly: 0, is_lifetime: false, max_profiles: 1, max_org_profiles: 0, max_seats: 1, core_features: ['1 free template demo', 'PDF export and download', 'Browse the template catalogue'], included_features: [], coming_soon_features: [] },
-    { id: 2, name: 'Personal', slug: 'personal', price_monthly: 5.99, price_yearly: 59.90, is_lifetime: false, max_profiles: 25, max_org_profiles: 0, max_seats: 1, core_features: ['Core document builders', 'Save document drafts', '14-day draft retention'], included_features: [], coming_soon_features: [] },
-    { id: 3, name: 'Standard', slug: 'standard', price_monthly: 7.99, price_yearly: 79.90, is_lifetime: false, max_profiles: 100, max_org_profiles: 0, max_seats: 1, core_features: ['More builders and templates', 'Branding controls', '14-day free trial'], included_features: [], coming_soon_features: [] },
-    { id: 4, name: 'Professional', slug: 'professional', price_monthly: 14.99, price_yearly: 149.90, is_lifetime: false, max_profiles: 999, max_org_profiles: 0, max_seats: 1, core_features: ['All builders and templates', 'Electronic signing', '30-day draft retention'], included_features: [], coming_soon_features: [] },
-    { id: 5, name: 'Organisation Starter', slug: 'org_starter', price_monthly: 29.99, price_yearly: 299.90, is_lifetime: false, max_profiles: 999, max_org_profiles: 1, max_seats: 3, core_features: ['Professional features', '3 included seats', 'Organisation controls'], included_features: [], coming_soon_features: [] },
-    { id: 6, name: 'Organisation Growth', slug: 'org_growth', price_monthly: 59.99, price_yearly: 599.90, is_lifetime: false, max_profiles: 999, max_org_profiles: 1, max_seats: 10, core_features: ['Professional features', '10 included seats', 'Team management'], included_features: [], coming_soon_features: [] },
-    { id: 7, name: 'Organisation Professional', slug: 'org_professional', price_monthly: 99.99, price_yearly: 999.90, is_lifetime: false, max_profiles: 999, max_org_profiles: 1, max_seats: 25, core_features: ['Professional features', '25 included seats', 'Advanced organisation controls'], included_features: [], coming_soon_features: [] },
+    { id: 1, name: 'Free', slug: 'free', price_monthly: 0, price_yearly: 0, is_lifetime: false, max_plans: 1, max_org_workspaces: 0, max_seats: 1, core_features: ['Try one guided planning builder', 'Preview your personalised plan', 'Browse all available builders'], included_features: [], coming_soon_features: [] },
+    { id: 2, name: 'Personal', slug: 'personal', price_monthly: 5.99, price_yearly: 59.90, is_lifetime: false, max_plans: 3, max_org_workspaces: 0, max_seats: 1, core_features: ['Core planning builders', 'Save up to 3 active plans', '14-day plan retention'], included_features: [], coming_soon_features: [] },
+    { id: 3, name: 'Standard', slug: 'standard', price_monthly: 7.99, price_yearly: 79.90, is_lifetime: false, max_plans: 5, max_org_workspaces: 0, max_seats: 1, core_features: ['Expanded planning builder library', 'Save up to 5 active plans', '14-day free trial'], included_features: [], coming_soon_features: [] },
+    { id: 4, name: 'Professional', slug: 'professional', price_monthly: 14.99, price_yearly: 149.90, is_lifetime: false, max_plans: 10, max_org_workspaces: 0, max_seats: 1, core_features: ['Every planning builder', 'Advanced planning tools', '30-day plan retention'], included_features: [], coming_soon_features: [] },
+    { id: 5, name: 'Organisation Starter', slug: 'org_starter', price_monthly: 29.99, price_yearly: 299.90, is_lifetime: false, max_plans: 10, max_org_workspaces: 1, max_seats: 3, core_features: ['All planning builders', '3 included seats', 'Shared organisation planning'], included_features: [], coming_soon_features: [] },
+    { id: 6, name: 'Organisation Growth', slug: 'org_growth', price_monthly: 59.99, price_yearly: 599.90, is_lifetime: false, max_plans: 25, max_org_workspaces: 1, max_seats: 10, core_features: ['All planning builders', '10 included seats', 'Team planning controls'], included_features: [], coming_soon_features: [] },
+    { id: 7, name: 'Organisation Professional', slug: 'org_professional', price_monthly: 99.99, price_yearly: 999.90, is_lifetime: false, max_plans: 50, max_org_workspaces: 1, max_seats: 25, core_features: ['All planning builders', '25 included seats', 'Advanced organisation controls'], included_features: [], coming_soon_features: [] },
   ]);
   const plansLoading = false;
   const [hpContent, setHpContent] = useState<HomepageContent>(HOMEPAGE_DEFAULTS);
@@ -305,7 +304,7 @@ export default function HomePage() {
       },
       {
         '@type': 'WebPage', '@id': `${site}/#webpage`, url: `${site}/`,
-        name: 'JA Plan Studio | Your Professional Document, Ready to Share',
+        name: 'JA Plan Studio | Guided Planning Made Simple',
         isPartOf: { '@id': `${site}/#website` },
         about: { '@id': `${site}/#organization` },
         datePublished: '2025-01-01', dateModified: '2026-07-12',
@@ -317,17 +316,17 @@ export default function HomePage() {
     <>
     <div className="relative">
       <Helmet>
-        <title>JA Plan Studio | Professional Documents Generated in Minutes</title>
-        <meta name="description" content="Create professional letters, contracts, invoices, policies, forms, reports and more. Build, save, export and manage documents from one secure account." />
-        <meta property="og:title" content="JA Plan Studio | Professional Documents Generated in Minutes" />
-        <meta property="og:description" content="Create professional letters, contracts, invoices, policies, forms, reports and more." />
+        <title>JA Plan Studio | Guided Planning Made Simple</title>
+        <meta name="description" content="Create personalised day trips, family days out, itineraries, budgets, accessibility checklists, occasions and holiday plans with guided builders." />
+        <meta property="og:title" content="JA Plan Studio | Guided Planning Made Simple" />
+        <meta property="og:description" content="Build personalised everyday, travel and accessibility plans in minutes." />
         <meta property="og:type" content="website" />
         <meta property="og:url" content={`${site}/`} />
         <meta property="og:image" content={`${site}/og-image.png`} />
         <meta property="og:site_name" content="JA Plan Studio" />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="JA Plan Studio | Professional Documents Generated in Minutes" />
-        <meta name="twitter:description" content="Create professional letters, contracts, invoices, policies, forms, reports and more." />
+        <meta name="twitter:title" content="JA Plan Studio | Guided Planning Made Simple" />
+        <meta name="twitter:description" content="Build personalised everyday, travel and accessibility plans in minutes." />
         <meta name="twitter:image" content={`${site}/og-image.png`} />
         <link rel="canonical" href={`${site}/`} />
         <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
@@ -411,13 +410,13 @@ export default function HomePage() {
               className="relative flex items-center justify-center"
             >
               <div className="relative w-full max-w-sm mx-auto">
-                <DemoProfileCard />
+                <DemoPlanCard />
                 <motion.div
                   animate={{ y: [0, -8, 0] }}
                   transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' as const }}
                   className="absolute -bottom-10 -right-4 hidden sm:block z-10"
                 >
-                  <DemoBusinessCard />
+                  <DemoChecklistCard />
                 </motion.div>
               </div>
             </motion.div>
@@ -440,12 +439,12 @@ export default function HomePage() {
             transition={{ duration: 0.5 }}
             className="text-center mb-14"
           >
-            <SectionBadge>Built for every document</SectionBadge>
+            <SectionBadge>Built for real life</SectionBadge>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight mb-3">
-              Personal documents or organisation workflows — you choose
+              Everyday plans or shared organisation planning — you choose
             </h2>
             <p className="text-muted-foreground text-base max-w-2xl mx-auto">
-              Create a one-off professional document for yourself or give your organisation a shared, controlled document workspace.
+              Build a plan around your own needs or give your organisation a shared, controlled planning workspace.
             </p>
           </motion.div>
 
@@ -461,18 +460,18 @@ export default function HomePage() {
               <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-500 mb-5">
                 <UserCheck className="w-6 h-6" />
               </div>
-              <h3 className="text-foreground font-bold text-xl mb-3">Personal Documents</h3>
+              <h3 className="text-foreground font-bold text-xl mb-3">Personal Plans</h3>
               <p className="text-muted-foreground text-sm leading-relaxed mb-5">
-                Create polished everyday documents without starting from a blank page. Choose a builder, select a template and enter the details that matter.
+                Plan everyday experiences without starting from a blank page. Choose a guided builder and add the details that matter to you.
               </p>
               <ul className="space-y-2.5">
                 {[
-                  'Letters, invoices and proposals',
-                  'Contracts, policies and forms',
-                  'Reports, minutes and checklists',
-                  'Guided fields and live preview',
-                  'Save drafts securely',
-                  'Export professional PDFs',
+                  'Day trips and family days out',
+                  'Travel itineraries and holidays',
+                  'Budgets and booking trackers',
+                  'Accessibility and travel checklists',
+                  'Save plans securely',
+                  'Download, print or share',
                 ].map(f => (
                   <li key={f} className="flex items-start gap-2.5 text-sm text-foreground/80">
                     <Check className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
@@ -493,16 +492,16 @@ export default function HomePage() {
               <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-500 mb-5">
                 <Building2 className="w-6 h-6" />
               </div>
-              <h3 className="text-foreground font-bold text-xl mb-3">Organisation Documents</h3>
+              <h3 className="text-foreground font-bold text-xl mb-3">Organisation Planning</h3>
               <p className="text-muted-foreground text-sm leading-relaxed mb-5">
-                A shared document workspace with organisation branding, managed seats and controlled access. Ideal for businesses, charities and growing teams.
+                A shared planning workspace with managed seats and controlled access. Ideal for businesses, charities, groups and growing teams.
               </p>
               <ul className="space-y-2.5">
                 {[
-                  'Organisation name, logo and branding',
-                  'Shared templates and documents',
+                  'Shared plans and reusable checklists',
+                  'Coordinated activities and occasions',
                   'Role-based team access',
-                  'Electronic signing workflows',
+                  'Central planning oversight',
                   'Organisation seats for staff members',
                   'Central billing and controls',
                 ].map(f => (
@@ -534,21 +533,21 @@ export default function HomePage() {
               Everything managed from one place
             </h2>
             <p className="text-muted-foreground text-base max-w-2xl mx-auto">
-              Your JA Plan Studio dashboard gives you full control over builders, documents, signing, organisation members and settings—all in one clean interface.
+              Your JA Plan Studio dashboard gives you full control over builders, saved plans, organisation members and settings—all in one clean interface.
             </p>
           </motion.div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[
-              { icon: <Layout className="w-5 h-5" />,    title: 'Document Builders',       desc: 'Use guided builders for letters, contracts, invoices, policies, forms, reports and more.' },
-              { icon: <Link2 className="w-5 h-5" />,     title: 'Template Catalogue',      desc: 'Browse professional templates by builder, category, industry and plan.' },
-              { icon: <QrCode className="w-5 h-5" />,    title: 'Live Preview',            desc: 'See the finished document update while you complete each guided field.' },
-              { icon: <BarChart3 className="w-5 h-5" />, title: 'Document History',        desc: 'Find saved drafts, recent documents and audit information from one place.' },
-              { icon: <Mail className="w-5 h-5" />,      title: 'Electronic Signing',      desc: 'Send supported documents for secure signing with a complete audit trail.' },
-              { icon: <Palette className="w-5 h-5" />,   title: 'Branding',                desc: 'Apply your colours, logo and organisation identity to supported documents.' },
+              { icon: <Layout className="w-5 h-5" />,    title: 'Planning Builders',       desc: 'Use guided builders for trips, itineraries, budgets, accessibility, occasions and more.' },
+              { icon: <Link2 className="w-5 h-5" />,     title: 'Builder Library',         desc: 'Browse the available planning tools and choose the right starting point.' },
+              { icon: <QrCode className="w-5 h-5" />,    title: 'Guided Questions',        desc: 'Answer clear questions while JA Plan Studio organises your plan.' },
+              { icon: <BarChart3 className="w-5 h-5" />, title: 'My Plans',                desc: 'Find active, recent and completed plans from one place.' },
+              { icon: <Mail className="w-5 h-5" />,      title: 'Reminders',               desc: 'Keep track of bookings, preparation and important planning dates.' },
+              { icon: <Palette className="w-5 h-5" />,   title: 'Personalised Results',    desc: 'Shape plans around your priorities, budget, accessibility and preferred pace.' },
               { icon: <Users className="w-5 h-5" />,     title: 'Organisation Seats',      desc: 'Invite team members with role-based access and shared organisation controls.' },
               { icon: <Shield className="w-5 h-5" />,    title: 'Security',                desc: 'Manage your account security, sessions and privacy settings.' },
-              { icon: <Share2 className="w-5 h-5" />,    title: 'Export Tools',            desc: 'Download, print or share completed documents from your workspace.' },
+              { icon: <Share2 className="w-5 h-5" />,    title: 'Share & Export',          desc: 'Download, print or share completed plans from your workspace.' },
             ].map((f, i) => (
               <motion.div
                 key={f.title}
@@ -589,9 +588,9 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
-              { step: '01', title: 'Choose a builder and template', desc: 'Select the document type you need, then choose the template that best matches your purpose.' },
-              { step: '02', title: 'Complete the guided fields', desc: 'Add your details while the live preview assembles and formats your professional document.' },
-              { step: '03', title: 'Save, export or send for signing', desc: 'Keep a secure draft, download the finished document or start an electronic signing workflow.' },
+              { step: '01', title: 'Choose a planning builder', desc: 'Select the day trip, itinerary, budget, accessibility, occasion or holiday tool you need.' },
+              { step: '02', title: 'Answer the guided questions', desc: 'Add your needs, timings, budget and preferences while JA Plan Studio organises the details.' },
+              { step: '03', title: 'Save, download or share', desc: 'Keep your plan securely, return to it later, print it or share it with the people involved.' },
             ].map((s, i) => (
               <motion.div
                 key={s.step}
@@ -660,7 +659,7 @@ export default function HomePage() {
             ))}
           </div>
           <p className="text-center text-muted-foreground text-sm mt-6">
-            And anyone who needs a polished professional document without starting from scratch.
+            And anyone who wants to make everyday planning clearer, calmer and easier to manage.
           </p>
         </div>
       </section>
@@ -751,7 +750,7 @@ export default function HomePage() {
                           </p>
                         </div>
 
-                        {/* Document allowance — the key differentiator */}
+                        {/* Saved-plan allowance — the key differentiator */}
                         <div className={`rounded-lg px-3 py-2 text-xs font-semibold ${
                           isEnterprise
                             ? 'bg-amber-500/10 text-amber-700 border border-amber-500/20'
@@ -762,9 +761,8 @@ export default function HomePage() {
                           {(() => {
                             const seats = plan.max_seats ?? 1;
                             if (plan.slug.startsWith('org_')) return `Organisation workspace · ${seats} seats`;
-                            if (plan.max_profiles === 999) return 'Unlimited document creation';
-                            if (plan.slug === 'free') return '1 free template demo';
-                            return 'Personal document workspace';
+                            if (plan.slug === 'free') return 'Try 1 guided planning builder';
+                            return `Save up to ${plan.max_plans} active plans`;
                           })()}
                         </div>
 
@@ -842,13 +840,13 @@ export default function HomePage() {
 
           <div className="space-y-3">
             {[
-              { q: 'What is JA Plan Studio?', a: 'JA Plan Studio is a secure professional document-building service for individuals and organisations. It provides guided builders, reusable templates, saved drafts, exports and supported signing workflows.' },
-              { q: 'Which builders are included?', a: 'JA Plan Studio includes builders for letters, emails, invoices, contracts, policies, forms, reports, minutes, proposals and checklists, plus an expanding catalogue of specialist templates.' },
-              { q: 'What does the dashboard include?', a: 'Your dashboard brings together document builders, saved documents, templates, signing requests, organisation members, account settings and support.' },
-              { q: 'Is there a free plan?', a: 'Yes. The Free plan includes one template demo, PDF export and access to browse the catalogue. Paid plans unlock more builders, templates, saved drafts and additional tools.' },
-              { q: 'Can I add my organisation branding?', a: 'Supported plans let you apply organisation details, colours and a logo to compatible document layouts.' },
-              { q: 'Who can use JA Plan Studio?', a: 'JA Plan Studio supports individuals, sole traders, businesses, charities, community groups and organisations that need professional documents.' },
-              { q: 'How do I get started?', a: 'Sign in through JA Group Services ID, choose a builder and select a template. Your account is created automatically on first sign-in.' },
+              { q: 'What is JA Plan Studio?', a: 'JA Plan Studio is a secure guided-planning service for individuals and organisations. It turns clear questions into organised, personalised plans.' },
+              { q: 'Which builders are included?', a: 'Builders cover day trips, family days out, budgets, travel checklists, accessibility, itineraries, occasions, destinations, bookings and holidays, with more being added.' },
+              { q: 'What does the dashboard include?', a: 'Your dashboard brings together planning builders, saved plans, organisation members, account settings and support.' },
+              { q: 'Is there a free plan?', a: 'Yes. The Free plan lets you try one guided builder. Paid plans unlock more builders, saved plans and longer retention.' },
+              { q: 'Can organisations use JA Plan Studio?', a: 'Yes. Organisation plans provide shared planning, managed seats and central controls for teams and groups.' },
+              { q: 'Who can use JA Plan Studio?', a: 'JA Plan Studio supports individuals, families, businesses, charities, community groups and organisations that want simpler planning.' },
+              { q: 'How do I get started?', a: 'Sign in through JA Group Services ID, choose a planning builder and answer the guided questions. Your account is created automatically on first sign-in.' },
               { q: 'Who operates JA Plan Studio?', a: 'JA Plan Studio is a service brand operated by JA Group Services Ltd, a company registered in England and Wales.' },
             ].map((item, i) => (
               <motion.div
@@ -883,10 +881,10 @@ export default function HomePage() {
                 <QrCode className="w-7 h-7" />
               </div>
               <h2 className="text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight mb-4">
-                Ready to create your professional document?
+                Ready to create your first plan?
               </h2>
               <p className="text-muted-foreground mb-8 leading-relaxed text-base max-w-xl mx-auto">
-                Sign in through JA Group Services ID, choose a builder and create your first professional document. Free to start—no credit card required.
+                Sign in through JA Group Services ID, choose a guided builder and create your first personalised plan. Free to start—no credit card required.
               </p>
               <div className="flex flex-wrap gap-3 justify-center mb-8">
                 <Link to="/sign-in">

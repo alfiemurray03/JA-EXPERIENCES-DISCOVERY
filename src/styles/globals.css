@@ -418,3 +418,31 @@ html {
 .legal-html-body a { color: hsl(var(--primary)); text-decoration: underline; }
 .legal-html-body table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; font-size: .875rem; }
 .legal-html-body th, .legal-html-body td { border: 1px solid hsl(var(--border)); padding: .5rem .75rem; text-align: left; }
+
+/* Unified Smart Profile visual language for every authenticated portal. */
+.smart-portal {
+  position: relative;
+  background:
+    radial-gradient(circle at 18% 0%, hsl(var(--primary) / .10), transparent 34rem),
+    radial-gradient(circle at 100% 38%, hsl(250 80% 62% / .07), transparent 30rem),
+    hsl(var(--background));
+}
+.smart-portal::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: .022;
+  background-image:
+    linear-gradient(hsl(var(--primary)) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--primary)) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+.smart-sidebar {
+  box-shadow: 12px 0 40px -28px hsl(var(--primary) / .45);
+}
+.smart-portal main > div > .rounded-xl,
+.smart-portal main > div > .rounded-2xl,
+.smart-portal main .bg-card {
+  box-shadow: 0 10px 35px -28px hsl(var(--primary) / .45);
+}

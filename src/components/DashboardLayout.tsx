@@ -280,7 +280,7 @@ function SidebarContent({ sections, pathname, onNavigate, user, onLogout }: Side
   const initials = user ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase() : 'U';
 
   return (
-    <div className="flex flex-col h-full bg-card border-r border-border">
+    <div className="smart-sidebar flex flex-col h-full bg-card/90 backdrop-blur-xl border-r border-border/70">
 
       {/* Logo */}
       <div className="p-4 border-b border-border shrink-0">
@@ -290,12 +290,12 @@ function SidebarContent({ sections, pathname, onNavigate, user, onLogout }: Side
           aria-label="JA Plan Studio — dashboard"
           onClick={onNavigate}
         >
-          <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center shrink-0" aria-hidden="true">
+          <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-blue-600/20" aria-hidden="true">
             <FileText className="w-5 h-5 text-primary-foreground" />
           </div>
           <div>
             <div className="font-bold text-sm text-foreground leading-tight">JA Plan Studio</div>
-            <div className="text-[10px] text-muted-foreground leading-tight">Document Platform</div>
+            <div className="text-[10px] text-muted-foreground leading-tight">Guided Planning</div>
           </div>
         </Link>
       </div>
@@ -305,7 +305,7 @@ function SidebarContent({ sections, pathname, onNavigate, user, onLogout }: Side
         <Button asChild className="w-full gap-2" size="sm">
           <Link to="/builders" onClick={onNavigate}>
             <Plus className="w-4 h-4" aria-hidden="true" />
-            New Document
+            New Plan
           </Link>
         </Button>
       </div>
@@ -432,7 +432,7 @@ export default function DashboardLayout({ children, noPadding: _noPadding }: Das
   }
 
   return (
-    <div className="min-h-screen bg-muted/20 flex">
+    <div className="smart-portal min-h-screen bg-background flex">
       <a href="#dashboard-main" className="skip-nav">Skip to main content</a>
 
       {/* Desktop sidebar */}
@@ -485,7 +485,7 @@ export default function DashboardLayout({ children, noPadding: _noPadding }: Das
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top bar */}
         <header
-          className="sticky top-0 z-30 bg-card border-b border-border px-4 h-14 flex items-center gap-3"
+          className="sticky top-0 z-30 bg-card/80 backdrop-blur-xl border-b border-border/70 px-4 h-14 flex items-center gap-3"
           role="banner"
         >
           <button
