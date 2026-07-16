@@ -356,6 +356,25 @@ function isPublicDocumentPath(path) {
   return false;
 }
 
+function isCustomerPortalPath(path) {
+  return ["/dashboard", "/documents", "/builders", "/settings"].some(
+    (prefix) => path === prefix || path === `${prefix}/` || path.startsWith(`${prefix}/`)
+  );
+}
+
+function isPublicPlanningPath(path) {
+  const exact = new Set([
+    "/", "/index.html", "/pricing", "/activities", "/experiences", "/headout",
+    "/getyourguide", "/booking-partners", "/how-it-works", "/plan-your-trip",
+    "/planning-services", "/accommodation", "/transfers", "/local-transport",
+    "/travel-documentation-support", "/accessibility-support",
+    "/selected-partner-hotels", "/budget-experiences", "/family-experiences",
+    "/couples-experiences", "/about", "/faqs"
+  ]);
+  const normalized = path.length > 1 && path.endsWith("/") ? path.slice(0, -1) : path;
+  return exact.has(normalized) || normalized === "/destinations" || normalized.startsWith("/destinations/");
+}
+
 function shouldGateCustomerDocument(request, path, publicAuthPath) {
   if (publicAuthPath) return false;
   if (path.startsWith("/account/") || path === "/account/dashboard") {
@@ -422,7 +441,7 @@ export async function onRequest(context) {
   ]).has(path);
   const realm = !rootLanding && (path.startsWith("/admin/") || path === "/admin/dashboard")
     ? "admin"
-    : !rootLanding && (path.startsWith("/account/") || path === "/account/dashboard" || shouldGateCustomerDocument(request, path, publicAuthPath))
+    : !rootLanding && (path.startsWith("/account/") || path === "/account/dashboard" || isCustomerPortalPath(path) || shouldGateCustomerDocument(request, path, publicAuthPath))
       ? "customer"
       : "";
 
@@ -543,6 +562,7 @@ export async function onRequest(context) {
 
   const bypass =
     publicAuthPath ||
+    isPublicPlanningPath(path) ||
     path === "/admin" ||
     path === "/admin/" ||
     path.startsWith("/admin/") ||
