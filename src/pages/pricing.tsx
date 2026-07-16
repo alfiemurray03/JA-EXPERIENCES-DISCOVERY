@@ -1,659 +1,140 @@
+import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Helmet } from '@dr.pogodin/react-helmet';
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { ArrowRight, Check, ChevronDown, ChevronUp, Clock, Compass, HeartHandshake, Route, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import {
-  CheckCircle2, X, FileText, Zap, Star, Building2,
-  Users, ArrowRight, ChevronDown, ChevronUp, Info,
-  Clock, Shield, AlertTriangle, Loader2,
-  PenLine, Gift,
-} from 'lucide-react';
-import {
-  PLAN_LABELS, PLAN_PRICE_DISPLAY, PLAN_DRAFT_LIMIT,
-  PLAN_RETENTION_DAYS, ORG_BASE_SEATS, PLAN_HAS_TRIAL,
-  type PlanId,
-} from '@/lib/plan-config';
-import { useAuth } from '@/lib/auth-context';
-import { useSiteSettings } from '@/lib/site-settings-context';
-import { useFeatureConfig } from '@/lib/feature-config-context';
+import { Button } from '@/components/ui/button';
 
-// ── Plan card definitions ─────────────────────────────────────────────────────
-interface PlanDef {
-  id: PlanId;
-  icon: React.ElementType;
-  color: string;
-  bgColor: string;
-  highlight: boolean;
-  badge: string | null;
+interface ServicePlan {
+  id: string;
+  plan_name: string;
+  plan_type: string;
+  price_label: string;
+  price_pence: number;
+  delivery_time: string;
+  revisions: string;
   description: string;
-  features: string[];
-  notIncluded: string[];
-  cta: string;
-  ctaVariant: 'default' | 'outline';
-  group: 'individual' | 'organisation';
-  comingSoon?: boolean;
-  isFree?: boolean;
+  button_label: string;
+  is_featured: number;
 }
 
-const PLANS: PlanDef[] = [
-  {
-    id: 'free',
-    icon: Gift,
-    color: 'text-slate-600',
-    bgColor: 'bg-slate-100',
-    highlight: false,
-    badge: null,
-    description: 'Try one guided planning builder with no commitment.',
-    features: [
-      'Try 1 guided planning builder',
-      'Preview your personalised plan',
-      'Browse all planning builders',
-    ],
-    notIncluded: [
-      'Save plans',
-      'Save plans',
-      'Full builder access',
-      'Organisation workspaces',
-    ],
-    cta: 'Try for Free',
-    ctaVariant: 'outline',
-    group: 'individual',
-    isFree: true,
-  },
-  {
-    id: 'personal',
-    icon: Clock,
-    color: 'text-emerald-600',
-    bgColor: 'bg-emerald-50',
-    highlight: false,
-    badge: null,
-    description: 'For individuals who need core builders and a few active plans.',
-    features: [
-      'Core planning builders',
-      'Save up to 3 active plans',
-      'Plans kept for 14 days',
-      'Download, print and share',
-    ],
-    notIncluded: [
-      'Advanced planning builders',
-      'Organisation workspace',
-    ],
-    cta: 'Start Free Trial',
-    ctaVariant: 'outline',
-    group: 'individual',
-  },
-  {
-    id: 'standard',
-    icon: Zap,
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-50',
-    highlight: false,
-    badge: null,
-    description: 'For people who plan regularly and need more builders and capacity.',
-    features: [
-      'Expanded planning builder library',
-      'Save up to 5 active plans',
-      'Plans kept for 14 days',
-      'Download, print and share',
-    ],
-    notIncluded: [
-      'Every advanced builder',
-      'Organisation workspace',
-    ],
-    cta: 'Start Free Trial',
-    ctaVariant: 'outline',
-    group: 'individual',
-  },
-  {
-    id: 'professional',
-    icon: Star,
-    color: 'text-primary',
-    bgColor: 'bg-primary/10',
-    highlight: true,
-    badge: 'Most Popular',
-    description: 'For people who need every builder and more active plans.',
-    features: [
-      'Every planning builder',
-      'Save up to 10 active plans',
-      'Plans kept for 30 days',
-      'Advanced planning tools',
-      'Download, print and share',
-    ],
-    notIncluded: [
-      'Multi-user accounts',
-    ],
-    cta: 'Start Free Trial',
-    ctaVariant: 'default',
-    group: 'individual',
-  },
-  {
-    id: 'org_starter',
-    icon: Building2,
-    color: 'text-purple-600',
-    bgColor: 'bg-purple-50',
-    highlight: false,
-    badge: null,
-    description: 'For small teams getting started with shared planning.',
-    features: [
-      'Every planning builder',
-      '2 user seats included',
-      'Save up to 10 shared plans',
-      'Plans kept for 30 days',
-      'Shared planning workspace',
-    ],
-    notIncluded: [
-      'Audit history',
-      'Advanced permissions',
-    ],
-    cta: 'Get Started',
-    ctaVariant: 'outline',
-    group: 'organisation',
-  },
-  {
-    id: 'org_growth',
-    icon: Users,
-    color: 'text-purple-700',
-    bgColor: 'bg-purple-100',
-    highlight: true,
-    badge: 'Best for Teams',
-    description: 'For growing teams who need a shared workspace and audit trail.',
-    features: [
-      'Everything in Org Starter',
-      '5 user seats included',
-      'Shared workspace',
-      'Audit history',
-      'Additional seats purchasable',
-      'Team planning controls',
-    ],
-    notIncluded: [
-      'Advanced permissions',
-    ],
-    cta: 'Get Started',
-    ctaVariant: 'default',
-    group: 'organisation',
-  },
-  {
-    id: 'org_professional',
-    icon: Shield,
-    color: 'text-purple-800',
-    bgColor: 'bg-purple-200',
-    highlight: false,
-    badge: null,
-    description: 'For larger organisations needing advanced controls and reporting.',
-    features: [
-      'Everything in Org Growth',
-      '10 user seats included',
-      'Advanced permissions',
-      'Reporting tools',
-      'Additional seats purchasable',
-      'Advanced organisation controls',
-    ],
-    notIncluded: [],
-    cta: 'Get Started',
-    ctaVariant: 'outline',
-    group: 'organisation',
-  },
+const JA_PLAN_STUDIO_PLANS: ServicePlan[] = [
+  { id: 'free_discovery_enquiry', plan_name: 'Free Discovery Enquiry', plan_type: 'Free', price_label: '£0', price_pence: 0, delivery_time: '1 to 3 working days', revisions: 'Initial review and recommendation', description: 'A no-cost starting point for questions and support-route guidance.', button_label: 'Start a free enquiry', is_featured: 0 },
+  { id: 'destination_discovery_standard', plan_name: 'Destination Discovery Plan', plan_type: 'Standard', price_label: '£49', price_pence: 4900, delivery_time: '3–5 working days', revisions: '1 minor revision', description: 'A focused destination discovery plan for early-stage trip ideas.', button_label: 'Buy now securely', is_featured: 1 },
+  { id: 'itinerary_experience_standard', plan_name: 'Itinerary and Experience Planning Plan', plan_type: 'Standard', price_label: '£89', price_pence: 8900, delivery_time: '5–7 working days', revisions: '1 minor revision', description: 'A structured itinerary and experience planning service.', button_label: 'Buy now securely', is_featured: 1 },
+  { id: 'complete_planning_standard', plan_name: 'Complete Discovery and Planning Guidance Plan', plan_type: 'Standard', price_label: '£149', price_pence: 14900, delivery_time: '7–10 working days', revisions: '2 minor revisions', description: 'A complete discovery and planning guidance package.', button_label: 'Buy now securely', is_featured: 1 },
+  { id: 'destination_discovery_social', plan_name: 'Destination Discovery Social Tariff', plan_type: 'Social tariff', price_label: '£29', price_pence: 2900, delivery_time: '3–5 working days', revisions: '1 minor revision', description: 'Reduced-rate destination discovery planning.', button_label: 'Buy now securely', is_featured: 0 },
+  { id: 'itinerary_experience_social', plan_name: 'Itinerary Planning Social Tariff', plan_type: 'Social tariff', price_label: '£55', price_pence: 5500, delivery_time: '5–7 working days', revisions: '1 minor revision', description: 'Reduced-rate itinerary and experience planning.', button_label: 'Buy now securely', is_featured: 0 },
+  { id: 'complete_planning_social', plan_name: 'Complete Planning Social Tariff', plan_type: 'Social tariff', price_label: '£95', price_pence: 9500, delivery_time: '7–10 working days', revisions: '2 minor revisions', description: 'Reduced-rate complete planning guidance.', button_label: 'Buy now securely', is_featured: 0 },
 ];
 
-// ── Comparison table ──────────────────────────────────────────────────────────
-type CellVal = string | boolean;
-interface CompRow {
-  label: string;
-  section?: string;
-  free: CellVal; personal: CellVal; standard: CellVal; professional: CellVal;
-  org_starter: CellVal; org_growth: CellVal; org_professional: CellVal;
-}
-
-const COMPARISON: CompRow[] = [
-  { section: 'Planning builders', label: '',
-    free: false, personal: false, standard: false, professional: false, org_starter: false, org_growth: false, org_professional: false },
-  { label: 'Browse full catalogue',    free: true,           personal: true,          standard: true,          professional: true,          org_starter: true,          org_growth: true,          org_professional: true },
-  { label: 'Guided builder demo',      free: '1 builder',    personal: true,          standard: true,          professional: true,          org_starter: true,          org_growth: true,          org_professional: true },
-  { label: 'Core planning builders',   free: false,          personal: true,          standard: true,          professional: true,          org_starter: true,          org_growth: true,          org_professional: true },
-  { label: 'Expanded builder library', free: false,          personal: false,         standard: true,          professional: true,          org_starter: true,          org_growth: true,          org_professional: true },
-  { label: 'Advanced planning tools',  free: false,          personal: false,         standard: false,         professional: true,          org_starter: true,          org_growth: true,          org_professional: true },
-  { section: 'Saved Plans', label: '',
-    free: false, personal: false, standard: false, professional: false, org_starter: false, org_growth: false, org_professional: false },
-  { label: 'Save active plans',        free: false,          personal: '3 plans',     standard: '5 plans',     professional: '10 plans',    org_starter: '10 (shared)', org_growth: '10 (shared)', org_professional: '10 (shared)' },
-  { label: 'Plan retention',           free: 'None',         personal: '14 days',     standard: '14 days',     professional: '30 days',     org_starter: '30 days',     org_growth: '30 days',     org_professional: '30 days' },
-  { label: 'PDF export',               free: true,           personal: true,          standard: true,          professional: true,          org_starter: true,          org_growth: true,          org_professional: true },
-  { section: 'Planning and sharing', label: '',
-    free: false, personal: false, standard: false, professional: false, org_starter: false, org_growth: false, org_professional: false },
-  { label: 'Download, print and share',free: false,          personal: true,          standard: true,          professional: true,          org_starter: true,          org_growth: true,          org_professional: true },
-  { label: 'Logo uploads',             free: false,          personal: true,          standard: true,          professional: true,          org_starter: true,          org_growth: true,          org_professional: true },
-  { label: 'Active plans',             free: false,          personal: '3',           standard: '5',           professional: '10',          org_starter: '10 shared',  org_growth: '10 shared',  org_professional: '10 shared' },
-  { label: 'Advanced layouts',         free: false,          personal: false,         standard: false,         professional: true,          org_starter: true,          org_growth: true,          org_professional: true },
-  { section: 'Organisation workspace', label: '',
-    free: false, personal: false, standard: false, professional: false, org_starter: false, org_growth: false, org_professional: false },
-  { label: 'Shared planning',          free: false,          personal: false,         standard: false,         professional: false,         org_starter: true,          org_growth: true,          org_professional: true },
-  { label: 'Max signers per doc',      free: false,          personal: false,         standard: false,         professional: '5',           org_starter: '10',          org_growth: '20',           org_professional: '50' },
-  { label: 'Audit certificate',        free: false,          personal: false,         standard: false,         professional: true,          org_starter: true,          org_growth: true,           org_professional: true },
-  { section: 'Team & Organisation', label: '',
-    free: false, personal: false, standard: false, professional: false, org_starter: false, org_growth: false, org_professional: false },
-  { label: 'User seats',               free: '1',            personal: '1',           standard: '1',           professional: '1',           org_starter: '2',           org_growth: '5',           org_professional: '10' },
-  { label: 'Additional seats',         free: false,          personal: false,         standard: false,         professional: false,         org_starter: true,          org_growth: true,          org_professional: true },
-  { label: 'Shared workspace',         free: false,          personal: false,         standard: false,         professional: false,         org_starter: false,         org_growth: true,          org_professional: true },
-  { label: 'Audit history',            free: false,          personal: false,         standard: false,         professional: false,         org_starter: false,         org_growth: true,          org_professional: true },
-  { label: 'Advanced permissions',     free: false,          personal: false,         standard: false,         professional: false,         org_starter: false,         org_growth: false,         org_professional: true },
-  { label: 'Reporting tools',          free: false,          personal: false,         standard: false,         professional: false,         org_starter: false,         org_growth: false,         org_professional: true },
+const FAQS = [
+  { q: 'Are these subscriptions?', a: 'No. These are JA Plan Studio planning-service packages with a one-off price. The previously displayed Personal, Standard, Professional and Organisation subscription tiers are not part of this public catalogue.' },
+  { q: 'What does JA Plan Studio help me build?', a: 'Depending on the package, we help structure destination ideas, itinerary and experience planning, practical checks, priorities and next steps into a clear personalised plan.' },
+  { q: 'What is the Free Discovery Enquiry?', a: 'It is a no-cost starting point for questions, an initial review and guidance towards the most suitable support route.' },
+  { q: 'What is a social tariff?', a: 'Social-tariff packages provide reduced-rate versions of the core planning services. Contact JA Plan Studio if you need help understanding eligibility or choosing the right option.' },
+  { q: 'Does JA Plan Studio make bookings?', a: 'No. JA Plan Studio provides discovery and planning guidance. Third-party bookings, prices, availability, refunds and provider terms remain between you and the relevant provider.' },
 ];
 
-const FAQS_STATIC = [
-  { q: 'Is there a free plan?', a: 'Yes. The Free plan lets you try one guided planning builder. Paid plans let you save plans and unlock more builders.' },
-  { q: 'Is there a free trial?', a: 'Personal, Standard, and Professional plans include a 14-day free trial with no credit card required. Organisation plans do not include a trial.' },
-  { q: 'What happens to my saved plans when my subscription expires?', a: 'Plans are automatically deleted when they reach their retention period (14 days for Personal and Standard, 30 days for Professional and Organisation plans). Download anything you need to keep.' },
-  { q: 'Is there permanent plan storage?', a: 'No. Saved plans are temporary working copies. The maximum retention period is 30 days, so download plans you need to keep.' },
-  { q: 'Can I cancel at any time?', a: 'Yes. Cancel from your account settings at any time. You keep access until the end of your billing period.' },
-  { q: 'What are additional seats?', a: 'Organisation plans include a base number of user seats. You can purchase additional User, Manager, or Admin seats separately through your account settings.' },
-  { q: 'Can I upgrade or downgrade?', a: 'Yes. Change your plan at any time from account settings. Changes take effect at the next billing period.' },
-  { q: 'Is my data secure?', a: 'We operate in compliance with UK GDPR. Your plans and personal data are handled in accordance with our Privacy Policy.' },
-];
-
-function CellValue({ value }: { value: CellVal }) {
-  if (value === true)  return <CheckCircle2 className="w-4 h-4 text-green-500 mx-auto" />;
-  if (value === false) return <X className="w-4 h-4 text-muted-foreground/30 mx-auto" />;
-  return <span className="text-xs text-foreground font-medium">{value}</span>;
-}
-
-function PlanCard({ plan, onCheckout, checkoutLoading, isLoggedIn, paymentsEnabled }: {
-  plan: PlanDef;
-  onCheckout: (planId: PlanId) => void;
-  checkoutLoading: string | null;
-  isLoggedIn: boolean;
-  paymentsEnabled: boolean;
-}) {
-  const retentionDays = PLAN_RETENTION_DAYS[plan.id];
-  const draftLimit    = PLAN_DRAFT_LIMIT[plan.id];
-  const baseSeats     = ORG_BASE_SEATS[plan.id];
-  const hasTrial      = PLAN_HAS_TRIAL[plan.id];
-  const Icon          = plan.icon;
-  const isLoading     = checkoutLoading === plan.id;
-  // Treat as coming soon if payments are off (except free plan)
-  const effectiveComingSoon = plan.comingSoon || (!paymentsEnabled && !plan.isFree);
-
-  function handleCta() {
-    if (plan.isFree) {
-      window.location.href = '/builders';
-      return;
-    }
-    if (!isLoggedIn) {
-      window.location.href = '/sign-in';
-      return;
-    }
-    onCheckout(plan.id);
-  }
+function PlanCard({ plan }: { plan: ServicePlan }) {
+  const isFree = plan.price_pence === 0;
+  const featured = Boolean(plan.is_featured) && plan.plan_type === 'Standard';
+  const href = isFree
+    ? `/contact?plan=${encodeURIComponent(plan.id)}`
+    : `/create-checkout-session?plan=${encodeURIComponent(plan.id)}`;
 
   return (
-    <div className={`relative flex flex-col rounded-2xl border bg-card p-6 shadow-sm transition-shadow hover:shadow-md ${plan.highlight ? 'border-primary ring-2 ring-primary/20' : 'border-border'} ${effectiveComingSoon ? 'opacity-75' : ''}`}>
-      {/* Coming Soon ribbon */}
-      {effectiveComingSoon && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
-          <Badge className="bg-amber-500 text-white px-3 py-1 text-xs font-semibold shadow">
-            Coming Soon
-          </Badge>
-        </div>
-      )}
-      {/* Badge for non-coming-soon plans */}
-      {!effectiveComingSoon && plan.badge && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-          <Badge className="bg-primary text-primary-foreground px-3 py-1 text-xs font-semibold shadow">
-            {plan.badge}
-          </Badge>
-        </div>
-      )}
-
-      <div className="mb-4">
-        <div className={`inline-flex items-center justify-center w-10 h-10 rounded-xl ${plan.bgColor} mb-3`}>
-          <Icon className={`w-5 h-5 ${plan.color}`} />
-        </div>
-        <h3 className="text-lg font-bold text-foreground">{PLAN_LABELS[plan.id]}</h3>
-        <p className="text-sm text-muted-foreground mt-1">{plan.description}</p>
-      </div>
-
-      <div className="mb-4">
-        <div className="flex items-baseline gap-1">
-          <span className="text-3xl font-extrabold text-foreground">{PLAN_PRICE_DISPLAY[plan.id]}</span>
-          {plan.id !== 'free' && <span className="text-sm text-muted-foreground">/month</span>}
-        </div>
-        {hasTrial && !effectiveComingSoon && (
-          <p className="text-xs text-green-600 font-medium mt-1 flex items-center gap-1">
-            <CheckCircle2 className="w-3 h-3" /> 14-day free trial included
-          </p>
-        )}
-        {effectiveComingSoon && (
-          <p className="text-xs text-amber-600 font-medium mt-1">Launching soon</p>
-        )}
-      </div>
-
-      {/* Key limits */}
-      <div className="flex flex-wrap gap-2 mb-4">
-        {plan.id === 'free' ? (
-          <span className="inline-flex items-center gap-1 text-xs bg-muted text-muted-foreground rounded-full px-2 py-0.5">
-            <FileText className="w-3 h-3" /> 1 builder demo
-          </span>
-        ) : draftLimit > 0 ? (
-          <span className="inline-flex items-center gap-1 text-xs bg-muted text-muted-foreground rounded-full px-2 py-0.5">
-            <FileText className="w-3 h-3" /> {draftLimit} active plans
-          </span>
-        ) : (
-          <span className="inline-flex items-center gap-1 text-xs bg-muted text-muted-foreground rounded-full px-2 py-0.5">
-            <FileText className="w-3 h-3" /> No saved plans
-          </span>
-        )}
-        {retentionDays && (
-          <span className="inline-flex items-center gap-1 text-xs bg-muted text-muted-foreground rounded-full px-2 py-0.5">
-            <Clock className="w-3 h-3" /> {retentionDays}-day retention
-          </span>
-        )}
-        {plan.group === 'organisation' && (
-          <span className="inline-flex items-center gap-1 text-xs bg-muted text-muted-foreground rounded-full px-2 py-0.5">
-            <Users className="w-3 h-3" /> {baseSeats} seats
-          </span>
-        )}
-      </div>
-
-      <ul className="space-y-2 mb-4 flex-1">
-        {plan.features.map(f => (
-          <li key={f} className="flex items-start gap-2 text-sm text-foreground">
-            <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
-            {f}
-          </li>
-        ))}
-        {plan.notIncluded.map(f => (
-          <li key={f} className="flex items-start gap-2 text-sm text-muted-foreground/60">
-            <X className="w-4 h-4 mt-0.5 shrink-0" />
-            {f}
-          </li>
-        ))}
+    <article className={`relative flex h-full flex-col rounded-2xl border p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${featured ? 'border-primary ring-2 ring-primary/15 bg-primary/[0.03]' : 'border-border bg-card'}`}>
+      {featured && <Badge className="absolute -top-3 left-6 bg-primary text-primary-foreground">JA Plan Studio package</Badge>}
+      <p className="mb-2 text-xs font-bold uppercase tracking-wider text-primary">{plan.plan_type}</p>
+      <h3 className="text-xl font-bold leading-tight text-foreground">{plan.plan_name}</h3>
+      <div className="my-5 text-4xl font-extrabold text-foreground">{plan.price_label}</div>
+      <p className="mb-5 text-sm leading-relaxed text-muted-foreground">{plan.description}</p>
+      <ul className="mb-6 space-y-3 text-sm text-foreground">
+        <li className="flex items-start gap-2"><Clock className="mt-0.5 h-4 w-4 shrink-0 text-primary" /><span><strong>Delivery:</strong> {plan.delivery_time}</span></li>
+        <li className="flex items-start gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" /><span>{plan.revisions}</span></li>
+        <li className="flex items-start gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" /><span>Personalised JA Plan Studio planning output</span></li>
       </ul>
-
-      <div className="mt-auto">
-        {effectiveComingSoon ? (
-          <Button
-            variant="outline"
-            className="w-full border-amber-300 text-amber-700 hover:bg-amber-50 cursor-default"
-            disabled
-          >
-            Coming Soon
-          </Button>
-        ) : (
-          <Button
-            variant={plan.ctaVariant}
-            className="w-full gap-2"
-            onClick={handleCta}
-            disabled={isLoading}
-          >
-            {isLoading
-              ? <><Loader2 className="w-4 h-4 animate-spin" /> Processing…</>
-              : <>{plan.cta} <ArrowRight className="w-4 h-4" /></>
-            }
-          </Button>
-        )}
-      </div>
-    </div>
+      <a href={href} className="mt-auto block">
+        <Button className="w-full gap-2">{plan.button_label || (isFree ? 'Start a free enquiry' : 'Choose this plan')} <ArrowRight className="h-4 w-4" /></Button>
+      </a>
+    </article>
   );
 }
 
 export default function PricingPage() {
-  const [searchParams] = useSearchParams();
+  const [plans, setPlans] = useState<ServicePlan[]>(JA_PLAN_STUDIO_PLANS);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const [showComparison, setShowComparison] = useState(false);
-  const { siteName } = useSiteSettings();
-  const { config: featureConfig } = useFeatureConfig();
-  const paymentsEnabled = featureConfig.payments;
+  const [searchParams] = useSearchParams();
+  const cancelled = searchParams.get('payment') === 'cancelled' || searchParams.get('checkout') === 'cancelled';
 
-  const FAQS = [
-    ...FAQS_STATIC,
-    { q: 'Who owns my plans?', a: `You own the planning content you create. ${siteName} provides the tools — the content is entirely yours.` },
-  ];
-  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
-  const [checkoutError, setCheckoutError] = useState('');
-  const { user } = useAuth();
+  useEffect(() => {
+    fetch('/plans-data', { cache: 'no-store' })
+      .then(response => response.ok ? response.json() : Promise.reject(new Error('Plan catalogue unavailable')))
+      .then(data => {
+        if (!Array.isArray(data.plans)) return;
+        const recognised = new Set(JA_PLAN_STUDIO_PLANS.map(plan => plan.id));
+        const current = data.plans.filter((plan: ServicePlan) => recognised.has(plan.id));
+        if (current.length) setPlans(current);
+      })
+      .catch(() => {});
+  }, []);
 
-  const cancelled = searchParams.get('checkout') === 'cancelled';
-
-  const individualPlans = PLANS.filter(p => p.group === 'individual');
-  const orgPlans        = PLANS.filter(p => p.group === 'organisation');
-
-  async function handleCheckout(planId: PlanId) {
-    setCheckoutError('');
-    setCheckoutLoading(planId);
-    try {
-      const res = await fetch('/api/stripe/create-checkout-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ plan: planId }),
-      });
-      const data = await res.json() as { success: boolean; url?: string; error?: string };
-      if (data.success && data.url) {
-        window.location.href = data.url;
-      } else {
-        setCheckoutError(data.error ?? 'Unable to start checkout. Please try again.');
-      }
-    } catch {
-      setCheckoutError('Network error. Please try again.');
-    } finally {
-      setCheckoutLoading(null);
-    }
-  }
+  const standardPlans = plans.filter(plan => plan.plan_type !== 'Social tariff');
+  const socialPlans = plans.filter(plan => plan.plan_type === 'Social tariff');
 
   return (
     <>
       <Helmet>
-        <title>Pricing — {siteName}</title>
-        <meta name="description" content="Choose the right JA Plan Studio subscription for your planning needs, with clear builder access, saved-plan limits and organisation options." />
+        <title>Plans & Pricing | JA Plan Studio</title>
+        <meta name="description" content="Choose a JA Plan Studio discovery, itinerary or complete planning package, including reduced-rate social-tariff options." />
+        <link rel="canonical" href="https://japlanstudio.jagroupservices.co.uk/pricing" />
       </Helmet>
 
-      <div className="min-h-screen bg-background">
-        {/* Hero */}
-        <section className="bg-gradient-to-b from-primary/5 to-background py-16 px-4 text-center">
-          <Badge variant="outline" className="mb-4 text-xs">Transparent Pricing</Badge>
-          <h1 className="text-4xl font-extrabold text-foreground mb-4">Simple, honest pricing</h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-6">
-            Start free with one guided builder. Upgrade to save plans and unlock more planning tools.
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-3 mt-2">
-            <div className="inline-flex items-center gap-2 bg-green-50 border border-green-200 text-green-800 rounded-lg px-5 py-3 text-sm font-medium">
-              <CheckCircle2 className="w-4 h-4 shrink-0" />
-              Sign-ups are now open — 14-day free trial on paid plans
-            </div>
-            <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-800 rounded-lg px-4 py-3 text-sm font-medium">
-              <AlertTriangle className="w-4 h-4 shrink-0" />
-              Max saved-plan retention: 30 days. Download plans you need to keep.
-            </div>
-          </div>
+      <main className="min-h-screen bg-background">
+        <section className="border-b border-border bg-gradient-to-b from-primary/10 to-background px-4 py-20 text-center">
+          <Badge variant="outline" className="mb-5">JA Plan Studio plans</Badge>
+          <h1 className="mx-auto max-w-4xl text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl">Planning support built around the plan you need</h1>
+          <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-muted-foreground">Choose free discovery support, a destination plan, an itinerary and experience plan, or complete discovery and planning guidance. These are one-off JA Plan Studio packages with clear delivery times.</p>
         </section>
 
-        <div className="max-w-7xl mx-auto px-4 pb-20">
-          {!paymentsEnabled && (
-            <div className="mb-8 flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl px-5 py-4">
-              <Clock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm font-semibold text-amber-800">Paid plans coming soon</p>
-                <p className="text-sm text-amber-700 mt-0.5">We are finalising our billing system. Paid plans will be available shortly. You can still use the platform with a free account in the meantime.</p>
-              </div>
-            </div>
-          )}
-          {cancelled && (
-            <Alert className="mb-8 border-amber-200 bg-amber-50">
-              <Info className="h-4 w-4 text-amber-600" />
-              <AlertDescription className="text-amber-800">
-                Checkout was cancelled. Your plan has not changed.
-              </AlertDescription>
-            </Alert>
-          )}
+        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+          {cancelled && <div className="mb-8 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-800">Checkout was cancelled. No payment was taken.</div>}
 
-          {checkoutError && (
-            <Alert variant="destructive" className="mb-8">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>{checkoutError}</AlertDescription>
-            </Alert>
-          )}
-
-          {/* Individual plans */}
-          <div className="mb-16">
-            <h2 className="text-2xl font-bold text-foreground mb-2 text-center">Individual Plans</h2>
-            <p className="text-muted-foreground text-center mb-8">For individuals and anyone planning for everyday life</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {individualPlans.map(plan => (
-                <PlanCard
-                  key={plan.id}
-                  plan={plan}
-                  onCheckout={handleCheckout}
-                  checkoutLoading={checkoutLoading}
-                  isLoggedIn={!!user}
-                  paymentsEnabled={paymentsEnabled}
-                />
-              ))}
+          <section aria-labelledby="standard-plans" className="mb-20">
+            <div className="mb-9 text-center">
+              <h2 id="standard-plans" className="text-3xl font-bold text-foreground">Discovery and planning packages</h2>
+              <p className="mt-2 text-muted-foreground">The existing JA Plan Studio catalogue, with clear one-off prices and delivery times.</p>
             </div>
-          </div>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">{standardPlans.map(plan => <PlanCard key={plan.id} plan={plan} />)}</div>
+          </section>
 
-          {/* Organisation plans */}
-          <div className="mb-16">
-            <h2 className="text-2xl font-bold text-foreground mb-2 text-center">Organisation Plans</h2>
-            <p className="text-muted-foreground text-center mb-4">For teams and groups — shared planning with multiple users</p>
-            <div className="inline-flex items-center gap-2 bg-blue-50 border border-blue-200 text-blue-800 rounded-lg px-4 py-2 text-sm mb-8 mx-auto flex justify-center">
-              <Info className="w-4 h-4 shrink-0" />
-              Additional User, Manager, and Admin seats can be purchased separately from your account settings.
+          <section aria-labelledby="social-plans" className="mb-20 rounded-3xl border border-emerald-200 bg-emerald-50/60 p-6 sm:p-10 dark:border-emerald-800 dark:bg-emerald-950/20">
+            <div className="mb-9 flex flex-col gap-4 sm:flex-row sm:items-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300"><HeartHandshake className="h-6 w-6" /></div>
+              <div><h2 id="social-plans" className="text-2xl font-bold text-foreground">Social-tariff planning packages</h2><p className="mt-1 text-sm text-muted-foreground">Reduced-rate versions of our destination, itinerary and complete planning services.</p></div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {orgPlans.map(plan => (
-                <PlanCard
-                  key={plan.id}
-                  plan={plan}
-                  onCheckout={handleCheckout}
-                  checkoutLoading={checkoutLoading}
-                  isLoggedIn={!!user}
-                  paymentsEnabled={paymentsEnabled}
-                />
-              ))}
-            </div>
-          </div>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">{socialPlans.map(plan => <PlanCard key={plan.id} plan={plan} />)}</div>
+          </section>
 
-          {/* Planning workspace callout */}
-          <div className="bg-primary/5 border border-primary/20 rounded-2xl p-6 mb-16 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-              <PenLine className="w-6 h-6 text-primary" />
+          <section className="mb-20">
+            <div className="mb-9 text-center"><Badge variant="outline" className="mb-3">Building your plan</Badge><h2 className="text-3xl font-bold text-foreground">What JA Plan Studio helps you build</h2></div>
+            <div className="grid gap-5 md:grid-cols-3">
+              {[
+                { icon: Compass, title: 'Destination discovery', text: 'Turn early ideas, preferences and priorities into a focused destination direction.' },
+                { icon: Route, title: 'Itinerary and experiences', text: 'Structure timings, experience ideas, practical checks and the steps needed before booking.' },
+                { icon: Sparkles, title: 'Complete planning guidance', text: 'Bring discovery, itinerary thinking and practical planning guidance together in one complete package.' },
+              ].map(item => <article key={item.title} className="rounded-2xl border border-border bg-card p-6"><item.icon className="mb-4 h-6 w-6 text-primary" /><h3 className="font-bold text-foreground">{item.title}</h3><p className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.text}</p></article>)}
             </div>
-            <div className="flex-1">
-              <h3 className="font-bold text-foreground mb-1">Every planning builder is included from Professional</h3>
-              <p className="text-sm text-muted-foreground">
-                Use the complete builder library, advanced planning tools and longer saved-plan retention. Organisation subscriptions add shared workspaces and managed seats.
-              </p>
-            </div>
-            {user ? (
-            <Button asChild variant="outline" className="shrink-0 gap-2">
-              <Link to="/settings?tab=subscription">
-                Upgrade Now <ArrowRight className="w-4 h-4" />
-              </Link>
-            </Button>
-          ) : (
-            <Button asChild variant="outline" className="shrink-0 gap-2">
-              <Link to="/sign-in">
-                Get Started <ArrowRight className="w-4 h-4" />
-              </Link>
-            </Button>
-          )}
-          </div>
+          </section>
 
-          {/* Plan retention notice */}
-          <div className="bg-muted/50 border border-border rounded-2xl p-6 mb-16">
-            <h3 className="font-bold text-foreground mb-3 flex items-center gap-2">
-              <Clock className="w-5 h-5 text-amber-500" />
-              About Saved Plans
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-muted-foreground">
-              <div>
-                <p className="font-medium text-foreground mb-1">Saved plans are temporary working copies</p>
-                <p>Saved plans let you return to planning in progress. They are not permanent storage, so download anything you need to keep.</p>
-              </div>
-              <div>
-                <p className="font-medium text-foreground mb-1">Automatic deletion</p>
-                <p>Plans are permanently deleted when they reach their retention period. There is no archive or recovery after deletion.</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Comparison table toggle */}
-          <div className="mb-16">
-            <button
-              onClick={() => setShowComparison(v => !v)}
-              className="flex items-center gap-2 mx-auto text-sm font-medium text-primary hover:underline mb-6"
-            >
-              {showComparison ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-              {showComparison ? 'Hide' : 'Show'} full feature comparison
-            </button>
-
-            {showComparison && (
-              <div className="overflow-x-auto rounded-xl border border-border">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="bg-muted/50">
-                      <th className="text-left px-4 py-3 font-semibold text-foreground w-48">Feature</th>
-                      {(['free', 'personal', 'standard', 'professional', 'org_starter', 'org_growth', 'org_professional'] as PlanId[]).map(p => (
-                        <th key={p} className={`text-center px-3 py-3 font-semibold text-xs ${p === 'professional' ? 'text-primary' : 'text-foreground'}`}>
-                          {PLAN_LABELS[p]}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {COMPARISON.map((row, i) => {
-                      if (row.section) {
-                        return (
-                          <tr key={i} className="bg-muted/30">
-                            <td colSpan={8} className="px-4 py-2 text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                              {row.section}
-                            </td>
-                          </tr>
-                        );
-                      }
-                      return (
-                        <tr key={i} className="border-t border-border hover:bg-muted/20 transition-colors">
-                          <td className="px-4 py-3 text-foreground">{row.label}</td>
-                          <td className="px-3 py-3 text-center"><CellValue value={row.free} /></td>
-                          <td className="px-3 py-3 text-center"><CellValue value={row.personal} /></td>
-                          <td className="px-3 py-3 text-center"><CellValue value={row.standard} /></td>
-                          <td className="px-3 py-3 text-center"><CellValue value={row.professional} /></td>
-                          <td className="px-3 py-3 text-center"><CellValue value={row.org_starter} /></td>
-                          <td className="px-3 py-3 text-center"><CellValue value={row.org_growth} /></td>
-                          <td className="px-3 py-3 text-center"><CellValue value={row.org_professional} /></td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-
-          {/* FAQs */}
-          <div className="max-w-2xl mx-auto">
-            <h2 className="text-2xl font-bold text-foreground mb-6 text-center">Frequently Asked Questions</h2>
-            <div className="space-y-2">
-              {FAQS.map((faq, i) => (
-                <div key={i} className="border border-border rounded-xl overflow-hidden">
-                  <button
-                    onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                    className="w-full flex items-center justify-between px-5 py-4 text-left font-medium text-foreground hover:bg-muted/30 transition-colors"
-                  >
-                    {faq.q}
-                    {openFaq === i ? <ChevronUp className="w-4 h-4 shrink-0" /> : <ChevronDown className="w-4 h-4 shrink-0" />}
-                  </button>
-                  {openFaq === i && (
-                    <div className="px-5 pb-4 text-sm text-muted-foreground border-t border-border pt-3">
-                      {faq.a}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
+          <section className="mx-auto max-w-3xl">
+            <h2 className="mb-7 text-center text-2xl font-bold text-foreground">Frequently asked questions</h2>
+            <div className="space-y-3">{FAQS.map((faq, index) => <div key={faq.q} className="overflow-hidden rounded-xl border border-border bg-card"><button onClick={() => setOpenFaq(openFaq === index ? null : index)} className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left font-semibold text-foreground">{faq.q}{openFaq === index ? <ChevronUp className="h-4 w-4 shrink-0" /> : <ChevronDown className="h-4 w-4 shrink-0" />}</button>{openFaq === index && <p className="border-t border-border px-5 py-4 text-sm leading-relaxed text-muted-foreground">{faq.a}</p>}</div>)}</div>
+            <div className="mt-10 text-center"><p className="mb-4 text-muted-foreground">Not sure which planning package fits?</p><Button asChild variant="outline"><Link to="/contact">Contact JA Plan Studio <ArrowRight className="ml-2 h-4 w-4" /></Link></Button></div>
+          </section>
         </div>
-      </div>
+      </main>
     </>
   );
 }
