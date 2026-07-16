@@ -5,47 +5,10 @@
  * persists across sessions and devices.
  * No localStorage — privacy-safe.
  */
-import { useState, useEffect } from 'react';
 import { Sun, Moon, Monitor } from 'lucide-react';
+import { useTheme, type ThemeMode } from '@/lib/theme-context';
 
-type Pref = 'light' | 'dark' | 'system';
-
-function getSystemPrefersDark(): boolean {
-  if (typeof window === 'undefined') return true;
-  return window.matchMedia('(prefers-color-scheme: dark)').matches;
-}
-
-function applyPref(pref: Pref) {
-  const root = document.documentElement;
-  const isDark = pref === 'dark' || (pref === 'system' && getSystemPrefersDark());
-  if (isDark) {
-    root.classList.add('dark');
-  } else {
-    root.classList.remove('dark');
-  }
-}
-
-async function loadSavedPref(): Promise<Pref> {
-  try {
-    const res = await fetch('/api/me/appearance', { credentials: 'include' });
-    if (!res.ok) return 'dark';
-    const data = await res.json();
-    return (data.preference as Pref) ?? 'dark';
-  } catch {
-    return 'dark';
-  }
-}
-
-async function savePref(pref: Pref) {
-  try {
-    await fetch('/api/me/appearance', {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ preference: pref }),
-    });
-  } catch { /* non-fatal */ }
-}
+type Pref = ThemeMode;
 
 interface ThemeToggleProps {
   className?: string;
@@ -54,33 +17,12 @@ interface ThemeToggleProps {
 }
 
 export default function ThemeToggle({ className = '', expanded = false }: ThemeToggleProps) {
-  const [pref, setPref] = useState<Pref>('dark');
-  const [loaded, setLoaded] = useState(false);
-
-  // Load saved preference on mount
-  useEffect(() => {
-    loadSavedPref().then(p => {
-      setPref(p);
-      applyPref(p);
-      setLoaded(true);
-    });
-  }, []);
-
-  // Listen for OS theme changes when in system mode
-  useEffect(() => {
-    if (pref !== 'system') return;
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    const handler = () => applyPref('system');
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
-  }, [pref]);
+  const { theme: pref, resolvedTheme, setTheme } = useTheme();
 
   const cycle = () => {
     const order: Pref[] = ['light', 'dark', 'system'];
     const next = order[(order.indexOf(pref) + 1) % order.length];
-    setPref(next);
-    applyPref(next);
-    savePref(next);
+    setTheme(next);
   };
 
   const icons: Record<Pref, React.ReactNode> = {
@@ -95,9 +37,7 @@ export default function ThemeToggle({ className = '', expanded = false }: ThemeT
     system: 'System',
   };
 
-  const isDark = document.documentElement.classList.contains('dark');
-
-  if (!loaded) return null;
+  const isDark = resolvedTheme === 'dark';
 
   if (expanded) {
     return (
@@ -105,7 +45,7 @@ export default function ThemeToggle({ className = '', expanded = false }: ThemeT
         {(['light', 'dark', 'system'] as Pref[]).map(p => (
           <button
             key={p}
-            onClick={() => { setPref(p); applyPref(p); savePref(p); }}
+            onClick={() => setTheme(p)}
             aria-label={`Switch to ${labels[p]} mode`}
             className={`
               flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200
