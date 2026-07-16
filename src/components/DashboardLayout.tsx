@@ -239,7 +239,7 @@ function NavSection({ section, pathname, onNavigate, initiallyOpen }: NavSection
                 onClick={onNavigate}
                 aria-current={active ? 'page' : undefined}
                 className={cn(
-                  'flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
+                  'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all',
                   active
                     ? 'bg-primary text-primary-foreground'
                     : 'text-muted-foreground hover:bg-muted hover:text-foreground',
@@ -280,7 +280,7 @@ function SidebarContent({ sections, pathname, onNavigate, user, onLogout }: Side
   const initials = user ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase() : 'U';
 
   return (
-    <div className="smart-sidebar flex flex-col h-full bg-card/90 backdrop-blur-xl border-r border-border/70">
+    <div className="flex flex-col h-full bg-card border-r border-border">
 
       {/* Logo */}
       <div className="p-4 border-b border-border shrink-0">
@@ -432,12 +432,12 @@ export default function DashboardLayout({ children, noPadding: _noPadding }: Das
   }
 
   return (
-    <div className="smart-portal min-h-screen bg-background flex">
+    <div className="profile-theme min-h-screen bg-background flex">
       <a href="#dashboard-main" className="skip-nav">Skip to main content</a>
 
       {/* Desktop sidebar */}
       <aside
-        className="hidden lg:flex flex-col w-64 shrink-0 sticky top-0 h-screen"
+        className="hidden lg:flex w-64 flex-col border-r border-border bg-card shrink-0 fixed inset-y-0 left-0 z-30"
         aria-label="Sidebar navigation"
       >
         <SidebarContent
@@ -482,10 +482,10 @@ export default function DashboardLayout({ children, noPadding: _noPadding }: Das
       )}
 
       {/* Main */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Top bar */}
+      <div className="flex-1 lg:ml-64 flex flex-col min-w-0 min-h-screen">
+        {/* Mobile header */}
         <header
-          className="sticky top-0 z-30 bg-card/80 backdrop-blur-xl border-b border-border/70 px-4 h-14 flex items-center gap-3"
+          className="lg:hidden sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-xl px-4 py-3 flex items-center gap-3"
           role="banner"
         >
           <button
@@ -497,7 +497,7 @@ export default function DashboardLayout({ children, noPadding: _noPadding }: Das
             <Menu className="w-5 h-5" aria-hidden="true" />
           </button>
 
-          <div className="flex-1" />
+          <div className="flex-1 font-bold text-foreground text-sm">JA Plan Studio</div>
 
           <NotificationBell />
 

@@ -521,7 +521,7 @@ function SubscriptionTab({ user, plan, planBadgeColor }: { user: ReturnType<type
     free:             ['Browse full template catalogue', 'Use 1 free demo template', 'PDF export', 'No draft saving'],
     personal:         ['Free + Standard templates', 'Save up to 3 drafts', '14-day draft retention', 'Custom branding', '1 brand profile'],
     standard:         ['Free + Standard templates', 'Save up to 5 drafts', '14-day draft retention', 'Custom branding', '1 brand profile'],
-    professional:     ['Free + Standard + Professional templates', 'Save up to 10 drafts', '30-day draft retention', 'Multiple brand profiles', 'Advanced editing', 'Document Signing (20 requests)'],
+    professional:     ['Every planning builder', 'Save up to 10 active plans', '30-day plan retention', 'Advanced planning tools', 'Download, print and share'],
     org_starter:      ['All templates including Organisation tier', '2 user seats', 'Save up to 10 shared drafts', '30-day retention', 'Shared branding', 'Document Signing (50 requests)'],
     org_growth:       ['Everything in Org Starter', '5 user seats', 'Shared workspace', 'Audit history', 'Document Signing (150 requests)'],
     org_professional: ['Everything in Org Growth', '10 user seats', 'Advanced permissions', 'Reporting tools', 'Document Signing (500 requests)'],

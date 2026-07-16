@@ -20,10 +20,9 @@ const INCLUDED = [
   'Usage reporting & analytics',
   'Dedicated account manager',
   'Priority support',
-  'Premium templates',
-  'Multiple brand profiles',
-  'Unlimited document creation',
-  'PDF & Word export',
+  'Every guided planning builder',
+  'Unlimited plan creation',
+  'Download, print and share plans',
 ];
 
 const HIGHLIGHTS = [
@@ -40,7 +39,7 @@ const HIGHLIGHTS = [
   {
     icon: BarChart2,
     title: 'Usage reporting',
-    description: 'See how your team is using the platform — documents created, templates used, and activity over time.',
+    description: 'See how your team is using the platform — plans created, builders used, and activity over time.',
   },
   {
     icon: ClipboardList,
@@ -64,7 +63,7 @@ const USE_CASES = [
   },
   {
     title: 'Property agencies',
-    description: 'Agents creating tenancy agreements, inspection reports, and correspondence with shared brand profiles.',
+    description: 'Teams coordinating destinations, bookings, accessibility needs and shared plans.',
   },
 ];
 

@@ -6,18 +6,15 @@ import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, X, FileText, Download, Lock, ArrowLeft, AlertTriangle } from 'lucide-react';
 
 const INCLUDED = [
-  'Browse the full template catalogue (100+ templates)',
-  '1 free template demo',
-  'PDF export and download',
+  'Browse every JA Plan Studio builder',
+  'Try 1 guided planning builder',
+  'Preview your personalised plan',
 ];
 
 const NOT_INCLUDED = [
-  'Save drafts within the platform',
-  'Standard templates',
-  'Professional templates',
-  'Organisation templates',
-  'Custom branding or logo uploads',
-  'Multiple branding profiles',
+  'Save plans within the platform',
+  'Full planning builder access',
+  'Organisation planning workspace',
 ];
 
 export default function FreePlanPage() {
@@ -28,7 +25,7 @@ export default function FreePlanPage() {
     <>
       <Helmet>
         <title>Free Plan — JA Plan Studio</title>
-        <meta name="description" content="The JA Plan Studio Free plan. Browse all templates, use 5 free templates, and export PDFs at no cost." />
+        <meta name="description" content="Try one JA Plan Studio guided planning builder at no cost." />
       </Helmet>
 
       <div className="max-w-3xl mx-auto px-4 py-12">
@@ -46,7 +43,7 @@ export default function FreePlanPage() {
               <h1 className="text-3xl font-extrabold text-foreground">Free Plan</h1>
               <Badge variant="secondary">£0 forever</Badge>
             </div>
-            <p className="text-muted-foreground">For individuals who occasionally need a document for personal use.</p>
+            <p className="text-muted-foreground">Try guided planning with no subscription.</p>
           </div>
         </div>
 
@@ -54,8 +51,8 @@ export default function FreePlanPage() {
         <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4 mb-8">
           <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
           <div className="text-sm text-amber-800">
-            <p className="font-semibold mb-1">No draft saving on the Free plan</p>
-            <p>Free plan users cannot save drafts within the platform. Export your document immediately after creating it — there is no way to retrieve it later.</p>
+            <p className="font-semibold mb-1">No saved plans on the Free plan</p>
+            <p>The Free plan is a builder preview. Upgrade if you want to save and return to plans.</p>
           </div>
         </div>
 
@@ -85,26 +82,26 @@ export default function FreePlanPage() {
           </ul>
         </div>
 
-        {/* Template access */}
+        {/* Builder access */}
         <div className="bg-card border border-border rounded-2xl p-6 mb-8">
           <h2 className="font-bold text-foreground mb-3 flex items-center gap-2">
-            <Lock className="w-4 h-4 text-muted-foreground" /> Template Access
+            <Lock className="w-4 h-4 text-muted-foreground" /> Builder Access
           </h2>
           <p className="text-sm text-muted-foreground mb-4">
-            Free plan users can browse the entire template catalogue and see what's available on each plan. Only free templates can be used to create documents.
+            Free plan users can browse every planning builder and try one guided builder before upgrading.
           </p>
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div className="flex items-center gap-2 text-green-700 bg-green-50 rounded-lg px-3 py-2">
-              <CheckCircle2 className="w-4 h-4" /> 1 free template demo
+              <CheckCircle2 className="w-4 h-4" /> 1 guided builder demo
             </div>
             <div className="flex items-center gap-2 text-muted-foreground bg-muted rounded-lg px-3 py-2">
-              <Lock className="w-4 h-4" /> Standard templates
+              <Lock className="w-4 h-4" /> Core builder library
             </div>
             <div className="flex items-center gap-2 text-muted-foreground bg-muted rounded-lg px-3 py-2">
-              <Lock className="w-4 h-4" /> Professional templates
+              <Lock className="w-4 h-4" /> Advanced builders
             </div>
             <div className="flex items-center gap-2 text-muted-foreground bg-muted rounded-lg px-3 py-2">
-              <Lock className="w-4 h-4" /> Organisation templates
+              <Lock className="w-4 h-4" /> Shared planning
             </div>
           </div>
         </div>
@@ -113,8 +110,8 @@ export default function FreePlanPage() {
         <div className="flex items-start gap-3 bg-blue-50 border border-blue-200 rounded-xl p-4 mb-8">
           <Download className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
           <div className="text-sm text-blue-800">
-            <p className="font-semibold mb-1">Always export your documents</p>
-            <p>Once you close a document on the Free plan, it cannot be retrieved. Download your PDF immediately after creating it.</p>
+            <p className="font-semibold mb-1">Upgrade to save your plans</p>
+            <p>The free preview is not retained. Choose a paid plan if you need to save or return to your planning.</p>
           </div>
         </div>
 

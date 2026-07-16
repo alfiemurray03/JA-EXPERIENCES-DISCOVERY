@@ -158,20 +158,20 @@ function Sidebar({ onClose }: SidebarProps) {
   })).filter(group => group.items.length > 0);
 
   return (
-    <div className="smart-sidebar flex flex-col h-full border-r border-border/70 bg-card/90 backdrop-blur-xl transition-colors">
+    <div className="flex flex-col h-full bg-white border-r border-slate-200">
 
       {/* Logo + close */}
-      <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200 dark:border-slate-800">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800 bg-slate-900">
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0
-            bg-gradient-to-br from-blue-500 to-blue-700 shadow-lg shadow-blue-600/20">
+            bg-white/10 border border-white/20">
             <Shield className="w-4 h-4 text-white" />
           </div>
           <div className="min-w-0">
-            <p className="font-semibold text-sm leading-tight truncate text-foreground">
-              JA Plan Studio
+            <p className="font-bold text-sm leading-tight truncate text-white">
+              Admin Portal
             </p>
-            <p className="text-[10px] truncate text-muted-foreground">Administration</p>
+            <p className="text-xs truncate text-slate-400">JA Plan Studio</p>
           </div>
         </div>
         {onClose && (
@@ -285,6 +285,12 @@ function AdminLayoutInner({ children, title, subtitle }: AdminLayoutInnerProps) 
   const { admin, isLoading } = useAdmin();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // Match the supplied reference admin design exactly: the admin portal
+  // is intentionally light, independent from the public/customer preference.
+  useEffect(() => {
+    document.documentElement.classList.remove('dark');
+  }, []);
+
   // Redirect to admin login if session is gone (expired or never set)
   useEffect(() => {
     if (!isLoading && !admin) {
@@ -308,11 +314,11 @@ function AdminLayoutInner({ children, title, subtitle }: AdminLayoutInnerProps) 
 
   return (
     <div
-      className="smart-portal flex h-screen overflow-hidden transition-colors bg-background"
+      className="admin-portal min-h-screen bg-slate-50 flex overflow-hidden"
     >
 
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex flex-col w-60 shrink-0">
+      <aside className="hidden lg:flex w-60 xl:w-64 flex-col border-r border-slate-200 bg-white shrink-0 fixed inset-y-0 left-0 z-30 shadow-sm">
         <Sidebar />
       </aside>
 
@@ -327,9 +333,9 @@ function AdminLayoutInner({ children, title, subtitle }: AdminLayoutInnerProps) 
       )}
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+      <div className="flex-1 lg:ml-60 xl:ml-64 flex flex-col overflow-hidden min-w-0 min-h-screen">
         {/* Top bar */}
-        <header className="flex items-center justify-between px-4 py-3 border-b border-border/70 shrink-0 transition-colors bg-card/80 backdrop-blur-xl">
+        <header className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-slate-200 shrink-0 bg-white/95 backdrop-blur-xl shadow-sm">
           <div className="flex items-center gap-3">
             <button
               className="lg:hidden p-1.5 rounded-lg transition-colors
@@ -353,7 +359,6 @@ function AdminLayoutInner({ children, title, subtitle }: AdminLayoutInnerProps) 
           </div>
 
           <div className="flex items-center gap-2">
-            <ThemeToggle />
             <button
               className="relative p-1.5 rounded-lg transition-colors
                 text-gray-500 hover:text-gray-900 hover:bg-gray-100
@@ -374,8 +379,8 @@ function AdminLayoutInner({ children, title, subtitle }: AdminLayoutInnerProps) 
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-auto bg-transparent">
-          <div className="p-5 max-w-screen-2xl mx-auto">
+        <main className="flex-1 overflow-auto bg-slate-50">
+          <div className="p-4 sm:p-6 lg:p-8 max-w-screen-2xl mx-auto">
             {children}
           </div>
         </main>

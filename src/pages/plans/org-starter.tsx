@@ -7,13 +7,12 @@ import { CheckCircle2, X, Building2, ArrowLeft, AlertTriangle, Download, Shoppin
 import { useState } from 'react';
 
 const INCLUDED = [
-  'All templates — Free, Standard, Professional, and Organisation tier',
+  'Every guided planning builder',
   '2 user seats included',
-  'Save up to 10 drafts (shared across organisation)',
-  'Drafts automatically deleted after 30 days',
-  'Shared branding profile',
-  'Shared organisation profile',
-  'PDF export',
+  'Save up to 10 shared plans',
+  'Plans retained for 30 days',
+  'Shared organisation planning workspace',
+  'Download, print and share plans',
   'Additional seats purchasable separately',
 ];
 
@@ -67,15 +66,15 @@ export default function OrgStarterPage() {
               <h1 className="text-3xl font-extrabold text-foreground">Organisation Starter</h1>
               <Badge variant="secondary">£29.99/month</Badge>
             </div>
-            <p className="text-muted-foreground">For small teams getting started with shared document creation.</p>
+            <p className="text-muted-foreground">For small teams getting started with shared planning.</p>
           </div>
         </div>
 
         <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4 mb-8">
           <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
           <div className="text-sm text-amber-800">
-            <p className="font-semibold mb-1">30-day draft retention — shared across your organisation</p>
-            <p>Up to 10 drafts are shared across all users in your organisation. Drafts are permanently deleted after 30 days. No recovery. Always export documents before the retention period ends.</p>
+            <p className="font-semibold mb-1">30-day saved-plan retention</p>
+            <p>Up to 10 plans are shared across your organisation and retained for 30 days. Download anything you need to keep.</p>
           </div>
         </div>
 

@@ -9,11 +9,11 @@ import { useState } from 'react';
 const INCLUDED = [
   'Everything in Organisation Growth',
   '10 user seats included',
-  'Save up to 10 drafts (shared across organisation)',
-  'Drafts automatically deleted after 30 days',
+  'Save up to 10 shared plans',
+  'Plans retained for 30 days',
   'Advanced permissions',
   'Reporting tools',
-  'All templates — Free, Standard, Professional, and Organisation tier',
+  'Every guided planning builder',
   'Additional seats purchasable separately',
 ];
 
@@ -67,8 +67,8 @@ export default function OrgProfessionalPage() {
         <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4 mb-8">
           <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
           <div className="text-sm text-amber-800">
-            <p className="font-semibold mb-1">30-day draft retention — shared across your organisation</p>
-            <p>Up to 10 drafts are shared across all users. Drafts are permanently deleted after 30 days. No recovery. Always export documents before the retention period ends.</p>
+            <p className="font-semibold mb-1">30-day saved-plan retention</p>
+            <p>Up to 10 plans are shared across your organisation and retained for 30 days. Download anything you need to keep.</p>
           </div>
         </div>
 

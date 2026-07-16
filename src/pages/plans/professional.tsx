@@ -7,21 +7,14 @@ import { CheckCircle2, X, Star, Lock, ArrowLeft, AlertTriangle, Download } from 
 import { useState } from 'react';
 
 const INCLUDED = [
-  'Browse the full template catalogue (100+ templates)',
-  'Free templates — full access',
-  'Standard templates — full access',
-  'Professional templates — full access',
-  'Save up to 10 draft documents',
-  'Drafts automatically deleted after 30 days',
-  'PDF export with premium layouts',
-  'Multiple branding profiles',
-  'Advanced editing tools',
-  'Custom branding on documents',
-  'Logo uploads',
+  'Every guided planning builder',
+  'Save up to 10 active plans',
+  'Plans retained for 30 days',
+  'Advanced planning tools',
+  'Download, print and share plans',
 ];
 
 const NOT_INCLUDED = [
-  'Organisation templates',
   'Multi-user accounts',
   'Shared workspace',
   'Audit history',
@@ -54,7 +47,7 @@ export default function ProfessionalPlanPage() {
     <>
       <Helmet>
         <title>Professional Plan — JA Plan Studio</title>
-        <meta name="description" content="Professional plan: all templates, save up to 10 drafts for 30 days, multiple branding profiles, advanced editing. £14.99/month." />
+        <meta name="description" content="Every JA Plan Studio builder, advanced planning tools and up to 10 active plans for £14.99/month." />
       </Helmet>
 
       <div className="max-w-3xl mx-auto px-4 py-12">
@@ -72,15 +65,15 @@ export default function ProfessionalPlanPage() {
               <Badge className="bg-primary text-primary-foreground">Most Popular</Badge>
               <Badge variant="secondary">£14.99/month</Badge>
             </div>
-            <p className="text-muted-foreground">For businesses and professionals needing premium templates and advanced branding.</p>
+            <p className="text-muted-foreground">For people who need every builder and more active plans.</p>
           </div>
         </div>
 
         <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4 mb-8">
           <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
           <div className="text-sm text-amber-800">
-            <p className="font-semibold mb-1">30-day draft retention</p>
-            <p>Saved drafts are automatically and permanently deleted after 30 days. There is no recovery. Always export your documents before the retention period ends.</p>
+            <p className="font-semibold mb-1">30-day saved-plan retention</p>
+            <p>Saved plans are automatically deleted after 30 days. Download anything you need to keep.</p>
           </div>
         </div>
 
@@ -121,20 +114,20 @@ export default function ProfessionalPlanPage() {
 
         <div className="bg-card border border-border rounded-2xl p-6 mb-8">
           <h2 className="font-bold text-foreground mb-3 flex items-center gap-2">
-            <Lock className="w-4 h-4 text-muted-foreground" /> Template Access
+            <Lock className="w-4 h-4 text-muted-foreground" /> Builder Access
           </h2>
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div className="flex items-center gap-2 text-green-700 bg-green-50 rounded-lg px-3 py-2">
-              <CheckCircle2 className="w-4 h-4" /> Free templates
+              <CheckCircle2 className="w-4 h-4" /> Core builders
             </div>
             <div className="flex items-center gap-2 text-green-700 bg-green-50 rounded-lg px-3 py-2">
-              <CheckCircle2 className="w-4 h-4" /> Standard templates
+              <CheckCircle2 className="w-4 h-4" /> Expanded builders
             </div>
             <div className="flex items-center gap-2 text-green-700 bg-green-50 rounded-lg px-3 py-2">
-              <CheckCircle2 className="w-4 h-4" /> Professional templates
+              <CheckCircle2 className="w-4 h-4" /> Advanced builders
             </div>
             <div className="flex items-center gap-2 text-muted-foreground bg-muted rounded-lg px-3 py-2">
-              <Lock className="w-4 h-4" /> Organisation templates
+              <Lock className="w-4 h-4" /> Shared planning
             </div>
           </div>
         </div>
@@ -142,8 +135,8 @@ export default function ProfessionalPlanPage() {
         <div className="flex items-start gap-3 bg-blue-50 border border-blue-200 rounded-xl p-4 mb-8">
           <Download className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
           <div className="text-sm text-blue-800">
-            <p className="font-semibold mb-1">Export before your retention period ends</p>
-            <p>Drafts are deleted after 30 days with no recovery. Export your PDF as soon as your document is ready.</p>
+            <p className="font-semibold mb-1">Download plans you need to keep</p>
+            <p>Saved plans are deleted after 30 days. Download or print them before the retention period ends.</p>
           </div>
         </div>
 

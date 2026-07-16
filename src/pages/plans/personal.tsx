@@ -7,23 +7,15 @@ import { CheckCircle2, X, Clock, ArrowLeft, AlertTriangle, Download } from 'luci
 import { useState } from 'react';
 
 const INCLUDED = [
-  'Browse the full template catalogue (100+ templates)',
-  'Free templates — unlimited use',
-  'Standard templates — full access',
-  'Save up to 3 draft documents',
-  'Drafts automatically deleted after 14 days',
-  'PDF export',
-  'Custom branding on documents',
-  'Logo uploads',
-  '1 branding profile',
+  'Core guided planning builders',
+  'Save up to 3 active plans',
+  'Plans retained for 14 days',
+  'Download, print and share plans',
 ];
 
 const NOT_INCLUDED = [
-  'Professional templates',
-  'Organisation templates',
-  'Multiple branding profiles',
-  'Advanced editing tools',
-  'Premium PDF layouts',
+  'Advanced planning builders',
+  'Organisation planning workspace',
   'Multi-user accounts',
 ];
 
@@ -55,7 +47,7 @@ export default function PersonalPlanPage() {
     <>
       <Helmet>
         <title>Personal Plan — £5.99/month | JA Plan Studio</title>
-        <meta name="description" content="The Personal plan gives you access to Standard templates, draft saving, and custom branding for just £5.99/month." />
+        <meta name="description" content="Core planning builders and up to 3 active plans for £5.99/month." />
       </Helmet>
 
       <div className="max-w-2xl mx-auto px-4 py-12">
@@ -73,7 +65,7 @@ export default function PersonalPlanPage() {
               <h1 className="text-3xl font-bold text-foreground">Personal</h1>
               <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-100">Best Value</Badge>
             </div>
-            <p className="text-muted-foreground">For individuals who need to save their work and access more templates.</p>
+            <p className="text-muted-foreground">For individuals who want core builders and saved plans.</p>
             <div className="mt-3 flex items-baseline gap-1">
               <span className="text-4xl font-bold text-foreground">£5.99</span>
               <span className="text-muted-foreground">/month</span>
@@ -134,16 +126,16 @@ export default function PersonalPlanPage() {
         <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-8">
           <Download className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-semibold text-amber-900">Always export your documents</p>
+            <p className="text-sm font-semibold text-amber-900">Download plans you need to keep</p>
             <p className="text-xs text-amber-700 mt-0.5">
-              Saved drafts are temporary working copies only. Drafts are permanently deleted after 14 days with no recovery. Export to PDF to keep a permanent copy.
+              Saved plans are retained for 14 days. Download or print anything you need to keep before it is deleted.
             </p>
           </div>
         </div>
 
         {/* Upgrade nudge */}
         <div className="text-center text-sm text-muted-foreground">
-          Need more drafts or professional templates?{' '}
+          Need more active plans or advanced builders?{' '}
           <Link to="/plans/standard" className="text-primary font-medium hover:underline">See Standard (£7.99/mo)</Link>
           {' '}or{' '}
           <Link to="/plans/professional" className="text-primary font-medium hover:underline">Professional (£14.99/mo)</Link>
