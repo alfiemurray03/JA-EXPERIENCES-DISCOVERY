@@ -1,8 +1,8 @@
 const DEFAULT_PLANS = [
-  ["personal", "JA Plan Studio – Explore", "Monthly subscription", "£5.99", 599, "", "", "Essential planning builders", "Save and revisit your plans", "A simple starting point for exploring ideas and building clear, practical plans.", "Subscribe to Explore", 1, 0, 10],
-  ["standard", "JA Plan Studio – Plan", "Monthly subscription", "£7.99", 799, "", "", "More builders and planning tools", "Download your finished plans", "For regularly creating detailed destination, itinerary, experience and everyday plans.", "Subscribe to Plan", 1, 1, 20],
-  ["professional", "JA Plan Studio – Complete", "Monthly subscription", "£14.99", 1499, "", "", "Full planning-builder access", "Enhanced planning and outputs", "Complete access for building and managing more comprehensive personalised plans.", "Subscribe to Complete", 1, 0, 30],
-  ["org_starter", "JA Plan Studio – Together", "Monthly subscription", "£39.99", 3999, "", "", "Shared planning for groups", "All builders and collaborative tools", "Shared planning for households, families and groups who want to build plans together.", "Subscribe to Together", 1, 0, 40]
+  ["personal", "Explore", "Monthly subscription", "£5.99", 599, "", "", "Essential planning builders", "Save and revisit your plans", "A simple starting point for exploring ideas and building clear, practical plans.", "Subscribe to Explore", 1, 0, 10],
+  ["standard", "Plan", "Monthly subscription", "£7.99", 799, "", "", "More builders and planning tools", "Download your finished plans", "For regularly creating detailed destination, itinerary, experience and everyday plans.", "Subscribe to Plan", 1, 1, 20],
+  ["professional", "Complete", "Monthly subscription", "£14.99", 1499, "", "", "Full planning-builder access", "Enhanced planning and outputs", "Complete access for building and managing more comprehensive personalised plans.", "Subscribe to Complete", 1, 0, 30],
+  ["org_starter", "Together", "Monthly subscription", "£39.99", 3999, "", "", "Shared planning for groups", "All builders and collaborative tools", "Shared planning for households, families and groups who want to build plans together.", "Subscribe to Together", 1, 0, 40]
 ];
 
 export async function onRequestGet(context) {
@@ -186,11 +186,20 @@ async function resolveStripePriceId(plan, env) {
   });
   if (!response.ok) return "";
   const catalogue = await response.json();
-  const expectedName = String(plan.plan_name || "").trim().toLowerCase();
+  const stripeProductNames = {
+    personal: "JA Plan Studio – Explore",
+    standard: "JA Plan Studio – Plan",
+    professional: "JA Plan Studio – Complete",
+    org_starter: "JA Plan Studio – Together"
+  };
+  const acceptedNames = new Set([
+    String(plan.plan_name || "").trim().toLowerCase(),
+    String(stripeProductNames[plan.id] || "").trim().toLowerCase()
+  ]);
   const match = (catalogue.data || []).find((price) => {
     const product = price && typeof price.product === "object" ? price.product : null;
     return product && product.active !== false
-      && String(product.name || "").trim().toLowerCase() === expectedName
+      && acceptedNames.has(String(product.name || "").trim().toLowerCase())
       && String(price.currency || "").toLowerCase() === "gbp"
       && Number(price.unit_amount || 0) === Number(plan.price_pence || 0)
       && price.recurring && price.recurring.interval === "month";

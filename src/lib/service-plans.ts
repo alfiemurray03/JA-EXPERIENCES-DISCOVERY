@@ -16,7 +16,7 @@ export interface ServicePlan {
 export const JA_PLAN_STUDIO_SUBSCRIPTIONS: ServicePlan[] = [
   {
     id: 'personal',
-    plan_name: 'JA Plan Studio – Explore',
+    plan_name: 'Explore',
     plan_type: 'Monthly subscription',
     price_label: '£5.99',
     price_pence: 599,
@@ -28,7 +28,7 @@ export const JA_PLAN_STUDIO_SUBSCRIPTIONS: ServicePlan[] = [
   },
   {
     id: 'standard',
-    plan_name: 'JA Plan Studio – Plan',
+    plan_name: 'Plan',
     plan_type: 'Monthly subscription',
     price_label: '£7.99',
     price_pence: 799,
@@ -40,7 +40,7 @@ export const JA_PLAN_STUDIO_SUBSCRIPTIONS: ServicePlan[] = [
   },
   {
     id: 'professional',
-    plan_name: 'JA Plan Studio – Complete',
+    plan_name: 'Complete',
     plan_type: 'Monthly subscription',
     price_label: '£14.99',
     price_pence: 1499,
@@ -52,7 +52,7 @@ export const JA_PLAN_STUDIO_SUBSCRIPTIONS: ServicePlan[] = [
   },
   {
     id: 'org_starter',
-    plan_name: 'JA Plan Studio – Together',
+    plan_name: 'Together',
     plan_type: 'Monthly subscription',
     price_label: '£39.99',
     price_pence: 3999,

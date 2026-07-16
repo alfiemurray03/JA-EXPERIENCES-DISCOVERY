@@ -80,11 +80,19 @@ export default async function handler(req: Request, res: Response) {
         professional: 1499,
         org_starter: 3999,
       };
+      const stripeProductNames: Partial<Record<PlanId, string>> = {
+        personal: 'JA Plan Studio – Explore',
+        standard: 'JA Plan Studio – Plan',
+        professional: 'JA Plan Studio – Complete',
+        org_starter: 'JA Plan Studio – Together',
+      };
       const catalogue = await stripe.prices.list({ active: true, type: 'recurring', limit: 100, expand: ['data.product'] });
       const match = catalogue.data.find((price) => {
         const product = typeof price.product === 'object' && !price.product.deleted ? price.product : null;
         return product?.active !== false
-          && product?.name?.trim().toLowerCase() === PLAN_LABELS[planId].trim().toLowerCase()
+          && [PLAN_LABELS[planId], stripeProductNames[planId]]
+            .filter(Boolean)
+            .some((name) => name!.trim().toLowerCase() === product?.name?.trim().toLowerCase())
           && price.currency.toLowerCase() === 'gbp'
           && price.unit_amount === expectedPence[planId]
           && price.recurring?.interval === 'month';

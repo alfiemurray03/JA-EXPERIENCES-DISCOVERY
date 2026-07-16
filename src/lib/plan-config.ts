@@ -68,10 +68,10 @@ export const ORG_BASE_SEATS: Record<PlanId, number> = {
 /** Human-readable plan labels */
 export const PLAN_LABELS: Record<PlanId, string> = {
   free:             'No subscription',
-  personal:         'JA Plan Studio – Explore',
-  standard:         'JA Plan Studio – Plan',
-  professional:     'JA Plan Studio – Complete',
-  org_starter:      'JA Plan Studio – Together',
+  personal:         'Explore',
+  standard:         'Plan',
+  professional:     'Complete',
+  org_starter:      'Together',
   org_growth:       'Legacy organisation growth',
   org_professional: 'Legacy organisation professional',
 };
