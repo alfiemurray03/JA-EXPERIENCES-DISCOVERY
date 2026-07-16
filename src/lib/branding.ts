@@ -24,8 +24,8 @@ export interface Branding {
 
 const DEFAULTS: Branding = {
   platform_name: 'JA Plan Studio',
-  platform_tagline: 'Professional documents, generated in minutes.',
-  platform_description: 'Create letters, contracts, invoices, policies, forms, reports and more from one secure account.',
+  platform_tagline: 'Personalised plans, built step by step.',
+  platform_description: 'Build destination, itinerary, experience, accessibility and practical travel plans with guided JA Plan Studio tools and planning support.',
   platform_url: 'https://japlanstudio.jagroupservices.co.uk',
   platform_logo_url: '',
   platform_favicon_url: '',
@@ -53,7 +53,13 @@ function fetchBranding(): Promise<void> {
   fetchPromise = fetch('/api/branding')
     .then(r => r.json())
     .then(data => {
-      if (data.success) cached = { ...DEFAULTS, ...data.data };
+      if (data.success) {
+        const next = { ...DEFAULTS, ...data.data } as Branding;
+        if (/document hub|profile studio/i.test(next.platform_name)) next.platform_name = DEFAULTS.platform_name;
+        if (/document|profile studio/i.test(next.platform_tagline)) next.platform_tagline = DEFAULTS.platform_tagline;
+        if (/document|letter|contract|invoice|profile studio/i.test(next.platform_description)) next.platform_description = DEFAULTS.platform_description;
+        cached = next;
+      }
     })
     .catch(() => {
       // silently fall back to defaults
