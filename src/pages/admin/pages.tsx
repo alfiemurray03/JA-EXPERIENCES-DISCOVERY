@@ -45,7 +45,7 @@ interface SitePage {
 // ── Seed data ─────────────────────────────────────────────────────────────────
 
 const SEED_PAGES: SitePage[] = [
-  { id: 'p-001', title: 'Homepage',            path: '/',                    category: 'marketing', status: 'live',          seoTitle: 'JA Plan Studio — Professional Document Builder', seoDescription: 'Create professional documents in minutes with 1,000+ templates. Export to PDF or Word. Trusted by businesses worldwide.', lastUpdated: '2026-06-02', noindex: false },
+  { id: 'p-001', title: 'Homepage',            path: '/',                    category: 'marketing', status: 'live',          seoTitle: 'JA Plan Studio — Guided Planning Builders', seoDescription: 'Build personalised destination, itinerary, experience, accessibility and practical travel plans.', lastUpdated: '2026-07-16', noindex: false },
   { id: 'p-002', title: 'Pricing',             path: '/pricing',             category: 'marketing', status: 'live',          seoTitle: 'Pricing — JA Plan Studio', seoDescription: 'Choose the plan that works for you. Start free and upgrade when you need more.', lastUpdated: '2026-06-02', noindex: false },
   { id: 'p-003', title: 'Contact',             path: '/contact',             category: 'marketing', status: 'live',          seoTitle: 'Contact Us — JA Plan Studio', seoDescription: 'Get in touch with the JA Plan Studio team.', lastUpdated: '2026-06-02', noindex: false },
   { id: 'p-004', title: 'Privacy Policy',      path: '/privacy',             category: 'legal',     status: 'live',          seoTitle: 'Privacy Policy — JA Plan Studio', seoDescription: 'How JA Plan Studio collects, uses, and protects your personal data.', lastUpdated: '2026-06-02', noindex: false },
