@@ -84,9 +84,9 @@ export default function TermsPage() {
               <section>
                 <h2 className="text-lg font-semibold text-foreground mb-3">1. The Service</h2>
                 <p className="text-muted-foreground leading-relaxed">
-                  {PLATFORM} is a document creation tool that provides templates, editing tools, and export functionality to help you create professional documents.
-                  The platform does not provide legal, financial, tax, medical, or any other professional advice.
-                  Documents generated are templates only — you are solely responsible for their accuracy, suitability, and legal compliance.
+                  {PLATFORM} provides guided builders, discovery tools and planning support for creating personalised experience and practical travel plans.
+                  The platform does not provide legal, financial, tax, medical, immigration, booking-agent or other regulated professional advice.
+                  You remain responsible for checking the accuracy and suitability of your plan, as well as provider availability, prices and terms.
                 </p>
               </section>
 

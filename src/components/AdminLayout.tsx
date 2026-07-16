@@ -226,7 +226,7 @@ function AdminLayoutInner({ children, title }: AdminLayoutInnerProps) {
     navigate('/admin', { replace: true });
   }
 
-  // Profile Studio's administration portal is intentionally light-only.
+  // JA Plan Studio's administration portal is intentionally light-only.
   useEffect(() => {
     document.documentElement.classList.remove('dark');
   }, []);

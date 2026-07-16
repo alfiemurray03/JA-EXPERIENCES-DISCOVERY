@@ -209,7 +209,7 @@ export default function OrganisationPlanPage() {
           <div className="bg-purple-600 text-white rounded-2xl p-8 text-center space-y-4">
             <h2 className="text-xl font-bold">Get your team started today</h2>
             <p className="text-sm text-purple-100 max-w-md mx-auto">
-              Set up your organisation account, invite your team, and start creating professional documents together.
+              Set up your organisation account, invite your team, and start coordinating shared plans together.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               {isCurrent ? (

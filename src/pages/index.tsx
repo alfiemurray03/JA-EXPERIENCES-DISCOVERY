@@ -263,7 +263,7 @@ export default function HomePage() {
       .then(d => {
         if (!d.success || !d.data) return;
         const announcement = String(d.data.announcement_text || '');
-        if (/document hub|profile studio/i.test(announcement)) return;
+        if (/document|profile/i.test(announcement)) return;
         setHpContent(current => ({
           ...current,
           announcement_enabled: Boolean(d.data.announcement_enabled),

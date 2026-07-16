@@ -74,7 +74,7 @@ const DEFAULT_CONFIG: SiteConfig = {
   comingSoonCountdownEnabled: false,
   siteName:    'JA Plan Studio',
   brandName:   'JA Group Services',
-  tagline:     'Professional Documents, Generated in Minutes',
+  tagline:     'Personalised Plans, Built Step by Step',
   supportEmail: 'support@jagroupservices.co.uk',
   supportPhone: '',
   companyName: 'JA Group Services Ltd',

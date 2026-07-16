@@ -55,9 +55,9 @@ function fetchBranding(): Promise<void> {
     .then(data => {
       if (data.success) {
         const next = { ...DEFAULTS, ...data.data } as Branding;
-        if (/document hub|profile studio/i.test(next.platform_name)) next.platform_name = DEFAULTS.platform_name;
-        if (/document|profile studio/i.test(next.platform_tagline)) next.platform_tagline = DEFAULTS.platform_tagline;
-        if (/document|letter|contract|invoice|profile studio/i.test(next.platform_description)) next.platform_description = DEFAULTS.platform_description;
+        next.platform_name = DEFAULTS.platform_name;
+        if (/document|profile/i.test(next.platform_tagline)) next.platform_tagline = DEFAULTS.platform_tagline;
+        if (/document|letter|contract|invoice|profile/i.test(next.platform_description)) next.platform_description = DEFAULTS.platform_description;
         cached = next;
       }
     })

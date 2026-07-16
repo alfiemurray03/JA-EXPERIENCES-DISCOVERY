@@ -54,8 +54,8 @@ export default function RootLayout({ children }: RootLayoutProps) {
     return (
       <Website>
         <Helmet>
-          <title>JA Plan Studio — Professional Document Builder</title>
-          <meta name="description" content="Generate professional documents in minutes. Employment letters, board minutes, privacy policies, HR documents and more. Operated by JA Group Services." />
+          <title>JA Plan Studio — Guided Planning Builders</title>
+          <meta name="description" content="Build personalised destination, itinerary, experience, accessibility and practical travel plans with guided JA Plan Studio tools." />
         </Helmet>
         <ScrollRestoration />
         <a href="#main-content" className="skip-nav">
@@ -74,8 +74,8 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <Website>
       <Helmet>
-        <title>JA Plan Studio — Professional Document Builder</title>
-        <meta name="description" content="Generate professional documents in minutes. Employment letters, board minutes, privacy policies, HR documents and more. Operated by JA Group Services." />
+        <title>JA Plan Studio — Guided Planning Builders</title>
+        <meta name="description" content="Build personalised destination, itinerary, experience, accessibility and practical travel plans with guided JA Plan Studio tools." />
       </Helmet>
       <ScrollRestoration />
       <a href="#main-content" className="skip-nav">

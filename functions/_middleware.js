@@ -440,13 +440,13 @@ export async function onRequest(context) {
       || (request.headers.get("Accept") || "").toLowerCase().includes("text/html"));
 
   if (adminDocumentRequest) {
-    const retiredProfileStudioRoutes = new Set([
+    const retiredTransferredRoutes = new Set([
       "/admin/affiliate", "/admin/resellers", "/admin/signing", "/admin/pages",
       "/admin/portal-nav", "/admin/stripe-diagnostics", "/admin/test-tools",
       "/admin/password-resets", "/admin/legal"
     ]);
     const normalisedPath = path.endsWith("/") ? path.slice(0, -1) : path;
-    if (retiredProfileStudioRoutes.has(normalisedPath)) {
+    if (retiredTransferredRoutes.has(normalisedPath)) {
       return new Response(null, {
         status: 302,
         headers: { Location: "/admin/dashboard", "Cache-Control": "no-store" }
@@ -569,7 +569,7 @@ export async function onRequest(context) {
     const headers = new Headers(response.headers);
     headers.set("Cache-Control", "no-store");
     headers.delete("Content-Length");
-    // The Profile Studio administration portal is intentionally light-only.
+    // The JA Plan Studio administration portal is intentionally light-only.
     // Do not inject the public website's saved theme into the admin document.
     return new Response(injectAccessibility(injectNativeIdentity(await response.text(), requestIdentitySnapshot(request))), {
       status: response.status,

@@ -1,5 +1,5 @@
 /**
- * JA Plan Studio admin dashboard — Profile Studio layout with live Plan Studio data.
+ * JA Plan Studio admin dashboard with live Plan Studio data.
  */
 import { useState, useEffect, useCallback } from 'react';
 import { Helmet } from '@dr.pogodin/react-helmet';

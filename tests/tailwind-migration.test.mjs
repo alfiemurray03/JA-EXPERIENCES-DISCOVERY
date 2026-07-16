@@ -63,7 +63,7 @@ test("shared header and footer use refined typography and a visible full footer 
   assert.match(styles, /\.site-footer \.site-footer-brand \.brand-name\s*{\s*color:\s*#60a5fa/);
 });
 
-test("shared public shell uses the JA Smart Profile Google Fonts typography", async () => {
+test("shared public shell uses the JA Plan Studio Google Fonts typography", async () => {
   const styles = await readFile(new URL("../src/styles/tailwind.css", import.meta.url), "utf8");
   assert.match(styles, /@import url\('https:\/\/fonts\.googleapis\.com\/css2\?family=Plus\+Jakarta\+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap'\)/);
   assert.match(styles, /\.site-header\s*{[\s\S]*?font-family:\s*"Inter"/);
