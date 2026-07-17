@@ -22,16 +22,33 @@ function loadScript(id: string, src: string, attributes: Record<string, string> 
 
 function ProviderWidget({ provider, slug }: { provider: Provider; slug: string }) {
   const destination = destinations.find((item) => item.slug === slug)!;
+  const [widgetFailed, setWidgetFailed] = useState(false);
   useEffect(() => {
+    setWidgetFailed(false);
     if (provider === 'headout') {
-      const cleanup = loadScript('headout-partner-widget', `https://partner.headout.com/embed/script?affiliate_code=${HEADOUT_AFFILIATE_CODE}&currency=GBP&utm_source=https://japlanstudio.jagroupservices.co.uk&language=en`);
-      return cleanup;
+      const headoutWindow = window as typeof window & { HWS?: { init?: () => void } };
+      const initialise = () => {
+        try { headoutWindow.HWS?.init?.(); } catch { setWidgetFailed(true); }
+      };
+      document.getElementById('headout-partner-widget')?.remove();
+      const script = document.createElement('script');
+      script.id = 'headout-partner-widget';
+      script.async = true;
+      script.src = `https://partner.headout.com/embed/script?affiliate_code=${HEADOUT_AFFILIATE_CODE}&currency=GBP&utm_source=https://japlanstudio.jagroupservices.co.uk&language=en`;
+      script.onload = initialise;
+      script.onerror = () => setWidgetFailed(true);
+      document.body.appendChild(script);
+      const retries = [window.setTimeout(initialise, 250), window.setTimeout(initialise, 1000)];
+      return () => { retries.forEach(window.clearTimeout); script.remove(); };
     }
     return loadScript('gyg-partner-widget', 'https://widget.getyourguide.com/dist/pa.umd.production.min.js', { 'data-gyg-partner-id': GYG_PARTNER_ID });
   }, [provider, slug]);
 
   if (provider === 'headout') {
-    return <div className="min-h-80 rounded-2xl border border-border bg-background p-4"><div data-hawt="gallery" data-city={destination.headout} data-max-count="100" data-show-read-more="true" /></div>;
+    return <div className="min-h-80 rounded-2xl border border-border bg-background p-4">
+      <div data-hawt="gallery" data-city={destination.headout} data-max-count="100" data-show-read-more="true" />
+      {widgetFailed && <div className="rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-950"><p>Live Headout activities could not be loaded.</p><a className="mt-3 inline-flex font-semibold underline" href={`https://www.headout.com/?affiliate_code=${HEADOUT_AFFILIATE_CODE}`} target="_blank" rel="sponsored noopener noreferrer">Browse {destination.name} activities on Headout</a></div>}
+    </div>;
   }
   const query = `${destination.name}, ${destination.country}`;
   const href = `https://www.getyourguide.com/s/?q=${encodeURIComponent(query)}&partner_id=${GYG_PARTNER_ID}&locale=en-GB&currency=GBP`;
