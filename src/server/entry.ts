@@ -302,7 +302,7 @@ app.use((_req: Request, res: Response, next: NextFunction) => {
     [
       "default-src 'self'",
       // Scripts: self + inline (Vite HMR / shadcn) + blob (PDF export)
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://widget.getyourguide.com",
       // Styles: self + inline (Tailwind / Radix / PDF renderer)
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       // Fonts
@@ -311,8 +311,8 @@ app.use((_req: Request, res: Response, next: NextFunction) => {
       "img-src 'self' data: blob: https:",
       // Connections: self + Microsoft OIDC + Stripe
       "connect-src 'self' https://login.microsoftonline.com https://api.stripe.com",
-      // Frames: Stripe Elements only
-      "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
+      // Frames: payments and approved activity partners
+      "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://partner.headout.com https://widget.getyourguide.com",
       // Block all plugin embeds
       "object-src 'none'",
       // Prevent base-URI hijacking

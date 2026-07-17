@@ -22,32 +22,15 @@ function loadScript(id: string, src: string, attributes: Record<string, string> 
 
 function ProviderWidget({ provider, slug }: { provider: Provider; slug: string }) {
   const destination = destinations.find((item) => item.slug === slug)!;
-  const [widgetFailed, setWidgetFailed] = useState(false);
   useEffect(() => {
-    setWidgetFailed(false);
-    if (provider === 'headout') {
-      const headoutWindow = window as typeof window & { HWS?: { init?: () => void } };
-      const initialise = () => {
-        try { headoutWindow.HWS?.init?.(); } catch { setWidgetFailed(true); }
-      };
-      document.getElementById('headout-partner-widget')?.remove();
-      const script = document.createElement('script');
-      script.id = 'headout-partner-widget';
-      script.async = true;
-      script.src = `https://partner.headout.com/embed/script?affiliate_code=${HEADOUT_AFFILIATE_CODE}&currency=GBP&utm_source=https://japlanstudio.jagroupservices.co.uk&language=en`;
-      script.onload = initialise;
-      script.onerror = () => setWidgetFailed(true);
-      document.body.appendChild(script);
-      const retries = [window.setTimeout(initialise, 250), window.setTimeout(initialise, 1000)];
-      return () => { retries.forEach(window.clearTimeout); script.remove(); };
-    }
+    if (provider === 'headout') return;
     return loadScript('gyg-partner-widget', 'https://widget.getyourguide.com/dist/pa.umd.production.min.js', { 'data-gyg-partner-id': GYG_PARTNER_ID });
   }, [provider, slug]);
 
   if (provider === 'headout') {
+    const params = new URLSearchParams({ affiliateCode: HEADOUT_AFFILIATE_CODE, affiliateWebsite: 'https://tours.jagroupservices.co.uk', currencyCode: 'GBP', language: 'en', city: destination.headout!, iframeId: `headout-${destination.slug}`, maxCount: '100', showMore: 'true' });
     return <div className="min-h-80 rounded-2xl border border-border bg-background p-4">
-      <div data-hawt="gallery" data-city={destination.headout} data-max-count="100" data-show-read-more="true" />
-      {widgetFailed && <div className="rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-950"><p>Live Headout activities could not be loaded.</p><a className="mt-3 inline-flex font-semibold underline" href={`https://www.headout.com/?affiliate_code=${HEADOUT_AFFILIATE_CODE}`} target="_blank" rel="sponsored noopener noreferrer">Browse {destination.name} activities on Headout</a></div>}
+      <iframe key={destination.slug} className="h-[900px] w-full rounded-lg border-0" src={`https://partner.headout.com/embed/gallery/?${params.toString()}`} title={`Headout activities in ${destination.name}`} loading="eager" referrerPolicy="strict-origin-when-cross-origin" allow="payment" />
     </div>;
   }
   const query = `${destination.name}, ${destination.country}`;
