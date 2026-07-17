@@ -421,13 +421,85 @@ export async function onRequest(context) {
     });
   }
 
-  const rootLanding = path === "/admin" || path === "/admin/" || path === "/account" || path === "/account/";
-  const landingRealm = path.startsWith("/admin") ? "admin" : path.startsWith("/account") ? "customer" : "";
   const publicAuthPath = new Set([
     "/admin/login", "/admin/login/", "/admin/auth/callback", "/admin/auth/callback/", "/admin/logout", "/admin/logout/",
     "/auth/callback", "/auth/callback/",
     "/account/login", "/account/login/", "/account/auth/callback", "/account/auth/callback/", "/account/logout", "/account/logout/"
   ]).has(path);
+
+  let settings = null;
+
+  // Enforce site status gates first for non-administrators, excluding absolute system bypasses
+  if (!adminIdentity) {
+    const isStatusBypass =
+      path === "/coming-soon" ||
+      path === "/coming-soon/" ||
+      path.startsWith("/coming-soon/") ||
+      path === "/maintenance" ||
+      path === "/maintenance/" ||
+      path.startsWith("/maintenance/") ||
+      path === "/favicon.ico" ||
+      path === "/robots.txt" ||
+      path === "/sitemap.xml" ||
+      path.startsWith("/assets/") ||
+      hasFileExtension(path) ||
+      path.startsWith("/cdn-cgi/") ||
+      path === "/plans-data" ||
+      path === "/plans-data/" ||
+      path === "/create-checkout-session" ||
+      path === "/create-checkout-session/" ||
+      path === "/payment-success" ||
+      path === "/payment-success/" ||
+      path === "/api" ||
+      path.startsWith("/api/") ||
+      path === "/health" ||
+      path === "/health/" ||
+      path.startsWith("/health/") ||
+      path === "/stripe-webhook" ||
+      path === "/stripe-webhook/" ||
+      path === "/status" ||
+      path.startsWith("/status/") ||
+      path === "/admin" ||
+      path === "/admin/" ||
+      path.startsWith("/admin/") ||
+      publicAuthPath;
+
+    if (!isStatusBypass && env.DB) {
+      settings = await getSiteSettings(env.DB);
+      if (settings.site_status === "maintenance") {
+        return new Response(pageHtml(settings, "maintenance"), {
+          status: 503,
+          headers: {
+            "Content-Type": "text/html; charset=utf-8",
+            "Cache-Control": "no-store",
+            "Retry-After": "3600"
+          }
+        });
+      }
+
+      if (settings.site_status === "coming_soon") {
+        if (isHtmlNavigationRequest(request)) {
+          return new Response(null, {
+            status: 302,
+            headers: {
+              Location: "/coming-soon/",
+              "Cache-Control": "no-store"
+            }
+          });
+        }
+        return new Response(JSON.stringify({ error: "Site is in coming soon mode." }), {
+          status: 503,
+          headers: {
+            "Content-Type": "application/json; charset=utf-8",
+            "Cache-Control": "no-store"
+          }
+        });
+      }
+    }
+  }
+
+  const rootLanding = path === "/admin" || path === "/admin/" || path === "/account" || path === "/account/";
+  const landingRealm = path.startsWith("/admin") ? "admin" : path.startsWith("/account") ? "customer" : "";
 
   // Admin screens are client-side routes. Serve the application document first and
   // let /api/admin/auth/me perform the authoritative session check inside React.
@@ -656,44 +728,8 @@ export async function onRequest(context) {
     return next(request);
   }
 
-  const settings = await getSiteSettings(env.DB);
-
-  console.log(JSON.stringify({
-    event: "admin_bypass_diag",
-    stage: "public_gate_decision",
-    path,
-    bypassDecision: "deny",
-    siteStatus: String(settings.site_status || "maintenance")
-  }));
-
-  if (settings.site_status === "maintenance") {
-    return new Response(pageHtml(settings, "maintenance"), {
-      status: 503,
-      headers: {
-        "Content-Type": "text/html; charset=utf-8",
-        "Cache-Control": "no-store",
-        "Retry-After": "3600"
-      }
-    });
-  }
-
-  if (settings.site_status === "coming_soon") {
-    if (isHtmlNavigationRequest(request)) {
-      return new Response(null, {
-        status: 302,
-        headers: {
-          Location: "/coming-soon/",
-          "Cache-Control": "no-store"
-        }
-      });
-    }
-    return new Response(JSON.stringify({ error: "Site is in coming soon mode." }), {
-      status: 503,
-      headers: {
-        "Content-Type": "application/json; charset=utf-8",
-        "Cache-Control": "no-store"
-      }
-    });
+  if (!settings) {
+    settings = await getSiteSettings(env.DB);
   }
 
   const response = await next(request);
