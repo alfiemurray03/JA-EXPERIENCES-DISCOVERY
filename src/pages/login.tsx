@@ -67,9 +67,9 @@ export default function LoginPage() {
             </div>
 
             <div className="border-t border-border pt-4">
-              <p className="text-xs font-semibold text-foreground uppercase tracking-wide mb-2.5">Free account includes</p>
+              <p className="text-xs font-semibold text-foreground uppercase tracking-wide mb-2.5">Plan, explore and save</p>
               <ul className="space-y-2">
-                {['1 free template demo', 'PDF export and download', 'Browse the full template catalogue'].map(item => (
+                {['Explore destinations and live activities', 'Use guided experience-planning builders', 'Save and continue your plans securely'].map(item => (
                   <li key={item} className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Check className="w-3.5 h-3.5 text-green-500 shrink-0" />{item}
                   </li>
