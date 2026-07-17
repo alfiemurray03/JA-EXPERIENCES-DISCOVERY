@@ -769,10 +769,10 @@ export default function AdminStripeDiagnostics() {
                     </p>
 
                     {[
-                      { label: 'Personal Plan',                placeholder: 'price_…', value: pricePersonal,        set: setPricePersonal,        current: status?.prices.personal.masked },
-                      { label: 'Standard Plan',                placeholder: 'price_…', value: priceStandard,        set: setPriceStandard,        current: status?.prices.standard.masked },
-                      { label: 'Professional Plan',            placeholder: 'price_…', value: priceProfessional,    set: setPriceProfessional,    current: status?.prices.professional.masked },
-                      { label: 'Organisation Starter Plan',    placeholder: 'price_…', value: priceOrgStarter,      set: setPriceOrgStarter,      current: status?.prices.org_starter.masked },
+                      { label: 'Explore Plan',                 placeholder: 'price_…', value: pricePersonal,        set: setPricePersonal,        current: status?.prices.personal.masked },
+                      { label: 'Plan Plan',                    placeholder: 'price_…', value: priceStandard,        set: setPriceStandard,        current: status?.prices.standard.masked },
+                      { label: 'Complete Plan',                placeholder: 'price_…', value: priceProfessional,    set: setPriceProfessional,    current: status?.prices.professional.masked },
+                      { label: 'Together Plan',                placeholder: 'price_…', value: priceOrgStarter,      set: setPriceOrgStarter,      current: status?.prices.org_starter.masked },
                       { label: 'Organisation Plan (legacy)',   placeholder: 'price_…', value: priceOrg,             set: setPriceOrg,             current: status?.prices.org.masked },
                       { label: 'Organisation Growth Plan',     placeholder: 'price_…', value: priceOrgGrowth,       set: setPriceOrgGrowth,       current: status?.prices.org_growth.masked },
                       { label: 'Organisation Professional Plan', placeholder: 'price_…', value: priceOrgProfessional, set: setPriceOrgProfessional, current: status?.prices.org_professional.masked },
@@ -936,10 +936,10 @@ export default function AdminStripeDiagnostics() {
                           onChange={e => setCheckoutPlan(e.target.value)}
                           className="bg-slate-900 border border-slate-700 text-white text-xs rounded-lg px-3 h-9"
                         >
-                          <option value="personal">Personal Plan</option>
-                          <option value="standard">Standard Plan</option>
-                          <option value="professional">Professional Plan</option>
-                          <option value="org_starter">Organisation Starter Plan</option>
+                          <option value="personal">Explore Plan</option>
+                          <option value="standard">Plan Plan</option>
+                          <option value="professional">Complete Plan</option>
+                          <option value="org_starter">Together Plan</option>
                           <option value="org_growth">Organisation Growth Plan</option>
                           <option value="org_professional">Organisation Professional Plan</option>
                         </select>

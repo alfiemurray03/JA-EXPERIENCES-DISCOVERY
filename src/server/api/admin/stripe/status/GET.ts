@@ -39,10 +39,10 @@ async function getConfigValue(configKey: string, envFallback: string | null): Pr
 
 // All 7 price slots — config key, env secret name, display label
 const PRICE_SLOTS = [
-  { key: 'personal',         configKey: 'stripe_price_personal_override',         envSecret: 'STRIPE_PRICE_PERSONAL',         label: 'Personal' },
-  { key: 'standard',         configKey: 'stripe_price_standard_override',         envSecret: 'STRIPE_PRICE_STANDARD',         label: 'Standard' },
-  { key: 'professional',     configKey: 'stripe_price_professional_override',     envSecret: 'STRIPE_PRICE_PROFESSIONAL',     label: 'Professional' },
-  { key: 'org_starter',      configKey: 'stripe_price_org_starter_override',      envSecret: 'STRIPE_PRICE_ORG_STARTER',      label: 'Organisation Starter' },
+  { key: 'personal',         configKey: 'stripe_price_personal_override',         envSecret: 'STRIPE_PRICE_PERSONAL',         label: 'Explore Plan' },
+  { key: 'standard',         configKey: 'stripe_price_standard_override',         envSecret: 'STRIPE_PRICE_STANDARD',         label: 'Plan Plan' },
+  { key: 'professional',     configKey: 'stripe_price_professional_override',     envSecret: 'STRIPE_PRICE_PROFESSIONAL',     label: 'Complete Plan' },
+  { key: 'org_starter',      configKey: 'stripe_price_org_starter_override',      envSecret: 'STRIPE_PRICE_ORG_STARTER',      label: 'Together Plan' },
   { key: 'org',              configKey: 'stripe_price_org_override',              envSecret: 'STRIPE_PRICE_ORG',              label: 'Organisation (legacy)' },
   { key: 'org_growth',       configKey: 'stripe_price_org_growth_override',       envSecret: 'STRIPE_PRICE_ORG_GROWTH',       label: 'Organisation Growth' },
   { key: 'org_professional', configKey: 'stripe_price_org_professional_override', envSecret: 'STRIPE_PRICE_ORG_PROFESSIONAL', label: 'Organisation Professional' },

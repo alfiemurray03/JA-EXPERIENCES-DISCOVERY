@@ -68,10 +68,10 @@ const DEFAULT_BRANDING: Record<string, string> = {
 };
 
 const STRIPE_PRICE_SLOTS = [
-  { key: 'personal',         configKey: 'stripe_price_personal_override',         label: 'Personal Plan' },
-  { key: 'standard',         configKey: 'stripe_price_standard_override',         label: 'Standard Plan' },
-  { key: 'professional',     configKey: 'stripe_price_professional_override',     label: 'Professional Plan' },
-  { key: 'org_starter',      configKey: 'stripe_price_org_starter_override',      label: 'Organisation Starter' },
+  { key: 'personal',         configKey: 'stripe_price_personal_override',         label: 'Explore Plan' },
+  { key: 'standard',         configKey: 'stripe_price_standard_override',         label: 'Plan Plan' },
+  { key: 'professional',     configKey: 'stripe_price_professional_override',     label: 'Complete Plan' },
+  { key: 'org_starter',      configKey: 'stripe_price_org_starter_override',      label: 'Together Plan' },
   { key: 'org_growth',       configKey: 'stripe_price_org_growth_override',       label: 'Organisation Growth' },
   { key: 'org_professional', configKey: 'stripe_price_org_professional_override', label: 'Organisation Professional' },
   { key: 'org',              configKey: 'stripe_price_org_override',              label: 'Organisation (legacy)' },
