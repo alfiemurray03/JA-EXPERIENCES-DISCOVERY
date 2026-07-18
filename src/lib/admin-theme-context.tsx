@@ -67,13 +67,29 @@ export function AdminThemeProvider({ children }: { children: React.ReactNode }) 
     }).catch(() => { /* the local preference still remains effective */ });
   }
 
-  // Apply the theme to the root around the entire portal. This includes the
-  // sidebar, header, page canvas, dialogs, drawers and mobile navigation.
+  // Apply the class to the root only while an Admin route is active. A DOM
+  // observer keeps this correct during React Router navigation, including
+  // pushState changes that do not emit a browser popstate event.
   useEffect(() => {
     const root = document.getElementById('admin-theme-root');
     if (!root) return;
-    root.classList.toggle('dark', resolvedTheme === 'dark');
-    root.dataset.adminTheme = resolvedTheme;
+
+    const syncTheme = () => {
+      const adminActive = window.location.pathname === '/admin' || window.location.pathname.startsWith('/admin/');
+      root.classList.toggle('dark', adminActive && resolvedTheme === 'dark');
+      root.dataset.adminTheme = adminActive ? resolvedTheme : 'inactive';
+    };
+
+    syncTheme();
+    const observer = new MutationObserver(syncTheme);
+    observer.observe(root, { childList: true, subtree: true });
+    window.addEventListener('popstate', syncTheme);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('popstate', syncTheme);
+      root.classList.remove('dark');
+      delete root.dataset.adminTheme;
+    };
   }, [resolvedTheme]);
 
   return (
