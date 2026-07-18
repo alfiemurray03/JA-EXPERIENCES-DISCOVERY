@@ -3,9 +3,12 @@ import { createRoot, hydrateRoot } from 'react-dom/client';
 import { HelmetProvider } from '@dr.pogodin/react-helmet';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from './App';
+import { installChunkRecovery } from './lib/chunk-recovery';
 import './styles/globals.css';
 import './styles/admin-polish.css';
 import './styles/pdf-document.css';
+
+installChunkRecovery();
 
 if (import.meta.env.MODE === 'development') {
   const meta = document.createElement('meta');
