@@ -7,6 +7,7 @@ import {
 } from 'react-router-dom';
 
 import CookieBannerErrorBoundary from '@/components/CookieBannerErrorBoundary';
+import RouteErrorPage from '@/components/RouteErrorPage';
 import RootLayout from './layouts/RootLayout';
 import Spinner from './components/Spinner';
 import { routes, adminRoutes, resellerRoutes } from './routes';
@@ -52,13 +53,20 @@ const customerRoutes: RouteObject[] = [
   ...retainedCustomerRoutes,
 ];
 
+const errorElement = <RouteErrorPage />;
+const withErrorPage = (route: RouteObject): RouteObject => ({
+  ...route,
+  errorElement: route.errorElement ?? errorElement,
+});
+
 const routeTree: RouteObject[] = [
   {
     element: rootElement,
+    errorElement,
     children: customerRoutes,
   },
-  ...adminRoutes,
-  ...resellerRoutes,
+  ...adminRoutes.map(withErrorPage),
+  ...resellerRoutes.map(withErrorPage),
 ];
 
 const router = createBrowserRouter(routeTree);
