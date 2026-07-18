@@ -80,22 +80,42 @@ export function applyBrowserBranding(value: Partial<BrowserBrandingSettings>) {
   window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail: settings }));
 }
 
+async function fetchBrowserBranding(): Promise<BrowserBrandingSettings | null> {
+  const endpoints = ['/api/site-settings/public', '/site-settings'];
+  for (const endpoint of endpoints) {
+    try {
+      const response = await fetch(endpoint, { headers: { Accept: 'application/json' }, cache: 'no-store' });
+      if (!response.ok) continue;
+      const data = await response.json() as {
+        settings?: Record<string, string>;
+        browser?: { tab_name?: string; admin_tab_name?: string; favicon_url?: string };
+      };
+      const values = data.settings
+        ? {
+            browserTabName: data.settings.browser_tab_name,
+            adminTabName: data.settings.admin_tab_name,
+            faviconUrl: data.settings.favicon_url,
+          }
+        : {
+            browserTabName: data.browser?.tab_name,
+            adminTabName: data.browser?.admin_tab_name,
+            faviconUrl: data.browser?.favicon_url,
+          };
+      return normaliseBrowserBranding(values);
+    } catch {
+      // Try the next runtime endpoint.
+    }
+  }
+  return null;
+}
+
 export async function loadBrowserBranding(): Promise<BrowserBrandingSettings> {
   const cached = getCachedBrowserBranding();
   applyBrowserBranding(cached);
-  try {
-    const response = await fetch('/api/site-settings/public', { headers: { Accept: 'application/json' }, cache: 'no-store' });
-    const data = await response.json() as { success?: boolean; settings?: Record<string, string> };
-    const settings = normaliseBrowserBranding({
-      browserTabName: data.settings?.browser_tab_name,
-      adminTabName: data.settings?.admin_tab_name,
-      faviconUrl: data.settings?.favicon_url,
-    });
-    applyBrowserBranding(settings);
-    return settings;
-  } catch {
-    return cached;
-  }
+  const loaded = await fetchBrowserBranding();
+  if (!loaded) return cached;
+  applyBrowserBranding(loaded);
+  return loaded;
 }
 
 export function installBrowserBranding() {
