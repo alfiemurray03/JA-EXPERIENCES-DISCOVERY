@@ -57,6 +57,8 @@ test('Saved browser branding is available in public, Admin and Coming Soon runti
   }
   assert.match(browserBranding, /applyBrowserBranding/);
   assert.match(browserBranding, /link\[rel~="icon"\]/);
+  assert.match(browserBranding, /new MutationObserver/);
+  assert.match(browserBranding, /characterData: true/);
   assert.match(browserBranding, /\/api\/site-settings\/public/);
   assert.match(browserBranding, /\/site-settings/);
   assert.match(comingSoon, /loadBrowserBranding/);
