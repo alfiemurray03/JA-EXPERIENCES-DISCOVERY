@@ -358,7 +358,8 @@ function isPublicPlanningPath(path) {
     "/planning-services", "/accommodation", "/transfers", "/local-transport",
     "/travel-documentation-support", "/accessibility-support",
     "/selected-partner-hotels", "/budget-experiences", "/family-experiences",
-    "/couples-experiences", "/about", "/faqs"
+    "/couples-experiences", "/about", "/faqs", "/terms", "/privacy", "/cookies",
+    "/complaints", "/acceptable-use"
   ]);
   const normalized = path.length > 1 && path.endsWith("/") ? path.slice(0, -1) : path;
   return exact.has(normalized) || normalized === "/destinations" || normalized.startsWith("/destinations/");

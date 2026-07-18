@@ -87,16 +87,15 @@ interface CustomerProfile {
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const PLANS = ['free', 'personal', 'standard', 'professional', 'org_starter', 'org_growth', 'org_professional'] as const;
+const PLANS = ['free', 'personal', 'standard', 'professional', 'org_starter'] as const;
 type Plan = typeof PLANS[number];
 
 // Use shared theme-aware badge classes
 const PLAN_STYLES = planBadgeCls;
 
 const PLAN_LABELS: Record<string, string> = {
-  free: 'Free', personal: 'Personal', standard: 'Standard', professional: 'Professional',
-  organisation: 'Organisation', org_starter: 'Org Starter',
-  org_growth: 'Org Growth', org_professional: 'Org Pro',
+  free: 'Free', personal: 'Explore Plan', standard: 'Plan Plan', professional: 'Complete Plan',
+  org_starter: 'Together Plan',
 };
 
 const SUB_STATUS_STYLES = subStatusBadgeCls;
@@ -1173,7 +1172,7 @@ export default function AdminSubscriptions() {
                           <p className={`text-xs ${adminCls.muted}`}>
                             Give this customer permanent access — no subscription, no expiry, never downgraded by Stripe webhooks.
                             Use for staff accounts, beta testers, or special arrangements.
-                            Lifetime grants are available for all paid plans (Personal, Standard, Professional, and Organisation plans).
+                            Lifetime grants are available for Explore Plan, Plan Plan, Complete Plan and Together Plan.
                           </p>
                           <div className="flex gap-2">
                             <Select value={lifetimePlan} onValueChange={(v) => { setLifetimePlan(v as Plan); setLifetimeSuccess(''); }}>

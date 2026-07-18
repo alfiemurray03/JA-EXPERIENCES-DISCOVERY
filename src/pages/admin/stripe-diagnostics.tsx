@@ -210,14 +210,11 @@ export default function AdminStripeDiagnostics() {
   const [keysError,      setKeysError]      = useState('');
   const [showLiveWarning, setShowLiveWarning] = useState(false);
 
-  // Prices form — all 7 plan price IDs
+  // Prices form — the four live JA Plan Studio subscriptions
   const [pricePersonal,        setPricePersonal]        = useState('');
   const [priceStandard,        setPriceStandard]        = useState('');
   const [priceProfessional,    setPriceProfessional]    = useState('');
   const [priceOrgStarter,      setPriceOrgStarter]      = useState('');
-  const [priceOrg,             setPriceOrg]             = useState('');
-  const [priceOrgGrowth,       setPriceOrgGrowth]       = useState('');
-  const [priceOrgProfessional, setPriceOrgProfessional] = useState('');
   const [trialEnabled,         setTrialEnabled]         = useState(true);
   const [trialDays,            setTrialDays]            = useState(30);
   const [pricesSaving,      setPricesSaving]      = useState(false);
@@ -316,9 +313,6 @@ export default function AdminStripeDiagnostics() {
           priceStandard:        priceStandard.trim()        || undefined,
           priceProfessional:    priceProfessional.trim()    || undefined,
           priceOrgStarter:      priceOrgStarter.trim()      || undefined,
-          priceOrg:             priceOrg.trim()             || undefined,
-          priceOrgGrowth:       priceOrgGrowth.trim()       || undefined,
-          priceOrgProfessional: priceOrgProfessional.trim() || undefined,
           trialEnabled,
           trialDays,
         }),
@@ -327,7 +321,7 @@ export default function AdminStripeDiagnostics() {
       if (data.success) {
         setPricesSaved(`Saved: ${data.updated?.join(', ')}`);
         setPricePersonal(''); setPriceStandard(''); setPriceProfessional('');
-        setPriceOrgStarter(''); setPriceOrg(''); setPriceOrgGrowth(''); setPriceOrgProfessional('');
+        setPriceOrgStarter('');
         setTimeout(() => { setPricesSaved(''); loadStatus(); }, 2500);
       } else {
         setPricesError(data.errors?.join('; ') ?? data.error ?? 'Failed to save.');
@@ -519,12 +513,10 @@ export default function AdminStripeDiagnostics() {
                       { label: 'Publishable key configured',         ok: status?.keys.publishableKey.set ?? false },
                       { label: 'Webhook secret configured',          ok: status?.keys.webhookSecret.set ?? false, warn: true },
                       { label: 'Stripe API reachable',               ok: status?.stripeConnected ?? false },
-                      { label: 'Personal price ID set',              ok: status?.prices.personal.set ?? false },
-                      { label: 'Standard price ID set',              ok: status?.prices.standard.set ?? false },
-                      { label: 'Professional price ID set',          ok: status?.prices.professional.set ?? false },
-                      { label: 'Organisation Starter price ID set',  ok: status?.prices.org_starter.set ?? false },
-                      { label: 'Organisation Growth price ID set',   ok: status?.prices.org_growth.set ?? false },
-                      { label: 'Organisation Pro price ID set',      ok: status?.prices.org_professional.set ?? false },
+                      { label: 'Explore Plan price ID set',          ok: status?.prices.personal.set ?? false },
+                      { label: 'Plan Plan price ID set',             ok: status?.prices.standard.set ?? false },
+                      { label: 'Complete Plan price ID set',         ok: status?.prices.professional.set ?? false },
+                      { label: 'Together Plan price ID set',         ok: status?.prices.org_starter.set ?? false },
                       { label: 'Key mode consistent',                ok: status?.isLiveMode === status?.publishableIsLive },
                       { label: 'Webhook handlers implemented',       ok: true },
                     ].map(item => (
@@ -769,13 +761,10 @@ export default function AdminStripeDiagnostics() {
                     </p>
 
                     {[
-                      { label: 'Personal Plan',                placeholder: 'price_…', value: pricePersonal,        set: setPricePersonal,        current: status?.prices.personal.masked },
-                      { label: 'Standard Plan',                placeholder: 'price_…', value: priceStandard,        set: setPriceStandard,        current: status?.prices.standard.masked },
-                      { label: 'Professional Plan',            placeholder: 'price_…', value: priceProfessional,    set: setPriceProfessional,    current: status?.prices.professional.masked },
-                      { label: 'Organisation Starter Plan',    placeholder: 'price_…', value: priceOrgStarter,      set: setPriceOrgStarter,      current: status?.prices.org_starter.masked },
-                      { label: 'Organisation Plan (legacy)',   placeholder: 'price_…', value: priceOrg,             set: setPriceOrg,             current: status?.prices.org.masked },
-                      { label: 'Organisation Growth Plan',     placeholder: 'price_…', value: priceOrgGrowth,       set: setPriceOrgGrowth,       current: status?.prices.org_growth.masked },
-                      { label: 'Organisation Professional Plan', placeholder: 'price_…', value: priceOrgProfessional, set: setPriceOrgProfessional, current: status?.prices.org_professional.masked },
+                      { label: 'Explore Plan',  placeholder: 'price_…', value: pricePersonal,     set: setPricePersonal,     current: status?.prices.personal.masked },
+                      { label: 'Plan Plan',     placeholder: 'price_…', value: priceStandard,     set: setPriceStandard,     current: status?.prices.standard.masked },
+                      { label: 'Complete Plan', placeholder: 'price_…', value: priceProfessional, set: setPriceProfessional, current: status?.prices.professional.masked },
+                      { label: 'Together Plan', placeholder: 'price_…', value: priceOrgStarter,   set: setPriceOrgStarter,   current: status?.prices.org_starter.masked },
                     ].map(plan => (
                       <div key={plan.label}>
                         <Label className="text-xs text-slate-300 mb-1 block">{plan.label}</Label>
@@ -936,12 +925,10 @@ export default function AdminStripeDiagnostics() {
                           onChange={e => setCheckoutPlan(e.target.value)}
                           className="bg-slate-900 border border-slate-700 text-white text-xs rounded-lg px-3 h-9"
                         >
-                          <option value="personal">Personal Plan</option>
-                          <option value="standard">Standard Plan</option>
-                          <option value="professional">Professional Plan</option>
-                          <option value="org_starter">Organisation Starter Plan</option>
-                          <option value="org_growth">Organisation Growth Plan</option>
-                          <option value="org_professional">Organisation Professional Plan</option>
+                          <option value="personal">Explore Plan</option>
+                          <option value="standard">Plan Plan</option>
+                          <option value="professional">Complete Plan</option>
+                          <option value="org_starter">Together Plan</option>
                         </select>
                         <Button onClick={createTestCheckout} disabled={checkoutLoading || isLiveMode}
                           className="bg-blue-700 hover:bg-blue-600 text-white gap-1.5 h-9">

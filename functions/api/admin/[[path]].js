@@ -171,7 +171,14 @@ async function patchCustomer(context, identity, email) {
   let plan = existing.admin_lifetime_plan_id || "free";
   if (["suspend", "suspend_account"].includes(action)) status = "Suspended";
   if (["activate", "reactivate_account"].includes(action)) status = "Active";
-  if (["grant_lifetime", "change_lifetime"].includes(action)) { lifetime = 1; plan = String(body.plan || plan); }
+  if (["grant_lifetime", "change_lifetime"].includes(action)) {
+    const requestedPlan = String(body.plan || plan);
+    if (!["personal", "standard", "professional", "org_starter"].includes(requestedPlan)) {
+      return json({ success: false, error: "Select one of the four live subscription plans for lifetime access." }, 400);
+    }
+    lifetime = 1;
+    plan = requestedPlan;
+  }
   if (action === "revoke_lifetime") { lifetime = 0; plan = "free"; }
   if (["change_plan", "override_plan"].includes(action)) plan = String(body.plan || plan);
   const requestedName = `${String(body.firstName ?? "").trim()} ${String(body.lastName ?? "").trim()}`.trim();

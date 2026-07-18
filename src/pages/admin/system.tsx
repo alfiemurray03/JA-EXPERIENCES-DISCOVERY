@@ -68,13 +68,10 @@ const DEFAULT_BRANDING: Record<string, string> = {
 };
 
 const STRIPE_PRICE_SLOTS = [
-  { key: 'personal',         configKey: 'stripe_price_personal_override',         label: 'Personal Plan' },
-  { key: 'standard',         configKey: 'stripe_price_standard_override',         label: 'Standard Plan' },
-  { key: 'professional',     configKey: 'stripe_price_professional_override',     label: 'Professional Plan' },
-  { key: 'org_starter',      configKey: 'stripe_price_org_starter_override',      label: 'Organisation Starter' },
-  { key: 'org_growth',       configKey: 'stripe_price_org_growth_override',       label: 'Organisation Growth' },
-  { key: 'org_professional', configKey: 'stripe_price_org_professional_override', label: 'Organisation Professional' },
-  { key: 'org',              configKey: 'stripe_price_org_override',              label: 'Organisation (legacy)' },
+  { key: 'personal',     configKey: 'stripe_price_personal_override',     label: 'Explore Plan' },
+  { key: 'standard',     configKey: 'stripe_price_standard_override',     label: 'Plan Plan' },
+  { key: 'professional', configKey: 'stripe_price_professional_override', label: 'Complete Plan' },
+  { key: 'org_starter',  configKey: 'stripe_price_org_starter_override',  label: 'Together Plan' },
 ] as const;
 
 type StripePriceKey = typeof STRIPE_PRICE_SLOTS[number]['key'];
@@ -100,23 +97,15 @@ const DEFAULT_PLAN_LIMITS: Record<string, string> = {
   limit_drafts_standard:         '5',
   limit_drafts_professional:     '10',
   limit_drafts_org_starter:      '10',
-  limit_drafts_org_growth:       '10',
-  limit_drafts_org_professional: '10',
   // Retention days (0 = no saving)
   retention_days_personal:         '14',
   retention_days_standard:         '14',
   retention_days_professional:     '30',
   retention_days_org_starter:      '30',
-  retention_days_org_growth:       '30',
-  retention_days_org_professional: '30',
-  // Org base seats
-  seats_org_starter:      '2',
-  seats_org_growth:       '5',
-  seats_org_professional: '10',
-  // Seat add-on prices (display only — actual prices set in Stripe)
-  price_seat_user:    '4.99',
-  price_seat_manager: '7.99',
-  price_seat_admin:   '9.99',
+  credit_limit_personal: '350000', five_hour_limit_personal: '150000',
+  credit_limit_standard: '750000', five_hour_limit_standard: '300000',
+  credit_limit_professional: '1500000', five_hour_limit_professional: '600000',
+  credit_limit_org_starter: 'unlimited', five_hour_limit_org_starter: 'unlimited',
 };
 
 function adminHeaders(): Record<string, string> {
@@ -362,7 +351,7 @@ export default function AdminSystem() {
                 <div className="flex items-start gap-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 rounded-xl px-4 py-3">
                   <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                   <p className="text-xs text-foreground">
-                    These values are stored in the database and used as reference. The enforcement logic in the application code uses <code className="text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-transparent px-1 rounded">src/lib/plan-config.ts</code> as the source of truth. Update both if you change limits.
+                    These values are stored in the database and enforced by the builder service. Invalid or missing values safely fall back to the deployed plan defaults.
                   </p>
                 </div>
 
@@ -376,12 +365,10 @@ export default function AdminSystem() {
                     <FieldGroup
                       fields={[
                         { id: 'limit_drafts_free',             label: 'Free (max drafts)' },
-                        { id: 'limit_drafts_personal',         label: 'Personal (max drafts)' },
-                        { id: 'limit_drafts_standard',         label: 'Standard (max drafts)' },
-                        { id: 'limit_drafts_professional',     label: 'Professional (max drafts)' },
-                        { id: 'limit_drafts_org_starter',      label: 'Org Starter (shared max)' },
-                        { id: 'limit_drafts_org_growth',       label: 'Org Growth (shared max)' },
-                        { id: 'limit_drafts_org_professional', label: 'Org Professional (shared max)' },
+                        { id: 'limit_drafts_personal',         label: 'Explore Plan (max drafts)' },
+                        { id: 'limit_drafts_standard',         label: 'Plan Plan (max drafts)' },
+                        { id: 'limit_drafts_professional',     label: 'Complete Plan (max drafts)' },
+                        { id: 'limit_drafts_org_starter',      label: 'Together Plan (max drafts)' },
                       ]}
                       values={planLimits}
                       onChange={(id, val) => setPlanLimits(prev => ({ ...prev, [id]: val }))}
@@ -398,12 +385,10 @@ export default function AdminSystem() {
                   <CardContent className="px-4 pb-4 space-y-4">
                     <FieldGroup
                       fields={[
-                        { id: 'retention_days_personal',         label: 'Personal (days)' },
-                        { id: 'retention_days_standard',         label: 'Standard (days)' },
-                        { id: 'retention_days_professional',     label: 'Professional (days)' },
-                        { id: 'retention_days_org_starter',      label: 'Org Starter (days)' },
-                        { id: 'retention_days_org_growth',       label: 'Org Growth (days)' },
-                        { id: 'retention_days_org_professional', label: 'Org Professional (days)' },
+                        { id: 'retention_days_personal',         label: 'Explore Plan (days)' },
+                        { id: 'retention_days_standard',         label: 'Plan Plan (days)' },
+                        { id: 'retention_days_professional',     label: 'Complete Plan (days)' },
+                        { id: 'retention_days_org_starter',      label: 'Together Plan (days)' },
                       ]}
                       values={planLimits}
                       onChange={(id, val) => setPlanLimits(prev => ({ ...prev, [id]: val }))}
@@ -411,18 +396,19 @@ export default function AdminSystem() {
                   </CardContent>
                 </Card>
 
-                {/* Org seats */}
+                {/* Credit allowances */}
                 <Card className="bg-card border-border">
                   <CardHeader className="pb-3 pt-4 px-4">
-                    <h3 className="text-sm font-semibold text-foreground">Organisation Base Seats</h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">Number of user seats included in each organisation plan before add-ons.</p>
+                    <h3 className="text-sm font-semibold text-foreground">Billing-period Credit Allowances</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">Credits available per Stripe billing period. Use “unlimited” only for Together Plan.</p>
                   </CardHeader>
                   <CardContent className="px-4 pb-4 space-y-4">
                     <FieldGroup
                       fields={[
-                        { id: 'seats_org_starter',      label: 'Org Starter (seats)' },
-                        { id: 'seats_org_growth',       label: 'Org Growth (seats)' },
-                        { id: 'seats_org_professional', label: 'Org Professional (seats)' },
+                        { id: 'credit_limit_personal', label: 'Explore Plan credits' },
+                        { id: 'credit_limit_standard', label: 'Plan Plan credits' },
+                        { id: 'credit_limit_professional', label: 'Complete Plan credits' },
+                        { id: 'credit_limit_org_starter', label: 'Together Plan credits' },
                       ]}
                       values={planLimits}
                       onChange={(id, val) => setPlanLimits(prev => ({ ...prev, [id]: val }))}
@@ -430,18 +416,19 @@ export default function AdminSystem() {
                   </CardContent>
                 </Card>
 
-                {/* Seat add-on prices */}
+                {/* Rolling limits */}
                 <Card className="bg-card border-border">
                   <CardHeader className="pb-3 pt-4 px-4">
-                    <h3 className="text-sm font-semibold text-foreground">Additional Seat Pricing (£/month)</h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">Reference prices for additional seat add-ons. Actual billing is controlled by Stripe Price IDs (set in Secrets).</p>
+                    <h3 className="text-sm font-semibold text-foreground">Rolling Five-hour Credit Limits</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">Maximum usage during any rolling five-hour window.</p>
                   </CardHeader>
                   <CardContent className="px-4 pb-4 space-y-4">
                     <FieldGroup
                       fields={[
-                        { id: 'price_seat_user',    label: 'Additional User Seat (£)' },
-                        { id: 'price_seat_manager', label: 'Additional Manager Seat (£)' },
-                        { id: 'price_seat_admin',   label: 'Additional Admin Seat (£)' },
+                        { id: 'five_hour_limit_personal', label: 'Explore Plan / 5 hours' },
+                        { id: 'five_hour_limit_standard', label: 'Plan Plan / 5 hours' },
+                        { id: 'five_hour_limit_professional', label: 'Complete Plan / 5 hours' },
+                        { id: 'five_hour_limit_org_starter', label: 'Together Plan / 5 hours' },
                       ]}
                       values={planLimits}
                       onChange={(id, val) => setPlanLimits(prev => ({ ...prev, [id]: val }))}

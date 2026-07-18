@@ -86,6 +86,13 @@ const LEGAL_DOCS: Array<{
     publicPath: '/acceptable-use',
     description: 'Rules governing what users may and may not do on the platform.',
   },
+  {
+    slug: 'complaints-policy',
+    title: 'Complaints Policy',
+    icon: FileText,
+    publicPath: '/complaints',
+    description: 'How customers can complain, expected response times and escalation stages.',
+  },
 ];
 
 // ── Default content (fallback if DB is empty) ─────────────────────────────────
@@ -126,10 +133,10 @@ Under UK GDPR, you have the right to access, rectify, erase, restrict, port, and
 7. Contact
 For any privacy-related queries, contact dpo@jagroupservices.co.uk.`,
 
-  'terms-of-service': `These Terms of Service ("Terms") govern your access to and use of JA Plan Studio, operated by JA Group Services ("we", "us", "our"). By registering an account or using the platform, you agree to be bound by these Terms.
+  'terms-of-service': `These Terms and Conditions govern your access to and use of JA Plan Studio, operated by JA Group Services Ltd (company number 16314179). By registering an account, starting a trial or using the platform, you agree to these terms.
 
 1. The Service
-JA Plan Studio is a document creation tool that provides templates, editing tools, and export functionality. The platform does not provide legal, financial, tax, medical, or any other professional advice. Documents generated are templates only.
+JA Plan Studio provides guided builders, destination discovery and personalised planning outputs. It is not a travel agent, tour operator, package organiser, insurer, booking provider or regulated adviser. Customers must check provider terms, prices, availability, accessibility and suitability.
 
 2. Eligibility
 You must be at least 18 years old to use JA Plan Studio.
@@ -138,7 +145,7 @@ You must be at least 18 years old to use JA Plan Studio.
 You are responsible for maintaining the confidentiality of your account credentials and for all activity that occurs under your account.
 
 4. Subscriptions, Trials & Billing
-Paid plans are billed monthly in advance. Prices are displayed in GBP and include VAT where applicable. You may cancel your subscription at any time from your account settings.
+Explore Plan, Plan Plan, Complete Plan and Together Plan are monthly subscriptions with a 30-day trial for eligible new customers. They renew automatically unless cancelled. Credit allowances and rolling five-hour limits shown at purchase form part of the plan description. Statutory cancellation and refund rights are not affected.
 
 5. Acceptable Use
 You agree not to use JA Plan Studio to create fraudulent, misleading, or illegal documents, or to violate any applicable law or regulation.
@@ -151,6 +158,23 @@ These Terms are governed by the laws of England and Wales.
 
 8. Contact
 If you have questions about these Terms, contact japlanstudio@jagroupservices.co.uk.`,
+
+  'complaints-policy': `JA Plan Studio is operated by JA Group Services Ltd. Complaints may be submitted through the Support Centre or to japlanstudio@jagroupservices.co.uk.
+
+1. Acknowledgement
+We normally acknowledge a complaint within two working days.
+
+2. Stage 1
+We aim to provide a substantive response within ten working days. If we need longer, we will explain why and provide an updated date.
+
+3. Stage 2
+Customers may request a senior review within 14 days of the Stage 1 response. We aim to issue a final response within a further ten working days.
+
+4. Provider complaints
+Complaints about a Headout, GetYourGuide or other third-party booking should normally be directed to the provider that supplied and fulfilled the booking.
+
+5. Rights
+This procedure does not remove statutory consumer or data-protection rights. Privacy complaints may also be raised with the Information Commissioner's Office.`,
 
   'cookie-policy': `This Cookie Policy explains how JA Plan Studio uses cookies and similar tracking technologies on our website.
 

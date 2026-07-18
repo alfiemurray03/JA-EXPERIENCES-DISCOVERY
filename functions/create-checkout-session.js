@@ -59,7 +59,7 @@ async function createCheckoutSession(planCode, env) {
     }, 403);
   }
 
-  const priceId = await resolveStripePriceId(selectedPlan, env);
+  const priceId = await resolveStripePriceId(selectedPlan, env, env.DB);
   if (!priceId) {
     return jsonResponse({
       error: "This subscription could not be matched to an active recurring Stripe price.",
@@ -172,7 +172,19 @@ async function syncServicePlans(DB) {
   }
 }
 
-async function resolveStripePriceId(plan, env) {
+async function resolveStripePriceId(plan, env, DB) {
+  const overrideByPlan = {
+    personal: "stripe_price_personal_override",
+    standard: "stripe_price_standard_override",
+    professional: "stripe_price_professional_override",
+    org_starter: "stripe_price_org_starter_override"
+  };
+  const overrideKey = overrideByPlan[plan.id];
+  if (DB && overrideKey) {
+    const row = await DB.prepare("SELECT value FROM site_settings WHERE key = ?").bind(overrideKey).first().catch(() => null);
+    const override = String(row?.value || "").trim();
+    if (override) return override;
+  }
   const secretByPlan = {
     personal: "STRIPE_PRICE_EXPLORE",
     standard: "STRIPE_PRICE_PLAN",

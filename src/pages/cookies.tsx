@@ -8,7 +8,7 @@ import { DATA_PROTECTION_EMAIL, normaliseContactDetails } from '@/lib/contact-de
 interface LegalContent { body: string; effectiveDate: string; version: number; }
 
 export default function CookiePolicyPage() {
-  const lastUpdated = '3 June 2026';
+  const lastUpdated = '18 July 2026';
   const { siteName, companyName, brandName } = useSiteSettings();
 
   const [liveContent, setLiveContent] = useState<LegalContent | null>(null);
@@ -33,7 +33,7 @@ export default function CookiePolicyPage() {
       <Helmet>
         <title>Cookie Policy — {siteName}</title>
         <meta name="description" content={`How ${siteName} uses cookies and similar technologies on our platform.`} />
-        <link rel="canonical" href="https://japlanstudio.co.uk/cookies" />
+        <link rel="canonical" href="https://japlanstudio.jagroupservices.co.uk/cookies" />
       </Helmet>
 
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -346,6 +346,7 @@ export default function CookiePolicyPage() {
           <div className="pt-6 border-t border-border flex flex-wrap gap-4 text-sm">
             <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>
             <Link to="/terms" className="text-primary hover:underline">Terms of Service</Link>
+            <Link to="/complaints" className="text-primary hover:underline">Complaints Policy</Link>
             <Link to="/contact" className="text-primary hover:underline">Contact Us</Link>
           </div>
         </div>
