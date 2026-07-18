@@ -4,11 +4,13 @@ import { HelmetProvider } from '@dr.pogodin/react-helmet';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from './App';
 import { installChunkRecovery } from './lib/chunk-recovery';
+import { installBrowserBranding } from './lib/browser-branding';
 import './styles/globals.css';
 import './styles/admin-polish.css';
 import './styles/pdf-document.css';
 
 installChunkRecovery();
+installBrowserBranding();
 
 if (import.meta.env.MODE === 'development') {
   const meta = document.createElement('meta');
