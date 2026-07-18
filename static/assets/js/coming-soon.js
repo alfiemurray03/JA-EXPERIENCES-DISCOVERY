@@ -105,14 +105,41 @@
     }
   }
 
-  function initialisePage() {
+  async function loadBrowserBranding() {
+    for (const endpoint of ["/site-settings", "/api/site-settings/public"]) {
+      try {
+        const response = await fetch(endpoint, {
+          headers: { Accept: "application/json" },
+          cache: "no-store",
+          credentials: "same-origin"
+        });
+        if (!response.ok) continue;
+        const data = await response.json();
+        const tabName = String(data.browser?.tab_name || data.settings?.browser_tab_name || "JA Plan Studio").trim();
+        const faviconUrl = String(data.browser?.favicon_url || data.settings?.favicon_url || "").trim();
+        if (faviconUrl) {
+          document.querySelectorAll('link[rel~="icon"], link[rel="shortcut icon"]').forEach((link) => {
+            link.href = faviconUrl;
+          });
+        }
+        const headline = String(byId("coming-soon-title")?.textContent || "Coming Soon").trim();
+        document.title = `${headline} — ${tabName || "JA Plan Studio"}`;
+        return;
+      } catch {
+        // Try the next public settings endpoint.
+      }
+    }
+  }
+
+  async function initialisePage() {
     straightenBrandMark();
-    loadConfiguration();
+    await loadConfiguration();
+    await loadBrowserBranding();
   }
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", initialisePage, { once: true });
   } else {
-    initialisePage();
+    void initialisePage();
   }
 })();
