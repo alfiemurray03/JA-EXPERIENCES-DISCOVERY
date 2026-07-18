@@ -365,6 +365,12 @@ function isPublicPlanningPath(path) {
   return exact.has(normalized) || normalized === "/destinations" || normalized.startsWith("/destinations/");
 }
 
+function isPublicLegalPath(path) {
+  const normalized = path.length > 1 && path.endsWith("/") ? path.slice(0, -1) : path;
+  return new Set(["/terms", "/privacy", "/cookies", "/complaints", "/acceptable-use"]).has(normalized)
+    || normalized.startsWith("/legal/");
+}
+
 function shouldGateCustomerDocument(request, path, publicAuthPath) {
   if (publicAuthPath) return false;
   if (path.startsWith("/account/") || path === "/account/dashboard") {
@@ -463,6 +469,7 @@ export async function onRequest(context) {
       path === "/admin" ||
       path === "/admin/" ||
       path.startsWith("/admin/") ||
+      isPublicLegalPath(path) ||
       publicAuthPath;
 
     if (!isStatusBypass && env.DB) {
