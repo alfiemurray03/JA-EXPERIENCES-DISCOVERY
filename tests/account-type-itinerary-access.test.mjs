@@ -74,8 +74,23 @@ test('pricing and builders render separate Individual and Organisation experienc
   assert.match(builders, /Workspace setup/);
   assert.match(builders, /Shared with me/);
   assert.match(builders, /Individual itineraries are private/);
-  assert.match(plans, /Invited users can edit itineraries/);
+  assert.match(plans, /Maximum invited-user permission/);
+  assert.match(plans, /Recipient must sign in with invited email/);
+  assert.match(plans, /Review and revoke invitations/);
   assert.match(plans, /personal: false, standard: false, professional: false, org_starter: true/);
+});
+
+test('Admin Operations monitors account types, organisations and permission exceptions', async () => {
+  const source = await readFile(new URL('functions/api/admin/section/operations.js', root), 'utf8');
+  assert.match(source, /organisation_workspaces/);
+  assert.match(source, /account_workspace_register/);
+  assert.match(source, /classification_required/);
+  assert.match(source, /permission_attention/);
+  assert.match(source, /active_itinerary_invitations/);
+  assert.match(source, /plan_entitlement_matrix/);
+  assert.match(source, /Individual account has active organisation invitations/);
+  assert.match(source, /Edit invitations exceed current entitlement/);
+  assert.match(source, /getNativeSession\(request, env, "admin"\)/);
 });
 
 test('Together member workspace mutations require Organisation identity and Together plan', async () => {
