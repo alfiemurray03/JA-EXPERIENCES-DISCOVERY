@@ -1,9 +1,6 @@
 /**
  * POST /api/stripe/create-checkout-session
- * Creates a Stripe Checkout Session for a plan subscription.
- *
- * Body: { plan: PlanId, successUrl?, cancelUrl?, referralCode? }
- * Referral code is also read from the ja_ref cookie as a fallback.
+ * Creates a Stripe Checkout Session for a live JA Plan Studio subscription.
  */
 import type { Request, Response } from 'express';
 import Stripe from 'stripe';
@@ -11,37 +8,95 @@ import { getSecret } from '#airo/secrets';
 import { resolveSession } from '../../auth/_session.js';
 import { db } from '../../../db/client.js';
 import { ja_users, ja_system_config } from '../../../db/schema.js';
-import { eq } from 'drizzle-orm';
-import { sql } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import {
   PLAN_STRIPE_SECRET_KEY, PLAN_HAS_TRIAL, PLAN_LABELS, PAID_PLANS,
   type PlanId,
 } from '../../../../lib/plan-config.js';
 
-export default async function handler(req: Request, res: Response) {
-  // Guard: payments must be enabled via feature toggle
+const PRICE_CONFIG_KEY: Partial<Record<PlanId, string>> = {
+  personal: 'stripe_price_personal_override',
+  standard: 'stripe_price_standard_override',
+  professional: 'stripe_price_professional_override',
+  org_starter: 'stripe_price_org_starter_override',
+};
+
+const EXPECTED_PRICE: Partial<Record<PlanId, { amount: number; productNames: string[] }>> = {
+  personal: { amount: 599, productNames: ['Explore Plan', 'JA Plan Studio – Explore', 'JA Plan Studio - Explore'] },
+  standard: { amount: 799, productNames: ['Plan Plan', 'JA Plan Studio – Plan', 'JA Plan Studio - Plan'] },
+  professional: { amount: 1499, productNames: ['Complete Plan', 'JA Plan Studio – Complete', 'JA Plan Studio - Complete'] },
+  org_starter: { amount: 3999, productNames: ['Together Plan', 'JA Plan Studio – Together', 'JA Plan Studio - Together'] },
+};
+
+async function configValue(key: string): Promise<string> {
+  const rows = await db
+    .select({ value: ja_system_config.value })
+    .from(ja_system_config)
+    .where(eq(ja_system_config.configKey, key))
+    .limit(1);
+  return String(rows[0]?.value ?? '').trim();
+}
+
+async function paymentsAreEnabled(): Promise<boolean> {
+  return (await configValue('toggle_payments')) === 'true';
+}
+
+function normalise(value: unknown): string {
+  return String(value ?? '').trim().toLowerCase();
+}
+
+async function resolveConfiguredPriceId(planId: PlanId): Promise<string> {
+  const overrideKey = PRICE_CONFIG_KEY[planId];
+  if (overrideKey) {
+    const override = await configValue(overrideKey);
+    if (override) return override;
+  }
+
+  const secretName = PLAN_STRIPE_SECRET_KEY[planId];
+  return secretName ? String(getSecret(secretName) ?? '').trim() : '';
+}
+
+async function validatePrice(stripe: Stripe, planId: PlanId, priceId: string): Promise<string | null> {
+  const expected = EXPECTED_PRICE[planId];
+  if (!expected) return 'This subscription is not configured for checkout.';
+  if (!/^price_[A-Za-z0-9]+$/.test(priceId)) return 'The configured Stripe Price ID is invalid.';
+
   try {
-    const toggleRows = await db
-      .select({ value: ja_system_config.value })
-      .from(ja_system_config)
-      .where(eq(ja_system_config.configKey, 'toggle_payments'))
-      .limit(1);
-    const paymentsEnabled = toggleRows[0]?.value === 'true';
-    if (!paymentsEnabled) {
+    const price = await stripe.prices.retrieve(priceId, { expand: ['product'] });
+    const product = price.product && typeof price.product === 'object' && !('deleted' in price.product)
+      ? price.product as Stripe.Product
+      : null;
+    const productName = normalise(product?.name);
+    const acceptedNames = new Set(expected.productNames.map(normalise));
+
+    if (!price.active || product?.active === false) return 'This subscription is not active in Stripe.';
+    if (!acceptedNames.has(productName)) return `The configured Price ID does not belong to ${PLAN_LABELS[planId]}.`;
+    if (price.currency.toLowerCase() !== 'gbp' || price.unit_amount !== expected.amount) {
+      return `The configured Stripe price does not match the published ${PLAN_LABELS[planId]} amount.`;
+    }
+    if (price.recurring?.interval !== 'month' || (price.recurring.interval_count ?? 1) !== 1) {
+      return 'The configured Stripe price is not a monthly subscription.';
+    }
+    return null;
+  } catch (error) {
+    console.error('stripe.checkout.price-validation.error', error);
+    return 'The configured Stripe Price ID could not be verified.';
+  }
+}
+
+export default async function handler(req: Request, res: Response) {
+  try {
+    if (!(await paymentsAreEnabled())) {
       return res.status(503).json({
         success: false,
-        error: 'Payments are not currently enabled on this platform. Please try again later.',
-        code: 'PAYMENTS_DISABLED',
+        error: 'Payments are coming soon. Checkout is currently switched off by JA Plan Studio.',
       });
     }
-  } catch {
-    // If we can't read the toggle, default to blocked for safety
-    return res.status(503).json({
-      success: false,
-      error: 'Unable to verify payment configuration. Please try again later.',
-      code: 'PAYMENTS_DISABLED',
-    });
+  } catch (error) {
+    console.error('stripe.checkout.toggle-read.error', error);
+    return res.status(503).json({ success: false, error: 'Checkout is temporarily unavailable. Please try again later.' });
   }
+
   const { plan, successUrl, cancelUrl, referralCode: bodyRef } = req.body as {
     plan: string;
     successUrl?: string;
@@ -49,70 +104,33 @@ export default async function handler(req: Request, res: Response) {
     referralCode?: string;
   };
 
-  // Validate plan
   if (!PAID_PLANS.includes(plan as PlanId)) {
-    return res.status(400).json({
-      success: false,
-      error: `Invalid plan. Must be one of: ${PAID_PLANS.join(', ')}.`,
-    });
+    return res.status(400).json({ success: false, error: 'Please select one of the available JA Plan Studio subscriptions.' });
   }
 
   const planId = plan as PlanId;
-
-  const secretKey = getSecret('STRIPE_SECRET_KEY') as string | null;
+  const secretKey = String(getSecret('STRIPE_SECRET_KEY') ?? '').trim();
   if (!secretKey) {
-    return res.status(503).json({ success: false, error: 'Stripe is not configured on this server.' });
-  }
-
-  // Load the Price ID from secrets
-  const priceSecretKey = PLAN_STRIPE_SECRET_KEY[planId];
-  if (!priceSecretKey) {
-    return res.status(400).json({ success: false, error: 'No Stripe price configured for this plan.' });
+    return res.status(503).json({ success: false, error: 'Checkout is temporarily unavailable. Please contact JA Plan Studio.' });
   }
 
   const stripe = new Stripe(secretKey, { apiVersion: '2026-05-27.dahlia' });
-  let priceId = getSecret(priceSecretKey) as string | null;
-  if (!priceId) {
-    try {
-      const expectedPence: Partial<Record<PlanId, number>> = {
-        personal: 599,
-        standard: 799,
-        professional: 1499,
-        org_starter: 3999,
-      };
-      const stripeProductNames: Partial<Record<PlanId, string>> = {
-        personal: 'JA Plan Studio – Explore',
-        standard: 'JA Plan Studio – Plan',
-        professional: 'JA Plan Studio – Complete',
-        org_starter: 'JA Plan Studio – Together',
-      };
-      const catalogue = await stripe.prices.list({ active: true, type: 'recurring', limit: 100, expand: ['data.product'] });
-      const match = catalogue.data.find((price) => {
-        const product = typeof price.product === 'object' && !price.product.deleted ? price.product : null;
-        return product?.active !== false
-          && [PLAN_LABELS[planId], stripeProductNames[planId]]
-            .filter(Boolean)
-            .some((name) => name!.trim().toLowerCase() === product?.name?.trim().toLowerCase())
-          && price.currency.toLowerCase() === 'gbp'
-          && price.unit_amount === expectedPence[planId]
-          && price.recurring?.interval === 'month';
-      });
-      priceId = match?.id ?? null;
-    } catch (error) {
-      console.error('stripe.price-resolution.error', error);
-    }
+  let priceId = '';
+  try {
+    priceId = await resolveConfiguredPriceId(planId);
+  } catch (error) {
+    console.error('stripe.checkout.price-config.error', error);
   }
+
   if (!priceId) {
-    return res.status(503).json({
-      success: false,
-      error: `The ${PLAN_LABELS[planId]} plan is not yet configured. Please add the ${priceSecretKey} secret in your project settings.`,
-    });
+    return res.status(503).json({ success: false, error: `${PLAN_LABELS[planId]} checkout has not been configured yet.` });
   }
+
+  const priceError = await validatePrice(stripe, planId, priceId);
+  if (priceError) return res.status(409).json({ success: false, error: priceError });
 
   try {
     const origin = `${req.protocol}://${req.get('host')}`;
-
-    // Pre-fill customer email if user is logged in
     const userId = await resolveSession(req);
     let customerEmail: string | undefined;
 
@@ -125,7 +143,6 @@ export default async function handler(req: Request, res: Response) {
       customerEmail = users[0]?.email;
     }
 
-    // Resolve referral code: body param > cookie
     const refCode = (bodyRef ?? (req.cookies?.ja_ref as string | undefined) ?? '').toUpperCase().trim() || undefined;
     let affiliateId: number | undefined;
 
@@ -134,60 +151,42 @@ export default async function handler(req: Request, res: Response) {
         const rows = await db.execute(sql`
           SELECT id FROM ja_affiliates WHERE referral_code = ${refCode} AND status = 'approved' LIMIT 1
         `);
-        const aff = ((rows as unknown as { rows?: unknown[] }).rows ?? [])[0] as { id: number } | undefined;
-        if (aff) affiliateId = aff.id;
-      } catch { /* non-fatal */ }
+        const affiliate = ((rows as unknown as { rows?: unknown[] }).rows ?? [])[0] as { id: number } | undefined;
+        if (affiliate) affiliateId = affiliate.id;
+      } catch {
+        // Referral attribution is non-fatal to checkout.
+      }
     }
 
     const trialDays = PLAN_HAS_TRIAL[planId] ? 30 : 0;
+    const metadata = {
+      plan: planId,
+      ...(userId ? { userId: String(userId) } : {}),
+      ...(affiliateId ? { affiliateId: String(affiliateId), referralCode: refCode! } : {}),
+    };
 
-    const sessionParams: Stripe.Checkout.SessionCreateParams = {
+    const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       payment_method_types: ['card'],
       ...(customerEmail ? { customer_email: customerEmail } : {}),
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: successUrl ?? `${origin}/dashboard?checkout=success&plan=${planId}`,
-      cancel_url:  cancelUrl  ?? `${origin}/pricing?checkout=cancelled`,
+      cancel_url: cancelUrl ?? `${origin}/pricing?checkout=cancelled`,
       allow_promotion_codes: true,
-      metadata: {
-        plan: planId,
-        ...(userId ? { userId: String(userId) } : {}),
-        ...(affiliateId ? { affiliateId: String(affiliateId), referralCode: refCode! } : {}),
+      metadata,
+      subscription_data: {
+        ...(trialDays > 0 ? { trial_period_days: trialDays } : {}),
+        metadata,
       },
-      ...(trialDays > 0
-        ? {
-            subscription_data: {
-              trial_period_days: trialDays,
-              metadata: {
-                plan: planId,
-                ...(userId ? { userId: String(userId) } : {}),
-                ...(affiliateId ? { affiliateId: String(affiliateId), referralCode: refCode! } : {}),
-              },
-            },
-          }
-        : {
-            subscription_data: {
-              metadata: {
-                plan: planId,
-                ...(userId ? { userId: String(userId) } : {}),
-                ...(affiliateId ? { affiliateId: String(affiliateId), referralCode: refCode! } : {}),
-              },
-            },
-          }),
-    };
-
-    const session = await stripe.checkout.sessions.create(sessionParams);
-
-    return res.json({
-      success: true,
-      url: session.url,
-      sessionId: session.id,
     });
-  } catch (err) {
-    console.error('stripe.create-checkout-session.error', err);
-    const message = err instanceof Stripe.errors.StripeError
-      ? err.message
-      : 'Failed to create checkout session.';
-    return res.status(500).json({ success: false, error: message });
+
+    if (!session.url) {
+      return res.status(503).json({ success: false, error: 'Stripe did not return a checkout page. Please try again.' });
+    }
+
+    return res.json({ success: true, url: session.url, sessionId: session.id });
+  } catch (error) {
+    console.error('stripe.create-checkout-session.error', error);
+    return res.status(503).json({ success: false, error: 'Checkout could not be started. Please try again later.' });
   }
 }
