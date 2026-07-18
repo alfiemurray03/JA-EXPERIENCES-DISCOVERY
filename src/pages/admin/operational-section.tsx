@@ -61,33 +61,38 @@ function arrayEntries(value: Record<string, unknown>) {
 
 function DataTable({ title, rows }: { title: string; rows: unknown[] }) {
   const objects = rows.filter(row => row && typeof row === 'object') as Array<Record<string, unknown>>;
-  const columns = Array.from(new Set(objects.flatMap(row => Object.keys(row)))).slice(0, 6);
+  const columns = Array.from(new Set(objects.flatMap(row => Object.keys(row)))).slice(0, 8);
   return (
-    <Card className="border-slate-200 bg-white overflow-hidden">
-      <CardHeader className="px-5 py-4 border-b border-slate-100">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="font-semibold text-slate-900">{titleCase(title)}</h2>
-          <span className="text-xs font-medium text-slate-500">{rows.length.toLocaleString('en-GB')} records</span>
+    <Card className="overflow-hidden border-slate-200 bg-white">
+      <CardHeader className="border-b border-slate-100 px-5 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="min-w-0 break-words font-semibold text-slate-900">{titleCase(title)}</h2>
+          <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">{rows.length.toLocaleString('en-GB')} records</span>
         </div>
       </CardHeader>
-      <CardContent className="p-0 overflow-x-auto">
+      <CardContent className="p-0">
         {!rows.length ? (
-          <div className="py-12 text-center text-sm text-slate-500">No records currently need attention.</div>
+          <div className="px-5 py-12 text-center text-sm text-slate-500">No records currently need attention.</div>
         ) : objects.length ? (
-          <table className="w-full min-w-[640px] text-sm">
-            <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
-              <tr>{columns.map(column => <th key={column} className="px-4 py-3 font-semibold">{titleCase(column)}</th>)}</tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {objects.slice(0, 100).map((row, index) => (
-                <tr key={String(row.id || row.reference || row.email || index)} className="hover:bg-slate-50/70">
-                  {columns.map(column => <td key={column} className="px-4 py-3 text-slate-700 max-w-[260px] truncate">{displayValue(row[column])}</td>)}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="admin-table-scroll">
+            <table className="admin-data-table min-w-[760px]" aria-label={titleCase(title)}>
+              <thead>
+                <tr>{columns.map(column => <th key={column} scope="col">{titleCase(column)}</th>)}</tr>
+              </thead>
+              <tbody>
+                {objects.slice(0, 100).map((row, index) => (
+                  <tr key={String(row.id || row.reference || row.email || index)}>
+                    {columns.map(column => {
+                      const text = displayValue(row[column]);
+                      return <td key={column} title={text} className="min-w-[140px] max-w-[320px] whitespace-normal break-words">{text}</td>;
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         ) : (
-          <div className="p-5 text-sm text-slate-700">{rows.map(displayValue).join(', ')}</div>
+          <div className="break-words p-5 text-sm text-slate-700">{rows.map(displayValue).join(', ')}</div>
         )}
       </CardContent>
     </Card>
@@ -125,34 +130,34 @@ export default function AdminOperationalSection() {
 
   return (
     <AdminLayout title={definition.title} subtitle={definition.subtitle}>
-      <div className="max-w-7xl mx-auto space-y-6 pb-16">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-blue-100 flex items-center justify-center"><Activity className="w-5 h-5 text-blue-600" /></div>
-            <div><h1 className="text-2xl font-bold text-slate-950">{definition.title}</h1><p className="text-sm text-slate-500">{definition.subtitle}</p></div>
+      <div className="mx-auto w-full max-w-7xl space-y-6 pb-16">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex min-w-0 items-start gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-100"><Activity className="h-5 w-5 text-blue-600" /></div>
+            <div className="min-w-0"><h1 className="break-words text-2xl font-bold text-slate-950">{definition.title}</h1><p className="break-words text-sm text-slate-500">{definition.subtitle}</p></div>
           </div>
-          <div className="flex items-center gap-2">
-            {definition.section === 'status' && <Button asChild variant="outline" size="sm"><Link to="/admin/site-settings"><Settings className="w-4 h-4 mr-2" />Manage status</Link></Button>}
-            <Button variant="outline" size="sm" onClick={() => void load()} disabled={loading}><RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />Refresh</Button>
+          <div className="flex flex-wrap items-center gap-2">
+            {definition.section === 'status' && <Button asChild variant="outline" size="sm"><Link to="/admin/site-settings"><Settings className="mr-2 h-4 w-4" />Manage status</Link></Button>}
+            <Button variant="outline" size="sm" onClick={() => void load()} disabled={loading}><RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />Refresh</Button>
           </div>
         </div>
 
-        {error && <Alert variant="destructive"><AlertTriangle className="w-4 h-4" /><AlertDescription>{error}</AlertDescription></Alert>}
+        {error && <Alert variant="destructive"><AlertTriangle className="h-4 w-4" /><AlertDescription>{error}</AlertDescription></Alert>}
 
-        {loading ? <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">{[0,1,2,3].map(item => <div key={item} className="h-28 rounded-xl bg-slate-100 animate-pulse" />)}</div> : (
+        {loading ? <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{[0,1,2,3].map(item => <div key={item} className="h-28 rounded-xl bg-slate-100 animate-pulse" />)}</div> : (
           <>
-            {scalars.length > 0 && <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">{scalars.map(([key, value]) => (
-              <Card key={key} className="border-slate-200 bg-white"><CardContent className="p-5"><div className="flex items-start justify-between gap-3"><div><p className="text-xs text-slate-500 mb-1">{titleCase(key)}</p><p className="text-xl font-bold text-slate-950 break-words">{displayValue(value)}</p></div><Database className="w-5 h-5 text-blue-500 shrink-0" /></div></CardContent></Card>
+            {scalars.length > 0 && <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{scalars.map(([key, value]) => (
+              <Card key={key} className="h-full border-slate-200 bg-white"><CardContent className="p-5"><div className="flex min-w-0 items-start justify-between gap-3"><div className="min-w-0"><p className="mb-1 break-words text-xs text-slate-500">{titleCase(key)}</p><p className="break-words text-xl font-bold text-slate-950">{displayValue(value)}</p></div><Database className="h-5 w-5 shrink-0 text-blue-500" /></div></CardContent></Card>
             ))}</div>}
 
             {objects.map(([key, value]) => {
               const entries = scalarEntries(value as Record<string, unknown>);
               if (!entries.length) return null;
-              return <Card key={key} className="border-slate-200 bg-white"><CardHeader className="px-5 py-4 border-b border-slate-100"><h2 className="font-semibold text-slate-900">{titleCase(key)}</h2></CardHeader><CardContent className="p-5 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{entries.map(([itemKey, itemValue]) => <div key={itemKey} className="rounded-xl border border-slate-200 bg-slate-50 p-4"><p className="text-xs text-slate-500 mb-1">{titleCase(itemKey)}</p><p className="font-semibold text-slate-900 break-words">{displayValue(itemValue)}</p></div>)}</CardContent></Card>;
+              return <Card key={key} className="border-slate-200 bg-white"><CardHeader className="border-b border-slate-100 px-5 py-4"><h2 className="break-words font-semibold text-slate-900">{titleCase(key)}</h2></CardHeader><CardContent className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-3">{entries.map(([itemKey, itemValue]) => <div key={itemKey} className="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-4"><p className="mb-1 break-words text-xs text-slate-500">{titleCase(itemKey)}</p><p className="break-words font-semibold text-slate-900">{displayValue(itemValue)}</p></div>)}</CardContent></Card>;
             })}
 
             {arrays.map(([key, rows]) => <DataTable key={key} title={key} rows={rows} />)}
-            {!scalars.length && !objects.length && !arrays.length && !error && <Card className="border-slate-200"><CardContent className="py-16 text-center"><Database className="w-8 h-8 text-slate-300 mx-auto mb-3" /><p className="font-medium text-slate-800">No administration data is available</p><p className="text-sm text-slate-500">There are currently no records in this section.</p></CardContent></Card>}
+            {!scalars.length && !objects.length && !arrays.length && !error && <Card className="border-slate-200"><CardContent className="py-16 text-center"><Database className="mx-auto mb-3 h-8 w-8 text-slate-300" /><p className="font-medium text-slate-800">No administration data is available</p><p className="text-sm text-slate-500">There are currently no records in this section.</p></CardContent></Card>}
           </>
         )}
       </div>
