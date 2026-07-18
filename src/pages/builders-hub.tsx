@@ -10,11 +10,19 @@ export interface ExperienceBuilder {
   estimated_minutes?: number; featured?: number; form_schema?: string; token_cost?: number;
 }
 
+export interface BuilderCreditSummary {
+  usage_model?: 'credits' | 'unlimited'; unlimited_builder_use?: boolean;
+  remaining_tokens?: number; used_tokens?: number; credit_limit?: number | null;
+  five_hour_limit?: number | null; used_last_five_hours?: number;
+  five_hour_resets_at?: string; token_reset_at?: string; plan_name?: string;
+  plan_active?: boolean; trial_active?: boolean;
+}
+
 interface BuilderData {
   builders: ExperienceBuilder[];
   drafts: Array<{ id: string; builder_id: string; builder_name: string; last_saved_at: string }>;
   outputs: Array<{ id: string; builder_id: string; title: string; created_at: string }>;
-  token_summary?: { plan_name?: string; plan_active?: boolean; trial_active?: boolean };
+  token_summary?: BuilderCreditSummary;
   error?: string;
 }
 

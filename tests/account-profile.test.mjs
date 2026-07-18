@@ -228,3 +228,44 @@ test("POST /account/profile binds one value for every profile INSERT placeholder
   assert.equal(payload.success, true);
   assert.equal(payload.saved, true);
 });
+
+test("POST /account/profile updates ordinary details without resetting consent and patches Microsoft Graph", async () => {
+  const secret = "test-token-encryption-key-that-is-long-enough";
+  const accessToken = await encryptToken("graph-access-token", secret);
+  const DB = new ProfileD1Mock({
+    token_hash: "session-hash",
+    access_token_encrypted: accessToken,
+    access_token_expires_at: "2099-01-01T00:00:00.000Z",
+  });
+  const request = new Request("http://127.0.0.1/account/profile", {
+    method: "POST",
+    headers: {
+      Accept: "application/json", "Content-Type": "application/json",
+      Cookie: "ja_customer_oidc_session=test-session",
+      "x-ja-auth-email": "customer@example.test", "x-ja-auth-name": "Test Customer",
+    },
+    body: JSON.stringify({
+      displayName: "Updated Customer", givenName: "Updated", familyName: "Customer",
+      companyName: "Example Ltd", mobilePhone: "+442038342790", city: "London", country: "United Kingdom",
+    }),
+  });
+  const originalFetch = globalThis.fetch;
+  let graphBody = null;
+  globalThis.fetch = async (input, init) => {
+    assert.equal(String(input), "https://graph.microsoft.com/v1.0/me");
+    assert.equal(init.method, "PATCH");
+    graphBody = JSON.parse(init.body);
+    return new Response(null, { status: 204 });
+  };
+  try {
+    const response = await onRequest({ request, env: { DB, OIDC_TOKEN_ENCRYPTION_KEY: secret } });
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).saved, true);
+    assert.deepEqual(graphBody, {
+      displayName: "Updated Customer", givenName: "Updated", surname: "Customer",
+      mobilePhone: "+442038342790", city: "London", country: "United Kingdom", companyName: "Example Ltd",
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});

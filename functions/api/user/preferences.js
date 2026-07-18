@@ -17,6 +17,7 @@ async function ensureTable(DB) {
 }
 
 export async function onRequest({ request, env }) {
+  try {
   if (!env.DB) return json({ success: false, error: "Preference service is not configured." }, 503);
   const session = await getNativeSession(request, env, "customer").catch(() => null);
   if (!session?.email) return json({ success: false, error: "Please sign in to continue.", code: "NOT_AUTHENTICATED" }, 401);
@@ -44,4 +45,8 @@ export async function onRequest({ request, env }) {
   }
 
   return json({ success: false, error: "Method not allowed." }, 405);
+  } catch (error) {
+    console.error(JSON.stringify({ event: "customer_preferences_failed", message: error instanceof Error ? error.message : "Unknown error" }));
+    return json({ success: false, error: "Preferences are temporarily unavailable. Please try again." }, 503);
+  }
 }

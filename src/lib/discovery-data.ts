@@ -1,6 +1,6 @@
 export type Destination = { slug: string; name: string; country: string; code: string; headout?: string; gyg?: string };
 
-export const destinations: Destination[] = [
+const curatedDestinations: Destination[] = [
   { slug: 'london', name: 'London', country: 'United Kingdom', code: 'GB', headout: 'LONDON', gyg: '57' },
   { slug: 'edinburgh', name: 'Edinburgh', country: 'United Kingdom', code: 'GB', headout: 'EDINBURGH' },
   { slug: 'lisbon', name: 'Lisbon', country: 'Portugal', code: 'PT', headout: 'LISBON' },
@@ -32,5 +32,20 @@ export const destinations: Destination[] = [
   { slug: 'copenhagen', name: 'Copenhagen', country: 'Denmark', code: 'DK' },
   { slug: 'bali', name: 'Bali', country: 'Indonesia', code: 'ID' },
 ];
+
+// Complete destination directory restored from the former 252-entry public
+// catalogue. Curated records above retain their provider IDs and country data;
+// remaining records stay available for search, guides and activity hand-off.
+const RESTORED_DESTINATION_NAMES = `Abu Dhabi|Albania|Algarve|Alicante|Amalfi Coast|Amman|Amsterdam|Antalya|Antwerp|Aruba|Athens|Auckland|Australia|Austria|Ayia Napa|Azores|Bahamas|Balearic Islands|Bali|Bangkok|Barbados|Barcelona|Bath|Belfast|Belgium|Belgrade|Bergen|Berlin|Bern|Bilbao|Birmingham|Bodrum|Bologna|Bordeaux|Bosnia and Herzegovina|Boston|Bratislava|Brighton|Brisbane|Bruges|Brussels|Bucharest|Budapest|Budva|Bulgaria|Cairo|Cambridge|Canada|Canary Islands|Cancun|Cape Town|Cappadocia|Cardiff|Casablanca|Catania|Chiang Mai|Chicago|Cinque Terre|Cologne|Copenhagen|Corfu|Crete|Croatia|Cyprus|Czech Republic|Delhi|Denmark|Doha|Dominican Republic|Dubai|Dublin|Dubrovnik|Dusseldorf|Edinburgh|Egypt|England|Estonia|Finland|Florence|France|Frankfurt|French Riviera|Fuerteventura|Funchal|Gdansk|Geneva|Germany|Ghent|Glasgow|Gold Coast|Gothenburg|Gozo|Gran Canaria|Granada|Greece|Hamburg|Hanoi|Helsinki|Ho Chi Minh City|Hong Kong|Hungary|Hurghada|Hvar|Ibiza|Iceland|India|Indonesia|Innsbruck|Interlaken|Ireland|Istanbul|Italy|Jamaica|Japan|Johannesburg|Jordan|Kenya|Kos|Kotor|Krakow|Kuala Lumpur|Kyoto|Lake Bled|Lanzarote|Larnaca|Las Vegas|Latvia|Limassol|Lisbon|Lithuania|Liverpool|Ljubljana|London|Los Angeles|Lucerne|Luxembourg|Lyon|Madeira|Madrid|Malaga|Malaysia|Mallorca|Malta|Manchester|Marrakech|Marseille|Melbourne|Menorca|Mexico|Mexico City|Miami|Milan|Monaco|Montenegro|Montreal|Morocco|Mostar|Mumbai|Munich|Mykonos|Nairobi|Naples|Netherlands|New York|New Zealand|Nice|Nicosia|Northern Ireland|Norway|Orlando|Osaka|Oslo|Oxford|Palermo|Paphos|Paris|Petra|Phuket|Pisa|Poland|Ponta Delgada|Porto|Portugal|Prague|Punta Cana|Qatar|Quebec City|Queenstown|Reykjavik|Rhodes|Riga|Romania|Rome|Rotterdam|Salzburg|San Francisco|Santorini|Sarajevo|Sardinia|Scotland|Seoul|Serbia|Seville|Sharm El Sheikh|Sicily|Singapore|Sliema|Slovakia|Slovenia|Sofia|South Africa|South Korea|Spain|Split|St Julian's|Stockholm|Strasbourg|Stuttgart|Sweden|Switzerland|Sydney|Tallinn|Tenerife|Thailand|The Hague|Tirana|Tokyo|Toronto|Toulouse|Tromso|Tulum|Turkiye|United Arab Emirates|United Kingdom|United States|Valencia|Valletta|Vancouver|Venice|Verona|Vienna|Vietnam|Vilnius|Wales|Warsaw|Washington DC|Wroclaw|York|Zagreb|Zakynthos|Zanzibar|Zurich`.split('|');
+
+function slugifyDestination(name: string) {
+  return name.toLowerCase().replace(/['’]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+const curatedBySlug = new Map(curatedDestinations.map((destination) => [destination.slug, destination]));
+export const destinations: Destination[] = RESTORED_DESTINATION_NAMES.map((name) => {
+  const slug = slugifyDestination(name);
+  return curatedBySlug.get(slug) || { slug, name, country: 'Worldwide', code: 'GL' };
+});
 
 export const countries = Array.from(new Set(destinations.map((item) => item.country)));

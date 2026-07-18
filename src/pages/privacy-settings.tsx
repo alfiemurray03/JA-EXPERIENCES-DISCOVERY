@@ -180,7 +180,7 @@ export default function PrivacySettingsPage() {
       ]);
       // If session expired, redirect to login
       if (sarRes.status === 401) {
-        window.location.href = '/login';
+        window.location.href = '/sign-in?redirect=/privacy-settings';
         return;
       }
       const sarData = await sarRes.json() as { success: boolean; requests?: SarRequest[]; error?: string };
@@ -209,7 +209,7 @@ export default function PrivacySettingsPage() {
         body: JSON.stringify({ requestType: sarType, notes: sarNotes }),
       });
       if (res.status === 401) {
-        window.location.href = '/login';
+        window.location.href = '/sign-in?redirect=/privacy-settings';
         return;
       }
       const data = await res.json() as { success: boolean; message?: string; error?: string; code?: string };

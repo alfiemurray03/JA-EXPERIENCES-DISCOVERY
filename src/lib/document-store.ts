@@ -12,6 +12,14 @@ export interface AuthUser {
   firstName: string;
   lastName: string;
   company?: string;
+  phone?: string;
+  preferredLanguage?: string;
+  officeLocation?: string;
+  city?: string;
+  county?: string;
+  country?: string;
+  postcode?: string;
+  streetAddress?: string;
   plan: 'free' | 'personal' | 'standard' | 'professional' | 'org_starter' | 'org_growth' | 'org_professional';
   usageType?: 'personal' | 'business' | 'both';
   planIsLifetime?: boolean;
@@ -94,6 +102,14 @@ export async function refreshCurrentUser(): Promise<AuthUser | null> {
       firstName: String(profile.microsoftGivenName || nameParts[0] || ''),
       lastName: String(profile.microsoftFamilyName || nameParts.slice(1).join(' ')),
       company: String(profile.microsoftCompanyName || ''),
+      phone: String(profile.microsoftMobilePhone || profile.phone || ''),
+      preferredLanguage: String(profile.microsoftPreferredLanguage || ''),
+      officeLocation: String(profile.microsoftOfficeLocation || ''),
+      city: String(profile.microsoftCity || ''),
+      county: String(profile.microsoftState || ''),
+      country: String(profile.microsoftCountry || ''),
+      postcode: String(profile.microsoftPostalCode || ''),
+      streetAddress: String(profile.microsoftStreetAddress || ''),
       plan: rawPlan,
       planIsLifetime: Boolean(profile.lifetimeAccess),
       createdAt: String(profile.createdAt || new Date(0).toISOString()),
@@ -105,10 +121,25 @@ export async function refreshCurrentUser(): Promise<AuthUser | null> {
 
 export async function updateUserProfile(updates: Partial<AuthUser>): Promise<boolean> {
   try {
+    const payload = {
+      displayName: `${updates.firstName ?? ''} ${updates.lastName ?? ''}`.trim(),
+      givenName: updates.firstName,
+      familyName: updates.lastName,
+      companyName: updates.company,
+      phone: updates.phone,
+      mobilePhone: updates.phone,
+      preferredLanguage: updates.preferredLanguage,
+      officeLocation: updates.officeLocation,
+      city: updates.city,
+      state: updates.county,
+      country: updates.country,
+      postalCode: updates.postcode,
+      streetAddress: updates.streetAddress,
+    };
     const res = await fetch('/account/profile', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updates),
+      body: JSON.stringify(payload),
       credentials: 'include',
     });
     const data = await res.json() as { success: boolean };

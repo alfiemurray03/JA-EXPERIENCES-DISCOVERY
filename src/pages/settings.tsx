@@ -63,6 +63,9 @@ export default function SettingsPage() {
     firstName: user?.firstName || '',
     lastName: user?.lastName || '',
     company: user?.company || '',
+    phone: user?.phone || '', preferredLanguage: user?.preferredLanguage || '',
+    officeLocation: user?.officeLocation || '', city: user?.city || '', county: user?.county || '',
+    country: user?.country || '', postcode: user?.postcode || '', streetAddress: user?.streetAddress || '',
   });
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileMsg, setProfileMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -77,6 +80,15 @@ export default function SettingsPage() {
   // Usage stats
   const [docCount, setDocCount] = useState<number | null>(null);
   const [draftCount, setDraftCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (user) setProfile({
+      firstName: user.firstName || '', lastName: user.lastName || '', company: user.company || '',
+      phone: user.phone || '', preferredLanguage: user.preferredLanguage || '', officeLocation: user.officeLocation || '',
+      city: user.city || '', county: user.county || '', country: user.country || '', postcode: user.postcode || '',
+      streetAddress: user.streetAddress || '',
+    });
+  }, [user]);
 
   useEffect(() => {
     // Load notification preferences
@@ -97,7 +109,13 @@ export default function SettingsPage() {
     setProfileSaving(true);
     setProfileMsg(null);
     try {
-      await updateUserProfile({ firstName: profile.firstName, lastName: profile.lastName, company: profile.company });
+      const saved = await updateUserProfile({
+        firstName: profile.firstName, lastName: profile.lastName, company: profile.company,
+        phone: profile.phone, preferredLanguage: profile.preferredLanguage, officeLocation: profile.officeLocation,
+        city: profile.city, county: profile.county, country: profile.country, postcode: profile.postcode,
+        streetAddress: profile.streetAddress,
+      });
+      if (!saved) throw new Error('Profile update was rejected.');
       await refreshUser();
       setProfileMsg({ type: 'success', text: 'Profile updated successfully.' });
     } catch {
@@ -231,6 +249,43 @@ export default function SettingsPage() {
                         onChange={(e) => setProfile(p => ({ ...p, company: e.target.value }))}
                         placeholder="Optional"
                       />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="phone">Mobile Phone</Label>
+                        <Input id="phone" type="tel" value={profile.phone} onChange={(e) => setProfile(p => ({ ...p, phone: e.target.value }))} placeholder="Optional" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="preferredLanguage">Preferred Language</Label>
+                        <Input id="preferredLanguage" value={profile.preferredLanguage} onChange={(e) => setProfile(p => ({ ...p, preferredLanguage: e.target.value }))} placeholder="e.g. en-GB" />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="streetAddress">Street Address</Label>
+                      <Input id="streetAddress" value={profile.streetAddress} onChange={(e) => setProfile(p => ({ ...p, streetAddress: e.target.value }))} placeholder="Optional" />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="city">Town / City</Label>
+                        <Input id="city" value={profile.city} onChange={(e) => setProfile(p => ({ ...p, city: e.target.value }))} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="county">County / Region</Label>
+                        <Input id="county" value={profile.county} onChange={(e) => setProfile(p => ({ ...p, county: e.target.value }))} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="postcode">Postcode</Label>
+                        <Input id="postcode" value={profile.postcode} onChange={(e) => setProfile(p => ({ ...p, postcode: e.target.value }))} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="country">Country</Label>
+                        <Input id="country" value={profile.country} onChange={(e) => setProfile(p => ({ ...p, country: e.target.value }))} />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="officeLocation">Office Location</Label>
+                      <Input id="officeLocation" value={profile.officeLocation} onChange={(e) => setProfile(p => ({ ...p, officeLocation: e.target.value }))} placeholder="Optional" />
+                      <p className="text-xs text-muted-foreground">Supported details are also synchronised to your JA Group Services ID profile in Microsoft Entra.</p>
                     </div>
                     <div className="space-y-2">
                       <Label>Account Type</Label>

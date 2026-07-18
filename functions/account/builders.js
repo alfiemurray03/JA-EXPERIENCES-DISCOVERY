@@ -278,14 +278,17 @@ async function tokenSummary(DB, email) {
   const unlimited = Boolean(activePlan && entitlement && entitlement.creditLimit === null);
   let usedThisPeriod = Number(usedRow?.used || 0);
   let usedLastFiveHours = 0;
+  let fiveHourResetsAt = "";
   if (activePlan && entitlement && !unlimited) {
     const periodStart = subscription.current_period_start || subscription.subscription_start || new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
-    const [periodUsage, windowUsage] = await Promise.all([
+    const [periodUsage, windowUsage, oldestWindowUsage] = await Promise.all([
       first(DB, `SELECT ABS(COALESCE(SUM(amount), 0)) AS used FROM builder_token_ledger WHERE lower(email) = lower(?) AND amount < 0 AND source = 'builder_usage' AND datetime(created_at) >= datetime(?)`, [email, periodStart]),
-      first(DB, `SELECT ABS(COALESCE(SUM(amount), 0)) AS used FROM builder_token_ledger WHERE lower(email) = lower(?) AND amount < 0 AND source = 'builder_usage' AND datetime(created_at) >= datetime('now', '-5 hours')`, [email])
+      first(DB, `SELECT ABS(COALESCE(SUM(amount), 0)) AS used FROM builder_token_ledger WHERE lower(email) = lower(?) AND amount < 0 AND source = 'builder_usage' AND datetime(created_at) >= datetime('now', '-5 hours')`, [email]),
+      first(DB, `SELECT created_at FROM builder_token_ledger WHERE lower(email) = lower(?) AND amount < 0 AND source = 'builder_usage' AND datetime(created_at) >= datetime('now', '-5 hours') ORDER BY datetime(created_at) ASC LIMIT 1`, [email])
     ]);
     usedThisPeriod = Number(periodUsage?.used || 0);
     usedLastFiveHours = Number(windowUsage?.used || 0);
+    if (oldestWindowUsage?.created_at) fiveHourResetsAt = new Date(new Date(oldestWindowUsage.created_at).getTime() + 5 * 60 * 60 * 1000).toISOString();
   }
   const remaining = activePlan && entitlement && !unlimited ? Math.max(0, entitlement.creditLimit - usedThisPeriod) : Number(balanceRow?.balance || 0);
   return {
@@ -297,10 +300,11 @@ async function tokenSummary(DB, email) {
     credit_limit: entitlement?.creditLimit ?? null,
     five_hour_limit: entitlement?.fiveHourLimit ?? null,
     used_last_five_hours: usedLastFiveHours,
+    five_hour_resets_at: fiveHourResetsAt,
     purchased_addon_tokens: Number(addOnRow?.purchased || 0),
     monthly_allowance: activeTrial ? Number(trial.token_allowance || 30) : 0,
     trial_tokens: trial ? Number(trial.token_allowance || 30) : 0,
-    token_reset_at: "",
+    token_reset_at: subscription?.current_period_end || "",
     trial: trial || null,
     trial_active: Boolean(activeTrial),
     subscription: subscription || null,

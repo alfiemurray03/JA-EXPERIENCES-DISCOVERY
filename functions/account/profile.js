@@ -455,27 +455,28 @@ async function patchMicrosoftGraphProfile(DB, request, env, identity, desired) {
     storedAccessToken = "";
   }
   const storedAccessTokenExpiry = session?.access_token_expires_at ? Date.parse(session.access_token_expires_at) : 0;
-  const refreshToken = await getCustomerRefreshToken(DB, request, env);
-  if (!refreshToken) return { ok: false, status: 0, reason: "No Microsoft refresh token was available.", requestId: "", clientRequestId: "" };
-
-  let accessToken = storedAccessToken && storedAccessTokenExpiry > Date.now() + 60_000
-    ? storedAccessToken
-    : await refreshMicrosoftAccessToken(DB, request, env);
+  let accessToken = storedAccessToken && storedAccessTokenExpiry > Date.now() + 60_000 ? storedAccessToken : "";
+  if (!accessToken) {
+    const refreshToken = await getCustomerRefreshToken(DB, request, env);
+    if (!refreshToken) return { ok: false, status: 0, reason: "No valid Microsoft access or refresh token was available.", requestId: "", clientRequestId: "" };
+    accessToken = await refreshMicrosoftAccessToken(DB, request, env);
+  }
   if (!accessToken) return { ok: false, status: 0, reason: "Microsoft access token refresh failed.", requestId: "", clientRequestId: "" };
 
   const body = {
     displayName: clean(desired.displayName, 120) || undefined,
-    givenName: clean(desired.givenName, 120) || undefined,
-    surname: clean(desired.familyName, 120) || undefined,
-    preferredLanguage: clean(desired.preferredLanguage, 40) || undefined,
-    mobilePhone: clean(desired.mobilePhone, 80) || undefined,
-    officeLocation: clean(desired.officeLocation, 120) || undefined,
-    city: clean(desired.city, 120) || undefined,
-    state: clean(desired.state, 120) || undefined,
-    country: clean(desired.country, 120) || undefined,
-    postalCode: clean(desired.postalCode, 40) || undefined,
-    streetAddress: clean(desired.streetAddress, 240) || undefined
+    givenName: clean(desired.microsoftGivenName, 120) || undefined,
+    surname: clean(desired.microsoftFamilyName, 120) || undefined,
+    preferredLanguage: clean(desired.microsoftPreferredLanguage, 40) || undefined,
+    mobilePhone: clean(desired.microsoftMobilePhone, 80) || undefined,
+    officeLocation: clean(desired.microsoftOfficeLocation, 120) || undefined,
+    city: clean(desired.microsoftCity, 120) || undefined,
+    state: clean(desired.microsoftState, 120) || undefined,
+    country: clean(desired.microsoftCountry, 120) || undefined,
+    postalCode: clean(desired.microsoftPostalCode, 40) || undefined,
+    streetAddress: clean(desired.microsoftStreetAddress, 240) || undefined
   };
+  if (clean(desired.microsoftCompanyName, 180)) body.companyName = clean(desired.microsoftCompanyName, 180);
 
   if (emailUpdateAllowed(env)) {
     if (clean(desired.mail, 254)) body.mail = clean(desired.mail, 254);
@@ -1042,12 +1043,6 @@ async function getProfilePlan(DB, planId) {
 async function saveProfile(DB, identity, body, request, env = {}) {
   await ensureProfileTable(DB);
 
-  if (!body.termsAccepted || !body.privacyAccepted) {
-    const error = new Error("Terms of Service and Privacy Notice consent is required.");
-    error.status = 400;
-    throw error;
-  }
-
   const current = await getProfile(DB, identity, env);
 
   const updated = {
@@ -1066,6 +1061,7 @@ async function saveProfile(DB, identity, body, request, env = {}) {
     microsoftCountry: clean(body.country, 120) || current.microsoftCountry || identity.country || "",
     microsoftPostalCode: clean(body.postalCode, 40) || current.microsoftPostalCode || "",
     microsoftStreetAddress: clean(body.streetAddress, 240) || current.microsoftStreetAddress || "",
+    microsoftCompanyName: clean(body.companyName || body.company, 180) || current.microsoftCompanyName || identity.companyName || "",
     microsoftMail: clean(body.email, 254) || current.microsoftEmail || identity.email || ""
   };
   const locale = identity.locale || current.microsoftLocale || "";
@@ -1160,7 +1156,7 @@ async function saveProfile(DB, identity, body, request, env = {}) {
     locale,
     identity.jobTitle || "",
     identity.department || "",
-    identity.companyName || "",
+    updated.microsoftCompanyName,
     identity.mobilePhone || "",
     identity.businessPhone || "",
     identity.country || "",
@@ -1198,6 +1194,7 @@ async function saveProfile(DB, identity, body, request, env = {}) {
         microsoft_country = COALESCE(NULLIF(?, ''), microsoft_country),
         microsoft_postal_code = COALESCE(NULLIF(?, ''), microsoft_postal_code),
         microsoft_street_address = COALESCE(NULLIF(?, ''), microsoft_street_address),
+        microsoft_company_name = COALESCE(NULLIF(?, ''), microsoft_company_name),
         microsoft_updated_at = CURRENT_TIMESTAMP,
         graph_sync_last_at = CURRENT_TIMESTAMP,
         graph_sync_success = 1,
@@ -1219,6 +1216,7 @@ async function saveProfile(DB, identity, body, request, env = {}) {
       updated.microsoftCountry,
       updated.microsoftPostalCode,
       updated.microsoftStreetAddress,
+      updated.microsoftCompanyName,
       graphSync.status || 200,
       graphSync.requestId || "",
       graphSync.clientRequestId || "",
@@ -1244,15 +1242,18 @@ async function saveProfile(DB, identity, body, request, env = {}) {
     ).run();
   }
 
-  await storeConsent(DB, {
-    email: identity.email,
-    source: "account-profile",
-    termsAccepted: Boolean(body.termsAccepted),
-    privacyAccepted: Boolean(body.privacyAccepted),
-    marketingConsent: Boolean(body.marketingConsent),
-    ipHash: await hashValue(request.headers.get("cf-connecting-ip") || ""),
-    userAgent: clean(request.headers.get("user-agent") || "", 500)
-  });
+  if ([body.termsAccepted, body.privacyAccepted, body.marketingConsent].some((value) => typeof value === "boolean")) {
+    const previous = await getLatestConsent(DB, identity.email);
+    await storeConsent(DB, {
+      email: identity.email,
+      source: "account-profile",
+      termsAccepted: typeof body.termsAccepted === "boolean" ? body.termsAccepted : Boolean(previous.termsAccepted),
+      privacyAccepted: typeof body.privacyAccepted === "boolean" ? body.privacyAccepted : Boolean(previous.privacyAccepted),
+      marketingConsent: typeof body.marketingConsent === "boolean" ? body.marketingConsent : Boolean(previous.marketingConsent),
+      ipHash: await hashValue(request.headers.get("cf-connecting-ip") || ""),
+      userAgent: clean(request.headers.get("user-agent") || "", 500)
+    });
+  }
 
   await ensureStripeCustomer(DB, env, identity, current).catch(() => {});
 
