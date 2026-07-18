@@ -17,6 +17,10 @@ const STANDALONE_PATHS = [
   '/documents',
   '/builders',
   '/settings',
+  '/support',
+  '/privacy-settings',
+  '/signing',
+  '/org',
   '/register',
   '/forgot-password',
 ];
