@@ -35,10 +35,8 @@ const PLAN_LIMITS: Record<string, number> = {
 };
 
 const PLAN_LABELS: Record<string, string> = {
-  free: 'Free', personal: 'Personal', standard: 'Standard', professional: 'Professional',
-  org_starter: 'Organisation Starter', org_growth: 'Organisation Growth',
-  org_professional: 'Organisation Professional',
-  organisation: 'Organisation', business: 'Business',
+  free: 'Free Plan', personal: 'Explore Plan', standard: 'Plan Plan', professional: 'Complete Plan',
+  org_starter: 'Together Plan',
 };
 
 const planBadgeColors: Record<string, string> = {
@@ -514,18 +512,15 @@ function SubscriptionTab({ user, plan, planBadgeColor }: { user: ReturnType<type
   const [seatLoading, setSeatLoading] = useState(false);
   const [seatError, setSeatError] = useState('');
 
-  const isOrgPlan = ['org_starter', 'org_growth', 'org_professional'].includes(plan);
+  const isOrgPlan = plan === 'org_starter';
   const limit = PLAN_LIMITS[plan] ?? 0;
 
   const PLAN_FEATURES: Record<string, string[]> = {
-    free:             ['Browse full template catalogue', 'Use 1 free demo template', 'PDF export', 'No draft saving'],
-    personal:         ['Free + Standard templates', 'Save up to 3 drafts', '14-day draft retention', 'Custom branding', '1 brand profile'],
-    standard:         ['Free + Standard templates', 'Save up to 5 drafts', '14-day draft retention', 'Custom branding', '1 brand profile'],
-    professional:     ['Every planning builder', 'Save up to 10 active plans', '30-day plan retention', 'Advanced planning tools', 'Download, print and share'],
-    org_starter:      ['All templates including Organisation tier', '2 user seats', 'Save up to 10 shared drafts', '30-day retention', 'Shared branding', 'Document Signing (50 requests)'],
-    org_growth:       ['Everything in Org Starter', '5 user seats', 'Shared workspace', 'Audit history', 'Document Signing (150 requests)'],
-    org_professional: ['Everything in Org Growth', '10 user seats', 'Advanced permissions', 'Reporting tools', 'Document Signing (500 requests)'],
-    organisation:     ['All templates', 'Multiple users', 'Shared workspace'],
+    free:         ['Browse the builder catalogue', 'Start an eligible free trial'],
+    personal:     ['350,000 credits each billing period', '150,000 credits per rolling 5 hours', 'Essential builders', '3 saved drafts', '14-day retention'],
+    standard:     ['750,000 credits each billing period', '300,000 credits per rolling 5 hours', 'All published builders', '5 saved drafts', '14-day retention'],
+    professional: ['1,500,000 credits each billing period', '600,000 credits per rolling 5 hours', 'All published builders', '10 saved drafts', '30-day retention'],
+    org_starter:  ['Unlimited builder credits', 'All published builders', '10 saved drafts', '30-day retention', 'Group-focused planning'],
   };
 
   const UPGRADE_PLANS = [
@@ -533,10 +528,8 @@ function SubscriptionTab({ user, plan, planBadgeColor }: { user: ReturnType<type
     { id: 'standard',         name: 'Plan Plan',             price: '£7.99/mo',  icon: Zap,       trial: true,  color: 'text-blue-600',   bg: 'bg-blue-50' },
     { id: 'professional',     name: 'Complete Plan',         price: '£14.99/mo', icon: Star,      trial: true,  color: 'text-primary',    bg: 'bg-primary/10', highlight: true },
     { id: 'org_starter',      name: 'Together Plan',         price: '£39.99/mo', icon: Building2, trial: true, color: 'text-purple-600', bg: 'bg-purple-50' },
-    { id: 'org_growth',       name: 'Org Growth',            price: '£59.99/mo', icon: Building2, trial: false, color: 'text-purple-700', bg: 'bg-purple-100' },
-    { id: 'org_professional', name: 'Org Professional',      price: '£99.99/mo', icon: Building2, trial: false, color: 'text-purple-800', bg: 'bg-purple-200' },
   ].filter(p => {
-    const order = ['free', 'personal', 'standard', 'professional', 'org_starter', 'org_growth', 'org_professional'];
+    const order = ['free', 'personal', 'standard', 'professional', 'org_starter'];
     return order.indexOf(p.id) > order.indexOf(plan);
   });
 
@@ -630,7 +623,7 @@ function SubscriptionTab({ user, plan, planBadgeColor }: { user: ReturnType<type
           <div className="flex items-start justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
-                <p className="text-xl font-bold text-foreground">{PLAN_LABELS[plan] ?? plan} Plan</p>
+                <p className="text-xl font-bold text-foreground">{PLAN_LABELS[plan] ?? plan}</p>
                 {user?.planIsLifetime && (
                   <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200 text-[10px]">★ Lifetime</Badge>
                 )}

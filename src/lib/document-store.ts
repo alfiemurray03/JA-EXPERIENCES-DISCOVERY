@@ -1,5 +1,6 @@
 import type { SavedDocument, DocumentFolder } from './document-types';
 import { generateDocRef } from './doc-ref';
+import { customerPlanId } from './customer-plan';
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 // All auth state is stored server-side (MySQL + httpOnly session cookie).
@@ -84,15 +85,16 @@ export async function refreshCurrentUser(): Promise<AuthUser | null> {
     const profile = data.profile;
     const displayName = String(profile.displayName || profile.verifiedName || profile.email || '');
     const nameParts = displayName.trim().split(/\s+/);
-    const rawPlan = String(profile.currentPlanType || profile.currentPlan || 'free').toLowerCase().replace(/[\s-]+/g, '_');
-    const supportedPlans = new Set(['free', 'personal', 'standard', 'professional', 'org_starter', 'org_growth', 'org_professional']);
+    // The canonical plan ID is authoritative. Human-readable plan type/name values
+    // such as "Monthly subscription" must never downgrade a lifetime grant to free.
+    const rawPlan = customerPlanId(profile);
     return {
       id: String(profile.microsoftObjectId || profile.email || ''),
       email: String(profile.email || profile.contactEmail || ''),
       firstName: String(profile.microsoftGivenName || nameParts[0] || ''),
       lastName: String(profile.microsoftFamilyName || nameParts.slice(1).join(' ')),
       company: String(profile.microsoftCompanyName || ''),
-      plan: (supportedPlans.has(rawPlan) ? rawPlan : 'free') as AuthUser['plan'],
+      plan: rawPlan,
       planIsLifetime: Boolean(profile.lifetimeAccess),
       createdAt: String(profile.createdAt || new Date(0).toISOString()),
     };
