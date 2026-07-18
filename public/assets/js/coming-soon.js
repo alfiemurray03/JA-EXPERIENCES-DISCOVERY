@@ -4,7 +4,23 @@
   const byId = (id) => document.getElementById(id);
   const pad = (value) => String(Math.max(0, Number(value) || 0)).padStart(2, "0");
   const checkIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg>';
+  const brandIcon = '<rect x="4" y="3" width="16" height="18" rx="3"></rect><path d="M8 8h8M8 12h8M8 16h5"></path>';
   let countdownTimer = null;
+
+  function straightenBrandMark() {
+    const icon = document.querySelector(".brand-mark svg");
+    if (!icon) return;
+
+    icon.setAttribute("viewBox", "0 0 24 24");
+    icon.setAttribute("fill", "none");
+    icon.setAttribute("stroke", "currentColor");
+    icon.setAttribute("stroke-width", "2");
+    icon.setAttribute("stroke-linecap", "round");
+    icon.setAttribute("stroke-linejoin", "round");
+    icon.innerHTML = brandIcon;
+    icon.style.display = "block";
+    icon.style.transform = "none";
+  }
 
   function setText(id, value) {
     const element = byId(id);
@@ -89,9 +105,14 @@
     }
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", loadConfiguration, { once: true });
-  } else {
+  function initialisePage() {
+    straightenBrandMark();
     loadConfiguration();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initialisePage, { once: true });
+  } else {
+    initialisePage();
   }
 })();
