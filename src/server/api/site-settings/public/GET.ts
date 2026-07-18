@@ -16,6 +16,10 @@ const DEFAULTS: Record<string, string> = {
   primary_color: '#1B4F8A',
   accent_color:  '#8a561b',
   logo_url:      '',
+  browser_tab_name: 'JA Plan Studio',
+  admin_tab_name: 'JA Plan Studio Admin Portal',
+  favicon_url: '/favicon.svg?v=20260718-4',
+  admin_theme_mode: 'light',
   nav_links: JSON.stringify([
     { id: 'nl-1', label: 'Pricing', href: '/pricing', openNewTab: false },
     { id: 'nl-2', label: 'Contact', href: '/contact', openNewTab: false },
@@ -36,10 +40,12 @@ export default async function handler(_req: Request, res: Response) {
     const all: Record<string, string> = { ...DEFAULTS };
     for (const row of rows) all[row.settingKey] = row.value;
 
-    // Only expose safe public keys
+    // Only expose safe public keys. Admin theme contains no account data and is
+    // public solely so the Admin shell can resolve its appearance before auth.
     const PUBLIC_KEYS = [
       'site_name', 'brand_name', 'tagline', 'support_email', 'company_name',
       'primary_color', 'accent_color', 'logo_url',
+      'browser_tab_name', 'admin_tab_name', 'favicon_url', 'admin_theme_mode',
       'nav_links', 'footer_links', 'affiliate_coming_soon',
     ];
     const settings: Record<string, string> = {};
