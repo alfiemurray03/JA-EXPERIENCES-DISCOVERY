@@ -12,6 +12,8 @@ const DEFAULTS: BrowserBrandingSettings = {
 
 const CACHE_KEY = 'ja_browser_branding_v1';
 const EVENT_NAME = 'ja-browser-branding-change';
+let activeSettings: BrowserBrandingSettings = DEFAULTS;
+let headObserver: MutationObserver | null = null;
 
 function cleanName(value: unknown, fallback: string): string {
   const text = String(value ?? '').trim().replace(/\s+/g, ' ');
@@ -76,6 +78,8 @@ function updateTitle(settings: BrowserBrandingSettings, previous: BrowserBrandin
     DEFAULTS.adminTabName,
     previous.browserTabName,
     previous.adminTabName,
+    activeSettings.browserTabName,
+    activeSettings.adminTabName,
   ].filter(Boolean))).sort((a, b) => b.length - a.length);
   const pattern = new RegExp(knownNames.map(escapeRegExp).join('|'), 'gi');
   document.title = pattern.test(current) ? current.replace(pattern, configuredName) : current;
@@ -87,6 +91,7 @@ export function applyBrowserBranding(value: Partial<BrowserBrandingSettings>) {
   const settings = normaliseBrowserBranding(value);
   updateIconLinks(settings.faviconUrl);
   updateTitle(settings, previous);
+  activeSettings = settings;
   try { window.localStorage.setItem(CACHE_KEY, JSON.stringify(settings)); } catch { /* cache is optional */ }
   window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail: settings }));
 }
@@ -129,8 +134,25 @@ export async function loadBrowserBranding(): Promise<BrowserBrandingSettings> {
   return loaded;
 }
 
+function installHeadObserver() {
+  if (headObserver || typeof document === 'undefined') return;
+  let queued = false;
+  headObserver = new MutationObserver(() => {
+    if (queued) return;
+    queued = true;
+    queueMicrotask(() => {
+      queued = false;
+      updateIconLinks(activeSettings.faviconUrl);
+      updateTitle(activeSettings, activeSettings);
+    });
+  });
+  headObserver.observe(document.head, { childList: true, subtree: true, characterData: true });
+}
+
 export function installBrowserBranding() {
   if (typeof window === 'undefined') return;
+  activeSettings = getCachedBrowserBranding();
+  installHeadObserver();
   void loadBrowserBranding();
 }
 
