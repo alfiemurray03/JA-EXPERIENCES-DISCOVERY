@@ -1,4 +1,5 @@
-import { getNativeSession, assertSameOrigin } from "../../../_shared/oidc.js";
+import { getNativeSession, assertSameOrigin, withIdentity } from "../../../_shared/oidc.js";
+import { onRequest as legacyAdminApi } from "../../../admin/api.js";
 import { accountPlanEntitlements, accountTypeFromProfile, enforceSharePermission } from "../../../_shared/account-entitlements.js";
 import { normalisePlanCode } from "../../../_shared/subscription-entitlements.js";
 
@@ -7,13 +8,7 @@ const json = (data, status = 200) => new Response(JSON.stringify(data), {
   headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" }
 });
 
-const PLAN_LABELS = Object.freeze({
-  free: "No subscription",
-  personal: "Explore Plan",
-  standard: "Plan Plan",
-  professional: "Complete Plan",
-  org_starter: "Together Plan"
-});
+const PLAN_LABELS = Object.freeze({ free: "No subscription", personal: "Explore Plan", standard: "Plan Plan", professional: "Complete Plan", org_starter: "Together Plan" });
 
 async function all(DB, sql, bindings = []) {
   const result = await DB.prepare(sql).bind(...bindings).all();
@@ -26,20 +21,30 @@ async function safeAlter(DB, sql) {
   }
 }
 
+async function legacyOperations(request, env, identity) {
+  try {
+    const url = new URL(request.url);
+    url.pathname = "/admin/api";
+    url.search = "?section=operations";
+    const authenticated = withIdentity(new Request(url, { method: "GET", headers: request.headers }), identity);
+    const response = await legacyAdminApi({ request: authenticated, env });
+    if (!response?.ok) return {};
+    const payload = await response.json().catch(() => ({}));
+    const data = payload.operations ?? payload.platform ?? payload;
+    return data && typeof data === "object" && !Array.isArray(data) ? data : {};
+  } catch {
+    return {};
+  }
+}
+
 async function prepareMonitoringSchema(DB) {
   await safeAlter(DB, "ALTER TABLE profiles ADD COLUMN account_type TEXT");
   await safeAlter(DB, "ALTER TABLE profiles ADD COLUMN account_type_selected_at TEXT");
   await DB.prepare(`CREATE TABLE IF NOT EXISTS builder_output_access (
-    id TEXT PRIMARY KEY,
-    owner_email TEXT NOT NULL,
-    output_id TEXT NOT NULL,
-    recipient_email TEXT NOT NULL,
-    recipient_name TEXT,
-    permission TEXT NOT NULL DEFAULT 'view',
-    status TEXT NOT NULL DEFAULT 'active',
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    revoked_at TEXT
+    id TEXT PRIMARY KEY, owner_email TEXT NOT NULL, output_id TEXT NOT NULL,
+    recipient_email TEXT NOT NULL, recipient_name TEXT, permission TEXT NOT NULL DEFAULT 'view',
+    status TEXT NOT NULL DEFAULT 'active', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, revoked_at TEXT
   )`).run();
 }
 
@@ -104,6 +109,7 @@ export async function onRequest({ request, env }) {
   if (request.method !== "GET") return json({ success: false, error: "Method not allowed." }, 405);
 
   try {
+    const existingOperations = await legacyOperations(request, env, identity);
     await prepareMonitoringSchema(env.DB);
     const profiles = await all(env.DB, `SELECT email, COALESCE(display_name, verified_name, email) AS display_name,
       account_type, account_type_selected_at, usage_type, admin_lifetime, admin_lifetime_plan_id,
@@ -152,6 +158,7 @@ export async function onRequest({ request, env }) {
     const publicRows = workspaceRows.map(({ _context, ...row }) => row);
 
     return json({ success: true, data: {
+      ...existingOperations,
       total_accounts: profiles.length,
       individual_accounts: individuals.length,
       organisation_accounts: organisations.length,
