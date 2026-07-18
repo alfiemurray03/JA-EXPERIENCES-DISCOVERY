@@ -1,7 +1,7 @@
 /**
  * Admin Portal Theme Context
  * Separate from the customer-facing ThemeProvider.
- * Defaults to 'light' — admins can switch to dark or system.
+ * The selected mode is cached locally and persisted to Admin site settings.
  */
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
@@ -14,13 +14,17 @@ interface AdminThemeContextType {
 }
 
 const AdminThemeContext = createContext<AdminThemeContextType | null>(null);
-
 const STORAGE_KEY = 'ja_admin_theme';
+
+function validTheme(value: unknown): value is AdminTheme {
+  return value === 'light' || value === 'dark' || value === 'system';
+}
 
 export function AdminThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<AdminTheme>(() => {
     if (typeof window === 'undefined') return 'light';
-    return (localStorage.getItem(STORAGE_KEY) as AdminTheme) ?? 'light';
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return validTheme(stored) ? stored : 'light';
   });
 
   const [systemDark, setSystemDark] = useState(() => {
@@ -30,29 +34,46 @@ export function AdminThemeProvider({ children }: { children: React.ReactNode }) 
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    const handler = (e: MediaQueryListEvent) => setSystemDark(e.matches);
+    const handler = (event: MediaQueryListEvent) => setSystemDark(event.matches);
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
+  }, []);
+
+  useEffect(() => {
+    if (!window.location.pathname.startsWith('/admin')) return;
+    fetch('/api/site-settings/public', { cache: 'no-store', headers: { Accept: 'application/json' } })
+      .then(response => response.json() as Promise<{ settings?: Record<string, string> }>)
+      .then(data => {
+        const saved = data.settings?.admin_theme_mode;
+        if (!validTheme(saved)) return;
+        setThemeState(saved);
+        localStorage.setItem(STORAGE_KEY, saved);
+      })
+      .catch(() => { /* retain the local preference */ });
   }, []);
 
   const resolvedTheme: 'light' | 'dark' =
     theme === 'system' ? (systemDark ? 'dark' : 'light') : theme;
 
-  function setTheme(t: AdminTheme) {
-    setThemeState(t);
-    localStorage.setItem(STORAGE_KEY, t);
+  function setTheme(next: AdminTheme) {
+    setThemeState(next);
+    localStorage.setItem(STORAGE_KEY, next);
+    if (!window.location.pathname.startsWith('/admin')) return;
+    void fetch('/api/admin/site-settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ settings: { admin_theme_mode: next } }),
+    }).catch(() => { /* the local preference still remains effective */ });
   }
 
-  // Apply resolved theme to a dedicated admin root element so Tailwind dark: variants
-  // work throughout the entire admin portal without affecting the customer-facing site.
+  // Apply the theme to the root around the entire portal. This includes the
+  // sidebar, header, page canvas, dialogs, drawers and mobile navigation.
   useEffect(() => {
     const root = document.getElementById('admin-theme-root');
     if (!root) return;
-    if (resolvedTheme === 'dark') {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
-    }
+    root.classList.toggle('dark', resolvedTheme === 'dark');
+    root.dataset.adminTheme = resolvedTheme;
   }, [resolvedTheme]);
 
   return (
@@ -63,7 +84,7 @@ export function AdminThemeProvider({ children }: { children: React.ReactNode }) 
 }
 
 export function useAdminTheme() {
-  const ctx = useContext(AdminThemeContext);
-  if (!ctx) throw new Error('useAdminTheme must be used within AdminThemeProvider');
-  return ctx;
+  const context = useContext(AdminThemeContext);
+  if (!context) throw new Error('useAdminTheme must be used within AdminThemeProvider');
+  return context;
 }
