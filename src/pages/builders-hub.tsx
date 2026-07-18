@@ -40,6 +40,8 @@ export default function BuildersHubPage() {
     if (!user) return;
     fetch('/account/api/builders', { credentials: 'include' })
       .then(async response => {
+        const contentType = response.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) throw new Error('The builder service returned an invalid response. Please refresh and try again.');
         const body = await response.json() as BuilderData;
         if (!response.ok) throw new Error(body.error || 'Experience builders could not be loaded.');
         setData(body);

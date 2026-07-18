@@ -215,9 +215,9 @@ async function seedDefaults(DB) {
   const seeded = await DB.prepare(`SELECT value FROM site_settings WHERE key='experience_builder_catalogue_version'`).first().catch(() => null);
   const existingCount = await DB.prepare(`SELECT COUNT(*) AS count FROM experience_builders`).first().catch(() => ({ count: 0 }));
   if (seeded?.value === catalogueVersion && Number(existingCount?.count || 0) >= DEFAULT_BUILDERS.length) return;
-  const allowedIds = DEFAULT_BUILDERS.map(row => row[0]);
-  const placeholders = allowedIds.map(() => "?").join(",");
-  await DB.prepare(`DELETE FROM experience_builders WHERE id NOT IN (${placeholders})`).bind(...allowedIds).run();
+  // Do not prune from a customer request. Besides deleting administrator-created
+  // templates, a 200+ item NOT IN list exceeds D1/SQLite bind-variable limits.
+  const seedStatements = [];
   for (const row of DEFAULT_BUILDERS) {
     const [id, name, builder_type, category, token_cost, plan_inclusion, visibility, description, catalogueIcon] = row;
 
@@ -241,7 +241,7 @@ async function seedDefaults(DB) {
       output_instructions = "Generate a personalized day-by-day vacation planning document.";
     }
 
-    await DB.prepare(`
+    seedStatements.push(DB.prepare(`
         INSERT INTO experience_builders (
           id, name, builder_type, category, token_cost, plan_inclusion, status, visibility, description,
           slug, icon, creates_description, estimated_minutes, trial_eligible, featured, display_order, output_instructions, form_schema
@@ -258,11 +258,16 @@ async function seedDefaults(DB) {
       `).bind(
         id, name, builder_type, category, token_cost, plan_inclusion, visibility, description,
         id, icon, creates_description, estimated_minutes, trial_eligible, featured, display_order, output_instructions, form_schema
-      ).run();
+      ));
   }
 
   for (const row of ADDONS) {
-    await DB.prepare(`INSERT OR IGNORE INTO token_addon_packages (id, name, price_pence, token_amount, package_type) VALUES (?, ?, ?, ?, ?)`).bind(...row).run();
+    seedStatements.push(DB.prepare(`INSERT OR IGNORE INTO token_addon_packages (id, name, price_pence, token_amount, package_type) VALUES (?, ?, ?, ?, ?)`).bind(...row));
+  }
+  if (typeof DB.batch === "function") {
+    for (let index = 0; index < seedStatements.length; index += 40) await DB.batch(seedStatements.slice(index, index + 40));
+  } else {
+    for (const statement of seedStatements) await statement.run();
   }
   await DB.prepare(`INSERT INTO site_settings (key,value,updated_at) VALUES ('experience_builder_catalogue_version',?,CURRENT_TIMESTAMP) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=CURRENT_TIMESTAMP`).bind(catalogueVersion).run().catch(() => {});
 }
@@ -542,7 +547,12 @@ export async function onRequest(context) {
   }
   if (!env.DB) return json({ error: "Database unavailable." }, 500);
 
-  await ensureTables(env.DB);
+  try {
+    await ensureTables(env.DB);
+  } catch (error) {
+    console.error(JSON.stringify({ event: "builder_catalogue_initialisation_failed", message: String(error?.message || error) }));
+    return json({ error: "Experience builders are temporarily unavailable while the catalogue is prepared.", code: "BUILDER_CATALOGUE_UNAVAILABLE" }, 503);
+  }
   const identity = getAccessIdentity(request);
 
   if (!identity.email) {
