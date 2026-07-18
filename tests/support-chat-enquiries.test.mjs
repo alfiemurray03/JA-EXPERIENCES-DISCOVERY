@@ -26,8 +26,9 @@ test('anonymous and signed-in support submissions use the Contact Enquiries work
   assert.match(chatbot, /Reference \{anonReference\}/);
 
   assert.match(supportRoute, /storeEnquiry\(env\.DB, enquiry, request\)/);
-  assert.match(supportRoute, /form_type = 'Support Chat'/);
-  assert.match(supportRoute, /category = COALESCE\(NULLIF\(category, ''\), 'Technical Support'\)/);
+  assert.match(supportRoute, /category: "Technical Support"/);
+  assert.match(supportRoute, /formType: "Support Chat"/);
+  assert.match(supportRoute, /source: "Support Chat"/);
   assert.match(supportRoute, /adminPath: `\/admin\/enquiries\?reference=/);
   assert.match(supportRoute, /if \(request\.method === "POST" && parts\[0\] === "submit"\)/);
 
