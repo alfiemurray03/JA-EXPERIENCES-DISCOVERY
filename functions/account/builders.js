@@ -254,18 +254,27 @@ async function activeSubscription(DB, email) {
 }
 
 async function tokenSummary(DB, email) {
-  const [trial, balanceRow, usedRow, addOnRow, subscription] = await Promise.all([
+  const [trial, balanceRow, usedRow, addOnRow, stripeSubscription, lifetimeProfile] = await Promise.all([
     first(DB, `SELECT * FROM trial_access_tokens WHERE lower(email) = lower(?)`, [email]),
     first(DB, `SELECT COALESCE(SUM(amount), 0) AS balance FROM builder_token_ledger WHERE lower(email) = lower(?)`, [email]),
     first(DB, `SELECT ABS(COALESCE(SUM(amount), 0)) AS used FROM builder_token_ledger WHERE lower(email) = lower(?) AND amount < 0 AND source = 'builder_usage'`, [email]),
     first(DB, `SELECT COALESCE(SUM(amount), 0) AS purchased FROM builder_token_ledger WHERE lower(email) = lower(?) AND source = 'add_on_purchase'`, [email]),
-    activeSubscription(DB, email)
+    activeSubscription(DB, email),
+    first(DB, `SELECT admin_lifetime, admin_lifetime_plan_id FROM profiles WHERE lower(email)=lower(?)`, [email]).catch(() => null)
   ]);
   const now = Date.now();
   const activeTrial = trial && trial.status === "Active" && new Date(trial.expires_at).getTime() > now;
+  const lifetimeActive = Number(lifetimeProfile?.admin_lifetime || 0) === 1 && Boolean(normalisePlanCode(lifetimeProfile?.admin_lifetime_plan_id));
+  const subscription = lifetimeActive ? {
+    plan_code: normalisePlanCode(lifetimeProfile.admin_lifetime_plan_id),
+    plan_name: `${lifetimeProfile.admin_lifetime_plan_id} lifetime`,
+    status: "lifetime",
+    current_period_start: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString(),
+    current_period_end: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toISOString()
+  } : stripeSubscription;
   const activePlan = Boolean(subscription);
   const planCode = activeTrial ? "trial" : normalisePlanCode(subscription?.plan_code || subscription?.plan_name);
-  const entitlement = planEntitlements(planCode);
+  const entitlement = await effectiveEntitlement(DB, planCode);
   const unlimited = Boolean(activePlan && entitlement && entitlement.creditLimit === null);
   let usedThisPeriod = Number(usedRow?.used || 0);
   let usedLastFiveHours = 0;
@@ -296,6 +305,7 @@ async function tokenSummary(DB, email) {
     trial_active: Boolean(activeTrial),
     subscription: subscription || null,
     subscription_active: activePlan,
+    lifetime_access: lifetimeActive,
     plan_active: Boolean(activeTrial || activePlan),
     plan_name: activeTrial ? "30-Day Free Trial" : activePlan ? (subscription.plan_name || "Active membership") : "No active self-service plan detected",
     deduction_rule: unlimited
@@ -322,6 +332,28 @@ function builderIncluded(builder, planCode) {
     org_starter: ["org_starter", "org-starter", "membership", "plus", "family"]
   }[planCode] || [planCode];
   return included.length === 0 || acceptedTags.some((tag) => included.includes(tag));
+}
+
+async function effectiveEntitlement(DB, value) {
+  const base = planEntitlements(value);
+  if (!base || !DB) return base;
+  const code = base.planCode;
+  const keys = [`limit_drafts_${code}`, `retention_days_${code}`, `credit_limit_${code}`, `five_hour_limit_${code}`];
+  const placeholders = keys.map(() => "?").join(",");
+  const rows = await all(DB, `SELECT key, value FROM site_settings WHERE key IN (${placeholders})`, keys).catch(() => []);
+  const settings = Object.fromEntries(rows.map((row) => [row.key, row.value]));
+  const positive = (key, fallback) => {
+    const number = Number(settings[key]);
+    return Number.isFinite(number) && number >= 0 ? number : fallback;
+  };
+  const allowance = (key, fallback) => String(settings[key] || "").toLowerCase() === "unlimited" ? null : positive(key, fallback);
+  return {
+    ...base,
+    draftLimit: positive(`limit_drafts_${code}`, base.draftLimit),
+    retentionDays: positive(`retention_days_${code}`, base.retentionDays),
+    creditLimit: allowance(`credit_limit_${code}`, base.creditLimit),
+    fiveHourLimit: allowance(`five_hour_limit_${code}`, base.fiveHourLimit)
+  };
 }
 
 async function removeExpiredDrafts(DB, email, retentionDays) {
@@ -476,7 +508,7 @@ export async function onRequest(context) {
 
   if (request.method === "GET") {
     const summary = await tokenSummary(env.DB, identity.email);
-    const entitlement = planEntitlements(accessPlanCode(summary));
+    const entitlement = await effectiveEntitlement(env.DB, accessPlanCode(summary));
     if (entitlement) await removeExpiredDrafts(env.DB, identity.email, entitlement.retentionDays);
     const [builders, outputs, ledger, attempts, packages, runs] = await Promise.all([
       all(env.DB, `SELECT * FROM experience_builders WHERE COALESCE(status, 'Active') != 'Archived' ORDER BY display_order ASC, category, token_cost, name`),
@@ -525,7 +557,7 @@ export async function onRequest(context) {
     const summary = await tokenSummary(env.DB, identity.email);
     if (!summary.plan_active) return json({ error: "An active trial or paid subscription is required to save a draft." }, 402);
     const planCode = accessPlanCode(summary);
-    const entitlement = planEntitlements(planCode);
+    const entitlement = await effectiveEntitlement(env.DB, planCode);
     if (!entitlement || !builderIncluded(builder, planCode)) return json({ error: "This builder is not included in your current plan." }, 403);
     await removeExpiredDrafts(env.DB, identity.email, entitlement.retentionDays);
     const answers = typeof body.answers === "string" ? body.answers : JSON.stringify(body.answers || {});

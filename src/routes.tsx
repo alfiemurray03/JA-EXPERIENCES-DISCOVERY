@@ -25,6 +25,7 @@ const PrivacySettingsPage = lazy(() => import('./pages/privacy-settings'));
 const TermsPage = lazy(() => import('./pages/terms'));
 const PrivacyPage = lazy(() => import('./pages/privacy'));
 const CookiesPage = lazy(() => import('./pages/cookies'));
+const ComplaintsPage = lazy(() => import('./pages/complaints'));
 const AcceptableUsePage = lazy(() => import('./pages/acceptable-use'));
 const ContactPage = lazy(() => import('./pages/contact'));
 const DiscoveryPage = lazy(() => import('./pages/discovery'));
@@ -294,6 +295,10 @@ export const routes: RouteObject[] = [
   {
     path: '/cookies',
     element: wrap(<CookiesPage />),
+  },
+  {
+    path: '/complaints',
+    element: wrap(<ComplaintsPage />),
   },
   {
     path: '/acceptable-use',

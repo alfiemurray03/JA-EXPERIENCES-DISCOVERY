@@ -5,7 +5,7 @@ import { FileText, RefreshCw } from 'lucide-react';
 import { useSiteSettings } from '@/lib/site-settings-context';
 import { PLAN_STUDIO_EMAIL, normaliseContactDetails } from '@/lib/contact-details';
 
-const EFFECTIVE_DATE = '2 June 2026';
+const EFFECTIVE_DATE = '18 July 2026';
 const CONTACT_EMAIL = PLAN_STUDIO_EMAIL;
 
 interface LegalContent {
@@ -55,7 +55,7 @@ export default function TermsPage() {
               <FileText className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Terms of Service</h1>
+              <h1 className="text-2xl font-bold text-foreground">Terms &amp; Conditions</h1>
               <p className="text-sm text-muted-foreground">Effective date: {effectiveDate}</p>
             </div>
           </div>
@@ -79,6 +79,7 @@ export default function TermsPage() {
                   These Terms of Service ("Terms") govern your access to and use of {PLATFORM}, operated by {COMPANY} ("we", "us", "our").
                   By registering an account or using the platform, you agree to be bound by these Terms.
                   If you do not agree, do not use the platform.
+                  {COMPANY} is company number 16314179, registered at 167–169 Great Portland Street, 5th Floor, London, W1W 5PF.
                 </p>
               </section>
 
@@ -112,8 +113,9 @@ export default function TermsPage() {
                 <h2 className="text-lg font-semibold text-foreground mb-3">4. Subscriptions, Trials &amp; Billing</h2>
                 <div className="space-y-3 text-muted-foreground">
                   <p><strong className="text-foreground">Free Trial:</strong> Explore Plan, Plan Plan, Complete Plan and Together Plan each include a 30-day free trial for eligible new subscriptions. The first monthly payment is collected when the trial ends unless the subscription is cancelled beforehand.</p>
-                  <p><strong className="text-foreground">Subscriptions:</strong> Paid plans are billed monthly in advance. Prices are displayed in GBP and include VAT where applicable.</p>
-                  <p><strong className="text-foreground">Cancellation:</strong> You may cancel your subscription at any time from your account settings. No refunds are issued for partial billing periods.</p>
+                  <p><strong className="text-foreground">Credits:</strong> Explore Plan includes 350,000 credits per billing period and 150,000 per rolling five hours; Plan Plan includes 750,000 and 300,000; Complete Plan includes 1,500,000 and 600,000; Together Plan is unlimited. Credits have no cash value and reset as described at purchase.</p>
+                  <p><strong className="text-foreground">Subscriptions:</strong> Paid plans renew monthly until cancelled. Prices are displayed in GBP and include VAT where applicable.</p>
+                  <p><strong className="text-foreground">Cancellation and refunds:</strong> You may cancel from your account settings. Access normally continues until the end of the paid period. Nothing in these Terms limits statutory cancellation, refund or consumer-remedy rights.</p>
                 </div>
               </section>
 
@@ -184,6 +186,7 @@ export default function TermsPage() {
             <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
             <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
             <Link to="/cookies" className="hover:text-foreground transition-colors">Cookie Policy</Link>
+            <Link to="/complaints" className="hover:text-foreground transition-colors">Complaints Policy</Link>
             <Link to="/pricing" className="hover:text-foreground transition-colors">Pricing</Link>
           </div>
 

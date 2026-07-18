@@ -49,6 +49,7 @@ export const DEFAULT_FOOTER_COLUMNS: FooterColumn[] = [
       { label: 'Terms of Service',    href: '/terms' },
       { label: 'Privacy Policy',      href: '/privacy' },
       { label: 'Cookie Policy',       href: '/cookies' },
+      { label: 'Complaints Policy',   href: '/complaints' },
       { label: 'Acceptable Use',      href: '/acceptable-use' },
     ],
   },

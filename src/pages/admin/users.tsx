@@ -118,9 +118,8 @@ const PLAN_COLORS: Record<string, string> = {
 };
 
 const PLAN_LABELS: Record<string, string> = {
-  free: 'Free', personal: 'Personal', standard: 'Standard',
-  professional: 'Professional', org_starter: 'Org Starter',
-  org_growth: 'Org Growth', org_professional: 'Org Pro',
+  free: 'Free', personal: 'Explore Plan', standard: 'Plan Plan',
+  professional: 'Complete Plan', org_starter: 'Together Plan',
 };
 
 const ROLE_COLORS: Record<string, string> = {

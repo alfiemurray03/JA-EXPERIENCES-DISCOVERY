@@ -9,7 +9,7 @@ const PLAN_DETAILS = {
   org_starter: ['Together Plan', 3999],
 };
 
-function database() {
+function database(overrides = {}) {
   return {
     prepare(sql) {
       const statement = {
@@ -17,6 +17,7 @@ function database() {
         bind(...values) { this.values = values; return this; },
         async run() { return { success: true }; },
         async first() {
+          if (sql.includes('FROM site_settings')) return overrides[this.values[0]] ? { value: overrides[this.values[0]] } : null;
           const id = this.values[0];
           const details = PLAN_DETAILS[id];
           if (!details || !sql.includes('FROM service_plans')) return null;
@@ -27,6 +28,25 @@ function database() {
     },
   };
 }
+
+test('admin Stripe price override is used by the live Explore checkout', async () => {
+  const originalFetch = globalThis.fetch;
+  let checkoutBody = '';
+  globalThis.fetch = async (_url, options) => {
+    checkoutBody = String(options?.body || '');
+    return new Response(JSON.stringify({ url: 'https://checkout.stripe.test/session' }), { status: 200 });
+  };
+  try {
+    const response = await onRequestGet({
+      request: new Request('https://japlanstudio.example/create-checkout-session?plan=personal'),
+      env: { DB: database({ stripe_price_personal_override: 'price_admin_explore' }), STRIPE_SECRET_KEY: 'sk_test', STRIPE_PRICE_EXPLORE: 'price_secret_explore' },
+    });
+    assert.equal(response.status, 303);
+    assert.equal(new URLSearchParams(checkoutBody).get('line_items[0][price]'), 'price_admin_explore');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
 
 for (const plan of Object.keys(PLAN_DETAILS)) {
   test(`${plan} checkout includes a 30-day Stripe trial`, async () => {

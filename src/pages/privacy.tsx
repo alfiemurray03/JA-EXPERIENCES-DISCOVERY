@@ -5,7 +5,7 @@ import { Shield, RefreshCw } from 'lucide-react';
 import { useSiteSettings } from '@/lib/site-settings-context';
 import { DATA_PROTECTION_EMAIL, normaliseContactDetails } from '@/lib/contact-details';
 
-const EFFECTIVE_DATE = '2 June 2026';
+const EFFECTIVE_DATE = '18 July 2026';
 const CONTACT_EMAIL = DATA_PROTECTION_EMAIL;
 
 interface LegalContent {
@@ -85,6 +85,7 @@ export default function PrivacyPage() {
                 <h2 className="text-lg font-semibold text-foreground mb-3">1. Data Controller</h2>
                 <p className="text-muted-foreground leading-relaxed">
                   {COMPANY} is the data controller for personal data collected through {PLATFORM}.
+                  Our company number is 16314179 and our registered office is 167–169 Great Portland Street, 5th Floor, London, W1W 5PF.
                   If you have questions about how we handle your data, contact us at{' '}
                   <a href={`mailto:${CONTACT_EMAIL}`} className="text-primary underline hover:no-underline">{CONTACT_EMAIL}</a>.
                 </p>
@@ -95,11 +96,11 @@ export default function PrivacyPage() {
                 <div className="space-y-4 text-muted-foreground">
                   <div>
                     <p className="font-medium text-foreground mb-1">Account data</p>
-                    <p>When you register, we collect your name, email address, and a hashed password. We do not store your password in plain text.</p>
+                    <p>We receive your name, email address and authentication identifiers from JA Group Services ID/Microsoft Entra External ID. JA Plan Studio does not create or store a separate customer password.</p>
                   </div>
                   <div>
                     <p className="font-medium text-foreground mb-1">Document data</p>
-                    <p>Documents you create, including their content and metadata, are stored on our servers so you can access them across sessions.</p>
+                    <p>We store builder answers, drafts, personalised planning outputs, saved experiences and associated metadata so you can use the service.</p>
                   </div>
                   <div>
                     <p className="font-medium text-foreground mb-1">Usage data</p>
@@ -121,6 +122,7 @@ export default function PrivacyPage() {
                   <li>To send transactional emails (account confirmations, notifications).</li>
                   <li>To detect and prevent fraud, abuse, and security incidents.</li>
                   <li>To comply with legal obligations.</li>
+                  <li>To administer trials, subscriptions, plan credits, payments, complaints and customer support.</li>
                 </ul>
               </section>
 
@@ -185,6 +187,7 @@ export default function PrivacyPage() {
             <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
             <Link to="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
             <Link to="/cookies" className="hover:text-foreground transition-colors">Cookie Policy</Link>
+            <Link to="/complaints" className="hover:text-foreground transition-colors">Complaints Policy</Link>
             <Link to="/pricing" className="hover:text-foreground transition-colors">Pricing</Link>
           </div>
 

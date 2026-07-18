@@ -43,4 +43,5 @@ export const seoRoutes: SeoRoute[] = [
 	{ path: "/terms",                 changefreq: "yearly",  priority: 0.3 },
 	{ path: "/privacy",               changefreq: "yearly",  priority: 0.3 },
 	{ path: "/cookies",               changefreq: "yearly",  priority: 0.3 },
+	{ path: "/complaints",            changefreq: "yearly",  priority: 0.3 },
 ];

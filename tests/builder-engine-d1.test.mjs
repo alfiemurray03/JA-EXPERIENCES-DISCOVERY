@@ -392,6 +392,49 @@ test("Together Plan retains unlimited builder usage", async () => {
   assert.equal(data.token_summary.credit_limit, null);
 });
 
+test("administrator lifetime grants activate the selected plan without Stripe", async () => {
+  const DB = createMockDB({ profile: { admin_customer_status: "Active", admin_lifetime: 1, admin_lifetime_plan_id: "professional" } });
+  const response = await accountOnRequest({
+    request: new Request("https://experiences.example.test/account/api/builders", {
+      method: "POST",
+      headers: { "x-ja-auth-email": "customer@example.test", "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "save_output", builder_id: "holiday-planner", fields: { destination: "Paris" } })
+    }),
+    env: { DB }
+  });
+  assert.equal(response.status, 200);
+  const data = await response.json();
+  assert.equal(data.token_summary.lifetime_access, true);
+  assert.equal(data.token_summary.credit_limit, 1500000);
+  assert.equal(data.token_summary.five_hour_limit, 600000);
+});
+
+test("finite plan credits run out and block additional builder outputs", async () => {
+  const DB = createMockDB({
+    subscription: { plan_name: "Explore Plan", plan_code: "personal", status: "active", current_period_start: "2026-07-01T00:00:00.000Z" },
+    ledger: [{ email: "customer@example.test", amount: -350000 }]
+  });
+  const response = await accountOnRequest({
+    request: new Request("https://experiences.example.test/account/api/builders", { method: "POST", headers: { "x-ja-auth-email": "customer@example.test", "Content-Type": "application/json" }, body: JSON.stringify({ action: "save_output", builder_id: "holiday-planner", fields: {} }) }),
+    env: { DB }
+  });
+  assert.equal(response.status, 402);
+  assert.equal((await response.json()).token_summary.remaining_tokens, 0);
+});
+
+test("rolling five-hour allowance returns a retryable rate-limit response", async () => {
+  const DB = createMockDB({
+    subscription: { plan_name: "Plan Plan", plan_code: "standard", status: "active", current_period_start: "2026-07-01T00:00:00.000Z" },
+    ledger: [{ email: "customer@example.test", amount: -300000 }]
+  });
+  const response = await accountOnRequest({
+    request: new Request("https://experiences.example.test/account/api/builders", { method: "POST", headers: { "x-ja-auth-email": "customer@example.test", "Content-Type": "application/json" }, body: JSON.stringify({ action: "save_output", builder_id: "holiday-planner", fields: {} }) }),
+    env: { DB }
+  });
+  assert.equal(response.status, 429);
+  assert.equal((await response.json()).code, "FIVE_HOUR_CREDIT_LIMIT");
+});
+
 // 6. Token Safety and Idempotency
 test("idempotency protects against duplicate charges using request_id", async () => {
   const outputs = [
