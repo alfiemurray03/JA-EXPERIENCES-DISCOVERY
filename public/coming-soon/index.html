@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Coming Soon — JA Plan Studio</title>
+  <meta name="description" content="JA Plan Studio is launching soon with guided planning builders, saved plans and discovery tools.">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#f8fafc">
+  <link rel="canonical" href="https://japlanstudio.jagroupservices.co.uk/coming-soon/">
+  <link rel="icon" href="/assets/favicons/favicon.svg?v=20260704-1" type="image/svg+xml">
+  <link rel="shortcut icon" href="/assets/favicons/favicon.ico?v=20260704-1" type="image/x-icon">
+  <link rel="apple-touch-icon" href="/assets/favicons/apple-touch-icon.png?v=20260704-1">
+  <link rel="manifest" href="/assets/favicons/site.webmanifest?v=20260704-1">
+  <style>
+    :root {
+      color-scheme: light;
+      --background: #f8fafc;
+      --card: #ffffff;
+      --foreground: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --primary: #0b4aa2;
+      --primary-soft: rgba(11, 74, 162, .09);
+      --primary-border: rgba(11, 74, 162, .18);
+      --shadow: 0 18px 50px rgba(15, 23, 42, .08);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { min-width: 320px; scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--background);
+      color: var(--foreground);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: inherit; }
+    button, input { font: inherit; }
+
+    .page {
+      position: relative;
+      isolation: isolate;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .glow {
+      position: fixed;
+      z-index: -1;
+      pointer-events: none;
+      border-radius: 999px;
+      filter: blur(80px);
+    }
+
+    .glow-top {
+      width: min(70vw, 780px);
+      height: 430px;
+      left: 50%;
+      top: -240px;
+      transform: translateX(-50%);
+      background: rgba(37, 99, 235, .12);
+    }
+
+    .glow-bottom {
+      width: 420px;
+      height: 420px;
+      right: -220px;
+      bottom: -220px;
+      background: rgba(14, 165, 233, .08);
+    }
+
+    .header,
+    .footer-inner {
+      width: min(1120px, calc(100% - 2rem));
+      margin-inline: auto;
+    }
+
+    .header {
+      min-height: 76px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-block: 1rem;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: .7rem;
+      text-decoration: none;
+      font-weight: 800;
+      letter-spacing: -.02em;
+    }
+
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--primary-border);
+      border-radius: 12px;
+      background: var(--primary-soft);
+      color: var(--primary);
+      box-shadow: 0 10px 28px rgba(11, 74, 162, .10);
+    }
+
+    .brand-mark svg { width: 21px; height: 21px; }
+    .brand-name { font-size: 1.05rem; }
+    .brand-name span { color: var(--primary); }
+
+    main {
+      flex: 1;
+      display: grid;
+      place-items: center;
+      width: 100%;
+      padding: clamp(2.5rem, 7vw, 6.5rem) 1rem;
+    }
+
+    .hero {
+      width: min(720px, 100%);
+      text-align: center;
+    }
+
+    .hero-icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 1.75rem;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--primary-border);
+      border-radius: 22px;
+      background: var(--primary-soft);
+      color: var(--primary);
+      box-shadow: 0 16px 40px rgba(11, 74, 162, .10);
+    }
+
+    .hero-icon svg { width: 40px; height: 40px; }
+
+    .eyebrow {
+      margin: 0 0 .9rem;
+      color: var(--primary);
+      font-size: .8rem;
+      font-weight: 800;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      color: #09419a;
+      font-size: clamp(2.65rem, 8vw, 4.35rem);
+      line-height: 1.02;
+      letter-spacing: -.055em;
+    }
+
+    .subtext {
+      max-width: 620px;
+      margin: 1.4rem auto 0;
+      color: #0f172a;
+      font-size: clamp(1.1rem, 3vw, 1.3rem);
+      line-height: 1.65;
+    }
+
+    .description {
+      max-width: 580px;
+      margin: .75rem auto 0;
+      color: var(--muted);
+      font-size: .98rem;
+      line-height: 1.7;
+    }
+
+    .countdown {
+      margin: 2.5rem auto 0;
+    }
+
+    .countdown[hidden] { display: none !important; }
+
+    .countdown-label {
+      margin: 0 0 1rem;
+      color: var(--muted);
+      font-size: .82rem;
+      font-weight: 700;
+    }
+
+    .countdown-grid {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      gap: clamp(.45rem, 2vw, 1.1rem);
+    }
+
+    .countdown-unit {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: .45rem;
+    }
+
+    .countdown-value {
+      width: clamp(60px, 15vw, 82px);
+      height: clamp(60px, 15vw, 82px);
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: var(--card);
+      color: var(--foreground);
+      box-shadow: var(--shadow);
+      font-size: clamp(1.55rem, 5vw, 2rem);
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .countdown-name {
+      color: var(--muted);
+      font-size: .67rem;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    .countdown-separator {
+      margin-top: clamp(17px, 4.5vw, 27px);
+      color: #94a3b8;
+      font-size: 1.55rem;
+      font-weight: 800;
+    }
+
+    .features {
+      max-width: 640px;
+      margin: 2.65rem auto 0;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: .75rem;
+      padding: 0;
+      list-style: none;
+      text-align: left;
+    }
+
+    .feature {
+      min-height: 58px;
+      display: flex;
+      align-items: flex-start;
+      gap: .65rem;
+      padding: .9rem;
+      border: 1px solid var(--border);
+      border-radius: 15px;
+      background: rgba(255, 255, 255, .88);
+      color: var(--muted);
+      box-shadow: 0 12px 34px rgba(15, 23, 42, .045);
+      font-size: .87rem;
+      line-height: 1.45;
+    }
+
+    .feature svg {
+      width: 17px;
+      height: 17px;
+      flex: 0 0 auto;
+      margin-top: .08rem;
+      color: var(--primary);
+    }
+
+    footer {
+      border-top: 1px solid var(--border);
+      background: rgba(248, 250, 252, .82);
+      backdrop-filter: blur(14px);
+    }
+
+    .footer-inner {
+      min-height: 76px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding-block: 1rem;
+      color: var(--muted);
+      font-size: .72rem;
+      line-height: 1.5;
+    }
+
+    .footer-inner p { margin: 0; }
+
+    .footer-links {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: .55rem 1rem;
+    }
+
+    .footer-links a,
+    .cookie-button {
+      border: 0;
+      padding: 0;
+      background: transparent;
+      color: var(--muted);
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .footer-links a:hover,
+    .footer-links a:focus-visible,
+    .cookie-button:hover,
+    .cookie-button:focus-visible {
+      color: var(--foreground);
+      text-decoration: underline;
+      text-underline-offset: .2em;
+    }
+
+    :focus-visible {
+      outline: 3px solid rgba(37, 99, 235, .35);
+      outline-offset: 3px;
+      border-radius: 5px;
+    }
+
+    @media (max-width: 680px) {
+      .header { min-height: 68px; }
+      main { padding-top: 2rem; padding-bottom: 3.5rem; }
+      .hero-icon { width: 70px; height: 70px; border-radius: 20px; }
+      .hero-icon svg { width: 34px; height: 34px; }
+      .features { grid-template-columns: 1fr; }
+      .footer-inner { align-items: flex-start; flex-direction: column; }
+      .footer-links { justify-content: flex-start; }
+    }
+
+    @media (max-width: 430px) {
+      .countdown-grid { gap: .3rem; }
+      .countdown-separator { font-size: 1.1rem; }
+      .countdown-name { font-size: .59rem; }
+      .brand-name { font-size: .98rem; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="glow glow-top" aria-hidden="true"></div>
+    <div class="glow glow-bottom" aria-hidden="true"></div>
+
+    <header class="header">
+      <a class="brand" href="/coming-soon/" aria-label="JA Plan Studio — Coming Soon">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 18l6-6-6-6"></path><path d="M5 6h4"></path><path d="M5 12h7"></path><path d="M5 18h4"></path>
+          </svg>
+        </span>
+        <span class="brand-name">JA <span>Plan Studio</span></span>
+      </a>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="coming-soon-title">
+        <div class="hero-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path>
+          </svg>
+        </div>
+
+        <p class="eyebrow" id="platform-name">JA Plan Studio</p>
+        <h1 id="coming-soon-title">Coming Soon</h1>
+        <p class="subtext" id="coming-soon-subtext">We are putting the finishing touches on something great.</p>
+        <p class="description" id="coming-soon-description">JA Plan Studio is a self-service experience planning platform that helps you build, save and manage everyday, travel and support planning outputs.</p>
+
+        <div class="countdown" id="countdown" hidden aria-live="polite">
+          <p class="countdown-label">Launching in</p>
+          <div class="countdown-grid" aria-label="Time remaining until launch">
+            <div class="countdown-unit"><span class="countdown-value" id="days">00</span><span class="countdown-name">Days</span></div>
+            <span class="countdown-separator" aria-hidden="true">:</span>
+            <div class="countdown-unit"><span class="countdown-value" id="hours">00</span><span class="countdown-name">Hours</span></div>
+            <span class="countdown-separator" aria-hidden="true">:</span>
+            <div class="countdown-unit"><span class="countdown-value" id="minutes">00</span><span class="countdown-name">Minutes</span></div>
+            <span class="countdown-separator" aria-hidden="true">:</span>
+            <div class="countdown-unit"><span class="countdown-value" id="seconds">00</span><span class="countdown-name">Seconds</span></div>
+          </div>
+        </div>
+
+        <ul class="features" id="coming-soon-features" aria-label="JA Plan Studio features">
+          <li class="feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"></path></svg><span>Guided Experience Builders</span></li>
+          <li class="feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"></path></svg><span>Saved plans and outputs</span></li>
+          <li class="feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"></path></svg><span>Destination discovery tools</span></li>
+          <li class="feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"></path></svg><span>Accessibility and support planning</span></li>
+        </ul>
+      </section>
+    </main>
+
+    <footer>
+      <div class="footer-inner">
+        <p>Copyright 2025–2026 JA Group Services Ltd and/or its Licensors – All Rights Reserved.</p>
+        <nav class="footer-links" aria-label="Legal and support links">
+          <a href="/legal/privacy/">Privacy Policy</a>
+          <a href="/legal/terms/">Terms of Service</a>
+          <a href="/legal/cookies/">Cookie Policy</a>
+          <a href="/accessibility-support/">Accessibility</a>
+          <button class="cookie-button" type="button" onclick="if(window.Cookiebot&&typeof Cookiebot.renew==='function'){Cookiebot.renew();}">Cookie settings</button>
+        </nav>
+      </div>
+    </footer>
+  </div>
+
+  <script src="/assets/js/coming-soon.js?v=20260718-1" data-cookieconsent="ignore" defer></script>
+</body>
+</html>
