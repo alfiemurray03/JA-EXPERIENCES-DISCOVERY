@@ -72,7 +72,7 @@ async function submitChatEnquiry(context, identity) {
     name: clean(body.name || identity.name || identity.email, 120),
     email: clean(body.email || identity.email, 254).toLowerCase(),
     subject: clean(body.subject, 180),
-    category: clean(body.category, 80) || "Technical Support",
+    category: "Technical Support",
     message: clean(body.message, 6000),
     formType: "Support Chat",
     enquiryType: "Support Chat",
@@ -89,10 +89,6 @@ async function submitChatEnquiry(context, identity) {
 
   await ensureEnquiryTables(env.DB);
   const result = await storeEnquiry(env.DB, enquiry, request);
-  await env.DB.prepare(`UPDATE enquiries
-    SET form_type = 'Support Chat', enquiry_type = 'Support Chat',
-      category = COALESCE(NULLIF(category, ''), 'Technical Support'), updated_at = CURRENT_TIMESTAMP
-    WHERE reference = ?`).bind(result.reference).run();
 
   if (!result.duplicate) {
     await recordEnquiryConsent(env.DB, enquiry, request, result.reference);
@@ -111,6 +107,8 @@ async function submitChatEnquiry(context, identity) {
     success: true,
     reference: result.reference,
     duplicate: result.duplicate,
+    category: "Technical Support",
+    source: "Support Chat",
     adminPath: `/admin/enquiries?reference=${encodeURIComponent(result.reference)}`,
     message: result.duplicate
       ? "This enquiry has already been received."
