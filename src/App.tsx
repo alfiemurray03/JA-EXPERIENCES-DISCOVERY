@@ -19,6 +19,9 @@ import { SiteSettingsProvider } from './lib/site-settings-context';
 import { ResellerAuthProvider } from './lib/reseller-auth-context';
 import SupportChatbot from '@/components/SupportChatbot';
 
+const StandardBusinessHomePage = lazy(() => import('./pages/home'));
+const StandardBusinessPlansPage = lazy(() => import('./pages/plans'));
+
 const CookieBanner = lazy(() =>
   import('@/components/CookieBanner').catch((error) => {
     console.warn('Failed to load CookieBanner:', error);
@@ -40,15 +43,21 @@ const rootElement = (
   </Suspense>
 );
 
+const retainedCustomerRoutes = routes.filter(route => !['/', '/pricing'].includes(String(route.path || '')));
+const customerRoutes: RouteObject[] = [
+  { path: '/', element: <StandardBusinessHomePage /> },
+  { path: '/home', element: <StandardBusinessHomePage /> },
+  { path: '/plans', element: <StandardBusinessPlansPage /> },
+  { path: '/pricing', element: <StandardBusinessPlansPage /> },
+  ...retainedCustomerRoutes,
+];
+
 const routeTree: RouteObject[] = [
-  // Customer routes — wrapped in RootLayout (header + footer)
   {
     element: rootElement,
-    children: routes,
+    children: customerRoutes,
   },
-  // Admin routes — rendered WITHOUT RootLayout (own dark shell)
   ...adminRoutes,
-  // Reseller portal routes — rendered WITHOUT RootLayout (own sidebar shell)
   ...resellerRoutes,
 ];
 
@@ -71,7 +80,6 @@ export default function App() {
                   <CookieBanner />
                 </Suspense>
               </CookieBannerErrorBoundary>
-              {/* Support chatbot — visible on all customer-facing pages */}
               <SupportChatbot />
             </>
             </ResellerAuthProvider>
