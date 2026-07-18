@@ -64,7 +64,7 @@ test('pricing renders disabled controls and a clear coming-soon message when Pay
   const pricing = await readFile(new URL('src/pages/pricing.tsx', root), 'utf8');
   assert.match(pricing, /useFeatureConfig/);
   assert.match(pricing, /Payments coming soon/);
-  assert.match(pricing, /payments=disabled/);
+  assert.match(pricing, /searchParams\.get\('payments'\) === 'disabled'/);
   assert.match(pricing, /paymentsEnabled=\{paymentsEnabled\}/);
 });
 
