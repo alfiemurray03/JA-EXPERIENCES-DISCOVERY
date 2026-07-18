@@ -1,3 +1,5 @@
+import { readFeatureFlag } from "./_shared/feature-flags.js";
+
 const DEFAULT_PLANS = [
   ["personal", "Explore Plan", "Monthly subscription", "£5.99", 599, "prod_UtkvP5dvxrwLNa", "price_1TtxPrDZzb3r6Q3cIViE64O4", "Essential planning builders", "Save and revisit your plans", "A simple starting point for exploring ideas and building clear, practical plans.", "Start 30-day free trial", 1, 0, 10],
   ["standard", "Plan Plan", "Monthly subscription", "£7.99", 799, "prod_UtkvpswzvV53y7", "price_1TtxPyDZzb3r6Q3cg9hcgXeA", "More builders and planning tools", "Download your finished plans", "For regularly creating detailed destination, itinerary, experience and everyday plans.", "Start 30-day free trial", 1, 1, 20],
@@ -16,7 +18,8 @@ export async function onRequestGet(context) {
 
     return await createCheckoutSession(planCode, context.env);
   } catch (error) {
-    return jsonResponse({ error: "Checkout GET failed.", details: errorMessage(error) }, 500);
+    console.error(JSON.stringify({ event: "checkout_get_failed", message: errorMessage(error) }));
+    return redirectTo(getSiteUrl(context.env) + "/pricing/?checkout=unavailable");
   }
 }
 
@@ -26,17 +29,25 @@ export async function onRequestPost(context) {
     const planCode = String(formData.get("plan") || "").trim();
     return await createCheckoutSession(planCode, context.env);
   } catch (error) {
-    return jsonResponse({ error: "Checkout POST failed.", details: errorMessage(error) }, 500);
+    console.error(JSON.stringify({ event: "checkout_post_failed", message: errorMessage(error) }));
+    return redirectTo(getSiteUrl(context.env) + "/pricing/?checkout=unavailable");
   }
 }
 
 async function createCheckoutSession(planCode, env) {
+  const siteUrl = getSiteUrl(env);
   if (!env || !env.DB) {
-    return jsonResponse({ error: "Plan database binding DB is missing." }, 500);
+    return redirectTo(siteUrl + "/pricing/?checkout=unavailable");
+  }
+
+  const paymentsEnabled = await readFeatureFlag(env.DB, "payments", false);
+  if (!paymentsEnabled) {
+    return redirectTo(siteUrl + "/pricing/?payments=disabled");
   }
 
   if (!env.STRIPE_SECRET_KEY) {
-    return jsonResponse({ error: "Missing STRIPE_SECRET_KEY in Cloudflare." }, 500);
+    console.error(JSON.stringify({ event: "checkout_stripe_secret_missing" }));
+    return redirectTo(siteUrl + "/pricing/?checkout=unavailable");
   }
 
   await syncServicePlans(env.DB);
@@ -47,28 +58,16 @@ async function createCheckoutSession(planCode, env) {
     WHERE id = ?
   `).bind(planCode).first();
 
-  if (!selectedPlan) {
-    return jsonResponse({ error: "Invalid plan selected.", planCode }, 404);
-  }
-
-  if (Number(selectedPlan.is_active || 0) !== 1) {
-    return jsonResponse({
-      error: "This plan is currently unavailable.",
-      planCode,
-      planName: selectedPlan.plan_name
-    }, 403);
+  if (!selectedPlan || Number(selectedPlan.is_active || 0) !== 1) {
+    return redirectTo(siteUrl + "/pricing/?plan=unavailable");
   }
 
   const priceId = await resolveStripePriceId(selectedPlan, env, env.DB);
   if (!priceId) {
-    return jsonResponse({
-      error: "This subscription could not be matched to an active recurring Stripe price.",
-      planCode,
-      planName: selectedPlan.plan_name
-    }, 409);
+    console.error(JSON.stringify({ event: "checkout_price_unresolved", planCode }));
+    return redirectTo(siteUrl + "/pricing/?checkout=unavailable");
   }
 
-  const siteUrl = getSiteUrl(env);
   const params = new URLSearchParams();
   params.append("mode", "subscription");
   params.append("line_items[0][price]", priceId);
@@ -101,23 +100,17 @@ async function createCheckoutSession(planCode, env) {
   try {
     session = JSON.parse(responseText);
   } catch {
-    return jsonResponse({
-      error: "Stripe returned non-JSON.",
-      status: stripeResponse.status,
-      response: responseText
-    }, 500);
+    console.error(JSON.stringify({ event: "checkout_stripe_non_json", status: stripeResponse.status }));
+    return redirectTo(siteUrl + "/pricing/?checkout=unavailable");
   }
 
-  if (!stripeResponse.ok) {
-    return jsonResponse({
-      error: "Stripe checkout could not be created.",
+  if (!stripeResponse.ok || !session?.url) {
+    console.error(JSON.stringify({
+      event: "checkout_stripe_rejected",
       status: stripeResponse.status,
-      details: session && session.error && session.error.message ? session.error.message : "Unknown Stripe error"
-    }, 500);
-  }
-
-  if (!session || !session.url) {
-    return jsonResponse({ error: "Stripe did not return a Checkout URL." }, 500);
+      message: session?.error?.message || "Stripe did not return a Checkout URL."
+    }));
+    return redirectTo(siteUrl + "/pricing/?checkout=unavailable");
   }
 
   return redirectTo(session.url);
@@ -241,16 +234,6 @@ function redirectTo(url) {
     status: 303,
     headers: {
       "Location": url,
-      "Cache-Control": "no-store"
-    }
-  });
-}
-
-function jsonResponse(data, status) {
-  return new Response(JSON.stringify(data, null, 2), {
-    status: status || 200,
-    headers: {
-      "Content-Type": "application/json; charset=utf-8",
       "Cache-Control": "no-store"
     }
   });
