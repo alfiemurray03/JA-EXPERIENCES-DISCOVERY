@@ -16,7 +16,7 @@ concurrency:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
 
     steps:
       - name: Check out repository
@@ -32,10 +32,50 @@ jobs:
         run: npm ci
 
       - name: Type-check application
-        run: npm run type-check
+        id: typecheck
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run type-check 2>&1 | tee typecheck.log
 
       - name: Run repository tests
-        run: node --test tests/*.test.mjs
+        id: tests
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          node --test tests/*.test.mjs 2>&1 | tee tests.log
 
       - name: Build production application
-        run: npm run build
+        id: build
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run build 2>&1 | tee build.log
+
+      - name: Upload validation output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-output
+          path: |
+            typecheck.log
+            tests.log
+            build.log
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Enforce validation result
+        if: always()
+        shell: bash
+        env:
+          TYPECHECK_OUTCOME: ${{ steps.typecheck.outcome }}
+          TEST_OUTCOME: ${{ steps.tests.outcome }}
+          BUILD_OUTCOME: ${{ steps.build.outcome }}
+        run: |
+          printf 'Type-check: %s\nTests: %s\nBuild: %s\n' "$TYPECHECK_OUTCOME" "$TEST_OUTCOME" "$BUILD_OUTCOME"
+          test "$TYPECHECK_OUTCOME" = success
+          test "$TEST_OUTCOME" = success
+          test "$BUILD_OUTCOME" = success
