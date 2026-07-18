@@ -18,7 +18,8 @@ export type PlanFeatureValue = string | boolean;
 export const PLAN_FEATURE_COMPARISON: Array<{ feature: string; values: Record<string, PlanFeatureValue> }> = [
   { feature: '30-day free trial', values: { personal: true, standard: true, professional: true, org_starter: true } },
   { feature: 'Destination and partner-activity galleries', values: { personal: true, standard: true, professional: true, org_starter: true } },
-  { feature: 'Builder usage while subscribed', values: { personal: 'Unlimited', standard: 'Unlimited', professional: 'Unlimited', org_starter: 'Unlimited' } },
+  { feature: 'Credits each billing period', values: { personal: '350,000', standard: '750,000', professional: '1,500,000', org_starter: 'Unlimited' } },
+  { feature: 'Rolling five-hour usage limit', values: { personal: '150,000', standard: '300,000', professional: '600,000', org_starter: 'Unlimited' } },
   { feature: 'Experience-planning builders', values: { personal: 'Essential builder collection', standard: 'All published builders', professional: 'All published builders', org_starter: 'All published builders' } },
   { feature: 'Travel Itinerary Builder', values: { personal: false, standard: true, professional: true, org_starter: true } },
   { feature: 'Accessibility planning suite', values: { personal: false, standard: true, professional: true, org_starter: true } },
@@ -42,7 +43,7 @@ export const JA_PLAN_STUDIO_SUBSCRIPTIONS: ServicePlan[] = [
     description: 'A simple starting point for exploring ideas and building clear, practical plans.',
     button_label: 'Start 30-day free trial',
     is_featured: 0,
-    included_features: ['30-day free trial', 'Essential experience-planning builder collection', 'Unlimited builder completions while subscribed', 'Up to 3 saved drafts', '14-day draft retention', 'Destination and partner-activity galleries'],
+    included_features: ['30-day free trial', '350,000 credits per billing period', 'Use up to 150,000 credits every rolling 5 hours', 'Essential experience-planning builder collection', 'Up to 3 saved drafts', '14-day draft retention'],
   },
   {
     id: 'standard',
@@ -55,7 +56,7 @@ export const JA_PLAN_STUDIO_SUBSCRIPTIONS: ServicePlan[] = [
     description: 'For regularly creating detailed destination, itinerary, experience and everyday plans.',
     button_label: 'Start 30-day free trial',
     is_featured: 1,
-    included_features: ['30-day free trial', 'All published experience-planning builders', 'Travel itinerary and accessibility builders', 'Unlimited builder completions while subscribed', 'Up to 5 saved drafts', '14-day draft retention'],
+    included_features: ['30-day free trial', '750,000 credits per billing period', 'Use up to 300,000 credits every rolling 5 hours', 'All published experience-planning builders', 'Up to 5 saved drafts', '14-day draft retention'],
   },
   {
     id: 'professional',
@@ -68,7 +69,7 @@ export const JA_PLAN_STUDIO_SUBSCRIPTIONS: ServicePlan[] = [
     description: 'Complete access for building and managing more comprehensive personalised plans.',
     button_label: 'Start 30-day free trial',
     is_featured: 0,
-    included_features: ['30-day free trial', 'All published experience-planning builders', 'Unlimited builder completions while subscribed', 'Up to 10 saved drafts', '30-day draft retention', 'Complete individual planning access'],
+    included_features: ['30-day free trial', '1,500,000 credits per billing period', 'Use up to 600,000 credits every rolling 5 hours', 'All published experience-planning builders', 'Up to 10 saved drafts', '30-day draft retention'],
   },
   {
     id: 'org_starter',

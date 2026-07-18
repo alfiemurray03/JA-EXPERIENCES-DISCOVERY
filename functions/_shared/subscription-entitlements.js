@@ -1,9 +1,9 @@
 export const SUBSCRIPTION_ENTITLEMENTS = Object.freeze({
-  personal: Object.freeze({ planCode: "personal", draftLimit: 3, retentionDays: 14 }),
-  standard: Object.freeze({ planCode: "standard", draftLimit: 5, retentionDays: 14 }),
-  professional: Object.freeze({ planCode: "professional", draftLimit: 10, retentionDays: 30 }),
-  org_starter: Object.freeze({ planCode: "org_starter", draftLimit: 10, retentionDays: 30 }),
-  trial: Object.freeze({ planCode: "trial", draftLimit: 3, retentionDays: 14 })
+  personal: Object.freeze({ planCode: "personal", draftLimit: 3, retentionDays: 14, creditLimit: 350000, fiveHourLimit: 150000 }),
+  standard: Object.freeze({ planCode: "standard", draftLimit: 5, retentionDays: 14, creditLimit: 750000, fiveHourLimit: 300000 }),
+  professional: Object.freeze({ planCode: "professional", draftLimit: 10, retentionDays: 30, creditLimit: 1500000, fiveHourLimit: 600000 }),
+  org_starter: Object.freeze({ planCode: "org_starter", draftLimit: 10, retentionDays: 30, creditLimit: null, fiveHourLimit: null }),
+  trial: Object.freeze({ planCode: "trial", draftLimit: 3, retentionDays: 14, creditLimit: 30, fiveHourLimit: 30 })
 });
 
 const PLAN_ALIASES = Object.freeze({

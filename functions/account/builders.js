@@ -264,12 +264,30 @@ async function tokenSummary(DB, email) {
   const now = Date.now();
   const activeTrial = trial && trial.status === "Active" && new Date(trial.expires_at).getTime() > now;
   const activePlan = Boolean(subscription);
+  const planCode = activeTrial ? "trial" : normalisePlanCode(subscription?.plan_code || subscription?.plan_name);
+  const entitlement = planEntitlements(planCode);
+  const unlimited = Boolean(activePlan && entitlement && entitlement.creditLimit === null);
+  let usedThisPeriod = Number(usedRow?.used || 0);
+  let usedLastFiveHours = 0;
+  if (activePlan && entitlement && !unlimited) {
+    const periodStart = subscription.current_period_start || subscription.subscription_start || new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+    const [periodUsage, windowUsage] = await Promise.all([
+      first(DB, `SELECT ABS(COALESCE(SUM(amount), 0)) AS used FROM builder_token_ledger WHERE lower(email) = lower(?) AND amount < 0 AND source = 'builder_usage' AND datetime(created_at) >= datetime(?)`, [email, periodStart]),
+      first(DB, `SELECT ABS(COALESCE(SUM(amount), 0)) AS used FROM builder_token_ledger WHERE lower(email) = lower(?) AND amount < 0 AND source = 'builder_usage' AND datetime(created_at) >= datetime('now', '-5 hours')`, [email])
+    ]);
+    usedThisPeriod = Number(periodUsage?.used || 0);
+    usedLastFiveHours = Number(windowUsage?.used || 0);
+  }
+  const remaining = activePlan && entitlement && !unlimited ? Math.max(0, entitlement.creditLimit - usedThisPeriod) : Number(balanceRow?.balance || 0);
   return {
     wording: "Builder Usage Tokens",
-    usage_model: activePlan ? "unlimited" : "credits",
-    unlimited_builder_use: activePlan,
-    remaining_tokens: Number(balanceRow?.balance || 0),
-    used_tokens: Number(usedRow?.used || 0),
+    usage_model: unlimited ? "unlimited" : "credits",
+    unlimited_builder_use: unlimited,
+    remaining_tokens: remaining,
+    used_tokens: usedThisPeriod,
+    credit_limit: entitlement?.creditLimit ?? null,
+    five_hour_limit: entitlement?.fiveHourLimit ?? null,
+    used_last_five_hours: usedLastFiveHours,
     purchased_addon_tokens: Number(addOnRow?.purchased || 0),
     monthly_allowance: activeTrial ? Number(trial.token_allowance || 30) : 0,
     trial_tokens: trial ? Number(trial.token_allowance || 30) : 0,
@@ -280,8 +298,10 @@ async function tokenSummary(DB, email) {
     subscription_active: activePlan,
     plan_active: Boolean(activeTrial || activePlan),
     plan_name: activeTrial ? "30-Day Free Trial" : activePlan ? (subscription.plan_name || "Active membership") : "No active self-service plan detected",
-    deduction_rule: activePlan
-      ? "Paid plans include unlimited use of the builders available on that plan. No credits are required or deducted."
+    deduction_rule: unlimited
+      ? "Together Plan includes unlimited use of all available builders."
+      : activePlan
+      ? `Credits reset each billing period. Up to ${entitlement?.fiveHourLimit?.toLocaleString("en-GB") || 0} credits may be used in any rolling five-hour window.`
       : "Free-plan credits are deducted only when a finished builder output is saved. Opening or previewing a builder does not use credits."
   };
 }
@@ -556,10 +576,14 @@ export async function onRequest(context) {
       await blockAttempt(env.DB, identity.email, builder, "Builder is not included in the active plan.", summary.remaining_tokens, Number(builder.token_cost || 0));
       return json({ error: "This builder is not included in your current plan.", token_summary: summary }, 403);
     }
-    const cost = summary.subscription_active ? 0 : Math.max(0, Number(builder.token_cost || 0));
-    if (!summary.subscription_active && summary.remaining_tokens < cost) {
+    const cost = summary.unlimited_builder_use ? 0 : Math.max(0, Number(builder.token_cost || 0));
+    if (summary.remaining_tokens < cost) {
       await blockAttempt(env.DB, identity.email, builder, "Insufficient Builder Usage Tokens.", summary.remaining_tokens, cost);
       return json({ error: "Not enough Builder Usage Tokens to complete this builder.", token_summary: summary }, 402);
+    }
+    if (summary.five_hour_limit !== null && summary.used_last_five_hours + cost > summary.five_hour_limit) {
+      await blockAttempt(env.DB, identity.email, builder, "Rolling five-hour credit limit reached.", summary.remaining_tokens, cost);
+      return json({ error: "You have reached your plan's rolling five-hour credit limit. Please try again later.", code: "FIVE_HOUR_CREDIT_LIMIT", token_summary: summary }, 429);
     }
     const requestId = clean(body.request_id, 120) || crypto.randomUUID();
     const existing = await first(env.DB, `SELECT * FROM builder_outputs WHERE lower(email) = lower(?) AND request_id = ?`, [identity.email, requestId]);

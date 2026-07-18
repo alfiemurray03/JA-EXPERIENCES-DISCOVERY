@@ -72,6 +72,9 @@ function createMockDB(options = {}) {
           if (sqlLower.includes("from trial_access_tokens")) {
             return options.trial || null;
           }
+          if (sqlLower.includes("select abs(coalesce(sum(amount)")) {
+            return { used: Math.abs(ledger.filter(item => item.amount < 0).reduce((sum, item) => sum + item.amount, 0)) };
+          }
           if (sqlLower.includes("select coalesce(sum(amount)")) {
             const sum = ledger.reduce((acc, curr) => acc + curr.amount, 0);
             return { balance: sum };
@@ -138,6 +141,9 @@ function createMockDB(options = {}) {
               tokens_available: this.args[5],
               tokens_required: this.args[6]
             });
+          }
+          if (sqlLower.includes("insert into builder_token_ledger")) {
+            ledger.push({ email: this.args[1], amount: this.args[2], balance_after: this.args[3] });
           }
           if (sqlLower.includes("insert into builder_runs")) {
             drafts.push({
@@ -349,7 +355,7 @@ test("insufficient tokens blocks creation and logs block attempt", async () => {
   assert.match(data.error, /Not enough Builder Usage Tokens/);
 });
 
-test("paid plans save outputs without a credit balance or deduction", async () => {
+test("finite paid plans receive their billing-period allowance and deduct builder credits", async () => {
   const DB = createMockDB({
     ledger: [],
     subscription: { plan_name: "Plan Plan", plan_code: "standard", status: "active" }
@@ -364,8 +370,26 @@ test("paid plans save outputs without a credit balance or deduction", async () =
   });
   assert.equal(response.status, 200);
   const data = await response.json();
+  assert.equal(data.token_summary.unlimited_builder_use, false);
+  assert.equal(data.token_summary.credit_limit, 750000);
+  assert.equal(data.token_summary.five_hour_limit, 300000);
+  assert.equal(data.token_summary.remaining_tokens, 749995);
+});
+
+test("Together Plan retains unlimited builder usage", async () => {
+  const DB = createMockDB({ subscription: { plan_name: "Together Plan", plan_code: "org_starter", status: "active" } });
+  const response = await accountOnRequest({
+    request: new Request("https://experiences.example.test/account/api/builders", {
+      method: "POST",
+      headers: { "x-ja-auth-email": "customer@example.test", "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "save_output", builder_id: "holiday-planner", fields: { destination: "Paris" } })
+    }),
+    env: { DB }
+  });
+  assert.equal(response.status, 200);
+  const data = await response.json();
   assert.equal(data.token_summary.unlimited_builder_use, true);
-  assert.equal(data.token_summary.remaining_tokens, 0);
+  assert.equal(data.token_summary.credit_limit, null);
 });
 
 // 6. Token Safety and Idempotency
