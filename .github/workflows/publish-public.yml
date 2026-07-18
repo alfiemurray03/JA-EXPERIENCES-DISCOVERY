@@ -1,0 +1,72 @@
+name: Publish Cloudflare Pages Bundle
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: public-bundle-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-public:
+    if: github.event_name != 'push' || github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Build deployable public bundle
+        run: npm run build
+
+      - name: Verify Standard and Business plans are compiled
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f public/index.html
+          grep -R --include='*.js' -F 'Standard Plans' public/assets >/dev/null
+          grep -R --include='*.js' -F 'Business Plans' public/assets >/dev/null
+          grep -R --include='*.js' -F 'accountType=' public/assets >/dev/null
+
+      - name: Upload deployable bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: cloudflare-public-${{ github.sha }}
+          path: public/
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Commit refreshed public bundle
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A public
+          if git diff --cached --quiet; then
+            echo 'The committed public bundle is already current.'
+            exit 0
+          fi
+          git commit -m 'Build production public bundle [skip public-build]'
+          git push origin HEAD:main
