@@ -27,6 +27,10 @@ function cleanFavicon(value: unknown): string {
   return DEFAULTS.faviconUrl;
 }
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 export function normaliseBrowserBranding(value: Partial<BrowserBrandingSettings> = {}): BrowserBrandingSettings {
   return {
     browserTabName: cleanName(value.browserTabName, DEFAULTS.browserTabName),
@@ -57,7 +61,7 @@ function updateIconLinks(url: string) {
   for (const link of links) link.href = url;
 }
 
-function updateTitle(settings: BrowserBrandingSettings) {
+function updateTitle(settings: BrowserBrandingSettings, previous: BrowserBrandingSettings) {
   const admin = window.location.pathname === '/admin' || window.location.pathname.startsWith('/admin/');
   const configuredName = admin ? settings.adminTabName : settings.browserTabName;
   const current = String(document.title || '').trim();
@@ -67,16 +71,23 @@ function updateTitle(settings: BrowserBrandingSettings) {
     return;
   }
 
-  const defaultPattern = /JA Plan Studio(?: Admin Portal| Admin)?/gi;
-  document.title = defaultPattern.test(current) ? current.replace(defaultPattern, configuredName) : current;
+  const knownNames = Array.from(new Set([
+    DEFAULTS.browserTabName,
+    DEFAULTS.adminTabName,
+    previous.browserTabName,
+    previous.adminTabName,
+  ].filter(Boolean))).sort((a, b) => b.length - a.length);
+  const pattern = new RegExp(knownNames.map(escapeRegExp).join('|'), 'gi');
+  document.title = pattern.test(current) ? current.replace(pattern, configuredName) : current;
 }
 
 export function applyBrowserBranding(value: Partial<BrowserBrandingSettings>) {
   if (typeof window === 'undefined') return;
+  const previous = getCachedBrowserBranding();
   const settings = normaliseBrowserBranding(value);
-  try { window.localStorage.setItem(CACHE_KEY, JSON.stringify(settings)); } catch { /* cache is optional */ }
   updateIconLinks(settings.faviconUrl);
-  updateTitle(settings);
+  updateTitle(settings, previous);
+  try { window.localStorage.setItem(CACHE_KEY, JSON.stringify(settings)); } catch { /* cache is optional */ }
   window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail: settings }));
 }
 
