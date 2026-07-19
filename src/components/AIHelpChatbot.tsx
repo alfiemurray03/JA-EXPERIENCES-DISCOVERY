@@ -1,1 +1,1 @@
-export { default } from './ManagedAIHelpChatbot';
+export { default } from './AIHelpChatbotRuntime';
