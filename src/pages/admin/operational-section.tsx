@@ -5,7 +5,7 @@ import AdminBrandingPage from '@/pages/admin/branding';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Activity, AlertTriangle, Database, RefreshCw, Settings } from 'lucide-react';
+import { Activity, AlertTriangle, Database, MessageCircle, RefreshCw, Settings } from 'lucide-react';
 
 interface SectionDefinition {
   section: string;
@@ -60,9 +60,16 @@ function arrayEntries(value: Record<string, unknown>) {
   return Object.entries(value).filter(([, item]) => Array.isArray(item)) as Array<[string, unknown[]]>;
 }
 
-function DataTable({ title, rows }: { title: string; rows: unknown[] }) {
+function DataTable({ title, rows, highlightedReference = '' }: { title: string; rows: unknown[]; highlightedReference?: string }) {
   const objects = rows.filter(row => row && typeof row === 'object') as Array<Record<string, unknown>>;
-  const columns = Array.from(new Set(objects.flatMap(row => Object.keys(row)))).slice(0, 8);
+  const orderedObjects = highlightedReference
+    ? [...objects].sort((left, right) => Number(String(right.reference || '') === highlightedReference) - Number(String(left.reference || '') === highlightedReference))
+    : objects;
+  const detectedColumns = Array.from(new Set(orderedObjects.flatMap(row => Object.keys(row))));
+  const columns = detectedColumns.includes('reference')
+    ? ['reference', ...detectedColumns.filter(column => column !== 'reference')].slice(0, 8)
+    : detectedColumns.slice(0, 8);
+
   return (
     <Card className="overflow-hidden border-slate-200 bg-white">
       <CardHeader className="border-b border-slate-100 px-5 py-4">
@@ -74,21 +81,29 @@ function DataTable({ title, rows }: { title: string; rows: unknown[] }) {
       <CardContent className="p-0">
         {!rows.length ? (
           <div className="px-5 py-12 text-center text-sm text-slate-500">No records currently need attention.</div>
-        ) : objects.length ? (
+        ) : orderedObjects.length ? (
           <div className="admin-table-scroll">
             <table className="admin-data-table min-w-[760px]" aria-label={titleCase(title)}>
               <thead>
                 <tr>{columns.map(column => <th key={column} scope="col">{titleCase(column)}</th>)}</tr>
               </thead>
               <tbody>
-                {objects.slice(0, 100).map((row, index) => (
-                  <tr key={String(row.id || row.reference || row.email || index)}>
-                    {columns.map(column => {
-                      const text = displayValue(row[column]);
-                      return <td key={column} title={text} className="min-w-[140px] max-w-[320px] whitespace-normal break-words">{text}</td>;
-                    })}
-                  </tr>
-                ))}
+                {orderedObjects.slice(0, 100).map((row, index) => {
+                  const reference = String(row.reference || '');
+                  const highlighted = Boolean(highlightedReference && reference === highlightedReference);
+                  return (
+                    <tr
+                      key={String(row.id || row.reference || row.email || index)}
+                      id={highlighted ? 'requested-enquiry' : undefined}
+                      className={highlighted ? 'bg-blue-50 ring-1 ring-inset ring-blue-300' : undefined}
+                    >
+                      {columns.map(column => {
+                        const text = displayValue(row[column]);
+                        return <td key={column} title={text} className="min-w-[140px] max-w-[320px] whitespace-normal break-words">{text}</td>;
+                      })}
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -104,6 +119,8 @@ export default function AdminOperationalSection() {
   const location = useLocation();
   const definition = DEFINITIONS[location.pathname] || DEFINITIONS['/admin/operations'];
   const isBranding = definition.section === 'branding';
+  const isEnquiries = definition.section === 'enquiries';
+  const requestedReference = useMemo(() => new URLSearchParams(location.search).get('reference')?.trim() || '', [location.search]);
   const [data, setData] = useState<Record<string, unknown>>({});
   const [loading, setLoading] = useState(!isBranding);
   const [error, setError] = useState('');
@@ -132,6 +149,12 @@ export default function AdminOperationalSection() {
 
   useEffect(() => { void load(); }, [load]);
 
+  useEffect(() => {
+    if (!loading && requestedReference) {
+      window.setTimeout(() => document.getElementById('requested-enquiry')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 80);
+    }
+  }, [loading, requestedReference, data]);
+
   const scalars = useMemo(() => scalarEntries(data), [data]);
   const objects = useMemo(() => objectEntries(data), [data]);
   const arrays = useMemo(() => arrayEntries(data), [data]);
@@ -152,6 +175,19 @@ export default function AdminOperationalSection() {
           </div>
         </div>
 
+        {isEnquiries && (
+          <Card className="border-blue-200 bg-blue-50">
+            <CardContent className="flex items-start gap-3 p-4 text-sm text-blue-950">
+              <MessageCircle className="mt-0.5 h-5 w-5 shrink-0 text-blue-700" />
+              <div>
+                <p className="font-semibold">Support assistant enquiries arrive here</p>
+                <p className="mt-1 text-blue-800">Messages sent through the public support assistant are recorded as Technical Support enquiries with an ENQ reference.</p>
+                {requestedReference && <p className="mt-2 font-mono text-xs font-semibold text-blue-900">Requested reference: {requestedReference}</p>}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {error && <Alert variant="destructive"><AlertTriangle className="h-4 w-4" /><AlertDescription>{error}</AlertDescription></Alert>}
 
         {loading ? <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{[0,1,2,3].map(item => <div key={item} className="h-28 rounded-xl bg-slate-100 animate-pulse" />)}</div> : (
@@ -166,7 +202,7 @@ export default function AdminOperationalSection() {
               return <Card key={key} className="border-slate-200 bg-white"><CardHeader className="border-b border-slate-100 px-5 py-4"><h2 className="break-words font-semibold text-slate-900">{titleCase(key)}</h2></CardHeader><CardContent className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-3">{entries.map(([itemKey, itemValue]) => <div key={itemKey} className="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-4"><p className="mb-1 break-words text-xs text-slate-500">{titleCase(itemKey)}</p><p className="break-words font-semibold text-slate-900">{displayValue(itemValue)}</p></div>)}</CardContent></Card>;
             })}
 
-            {arrays.map(([key, rows]) => <DataTable key={key} title={key} rows={rows} />)}
+            {arrays.map(([key, rows]) => <DataTable key={key} title={key} rows={rows} highlightedReference={isEnquiries ? requestedReference : ''} />)}
             {!scalars.length && !objects.length && !arrays.length && !error && <Card className="border-slate-200"><CardContent className="py-16 text-center"><Database className="mx-auto mb-3 h-8 w-8 text-slate-300" /><p className="font-medium text-slate-800">No administration data is available</p><p className="text-sm text-slate-500">There are currently no records in this section.</p></CardContent></Card>}
           </>
         )}
