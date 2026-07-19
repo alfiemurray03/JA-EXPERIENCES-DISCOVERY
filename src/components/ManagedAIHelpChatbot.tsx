@@ -172,6 +172,10 @@ export default function ManagedAIHelpChatbot() {
   }, [config.maintenanceEnabled]);
 
   useEffect(() => {
+    if (ready && open && !config.maintenanceEnabled && messages.length === 0) initialiseConversation();
+  }, [ready, open, config.maintenanceEnabled, messages.length]);
+
+  useEffect(() => {
     if (!ready || !config.enabled || config.autoOpenDelaySeconds <= 0 || hiddenForPortal) return;
     const timer = window.setTimeout(() => openWidget(), config.autoOpenDelaySeconds * 1000);
     return () => window.clearTimeout(timer);
