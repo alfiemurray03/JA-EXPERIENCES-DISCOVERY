@@ -39,6 +39,64 @@ function sameOrigin(request) {
   return !origin || origin === new URL(request.url).origin;
 }
 
+async function sendTeamsSupportCard(env, request, reference, enquiry, priority) {
+  const webhook = clean(env.TEAMS_SUPPORT_WEBHOOK_URL, 2000);
+  if (!webhook) return { sent: false, reason: "not_configured" };
+
+  let target;
+  try {
+    target = new URL(webhook);
+  } catch {
+    throw new Error("The Teams support webhook URL is invalid.");
+  }
+  if (target.protocol !== "https:" || !target.hostname.endsWith(".environment.api.powerplatform.com")) {
+    throw new Error("The Teams support webhook host is not permitted.");
+  }
+
+  const caseUrl = new URL(`/admin/enquiries?reference=${encodeURIComponent(reference)}`, request.url).toString();
+  const card = {
+    type: "message",
+    attachments: [{
+      contentType: "application/vnd.microsoft.card.adaptive",
+      contentUrl: null,
+      content: {
+        type: "AdaptiveCard",
+        version: "1.4",
+        $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
+        body: [
+          { type: "TextBlock", size: "Large", weight: "Bolder", text: "JA Plan Studio support escalation", wrap: true },
+          { type: "TextBlock", text: `Reference: ${reference}`, weight: "Bolder", wrap: true },
+          {
+            type: "FactSet",
+            facts: [
+              { title: "Priority", value: priority },
+              { title: "Category", value: clean(enquiry.category, 80) || "General Enquiry" },
+              { title: "Customer", value: clean(enquiry.name, 120) || "Customer" },
+              { title: "Email", value: clean(enquiry.email, 254) },
+              { title: "Subject", value: clean(enquiry.subject, 180) }
+            ]
+          },
+          { type: "TextBlock", text: "A customer support case has been escalated after AI-guided triage.", wrap: true, spacing: "Medium" }
+        ],
+        actions: [
+          { type: "Action.OpenUrl", title: "Open support case", url: caseUrl }
+        ]
+      }
+    }]
+  };
+
+  const response = await fetch(target.toString(), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(card)
+  });
+  if (!response.ok) {
+    const detail = clean(await response.text().catch(() => ""), 240);
+    throw new Error(`Teams workflow returned ${response.status}${detail ? `: ${detail}` : ""}`);
+  }
+  return { sent: true };
+}
+
 async function ensureSupportTables(DB) {
   await DB.prepare(`CREATE TABLE IF NOT EXISTS support_tickets (
     id TEXT PRIMARY KEY, reference TEXT UNIQUE, customer_email TEXT, customer_name TEXT,
@@ -102,8 +160,21 @@ async function submitChatEnquiry(context, identity) {
 
   if (!result.duplicate) {
     await recordEnquiryConsent(env.DB, enquiry, request, result.reference);
-    const notificationWork = sendNewEnquiryNotifications(env.DB, env, result.reference).catch((error) => {
-      console.error(JSON.stringify({ event: "support_chat_notification_failed", reference: result.reference, message: String(error?.message || error).slice(0, 240) }));
+    const requestedPriority = clean(body.priority, 20);
+    const priority = ["Urgent", "High", "Normal", "Low"].includes(requestedPriority) ? requestedPriority : "Normal";
+    const notificationWork = Promise.allSettled([
+      sendNewEnquiryNotifications(env.DB, env, result.reference),
+      sendTeamsSupportCard(env, request, result.reference, enquiry, priority)
+    ]).then((results) => {
+      results.forEach((outcome, index) => {
+        if (outcome.status === "rejected") {
+          console.error(JSON.stringify({
+            event: index === 0 ? "support_chat_notification_failed" : "teams_support_webhook_failed",
+            reference: result.reference,
+            message: String(outcome.reason?.message || outcome.reason).slice(0, 240)
+          }));
+        }
+      });
     });
     if (typeof context.waitUntil === "function") context.waitUntil(notificationWork);
     else await notificationWork;
