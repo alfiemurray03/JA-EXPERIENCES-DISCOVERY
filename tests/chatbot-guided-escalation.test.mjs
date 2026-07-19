@@ -46,7 +46,7 @@ test('finishes triage with priority, structured subject and enquiry action', () 
   assert.equal(result.escalate, true);
   assert.equal(result.priority, 'High');
   assert.equal(result.suggestedSubject, '[High] Account or sign-in support request');
-  assert.deepEqual(result.suggestions, ['Create an enquiry', 'Try another question']);
+  assert.deepEqual(result.suggestions, ['Continue escalation', 'Try another question']);
   assert.match(result.reply, /full conversation and your answers will be attached automatically/);
 });
 
