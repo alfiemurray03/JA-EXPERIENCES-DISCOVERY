@@ -136,7 +136,7 @@ export function guidedEscalation(config, message, rawHistory) {
     const introduction = answered === 0 ? "Of course — I’ll ask a few questions so I can understand what has happened and help properly." : "";
     const securityNote = answered === 0 ? "Please don’t send passwords, full payment-card numbers, security codes or authentication codes." : "";
     return {
-      reply: [introduction, flow.questions[answered], securityNote].filter(Boolean).join("\\n\\n"),
+      reply: [introduction, flow.questions[answered], securityNote].filter(Boolean).join("\n\n"),
       suggestions: [],
       category: flow.category,
       suggestedSubject: `${flow.label} support request`,
