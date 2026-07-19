@@ -6,7 +6,7 @@ const FLOWS = {
     category: "Technical Support",
     priority: "High",
     questions: [
-      "Are you trying to access the customer account or the Admin Centre?",
+      "Which sign-in method are you using to access your JA Plan Studio customer account?",
       "What happens when you try to sign in, including the exact error message if one appears?",
       "Which device and browser are you using?",
       "When did the problem begin, and does it happen every time?"
