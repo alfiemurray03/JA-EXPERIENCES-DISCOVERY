@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFile } from 'node:fs/promises';
 import { onRequest as supportAssistant } from '../functions/api/support-assistant.js';
-import { DEFAULT_ARTICLES } from '../functions/_shared/support-assistant-core.js';
+import { DEFAULT_ARTICLES, knowledgeFrom } from '../functions/_shared/support-assistant-core.js';
 import { onRequest as supportMiddleware } from '../functions/api/support/_middleware.js';
 
 const app = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8');
@@ -185,4 +185,7 @@ test('default knowledge contains hundreds of affiliate-safe support answers', ()
   assert.ok(affiliate.some(article => /GetYourGuide/.test(article.answer)));
   assert.ok(affiliate.some(article => /Headout/.test(article.answer)));
   assert.ok(affiliate.some(article => /affiliate links only|does not sell or fulfil/i.test(article.answer)));
+  const merged = knowledgeFrom({ ai_chatbot_knowledge_json: JSON.stringify([{ id: 'custom', title: 'Custom answer', answer: 'Custom help', category: 'General' }]) });
+  assert.ok(merged.length >= 201);
+  assert.ok(merged.some(article => article.id === 'custom'));
 });
