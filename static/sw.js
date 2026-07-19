@@ -1,5 +1,5 @@
-const CACHE_NAME = 'ja-plan-studio-shell-v1';
-const SHELL = ['/', '/manifest.webmanifest', '/pwa-icon.svg', '/favicon.svg'];
+const CACHE_NAME = 'ja-plan-studio-shell-v2';
+const SHELL = ['/', '/?source=pwa', '/manifest.webmanifest', '/pwa-icon.svg', '/favicon.svg'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -13,14 +13,25 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+function isProtectedNavigation(pathname) {
+  return pathname === '/dashboard' || pathname.startsWith('/dashboard/') ||
+    pathname === '/admin' || pathname.startsWith('/admin/') ||
+    pathname === '/account' || pathname.startsWith('/account/');
+}
+
 self.addEventListener('fetch', (event) => {
   const request = event.request;
   if (request.method !== 'GET') return;
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
-  // Never cache authenticated APIs or logout/callback responses.
-  if (url.pathname.startsWith('/api/') || url.pathname.includes('/logout') || url.pathname.includes('/callback')) return;
+  // Never cache authenticated APIs, identity callbacks, logout responses or protected portals.
+  if (
+    url.pathname.startsWith('/api/') ||
+    url.pathname.includes('/logout') ||
+    url.pathname.includes('/callback') ||
+    isProtectedNavigation(url.pathname)
+  ) return;
 
   if (request.mode === 'navigate') {
     event.respondWith(
@@ -30,7 +41,7 @@ self.addEventListener('fetch', (event) => {
           if (response.ok) caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
           return response;
         })
-        .catch(async () => (await caches.match(request)) || (await caches.match('/'))),
+        .catch(async () => (await caches.match(request)) || (await caches.match('/?source=pwa')) || (await caches.match('/'))),
     );
     return;
   }
