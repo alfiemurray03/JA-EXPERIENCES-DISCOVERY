@@ -310,7 +310,7 @@ export default function ManagedAIHelpChatbot() {
     const supportHistory = issueOnlyHistory(next);
     const lastAssistantText = [...messages].reverse().find(message => message.role === 'assistant')?.text || '';
     const answeringHandover = /Would you like me to send this conversation to the support team\?/i.test(lastAssistantText);
-    const confirmingHandover = answeringHandover && /^(?:yes|yes please|please do|send it|send this|go ahead|contact them|contact the team|submit it)[.! ]*$/i.test(value);
+    const confirmingHandover = answeringHandover && /^(?:yes\b|please do\b|send\b|go ahead\b|contact\b|submit\b)/i.test(value);
     setThinkingLabel(confirmingHandover ? 'Sending your enquiry…' : answeringHandover ? 'Continuing the conversation…' : 'Searching the Help Centre…');
     setMessages(next); setInput(''); setThinking(true); setChatError('');
     try {
