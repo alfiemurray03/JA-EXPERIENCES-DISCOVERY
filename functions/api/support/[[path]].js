@@ -137,10 +137,10 @@ async function activeMaintenance(DB) {
   const start = config.maintenanceStart ? Date.parse(config.maintenanceStart) : 0;
   const end = config.maintenanceEnd ? Date.parse(config.maintenanceEnd) : 0;
   const scheduled = Boolean(start && now >= start && (!end || now <= end));
-  return { active: config.maintenanceEnabled || scheduled, message: config.maintenanceMessage };
+  return { active: config.maintenanceEnabled || scheduled, message: config.maintenanceMessage, config };
 }
 
-async function submitChatEnquiry(context, identity) {
+async function submitChatEnquiry(context, identity, assistantConfig) {
   const { request, env } = context;
   const body = await request.json().catch(() => ({}));
   const requestedCategory = clean(body.category, 80);
@@ -174,12 +174,12 @@ async function submitChatEnquiry(context, identity) {
     await recordEnquiryConsent(env.DB, enquiry, request, result.reference);
     const requestedPriority = clean(body.priority, 20);
     const priority = ["Urgent", "High", "Normal", "Low"].includes(requestedPriority) ? requestedPriority : "Normal";
-    const configuredWebhooks = [
+    const configuredWebhooks = assistantConfig.webhookDeliveryEnabled ? [
       env.TEAMS_SUPPORT_WEBHOOK_URL,
       env.SUPPORT_WEBHOOK_2_URL,
       env.SUPPORT_WEBHOOK_3_URL,
       env.SUPPORT_WEBHOOK_4_URL
-    ].filter(Boolean);
+    ].filter(Boolean) : [];
     const deliveryTasks = [
       sendNewEnquiryNotifications(env.DB, env, result.reference),
       ...configuredWebhooks.map((webhook) => sendTeamsSupportCard(webhook, request, result.reference, enquiry, priority))
@@ -221,7 +221,7 @@ export async function onRequest(context) {
     if (request.method === "POST" && parts[0] === "submit") {
       const maintenance = await activeMaintenance(env.DB);
       if (maintenance.active) return json({ success: false, maintenance: true, error: maintenance.message }, 503);
-      return submitChatEnquiry(context, identity);
+      return submitChatEnquiry(context, identity, maintenance.config);
     }
     if (!identity.email) return json({ success: false, error: "Please sign in to view support conversations." }, 401);
     await ensureSupportTables(env.DB);
