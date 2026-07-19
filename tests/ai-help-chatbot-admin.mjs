@@ -83,11 +83,23 @@ test('Admin chatbot control centre manages webhook slots, scheduled maintenance 
   assert.match(adminControl, /Send test/);
   assert.match(adminControl, /Scheduled start/);
   assert.match(adminControl, /Scheduled end/);
-  assert.match(adminControl, /Allow enquiries during maintenance/);
+  assert.doesNotMatch(adminControl, /Allow enquiries during maintenance/);
+  assert.match(adminControl, /Customer contact is locked during maintenance/);
+  assert.match(adminControl, /Times New Roman/);
+  assert.match(adminControl, /Atkinson Hyperlegible/);
+  assert.match(adminControl, /fetch\('\/api\/support-assistant'/);
   assert.match(adminControl, /Launcher logo URL/);
   assert.match(adminControl, /Assistant avatar URL/);
   assert.match(adminControl, /Chatbot font/);
   assert.match(adminMonitor, /test_webhook/);
   assert.match(adminMonitor, /TEAMS_SUPPORT_WEBHOOK_URL/);
   assert.match(adminMonitor, /permittedWebhook/);
+});
+
+
+test('Admin Centre exposes the expanded support knowledge and affiliate controls', () => {
+  assert.match(assistantCore, /EXPANDED_DEFAULT_ARTICLES/);
+  assert.match(adminControl, /loaded\.knowledge = assistantData\.articles/);
+  assert.match(adminControl, /Customer contact is locked during maintenance/);
+  assert.match(adminControl, /Configured start and end times are shown to visitors/);
 });
