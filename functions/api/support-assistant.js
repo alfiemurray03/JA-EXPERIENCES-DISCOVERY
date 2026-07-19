@@ -49,7 +49,7 @@ export async function onRequest(context) {
         maintenanceMessage: config.maintenanceMessage,
         maintenanceStart: config.maintenanceStart,
         maintenanceEnd: config.maintenanceEnd,
-        maintenanceAllowEnquiries: config.maintenanceAllowEnquiries,
+        maintenanceAllowEnquiries: false,
         allowAnonymous: config.allowAnonymous,
         selfHelpEnabled: config.selfHelpEnabled,
         escalationEnabled: config.escalationEnabled,
@@ -81,6 +81,7 @@ export async function onRequest(context) {
         summary: article.summary,
         answer: article.answer,
         steps: article.steps,
+        keywords: article.keywords,
         href: article.href || "/help-centre"
       }))
     });
