@@ -22,7 +22,6 @@ import AIHelpChatbot from '@/components/AIHelpChatbot';
 
 const StandardBusinessHomePage = lazy(() => import('./pages/home'));
 const StandardBusinessPlansPage = lazy(() => import('./pages/plans'));
-const AdminAIChatbotPage = lazy(() => import('./pages/admin/ai-chatbot'));
 
 const CookieBanner = lazy(() =>
   import('@/components/CookieBanner').catch((error) => {
@@ -65,15 +64,6 @@ const routeTree: RouteObject[] = [
     element: rootElement,
     errorElement,
     children: customerRoutes,
-  },
-  {
-    path: '/admin/ai-chatbot',
-    element: (
-      <Suspense fallback={<SpinnerFallback />}>
-        <AdminAIChatbotPage />
-      </Suspense>
-    ),
-    errorElement,
   },
   ...adminRoutes.map(withErrorPage),
   ...resellerRoutes.map(withErrorPage),
