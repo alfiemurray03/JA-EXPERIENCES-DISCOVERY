@@ -38,7 +38,7 @@ test('asks normal billing questions in sequence and excludes sensitive payment d
   assert.doesNotMatch(result.reply, /\d+ of \d+/);
 });
 
-test('finishes the conversation with a natural submission message', () => {
+test('asks for confirmation before submitting to the support team', () => {
   const history = [
     { role: 'user', content: 'My account is locked and I cannot access my paid plan' },
     ...exchange('Which sign-in option are you using for your JA Plan Studio account?', 'Microsoft sign-in'),
@@ -46,13 +46,21 @@ test('finishes the conversation with a natural submission message', () => {
     ...exchange('What device and browser are you using?', 'iPhone Safari'),
     ...exchange('When did this start, and does it happen every time you try?', 'Since today, every time'),
   ];
-  const result = guidedEscalation(config, 'Since today, every time', history);
-  assert.equal(result.escalate, true);
-  assert.equal(result.priority, 'High');
-  assert.equal(result.suggestedSubject, '[High] Account or sign-in support request');
-  assert.match(result.reply, /I’ll send this conversation to them now/);
-  assert.match(result.reply, /enquiry reference/);
-  assert.doesNotMatch(result.reply, /Category:|Priority:/);
+  const confirmation = guidedEscalation(config, 'Since today, every time', history);
+  assert.equal(confirmation.escalate, false);
+  assert.match(confirmation.reply, /Would you like me to send this conversation to the support team\?/);
+  assert.deepEqual(confirmation.suggestions, ['Yes, send it to the support team', 'No, keep helping me']);
+
+  const confirmed = guidedEscalation(config, 'Yes, please', [...history, { role: 'assistant', content: confirmation.reply }, { role: 'user', content: 'Yes, please' }]);
+  assert.equal(confirmed.escalate, true);
+  assert.equal(confirmed.priority, 'High');
+  assert.equal(confirmed.suggestedSubject, '[High] Account or sign-in support request');
+  assert.match(confirmed.reply, /sending the conversation to the support team now/);
+  assert.match(confirmed.reply, /enquiry reference/);
+
+  const declined = guidedEscalation(config, 'No, keep helping me', [...history, { role: 'assistant', content: confirmation.reply }, { role: 'user', content: 'No, keep helping me' }]);
+  assert.equal(declined.escalate, false);
+  assert.match(declined.reply, /I haven’t sent anything/);
 });
 
 test('routes privacy concerns using conversational British English', () => {
