@@ -10,7 +10,7 @@ import { useAdmin } from '@/lib/admin-context';
 import {
   Users, CreditCard, Activity, Server, ShieldCheck,
   MessageSquare, ArrowRight, RefreshCw, HeartPulse,
-  Settings, ClipboardList, AlertTriangle, UserCheck,
+  Settings, ClipboardList, AlertTriangle, UserCheck, Bot,
 } from 'lucide-react';
 
 interface PlatformStats {
@@ -105,6 +105,7 @@ export default function AdminDashboard() {
   ];
 
   const quickLinks = [
+    { to: '/admin/ai-chatbot', label: 'AI Chatbot Settings', desc: 'Self-help, anonymous access, knowledge and enquiry escalation', icon: Bot },
     { to: '/admin/health', label: 'Production Health', desc: 'Verified platform, database and integration signals', icon: HeartPulse },
     { to: '/admin/status', label: 'Status Centre', desc: 'Live services, incidents and operational notices', icon: Activity },
     { to: '/admin/site-settings', label: 'Live Website Status', desc: `Current public mode: ${websiteStatus}`, icon: Settings },
