@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en-GB" dir="ltr">
   <head>
     <meta charset="UTF-8" />
     <title>JA Plan Studio</title>
@@ -19,21 +19,22 @@
           var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
           if (!standalone) return;
 
+          document.documentElement.dataset.displayMode = 'standalone';
+          document.cookie = 'ja_pwa_mode=1; Path=/; Max-Age=31536000; SameSite=Lax; Secure';
+
           var path = window.location.pathname.replace(/\/+$/, '') || '/';
           var isIdentityResponse = path.indexOf('/callback') !== -1 || path.indexOf('/logout') !== -1 || path.indexOf('/signed-out') !== -1;
           var isProtectedResume =
             path === '/dashboard' || path.indexOf('/dashboard/') === 0 ||
+            path === '/builders' || path.indexOf('/builders/') === 0 ||
+            path === '/documents' || path.indexOf('/documents/') === 0 ||
+            path === '/settings' || path.indexOf('/settings/') === 0 ||
             path === '/admin' || path.indexOf('/admin/') === 0 ||
             path === '/account' || path.indexOf('/account/') === 0 ||
             path === '/sign-in' || path.indexOf('/sign-in/') === 0;
 
-          // iOS Home Screen apps can resume the last protected page instead of
-          // respecting a newly updated manifest start_url. Normalise a cold
-          // standalone launch to the public homepage so installing the app never
-          // requires authentication merely to open it. Identity callbacks are
-          // deliberately excluded so Microsoft sign-in can still complete.
           if (isProtectedResume && !isIdentityResponse) {
-            window.location.replace('/?source=pwa&launch=public-v3');
+            window.location.replace('/?source=pwa&launch=public-v5');
           }
         } catch (e) {}
       })();
@@ -52,11 +53,12 @@
     <meta name="referrer" content="same-origin" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#0b172d" />
+    <meta name="color-scheme" content="light dark" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="JA Plan Studio" />
-    <link rel="manifest" href="/manifest.webmanifest?v=3" />
+    <link rel="manifest" href="/manifest.webmanifest?v=5" />
     <link rel="apple-touch-icon" href="/pwa-icon.svg" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=20260718-4" />
     <link rel="shortcut icon" type="image/svg+xml" href="/favicon.svg?v=20260718-4" />
