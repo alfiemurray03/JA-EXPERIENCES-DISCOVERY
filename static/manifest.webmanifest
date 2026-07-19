@@ -3,7 +3,7 @@
   "name": "JA Plan Studio",
   "short_name": "JA Plan Studio",
   "description": "Guided planning builders, saved plans and secure customer and administration access.",
-  "start_url": "/",
+  "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
@@ -22,21 +22,21 @@
   ],
   "shortcuts": [
     {
+      "name": "JA Plan Studio Home",
+      "short_name": "Home",
+      "url": "/?source=pwa",
+      "icons": [{ "src": "/pwa-icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    },
+    {
       "name": "Explore Builders",
       "short_name": "Builders",
       "url": "/builders",
       "icons": [{ "src": "/pwa-icon.svg", "sizes": "any", "type": "image/svg+xml" }]
     },
     {
-      "name": "Customer Dashboard",
-      "short_name": "Dashboard",
-      "url": "/dashboard",
-      "icons": [{ "src": "/pwa-icon.svg", "sizes": "any", "type": "image/svg+xml" }]
-    },
-    {
-      "name": "Admin Portal",
-      "short_name": "Admin",
-      "url": "/admin",
+      "name": "Help Centre",
+      "short_name": "Help",
+      "url": "/help-centre",
       "icons": [{ "src": "/pwa-icon.svg", "sizes": "any", "type": "image/svg+xml" }]
     }
   ]
