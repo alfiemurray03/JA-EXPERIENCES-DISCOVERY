@@ -28,6 +28,16 @@ function sameOrigin(request) {
   return !origin || origin === new URL(request.url).origin;
 }
 
+function issueOnlyHistory(rawHistory) {
+  const history = Array.isArray(rawHistory) ? rawHistory : [];
+  const boundary = history.findLastIndex((item) => item?.role === "assistant" && /now, please tell me what you need help with/i.test(String(item?.content || item?.text || "")));
+  return (boundary >= 0 ? history.slice(boundary + 1) : history).slice(-20);
+}
+
+function acknowledgementOnly(message) {
+  return /^(?:ok(?:ay)?|yes|no|sure|continue|go ahead|thanks?|thank you|hi|hello|hey|help)[.! ]*$/i.test(message);
+}
+
 export async function onRequest(context) {
   const { request, env } = context;
   const settings = await loadAssistantSettings(env.DB);
@@ -107,11 +117,24 @@ export async function onRequest(context) {
 
   const message = clean(body.message, 2000);
   if (message.length < 2) return json({ success: false, error: "Please enter a question." }, 400);
+  const history = issueOnlyHistory(body.history);
+  const issueTurns = history.filter((item) => item?.role === "user").length;
 
-  let result = guidedEscalation(config, message, body.history);
-  if (!result) result = await workersAiAnswer(env, config, articles, message, body.history);
-  if (!result) result = builtInAnswer(config, articles, message, body.history);
-  await recordAssistantExchange(env.DB, request, body, result, config.provider === "workers_ai" ? config.model : "");
+  let result;
+  if (issueTurns <= 1 && acknowledgementOnly(message)) {
+    result = {
+      reply: "I’m ready to help, but I still need a description of the issue. Please tell me what happened, which page or feature is affected, and what you expected to happen.",
+      suggestions: [],
+      escalate: false,
+      resolved: false,
+      source: "issue_intake_guard"
+    };
+  } else {
+    result = guidedEscalation(config, message, history);
+    if (!result) result = await workersAiAnswer(env, config, articles, message, history);
+    if (!result) result = builtInAnswer(config, articles, message, history);
+  }
+  await recordAssistantExchange(env.DB, request, { ...body, history }, result, config.provider === "workers_ai" ? config.model : "");
 
   return json({
     success: true,

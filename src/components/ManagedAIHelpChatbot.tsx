@@ -92,6 +92,14 @@ function id(prefix: string) {
   catch { return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`; }
 }
 
+function issueOnlyHistory(messages: ChatMessage[]) {
+  let boundary = -1;
+  messages.forEach((message, index) => {
+    if (message.role === 'assistant' && /now, please tell me what you need help with/i.test(message.text)) boundary = index;
+  });
+  return (boundary >= 0 ? messages.slice(boundary + 1) : messages).slice(-20);
+}
+
 function displayName(user: { firstName?: string | null; lastName?: string | null; email: string } | null | undefined) {
   if (!user) return '';
   return `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || user.email;
@@ -298,11 +306,12 @@ export default function ManagedAIHelpChatbot() {
     if (value === 'Ask another question' || value === 'Try another question') { appendAssistant('Of course. What else can I help you with?', { suggestions: STARTER_SUGGESTIONS }); setInput(''); return; }
     const userMessage: ChatMessage = { id: id('user'), role: 'user', text: value };
     const next = [...messages, userMessage];
+    const supportHistory = issueOnlyHistory(next);
     setMessages(next); setInput(''); setThinking(true); setChatError('');
     try {
       const response = await fetch('/api/support-assistant', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
-        body: JSON.stringify({ sessionId: sessionIdRef.current, message: value, email: user?.email || '', pagePath: window.location.pathname, history: next.slice(-10).map(message => ({ role: message.role, content: message.text })) }),
+        body: JSON.stringify({ sessionId: sessionIdRef.current, message: value, email: user?.email || '', pagePath: window.location.pathname, history: supportHistory.map(message => ({ role: message.role, content: message.text })) }),
       });
       const data = await response.json().catch(() => ({})) as AssistantReply;
       if (!response.ok || !data.success || !data.reply) throw new Error(data.error || 'The Help Centre assistant could not answer that question.');
