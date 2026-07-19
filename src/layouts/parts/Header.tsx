@@ -1,5 +1,5 @@
 // @refresh reset
-// v10 — simplified public navigation for JA Plan Studio
+// v11 — concise public navigation for JA Plan Studio
 import { Link } from 'react-router-dom';
 import { Menu, X, LayoutDashboard, LogOut, User, ChevronDown } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
@@ -16,7 +16,7 @@ export default function SiteNavHeader() {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const navGroups = [
-    { label: 'Get Your Guide & Headout', links: [
+    { label: 'Book', links: [
       { href: '/getyourguide', label: 'Get Your Guide' },
       { href: '/headout', label: 'Headout' },
     ]},
