@@ -95,3 +95,14 @@ test('assistant offers enquiry escalation when self-help did not work', async ()
   assert.equal(data.escalate, true);
   assert.ok(data.suggestions.includes('Create an enquiry'));
 });
+
+
+test('completed triage automatically creates a signed-in Contact Enquiry', () => {
+  assert.match(chatbot, /submitAutomaticEscalation/);
+  assert.match(chatbot, /AI Support Assistant escalation/);
+  assert.match(chatbot, /automatic-escalation/);
+  assert.match(chatbot, /if \(data\.escalate\) await submitAutomaticEscalation/);
+  assert.match(chatbot, /Account type: Signed-in customer/);
+  assert.match(chatbot, /setReference\(data\.reference\)/);
+  assert.match(chatbot, /setMode\('sent'\)/);
+});
