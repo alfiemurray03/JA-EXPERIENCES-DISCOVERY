@@ -173,7 +173,7 @@ export default function ManagedAIHelpChatbot() {
 
   function initialiseConversation() {
     if (messages.length) return;
-    setMessages([{ id: id('assistant'), role: 'assistant', text: config.maintenanceEnabled ? [config.maintenanceMessage, formatMaintenanceWindow(config.maintenanceStart, config.maintenanceEnd)].filter(Boolean).join('\n\n') : `Hello 👋 Welcome to JA Plan Studio. I’m ${config.assistantName}. Before we look at the issue, what is your full name?`, suggestions: [] }]);
+    setMessages([{ id: id('assistant'), role: 'assistant', text: config.maintenanceEnabled ? [config.maintenanceMessage, formatMaintenanceWindow(config.maintenanceStart, config.maintenanceEnd)].filter(Boolean).join('\n\n') : `${config.welcomeMessage}\n\nBefore we look at the issue, what is your full name?`, suggestions: [] }]);
   }
 
   function openWidget() {
@@ -399,7 +399,7 @@ export default function ManagedAIHelpChatbot() {
     sessionIdRef.current = id('support-session'); openedAtRef.current = Date.now(); setReference(''); setInput(''); setSuggestedSubject(''); setSuggestedCategory('Technical Support');
     setForm({ name: '', email: '', telephone: '', subject: '', message: '', category: 'Technical Support', consent: false });
     setIntakeStep('name');
-    setMessages([{ id: id('assistant'), role: 'assistant', text: `Hello 👋 Welcome to JA Plan Studio. I’m ${config.assistantName}. Before we look at the issue, what is your full name?`, suggestions: [] }]); setMode('chat'); void sendEvent('open');
+    setMessages([{ id: id('assistant'), role: 'assistant', text: `${config.welcomeMessage}\n\nBefore we look at the issue, what is your full name?`, suggestions: [] }]); setMode('chat'); void sendEvent('open');
   }
 
   if (hiddenForPortal || !ready || !config.enabled) return null;
