@@ -17,18 +17,25 @@ test('Admin Portal supports horizontal touch scrolling on mobile', () => {
   assert.match(adminMobile, /env\(safe-area-inset-bottom\)/);
 });
 
-test('mobile web app manifest is installable and scoped to JA Plan Studio', () => {
+test('mobile web app launches on the public homepage without compulsory sign-in', () => {
   assert.equal(manifest.name, 'JA Plan Studio');
   assert.equal(manifest.display, 'standalone');
   assert.equal(manifest.scope, '/');
-  assert.equal(manifest.start_url, '/');
+  assert.equal(manifest.start_url, '/?source=pwa');
   assert.ok(manifest.icons.some((icon) => String(icon.purpose).includes('maskable')));
+  assert.ok(manifest.shortcuts.some((shortcut) => shortcut.url === '/?source=pwa'));
+  assert.ok(manifest.shortcuts.some((shortcut) => shortcut.url === '/help-centre'));
+  assert.ok(!manifest.shortcuts.some((shortcut) => shortcut.url === '/dashboard'));
+  assert.ok(!manifest.shortcuts.some((shortcut) => shortcut.url === '/admin'));
 });
 
-test('service worker is registered and avoids caching authenticated APIs', () => {
+test('service worker is registered and keeps protected sessions out of cache', () => {
   assert.match(main, /installPwaSupport\(\)/);
   assert.match(pwa, /serviceWorker\.register\('\/sw\.js'/);
   assert.match(serviceWorker, /url\.pathname\.startsWith\('\/api\/'\)/);
+  assert.match(serviceWorker, /isProtectedNavigation/);
+  assert.match(serviceWorker, /pathname\.startsWith\('\/admin\/'\)/);
+  assert.match(serviceWorker, /pathname\.startsWith\('\/dashboard\/'\)/);
   assert.match(serviceWorker, /request\.mode === 'navigate'/);
 });
 
