@@ -226,3 +226,11 @@ test('support handover uses a clear confirmation and sending state', () => {
   assert.match(chatbot, /Continuing the conversation…/);
   assert.match(chatbot, /confirmingHandover/);
 });
+
+
+test('webhook delivery can be disabled without disabling enquiry email', () => {
+  assert.match(supportSubmit, /assistantConfig\.webhookDeliveryEnabled \? \[/);
+  assert.match(supportSubmit, /sendNewEnquiryNotifications\(env\.DB, env, result\.reference\)/);
+  assert.match(supportSubmit, /configuredWebhooks\.map/);
+  assert.match(chatbot, /config\.welcomeMessage/);
+});
