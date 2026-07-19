@@ -76,7 +76,9 @@ async function sendTeamsSupportCard(env, request, reference, enquiry, priority) 
               { title: "Subject", value: clean(enquiry.subject, 180) }
             ]
           },
-          { type: "TextBlock", text: "A customer support case has been escalated after AI-guided triage.", wrap: true, spacing: "Medium" }
+          { type: "TextBlock", text: "A customer support case has been escalated after AI-guided triage.", wrap: true, spacing: "Medium" },
+          { type: "TextBlock", text: "Complete conversation transcript", weight: "Bolder", wrap: true, spacing: "Medium" },
+          { type: "TextBlock", text: clean(enquiry.message, 20000), wrap: true, fontType: "Monospace", size: "Small" }
         ],
         actions: [
           { type: "Action.OpenUrl", title: "Open support case", url: caseUrl }
@@ -140,7 +142,7 @@ async function submitChatEnquiry(context, identity) {
     email: clean(body.email || identity.email, 254).toLowerCase(),
     subject: clean(body.subject, 180),
     category,
-    message: clean(body.message, 6000),
+    message: clean(body.message, 20000),
     formType: "Support Chat",
     enquiryType: "AI Help Centre escalation",
     termsAccepted: body.termsAccepted === true,
