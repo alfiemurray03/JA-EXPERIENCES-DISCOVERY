@@ -21,26 +21,36 @@ test('mobile web app launches on the public homepage without compulsory sign-in'
   assert.equal(manifest.name, 'JA Plan Studio');
   assert.equal(manifest.display, 'standalone');
   assert.equal(manifest.scope, '/');
-  assert.equal(manifest.start_url, '/?source=pwa');
+  assert.equal(manifest.start_url, '/?source=pwa&launch=public-v3');
   assert.ok(manifest.icons.some((icon) => String(icon.purpose).includes('maskable')));
-  assert.ok(manifest.shortcuts.some((shortcut) => shortcut.url === '/?source=pwa'));
+  assert.ok(manifest.shortcuts.some((shortcut) => shortcut.url === '/?source=pwa&launch=public-v3'));
   assert.ok(manifest.shortcuts.some((shortcut) => shortcut.url === '/help-centre'));
   assert.ok(!manifest.shortcuts.some((shortcut) => shortcut.url === '/dashboard'));
   assert.ok(!manifest.shortcuts.some((shortcut) => shortcut.url === '/admin'));
 });
 
+test('standalone launch guard recovers old installed copies from protected pages', () => {
+  assert.match(index, /display-mode: standalone/);
+  assert.match(index, /window\.navigator\.standalone === true/);
+  assert.match(index, /isProtectedResume/);
+  assert.match(index, /window\.location\.replace\('\/\?source=pwa&launch=public-v3'\)/);
+  assert.match(index, /isIdentityResponse/);
+});
+
 test('service worker is registered and keeps protected sessions out of cache', () => {
   assert.match(main, /installPwaSupport\(\)/);
   assert.match(pwa, /serviceWorker\.register\('\/sw\.js'/);
+  assert.match(serviceWorker, /ja-plan-studio-shell-v3/);
   assert.match(serviceWorker, /url\.pathname\.startsWith\('\/api\/'\)/);
   assert.match(serviceWorker, /isProtectedNavigation/);
   assert.match(serviceWorker, /pathname\.startsWith\('\/admin\/'\)/);
   assert.match(serviceWorker, /pathname\.startsWith\('\/dashboard\/'\)/);
   assert.match(serviceWorker, /request\.mode === 'navigate'/);
+  assert.match(serviceWorker, /request\.destination === 'manifest'/);
 });
 
 test('HTML includes iPhone and Android web app metadata', () => {
-  assert.match(index, /rel="manifest" href="\/manifest\.webmanifest"/);
+  assert.match(index, /rel="manifest" href="\/manifest\.webmanifest\?v=3"/);
   assert.match(index, /apple-mobile-web-app-capable" content="yes"/);
   assert.match(index, /viewport-fit=cover/);
   assert.match(index, /theme-color" content="#0b172d"/);

@@ -1,5 +1,6 @@
-const CACHE_NAME = 'ja-plan-studio-shell-v2';
-const SHELL = ['/', '/?source=pwa', '/manifest.webmanifest', '/pwa-icon.svg', '/favicon.svg'];
+const CACHE_NAME = 'ja-plan-studio-shell-v3';
+const PUBLIC_LAUNCH = '/?source=pwa&launch=public-v3';
+const SHELL = ['/', PUBLIC_LAUNCH, '/manifest.webmanifest?v=3', '/pwa-icon.svg', '/favicon.svg'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -16,7 +17,8 @@ self.addEventListener('activate', (event) => {
 function isProtectedNavigation(pathname) {
   return pathname === '/dashboard' || pathname.startsWith('/dashboard/') ||
     pathname === '/admin' || pathname.startsWith('/admin/') ||
-    pathname === '/account' || pathname.startsWith('/account/');
+    pathname === '/account' || pathname.startsWith('/account/') ||
+    pathname === '/sign-in' || pathname.startsWith('/sign-in/');
 }
 
 self.addEventListener('fetch', (event) => {
@@ -41,12 +43,12 @@ self.addEventListener('fetch', (event) => {
           if (response.ok) caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
           return response;
         })
-        .catch(async () => (await caches.match(request)) || (await caches.match('/?source=pwa')) || (await caches.match('/'))),
+        .catch(async () => (await caches.match(request)) || (await caches.match(PUBLIC_LAUNCH)) || (await caches.match('/'))),
     );
     return;
   }
 
-  if (['script', 'style', 'image', 'font', 'manifest'].includes(request.destination)) {
+  if (['script', 'style', 'image', 'font'].includes(request.destination)) {
     event.respondWith(
       caches.match(request).then((cached) => {
         const network = fetch(request).then((response) => {
@@ -56,5 +58,10 @@ self.addEventListener('fetch', (event) => {
         return cached || network;
       }),
     );
+  }
+
+  // Always revalidate the manifest so installed apps receive new launch metadata.
+  if (request.destination === 'manifest') {
+    event.respondWith(fetch(request, { cache: 'no-store' }).catch(() => caches.match('/manifest.webmanifest?v=3')));
   }
 });

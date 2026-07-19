@@ -3,7 +3,7 @@
   "name": "JA Plan Studio",
   "short_name": "JA Plan Studio",
   "description": "Guided planning builders, saved plans and secure customer and administration access.",
-  "start_url": "/?source=pwa",
+  "start_url": "/?source=pwa&launch=public-v3",
   "scope": "/",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
@@ -24,7 +24,7 @@
     {
       "name": "JA Plan Studio Home",
       "short_name": "Home",
-      "url": "/?source=pwa",
+      "url": "/?source=pwa&launch=public-v3",
       "icons": [{ "src": "/pwa-icon.svg", "sizes": "any", "type": "image/svg+xml" }]
     },
     {
