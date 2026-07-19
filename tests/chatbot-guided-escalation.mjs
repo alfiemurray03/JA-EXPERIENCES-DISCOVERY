@@ -20,6 +20,8 @@ test('starts a natural account conversation after unresolved sign-in help', () =
   assert.equal(result.category, 'Technical Support');
   assert.match(result.reply, /I’ll ask a few questions/);
   assert.match(result.reply, /Which sign-in option are you using/);
+  assert.match(result.reply, /\n\nWhich sign-in option/);
+  assert.doesNotMatch(result.reply, /\\\\n/);
   assert.doesNotMatch(result.reply, /\b(?:check|question)\s+\d+\s+of\s+\d+/i);
   assert.equal(result.escalate, false);
 });
