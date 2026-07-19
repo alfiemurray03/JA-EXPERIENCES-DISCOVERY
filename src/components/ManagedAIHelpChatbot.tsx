@@ -43,10 +43,10 @@ interface EnquiryForm { name: string; email: string; telephone: string; subject:
 const DEFAULT_CONFIG: AssistantConfig = {
   enabled: true,
   maintenanceEnabled: false,
-  maintenanceMessage: 'The Help Centre assistant is undergoing maintenance. You can still send a Contact Enquiry.',
+  maintenanceMessage: 'The Help Centre assistant is temporarily unavailable while maintenance is completed. Please return after the maintenance window.',
   maintenanceStart: '',
   maintenanceEnd: '',
-  maintenanceAllowEnquiries: true,
+  maintenanceAllowEnquiries: false,
   allowAnonymous: true,
   selfHelpEnabled: true,
   escalationEnabled: true,
@@ -72,6 +72,20 @@ const DEFAULT_CONFIG: AssistantConfig = {
 
 const STARTER_SUGGESTIONS = ['Account or sign-in', 'Billing or subscription', 'Builders or saved plans', 'Privacy or data', 'Technical problem'];
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function formatMaintenanceWindow(start: string, end: string) {
+  const format = (value: string) => {
+    if (!value) return '';
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? '' : date.toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
+  };
+  const from = format(start);
+  const until = format(end);
+  if (from && until) return `Scheduled maintenance: ${from} to ${until} (your local time).`;
+  if (from) return `Scheduled maintenance begins: ${from} (your local time).`;
+  if (until) return `Maintenance is scheduled to finish: ${until} (your local time).`;
+  return '';
+}
 
 function id(prefix: string) {
   try { return `${prefix}-${crypto.randomUUID()}`; }
@@ -150,7 +164,7 @@ export default function ManagedAIHelpChatbot() {
 
   function initialiseConversation() {
     if (messages.length) return;
-    setMessages([{ id: id('assistant'), role: 'assistant', text: config.maintenanceEnabled ? config.maintenanceMessage : `Hello 👋 Welcome to JA Plan Studio. I’m ${config.assistantName}. Before we look at the issue, what is your full name?`, suggestions: config.maintenanceEnabled ? (config.escalationEnabled && config.maintenanceAllowEnquiries ? ['Create an enquiry'] : []) : [] }]);
+    setMessages([{ id: id('assistant'), role: 'assistant', text: config.maintenanceEnabled ? [config.maintenanceMessage, formatMaintenanceWindow(config.maintenanceStart, config.maintenanceEnd)].filter(Boolean).join('\n\n') : `Hello 👋 Welcome to JA Plan Studio. I’m ${config.assistantName}. Before we look at the issue, what is your full name?`, suggestions: [] }]);
   }
 
   function openWidget() {
@@ -241,10 +255,7 @@ export default function ManagedAIHelpChatbot() {
   async function sendMessage(raw = input) {
     const value = raw.trim();
     if (!value || thinking) return;
-    if (config.maintenanceEnabled) {
-      if (value === 'Create an enquiry' && config.escalationEnabled && config.maintenanceAllowEnquiries) startEnquiry();
-      return;
-    }
+    if (config.maintenanceEnabled) return;
 
     if (intakeStep !== 'issue') {
       const intakeMessage: ChatMessage = { id: id('user'), role: 'user', text: value };
@@ -381,6 +392,7 @@ export default function ManagedAIHelpChatbot() {
   const sideClass = config.position === 'bottom-left' ? 'left-5' : 'right-5';
   const panelSideClass = config.position === 'bottom-left' ? 'sm:left-5' : 'sm:right-5';
   const colourStyle = { '--chat-primary': config.primaryColor, '--chat-accent': config.accentColor, fontFamily: config.fontFamily } as CSSProperties;
+  const maintenanceWindow = formatMaintenanceWindow(config.maintenanceStart, config.maintenanceEnd);
 
   return (
     <div style={colourStyle}>
@@ -406,6 +418,7 @@ export default function ManagedAIHelpChatbot() {
             </div>
             <button type="button" onClick={closeWidget} aria-label="Close assistant" className="rounded-lg p-1.5 text-white/80 hover:bg-white/10"><X className="h-4 w-4" /></button>
           </header>
+          {maintenanceWindow && <div role="status" className="shrink-0 border-b border-amber-200 bg-amber-50 px-4 py-2.5 text-xs font-semibold text-amber-950">{maintenanceWindow}</div>}
 
           {mode === 'chat' && <>
             <div className="flex-1 space-y-4 overflow-y-auto bg-slate-50 px-4 py-4" aria-live="polite">
