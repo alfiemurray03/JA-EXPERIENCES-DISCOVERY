@@ -1,10 +1,12 @@
+import { EXPANDED_DEFAULT_ARTICLES } from "./support-assistant-knowledge.js";
+
 export const DEFAULT_CONFIG = {
   enabled: true,
   maintenanceEnabled: false,
-  maintenanceMessage: "The Help Centre assistant is undergoing maintenance. You can still send a Contact Enquiry.",
+  maintenanceMessage: "The Help Centre assistant is temporarily unavailable while maintenance is completed. Please return after the maintenance window.",
   maintenanceStart: "",
   maintenanceEnd: "",
-  maintenanceAllowEnquiries: true,
+  maintenanceAllowEnquiries: false,
   allowAnonymous: true,
   selfHelpEnabled: true,
   escalationEnabled: true,
@@ -33,68 +35,7 @@ export const DEFAULT_CONFIG = {
   autoOpenDelaySeconds: 0
 };
 
-export const DEFAULT_ARTICLES = [
-  {
-    id: "sign-in",
-    category: "Account & access",
-    title: "Sign-in and Microsoft account help",
-    summary: "Resolve common JA Group Services ID sign-in and account-access problems.",
-    answer: "Use the Log In button and complete Microsoft sign-in in the same browser. If you return without being signed in, close duplicate tabs, allow essential cookies and try once more.",
-    keywords: ["login", "log in", "sign in", "microsoft", "session", "pin", "cookies"],
-    steps: ["Close duplicate sign-in tabs.", "Return to JA Plan Studio and choose Log In.", "Complete Microsoft sign-in in the same browser."],
-    href: "/help-centre"
-  },
-  {
-    id: "billing",
-    category: "Billing & subscriptions",
-    title: "Subscriptions, plans and invoices",
-    summary: "Understand your plan, renewal date, invoices and Stripe billing access.",
-    answer: "Open Settings and choose Billing. Review the active plan, renewal information and invoices, or open the secure Stripe billing portal where available.",
-    keywords: ["billing", "subscription", "plan", "invoice", "payment", "stripe", "renewal", "refund"],
-    steps: ["Open Settings and choose Billing.", "Review the plan and renewal information.", "Use the secure billing portal for supported changes."],
-    href: "/help-centre"
-  },
-  {
-    id: "builders",
-    category: "Builders & plans",
-    title: "Create, save and preview a plan",
-    summary: "Choose a builder, answer its guided questions, preview the result and save your plan.",
-    answer: "Open Explore Builders, choose a planning template and complete each guided step. Use Preview before saving, then save the plan to your customer account.",
-    keywords: ["builder", "plan", "template", "save", "preview", "download", "guided"],
-    steps: ["Open Explore Builders.", "Choose a template and complete the questions.", "Preview the result, then save it."],
-    href: "/help-centre"
-  },
-  {
-    id: "privacy",
-    category: "Privacy & data",
-    title: "Privacy and data requests",
-    summary: "Request access, correction, deletion or another data-protection action.",
-    answer: "Open Privacy & Data in your account and choose the appropriate request type. Provide enough detail for the team to identify the information and track the request from the same page.",
-    keywords: ["privacy", "data", "gdpr", "delete", "deletion", "dsar", "correction"],
-    steps: ["Open Privacy & Data.", "Choose the request type.", "Provide the requested details and track the request."],
-    href: "/privacy"
-  },
-  {
-    id: "technical",
-    category: "Technical support",
-    title: "Website or builder not working",
-    summary: "Try safe checks for loading, saving, preview and browser errors.",
-    answer: "Refresh the page once, confirm you are still signed in and retry in one browser tab. If the same error continues, create an enquiry with the page, time and exact message shown.",
-    keywords: ["error", "not working", "broken", "blank", "loading", "save", "preview", "download", "browser"],
-    steps: ["Refresh the affected page once.", "Confirm you are signed in and use one tab.", "Create an enquiry if the error continues."],
-    href: "/help-centre"
-  },
-  {
-    id: "accessibility",
-    category: "Accessibility",
-    title: "Accessibility and additional support",
-    summary: "Find accessibility controls and request an adjustment.",
-    answer: "Use the website accessibility controls where available. For additional support, create an enquiry and explain the adjustment or alternative format that would help.",
-    keywords: ["accessibility", "disability", "screen reader", "contrast", "font", "adjustment"],
-    steps: ["Open the accessibility controls.", "Choose the adjustment you need.", "Create an enquiry for further support."],
-    href: "/help-centre"
-  }
-];
+export const DEFAULT_ARTICLES = EXPANDED_DEFAULT_ARTICLES;
 
 const CATEGORY_SUGGESTIONS = [
   "Account or sign-in",
@@ -158,7 +99,7 @@ export function configFrom(settings) {
     maintenanceMessage: clean(settings.ai_chatbot_maintenance_message || DEFAULT_CONFIG.maintenanceMessage, 500),
     maintenanceStart: dateTime(settings.ai_chatbot_maintenance_start),
     maintenanceEnd: dateTime(settings.ai_chatbot_maintenance_end),
-    maintenanceAllowEnquiries: bool(settings.ai_chatbot_maintenance_allow_enquiries, DEFAULT_CONFIG.maintenanceAllowEnquiries),
+    maintenanceAllowEnquiries: false,
     allowAnonymous: bool(settings.ai_chatbot_allow_anonymous, DEFAULT_CONFIG.allowAnonymous),
     selfHelpEnabled: bool(settings.ai_chatbot_self_help_enabled, DEFAULT_CONFIG.selfHelpEnabled),
     escalationEnabled: bool(settings.ai_chatbot_escalation_enabled, DEFAULT_CONFIG.escalationEnabled),
@@ -166,7 +107,7 @@ export function configFrom(settings) {
     assistantName: clean(settings.ai_chatbot_name || DEFAULT_CONFIG.assistantName, 80),
     logoUrl: safeAssetUrl(settings.ai_chatbot_logo_url),
     avatarUrl: safeAssetUrl(settings.ai_chatbot_avatar_url),
-    fontFamily: ["inherit", "Segoe UI", "Arial", "Atkinson Hyperlegible", "Georgia"].includes(settings.ai_chatbot_font_family) ? settings.ai_chatbot_font_family : DEFAULT_CONFIG.fontFamily,
+    fontFamily: ["inherit", "system-ui", "Segoe UI", "Arial", "Helvetica", "Verdana", "Tahoma", "Trebuchet MS", "Calibri", "Open Sans", "Roboto", "Lato", "Poppins", "Montserrat", "Nunito", "Atkinson Hyperlegible", "Georgia", "Garamond", "Cambria", "Times New Roman", "Courier New"].includes(settings.ai_chatbot_font_family) ? settings.ai_chatbot_font_family : DEFAULT_CONFIG.fontFamily,
     welcomeMessage: clean(settings.ai_chatbot_welcome_message || DEFAULT_CONFIG.welcomeMessage, 500),
     responseTime: clean(settings.ai_chatbot_response_time || DEFAULT_CONFIG.responseTime, 120),
     maxSelfHelpTurns: integer(settings.ai_chatbot_max_self_help_turns, DEFAULT_CONFIG.maxSelfHelpTurns, 1, 8),
@@ -192,7 +133,7 @@ export function knowledgeFrom(settings) {
   try {
     const parsed = JSON.parse(settings.ai_chatbot_knowledge_json || "[]");
     if (!Array.isArray(parsed) || !parsed.length) return DEFAULT_ARTICLES;
-    return parsed.slice(0, 100).map((article, index) => ({
+    return parsed.slice(0, 500).map((article, index) => ({
       id: clean(article.id || `article-${index + 1}`, 80),
       category: clean(article.category || "General", 80),
       title: clean(article.title, 160),
