@@ -29,7 +29,7 @@ test('chatbot performs guided self-help and Contact Enquiry escalation', () => {
   assert.match(chatbot, /fetch\('\/api\/support\/submit'/);
   assert.match(chatbot, /sessionId: sessionIdRef\.current/);
   assert.match(chatbot, /startedAt: openedAtRef\.current/);
-  assert.match(chatbot, /Admin Centre’s Contact Enquiries section/);
+  assert.match(chatbot, /JA Plan Studio Support Team/);
 });
 
 test('anonymous enquiry submission bypasses only the submit middleware route', async () => {
@@ -105,4 +105,22 @@ test('completed triage automatically creates a signed-in Contact Enquiry', () =>
   assert.match(chatbot, /Account type: Signed-in customer/);
   assert.match(chatbot, /setReference\(data\.reference\)/);
   assert.match(chatbot, /setMode\('sent'\)/);
+});
+
+
+test('customer chatbot never exposes internal Admin Centre terminology', () => {
+  assert.doesNotMatch(chatbot, /Admin Centre/i);
+});
+
+
+test('support escalations use the server-side Teams workflow secret', () => {
+  assert.match(supportSubmit, /env\.TEAMS_SUPPORT_WEBHOOK_URL/);
+  assert.match(supportSubmit, /sendTeamsSupportCard/);
+  assert.match(supportSubmit, /application\/vnd\.microsoft\.card\.adaptive/);
+  assert.match(supportSubmit, /JA Plan Studio support escalation/);
+  assert.match(supportSubmit, /Action\.OpenUrl/);
+  assert.match(supportSubmit, /\.environment\.api\.powerplatform\.com/);
+  assert.match(supportSubmit, /Promise\.allSettled/);
+  assert.doesNotMatch(chatbot, /TEAMS_SUPPORT_WEBHOOK_URL/);
+  assert.doesNotMatch(supportSubmit, /sig=[A-Za-z0-9_-]+/);
 });
