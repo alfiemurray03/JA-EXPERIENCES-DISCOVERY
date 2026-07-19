@@ -287,7 +287,7 @@ export default function AIChatbotControlCenter() {
       const assistantData = await assistantResponse.json().catch(() => ({})) as { articles?: Article[] };
       if (!response.ok || !data.success) throw new Error(data.error || 'Chatbot settings could not be loaded.');
       const loaded = fromRecord(data.settings || {});
-      if (!data.settings?.ai_chatbot_knowledge_json && Array.isArray(assistantData.articles) && assistantData.articles.length) loaded.knowledge = assistantData.articles;
+      if (Array.isArray(assistantData.articles) && assistantData.articles.length) loaded.knowledge = assistantData.articles;
       setSettings(loaded);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Chatbot settings could not be loaded.');
