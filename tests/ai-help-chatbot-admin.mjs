@@ -114,3 +114,16 @@ test('Knowledge Centre uses a compact searchable master-detail layout', () => {
   assert.match(adminControl, /overflow-y-auto/);
   assert.match(adminControl, /No matching articles/);
 });
+
+
+test('Admin controls email-only support delivery and previews current chatbot states', () => {
+  assert.match(adminControl, /webhookDeliveryEnabled/);
+  assert.match(adminControl, /ai_chatbot_webhook_delivery_enabled/);
+  assert.match(adminControl, /Teams and additional webhooks/);
+  assert.match(adminControl, /enquiries are still stored and emailed/);
+  assert.match(adminControl, /Current chatbot preview/);
+  assert.match(adminControl, /Welcome and intake/);
+  assert.match(adminControl, /Self-help answer/);
+  assert.match(adminControl, /Support handover/);
+  assert.match(adminControl, /Maintenance/);
+});
