@@ -1,0 +1,33 @@
+/* Public chatbot confirmation must remain readable regardless of the website theme. */
+section[role="dialog"][aria-label$=" chat"] h2,
+section[role="dialog"][aria-label$=" chat"] p.font-mono {
+  color: #0f172a !important;
+}
+
+section[role="dialog"][aria-label$=" chat"] [data-slot="card"],
+section[role="dialog"][aria-label$=" chat"] [data-slot="card-content"] {
+  color: #0f172a;
+}
+
+/* Reinforce the complete Admin dark palette for modern data-slot components. */
+#admin-theme-root.dark .admin-portal [data-slot="card"],
+#admin-theme-root.dark .admin-portal [data-slot="card-header"],
+#admin-theme-root.dark .admin-portal [data-slot="card-content"] {
+  border-color: #334155 !important;
+  background-color: #0f172a !important;
+  color: #e2e8f0 !important;
+}
+
+#admin-theme-root.dark .admin-portal [data-slot="card-title"],
+#admin-theme-root.dark .admin-portal [data-slot="card"] strong,
+#admin-theme-root.dark .admin-portal [data-slot="card"] h1,
+#admin-theme-root.dark .admin-portal [data-slot="card"] h2,
+#admin-theme-root.dark .admin-portal [data-slot="card"] h3,
+#admin-theme-root.dark .admin-portal [data-slot="card"] p:not([class*="text-"]) {
+  color: #f8fafc !important;
+}
+
+#admin-theme-root.dark .admin-portal [data-slot="card"] button:not(.bg-blue-600):not(.bg-primary),
+#admin-theme-root.dark .admin-portal [data-slot="card"] a:not(.bg-blue-600):not(.bg-primary) {
+  color: #e2e8f0;
+}
