@@ -2,11 +2,17 @@ export const DEFAULT_CONFIG = {
   enabled: true,
   maintenanceEnabled: false,
   maintenanceMessage: "The Help Centre assistant is undergoing maintenance. You can still send a Contact Enquiry.",
+  maintenanceStart: "",
+  maintenanceEnd: "",
+  maintenanceAllowEnquiries: true,
   allowAnonymous: true,
   selfHelpEnabled: true,
   escalationEnabled: true,
   debugEnabled: false,
   assistantName: "JA Support Assistant",
+  logoUrl: "",
+  avatarUrl: "",
+  fontFamily: "inherit",
   welcomeMessage: "Hello! I can help you find an answer in the JA Plan Studio Help Centre. What do you need help with?",
   responseTime: "within 2 working days",
   maxSelfHelpTurns: 3,
@@ -118,6 +124,23 @@ function colour(value, fallback) {
   return /^#[0-9a-f]{6}$/i.test(candidate) ? candidate : fallback;
 }
 
+function safeAssetUrl(value) {
+  const candidate = clean(value, 500);
+  if (!candidate) return "";
+  if (candidate.startsWith("/") && !candidate.startsWith("//")) return candidate;
+  try {
+    const url = new URL(candidate);
+    return url.protocol === "https:" ? url.toString() : "";
+  } catch {
+    return "";
+  }
+}
+
+function dateTime(value) {
+  const candidate = clean(value, 40);
+  return candidate && !Number.isNaN(Date.parse(candidate)) ? candidate : "";
+}
+
 export async function loadAssistantSettings(DB) {
   if (!DB) return {};
   try {
@@ -133,11 +156,17 @@ export function configFrom(settings) {
     enabled: bool(settings.ai_chatbot_enabled, DEFAULT_CONFIG.enabled),
     maintenanceEnabled: bool(settings.ai_chatbot_maintenance_enabled, DEFAULT_CONFIG.maintenanceEnabled),
     maintenanceMessage: clean(settings.ai_chatbot_maintenance_message || DEFAULT_CONFIG.maintenanceMessage, 500),
+    maintenanceStart: dateTime(settings.ai_chatbot_maintenance_start),
+    maintenanceEnd: dateTime(settings.ai_chatbot_maintenance_end),
+    maintenanceAllowEnquiries: bool(settings.ai_chatbot_maintenance_allow_enquiries, DEFAULT_CONFIG.maintenanceAllowEnquiries),
     allowAnonymous: bool(settings.ai_chatbot_allow_anonymous, DEFAULT_CONFIG.allowAnonymous),
     selfHelpEnabled: bool(settings.ai_chatbot_self_help_enabled, DEFAULT_CONFIG.selfHelpEnabled),
     escalationEnabled: bool(settings.ai_chatbot_escalation_enabled, DEFAULT_CONFIG.escalationEnabled),
     debugEnabled: bool(settings.ai_chatbot_debug_enabled, DEFAULT_CONFIG.debugEnabled),
     assistantName: clean(settings.ai_chatbot_name || DEFAULT_CONFIG.assistantName, 80),
+    logoUrl: safeAssetUrl(settings.ai_chatbot_logo_url),
+    avatarUrl: safeAssetUrl(settings.ai_chatbot_avatar_url),
+    fontFamily: ["inherit", "Segoe UI", "Arial", "Atkinson Hyperlegible", "Georgia"].includes(settings.ai_chatbot_font_family) ? settings.ai_chatbot_font_family : DEFAULT_CONFIG.fontFamily,
     welcomeMessage: clean(settings.ai_chatbot_welcome_message || DEFAULT_CONFIG.welcomeMessage, 500),
     responseTime: clean(settings.ai_chatbot_response_time || DEFAULT_CONFIG.responseTime, 120),
     maxSelfHelpTurns: integer(settings.ai_chatbot_max_self_help_turns, DEFAULT_CONFIG.maxSelfHelpTurns, 1, 8),

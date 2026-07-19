@@ -154,3 +154,20 @@ test('customer can download and print the complete transcript', () => {
   assert.match(chatbot, /Download transcript/);
   assert.match(chatbot, /Print transcript/);
 });
+
+
+test('runtime applies expanded maintenance branding and webhook delivery controls', () => {
+  assert.match(chatbot, /config\.logoUrl/);
+  assert.match(chatbot, /config\.avatarUrl/);
+  assert.match(chatbot, /fontFamily: config\.fontFamily/);
+  assert.match(supportSubmit, /SUPPORT_WEBHOOK_2_URL/);
+  assert.match(supportSubmit, /SUPPORT_WEBHOOK_3_URL/);
+  assert.match(supportSubmit, /SUPPORT_WEBHOOK_4_URL/);
+  assert.match(supportSubmit, /configuredWebhooks\.map/);
+});
+
+
+test('maintenance mode can retain functional enquiry escalation', () => {
+  assert.match(chatbot, /config\.maintenanceAllowEnquiries/);
+  assert.match(chatbot, /value === 'Create an enquiry'.*startEnquiry/s);
+});

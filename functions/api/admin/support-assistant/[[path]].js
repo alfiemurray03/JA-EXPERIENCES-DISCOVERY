@@ -13,6 +13,50 @@ function configuredAdmins(env) {
     .split(",").map((email) => email.trim().toLowerCase()).filter(Boolean);
 }
 
+function webhookSlots(env) {
+  return [
+    { id: "teams", label: "Microsoft Teams Support", configured: Boolean(env.TEAMS_SUPPORT_WEBHOOK_URL), url: env.TEAMS_SUPPORT_WEBHOOK_URL },
+    { id: "secondary", label: "Additional workflow 1", configured: Boolean(env.SUPPORT_WEBHOOK_2_URL), url: env.SUPPORT_WEBHOOK_2_URL },
+    { id: "tertiary", label: "Additional workflow 2", configured: Boolean(env.SUPPORT_WEBHOOK_3_URL), url: env.SUPPORT_WEBHOOK_3_URL },
+    { id: "quaternary", label: "Additional workflow 3", configured: Boolean(env.SUPPORT_WEBHOOK_4_URL), url: env.SUPPORT_WEBHOOK_4_URL }
+  ];
+}
+
+function permittedWebhook(value) {
+  try {
+    const url = new URL(String(value || ""));
+    return url.protocol === "https:" && url.hostname.endsWith(".environment.api.powerplatform.com");
+  } catch {
+    return false;
+  }
+}
+
+async function testWebhook(slot) {
+  if (!slot?.configured || !permittedWebhook(slot.url)) throw new Error("The selected webhook is not configured with a permitted Power Platform URL.");
+  const response = await fetch(slot.url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      type: "message",
+      attachments: [{
+        contentType: "application/vnd.microsoft.card.adaptive",
+        contentUrl: null,
+        content: {
+          type: "AdaptiveCard",
+          version: "1.4",
+          $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
+          body: [
+            { type: "TextBlock", size: "Large", weight: "Bolder", text: "JA Plan Studio webhook test", wrap: true },
+            { type: "TextBlock", text: `${slot.label} is connected to the AI Chatbot Control Centre.`, wrap: true },
+            { type: "TextBlock", text: new Date().toISOString(), size: "Small", isSubtle: true }
+          ]
+        }
+      }]
+    })
+  });
+  if (!response.ok) throw new Error(`Webhook returned HTTP ${response.status}.`);
+}
+
 async function authorised(DB, identity, env) {
   if (configuredAdmins(env).includes(String(identity.email || "").toLowerCase())) return true;
   try {
@@ -101,13 +145,24 @@ export async function onRequest(context) {
         provider: settings.ai_chatbot_provider || "built_in",
         model: settings.ai_chatbot_model || "",
         debugEnabled: settings.ai_chatbot_debug_enabled === "true",
-        maintenanceEnabled: settings.ai_chatbot_maintenance_enabled === "true"
+        maintenanceEnabled: settings.ai_chatbot_maintenance_enabled === "true",
+        webhooks: webhookSlots(env).map(({ id, label, configured }) => ({ id, label, configured }))
       }
     });
   }
 
   const body = await bodyOf(request);
   const action = String(body.action || "set_status");
+  if (action === "test_webhook") {
+    const slot = webhookSlots(env).find((item) => item.id === String(body.slot || ""));
+    if (!slot) return json({ success: false, error: "Webhook slot was not found." }, 404);
+    try {
+      await testWebhook(slot);
+      return json({ success: true, slot: slot.id, message: `${slot.label} test delivered.` });
+    } catch (error) {
+      return json({ success: false, error: String(error?.message || error).slice(0, 240) }, 502);
+    }
+  }
   if (action === "purge_abandoned") {
     const days = Math.min(365, Math.max(1, Number(body.days || 30)));
     const sessions = await env.DB.prepare("SELECT session_id FROM support_ai_conversations WHERE status='abandoned' AND last_activity < datetime('now', ?)").bind(`-${days} days`).all();

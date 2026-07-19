@@ -72,3 +72,22 @@ test('Admin Centre provides full chatbot control and monitoring', () => {
   assert.match(adminControl, /ai_chatbot_knowledge_json/);
   assert.match(adminControl, /\/api\/admin\/support-assistant/);
 });
+
+
+test('Admin chatbot control centre manages webhook slots, scheduled maintenance and branding', () => {
+  assert.match(adminControl, /Integrations/);
+  assert.match(adminControl, /Microsoft Teams Support/);
+  assert.match(adminControl, /SUPPORT_WEBHOOK_2_URL/);
+  assert.match(adminControl, /SUPPORT_WEBHOOK_3_URL/);
+  assert.match(adminControl, /SUPPORT_WEBHOOK_4_URL/);
+  assert.match(adminControl, /Send test/);
+  assert.match(adminControl, /Scheduled start/);
+  assert.match(adminControl, /Scheduled end/);
+  assert.match(adminControl, /Allow enquiries during maintenance/);
+  assert.match(adminControl, /Launcher logo URL/);
+  assert.match(adminControl, /Assistant avatar URL/);
+  assert.match(adminControl, /Chatbot font/);
+  assert.match(adminMonitor, /test_webhook/);
+  assert.match(adminMonitor, /TEAMS_SUPPORT_WEBHOOK_URL/);
+  assert.match(adminMonitor, /permittedWebhook/);
+});

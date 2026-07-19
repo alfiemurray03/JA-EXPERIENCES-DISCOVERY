@@ -9,10 +9,16 @@ interface AssistantConfig {
   enabled: boolean;
   maintenanceEnabled: boolean;
   maintenanceMessage: string;
+  maintenanceStart: string;
+  maintenanceEnd: string;
+  maintenanceAllowEnquiries: boolean;
   allowAnonymous: boolean;
   selfHelpEnabled: boolean;
   escalationEnabled: boolean;
   assistantName: string;
+  logoUrl: string;
+  avatarUrl: string;
+  fontFamily: string;
   welcomeMessage: string;
   responseTime: string;
   maxSelfHelpTurns: number;
@@ -38,10 +44,16 @@ const DEFAULT_CONFIG: AssistantConfig = {
   enabled: true,
   maintenanceEnabled: false,
   maintenanceMessage: 'The Help Centre assistant is undergoing maintenance. You can still send a Contact Enquiry.',
+  maintenanceStart: '',
+  maintenanceEnd: '',
+  maintenanceAllowEnquiries: true,
   allowAnonymous: true,
   selfHelpEnabled: true,
   escalationEnabled: true,
   assistantName: 'JA Support Assistant',
+  logoUrl: '',
+  avatarUrl: '',
+  fontFamily: 'inherit',
   welcomeMessage: 'Hello! I can help you find an answer in the JA Plan Studio Help Centre. What do you need help with?',
   responseTime: 'within 2 working days',
   maxSelfHelpTurns: 3,
@@ -138,7 +150,7 @@ export default function ManagedAIHelpChatbot() {
 
   function initialiseConversation() {
     if (messages.length) return;
-    setMessages([{ id: id('assistant'), role: 'assistant', text: config.maintenanceEnabled ? config.maintenanceMessage : `Hello 👋 Welcome to JA Plan Studio. I’m ${config.assistantName}. Before we look at the issue, what is your full name?`, suggestions: config.maintenanceEnabled ? (config.escalationEnabled ? ['Create an enquiry'] : []) : [] }]);
+    setMessages([{ id: id('assistant'), role: 'assistant', text: config.maintenanceEnabled ? config.maintenanceMessage : `Hello 👋 Welcome to JA Plan Studio. I’m ${config.assistantName}. Before we look at the issue, what is your full name?`, suggestions: config.maintenanceEnabled ? (config.escalationEnabled && config.maintenanceAllowEnquiries ? ['Create an enquiry'] : []) : [] }]);
   }
 
   function openWidget() {
@@ -228,7 +240,11 @@ export default function ManagedAIHelpChatbot() {
 
   async function sendMessage(raw = input) {
     const value = raw.trim();
-    if (!value || thinking || config.maintenanceEnabled) return;
+    if (!value || thinking) return;
+    if (config.maintenanceEnabled) {
+      if (value === 'Create an enquiry' && config.escalationEnabled && config.maintenanceAllowEnquiries) startEnquiry();
+      return;
+    }
 
     if (intakeStep !== 'issue') {
       const intakeMessage: ChatMessage = { id: id('user'), role: 'user', text: value };
@@ -364,7 +380,7 @@ export default function ManagedAIHelpChatbot() {
   if (hiddenForPortal || !ready || !config.enabled) return null;
   const sideClass = config.position === 'bottom-left' ? 'left-5' : 'right-5';
   const panelSideClass = config.position === 'bottom-left' ? 'sm:left-5' : 'sm:right-5';
-  const colourStyle = { '--chat-primary': config.primaryColor, '--chat-accent': config.accentColor } as CSSProperties;
+  const colourStyle = { '--chat-primary': config.primaryColor, '--chat-accent': config.accentColor, fontFamily: config.fontFamily } as CSSProperties;
 
   return (
     <div style={colourStyle}>
@@ -373,7 +389,7 @@ export default function ManagedAIHelpChatbot() {
         <button type="button" onClick={open ? closeWidget : openWidget} aria-label={open ? 'Close Help Centre assistant' : 'Open Help Centre assistant'}
           style={{ width: config.launcherSize, height: config.launcherSize, backgroundColor: config.primaryColor }}
           className="relative flex items-center justify-center rounded-full text-white shadow-2xl transition hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-200">
-          {open ? <ChevronDown className="h-6 w-6" /> : <Bot className="h-6 w-6" />}
+          {open ? <ChevronDown className="h-6 w-6" /> : config.logoUrl ? <img src={config.logoUrl} alt="" className="h-8 w-8 rounded-full object-contain" /> : <Bot className="h-6 w-6" />}
           {!open && <span className="absolute -left-1 -top-1 rounded-full bg-white p-1 shadow" style={{ color: config.primaryColor }}><Sparkles className="h-3 w-3" /></span>}
         </button>
       </div>
@@ -385,7 +401,7 @@ export default function ManagedAIHelpChatbot() {
           <header style={{ backgroundColor: config.primaryColor }} className="flex shrink-0 items-center justify-between px-4 py-3 text-white">
             <div className="flex min-w-0 items-center gap-3">
               {mode !== 'chat' && <button type="button" onClick={() => setMode('chat')} className="rounded-lg p-1.5 text-white/80 hover:bg-white/10" aria-label="Back to conversation"><ArrowLeft className="h-4 w-4" /></button>}
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15">{config.maintenanceEnabled ? <Wrench className="h-5 w-5" /> : <Bot className="h-5 w-5" />}</span>
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/15">{config.maintenanceEnabled ? <Wrench className="h-5 w-5" /> : config.avatarUrl ? <img src={config.avatarUrl} alt="" className="h-full w-full object-cover" /> : <Bot className="h-5 w-5" />}</span>
               <div className="min-w-0"><p className="truncate text-sm font-bold">{mode === 'enquiry' ? 'Contact Enquiry' : mode === 'sent' ? 'Enquiry received' : config.assistantName}</p><p className="truncate text-[11px] text-white/80">{config.maintenanceEnabled ? 'Maintenance mode' : `AI-assisted Help Centre · Team replies ${config.responseTime}`}</p></div>
             </div>
             <button type="button" onClick={closeWidget} aria-label="Close assistant" className="rounded-lg p-1.5 text-white/80 hover:bg-white/10"><X className="h-4 w-4" /></button>
