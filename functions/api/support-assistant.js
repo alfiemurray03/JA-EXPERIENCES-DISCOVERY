@@ -6,6 +6,7 @@ import {
   loadAssistantSettings,
   workersAiAnswer
 } from "../_shared/support-assistant-core.js";
+import { guidedEscalation } from "../_shared/support-assistant-triage.js";
 import {
   recordAssistantEvent,
   recordAssistantExchange
@@ -95,7 +96,8 @@ export async function onRequest(context) {
   const message = clean(body.message, 2000);
   if (message.length < 2) return json({ success: false, error: "Please enter a question." }, 400);
 
-  let result = await workersAiAnswer(env, config, articles, message, body.history);
+  let result = guidedEscalation(config, message, body.history);
+  if (!result) result = await workersAiAnswer(env, config, articles, message, body.history);
   if (!result) result = builtInAnswer(config, articles, message, body.history);
   await recordAssistantExchange(env.DB, request, body, result, config.provider === "workers_ai" ? config.model : "");
 
