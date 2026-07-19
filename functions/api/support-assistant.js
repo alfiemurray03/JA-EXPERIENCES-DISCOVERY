@@ -34,18 +34,29 @@ export async function onRequest(context) {
   const config = configFrom(settings);
   const articles = knowledgeFrom(settings);
   const identityEmail = clean(request.headers.get("x-ja-auth-email"), 254).toLowerCase();
+  const now = Date.now();
+  const scheduledStart = config.maintenanceStart ? Date.parse(config.maintenanceStart) : 0;
+  const scheduledEnd = config.maintenanceEnd ? Date.parse(config.maintenanceEnd) : 0;
+  const scheduledMaintenance = Boolean(scheduledStart && now >= scheduledStart && (!scheduledEnd || now <= scheduledEnd));
+  const maintenanceActive = config.maintenanceEnabled || scheduledMaintenance;
 
   if (request.method === "GET") {
     return json({
       success: true,
       config: {
         enabled: config.enabled,
-        maintenanceEnabled: config.maintenanceEnabled,
+        maintenanceEnabled: maintenanceActive,
         maintenanceMessage: config.maintenanceMessage,
+        maintenanceStart: config.maintenanceStart,
+        maintenanceEnd: config.maintenanceEnd,
+        maintenanceAllowEnquiries: config.maintenanceAllowEnquiries,
         allowAnonymous: config.allowAnonymous,
         selfHelpEnabled: config.selfHelpEnabled,
         escalationEnabled: config.escalationEnabled,
         assistantName: config.assistantName,
+        logoUrl: config.logoUrl,
+        avatarUrl: config.avatarUrl,
+        fontFamily: config.fontFamily,
         welcomeMessage: config.welcomeMessage,
         responseTime: config.responseTime,
         maxSelfHelpTurns: config.maxSelfHelpTurns,
@@ -86,7 +97,7 @@ export async function onRequest(context) {
   }
 
   if (!config.enabled) return json({ success: false, error: "The support assistant is currently unavailable." }, 503);
-  if (config.maintenanceEnabled) {
+  if (maintenanceActive) {
     return json({ success: false, error: config.maintenanceMessage, maintenance: true }, 503);
   }
   if (!identityEmail && !config.allowAnonymous) {
