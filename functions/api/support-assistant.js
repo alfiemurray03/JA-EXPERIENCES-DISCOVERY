@@ -22,7 +22,7 @@ const DEFAULT_ARTICLES = [
     answer: "Open your customer Settings and select Profile. Update the available fields, save the changes, and wait for the confirmation before leaving the page.",
     keywords: ["account", "profile", "personal", "name", "email", "details", "change", "update"],
     steps: ["Open Settings and choose Profile.", "Update the details you need.", "Select Save changes and wait for confirmation."],
-    href: "/support"
+    href: "/help-centre"
   },
   {
     id: "sign-in",
@@ -32,7 +32,7 @@ const DEFAULT_ARTICLES = [
     answer: "Use the Log In button and complete Microsoft sign-in in the same browser. If you are returned to the website without being signed in, close duplicate tabs, allow essential cookies, and try once more.",
     keywords: ["login", "log in", "sign in", "microsoft", "oidc", "session", "pin", "account access", "cookies"],
     steps: ["Close duplicate JA Plan Studio sign-in tabs.", "Return to the website and choose Log In.", "Complete Microsoft sign-in without opening a second browser window."],
-    href: "/support"
+    href: "/help-centre"
   },
   {
     id: "billing",
@@ -42,7 +42,7 @@ const DEFAULT_ARTICLES = [
     answer: "Open Settings and choose Billing. You can review the active plan, renewal information and invoices, or open the secure Stripe billing portal where available.",
     keywords: ["billing", "subscription", "plan", "invoice", "payment", "stripe", "renewal", "charge", "refund"],
     steps: ["Open Settings and choose Billing.", "Review the plan, renewal date and invoices.", "Use the secure billing portal for supported changes."],
-    href: "/support"
+    href: "/help-centre"
   },
   {
     id: "builders",
@@ -52,7 +52,7 @@ const DEFAULT_ARTICLES = [
     answer: "Open Explore Builders, choose a planning template and complete each guided step. Use Preview before saving, then save the plan to your customer account.",
     keywords: ["builder", "plan", "template", "save", "preview", "download", "create", "guided", "questions"],
     steps: ["Open Explore Builders.", "Choose a template and complete the guided questions.", "Preview the result, then save it to your account."],
-    href: "/support"
+    href: "/help-centre"
   },
   {
     id: "usage",
@@ -62,7 +62,7 @@ const DEFAULT_ARTICLES = [
     answer: "Builder availability depends on your active subscription and any usage controls shown in your account. Check your Membership and Customer Usage pages, then reopen the builder.",
     keywords: ["usage", "limit", "credits", "tokens", "allowance", "unlimited", "locked", "access", "membership"],
     steps: ["Open Membership to confirm the active plan.", "Review Customer Usage for current usage.", "Return to Explore Builders and reopen the builder."],
-    href: "/support"
+    href: "/help-centre"
   },
   {
     id: "privacy",
@@ -72,7 +72,7 @@ const DEFAULT_ARTICLES = [
     answer: "Open Privacy & Data in your account and choose the appropriate request type. Provide enough detail for the team to identify the information and track the request from the same page.",
     keywords: ["privacy", "data", "gdpr", "delete", "deletion", "access request", "dsar", "correction", "information"],
     steps: ["Open Privacy & Data.", "Choose the request type and provide the requested details.", "Track the request from your account."],
-    href: "/privacy-settings"
+    href: "/privacy"
   },
   {
     id: "technical",
@@ -82,7 +82,7 @@ const DEFAULT_ARTICLES = [
     answer: "Refresh the page once, confirm you are still signed in, and retry in a single browser tab. Do not repeatedly clear all browser data. If the same error continues, create an enquiry with the page, time and exact message shown.",
     keywords: ["error", "not working", "broken", "blank", "loading", "load", "save", "preview", "download", "browser"],
     steps: ["Refresh the affected page once.", "Confirm you are signed in and use one browser tab.", "If it continues, create an enquiry with the affected page and exact error."],
-    href: "/support"
+    href: "/help-centre"
   },
   {
     id: "accessibility",
@@ -92,7 +92,7 @@ const DEFAULT_ARTICLES = [
     answer: "Use the website accessibility controls where available. For support with a particular builder or plan, create an enquiry and explain the adjustment or alternative format that would help.",
     keywords: ["accessibility", "disabled", "disability", "screen reader", "contrast", "font", "additional support", "adjustment"],
     steps: ["Open the accessibility controls.", "Select the display or motion adjustment you need.", "Create an enquiry if you need an additional adjustment."],
-    href: "/support"
+    href: "/help-centre"
   }
 ];
 
@@ -178,7 +178,7 @@ function knowledgeFrom(settings) {
       steps: Array.isArray(article.steps)
         ? article.steps.map((item) => clean(item, 300)).filter(Boolean).slice(0, 10)
         : clean(article.steps, 1600).split("\n").map((item) => item.trim()).filter(Boolean).slice(0, 10),
-      href: clean(article.href || "/support", 300)
+      href: clean(article.href || "/help-centre", 300)
     })).filter((article) => article.title && article.answer);
   } catch {
     return DEFAULT_ARTICLES;
@@ -300,7 +300,7 @@ function builtInAnswer(config, articles, message, history) {
       title: article.title,
       category: article.category,
       summary: article.summary,
-      href: article.href || "/support"
+      href: article.href || "/help-centre"
     },
     category: categoryFor(article),
     suggestedSubject: article.title,
@@ -324,7 +324,7 @@ async function workersAiAnswer(env, config, articles, message, history) {
         `CATEGORY: ${article.category}`,
         `ANSWER: ${article.answer}`,
         `STEPS: ${(article.steps || []).join(" | ")}`,
-        `LINK: ${article.href || "/support"}`
+        `LINK: ${article.href || "/help-centre"}`
       ].join("\n")).join("\n\n")
     : "No confident Help Centre article matched.";
 
@@ -364,7 +364,7 @@ async function workersAiAnswer(env, config, articles, message, history) {
         title: best.title,
         category: best.category,
         summary: best.summary,
-        href: best.href || "/support"
+        href: best.href || "/help-centre"
       } : undefined,
       category: categoryFor(best),
       suggestedSubject: best?.title || clean(message, 120),
@@ -436,7 +436,16 @@ export async function onRequest(context) {
         maxSelfHelpTurns: config.maxSelfHelpTurns
       },
       categories: Array.from(new Set(articles.map((article) => article.category))).filter(Boolean),
-      articleCount: articles.length
+      articleCount: articles.length,
+      articles: articles.map((article) => ({
+        id: article.id,
+        category: article.category,
+        title: article.title,
+        summary: article.summary,
+        answer: article.answer,
+        steps: article.steps,
+        href: article.href || "/help-centre"
+      }))
     });
   }
 
