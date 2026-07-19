@@ -7,6 +7,20 @@ import {
   validateEnquiry
 } from "../../_shared/enquiries.js";
 
+const ALLOWED_CHAT_CATEGORIES = new Set([
+  "General Enquiry",
+  "Sales",
+  "Billing",
+  "Technical Support",
+  "Partnerships",
+  "Accessibility",
+  "Data Protection",
+  "Safeguarding",
+  "Complaints",
+  "Feedback",
+  "Other"
+]);
+
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -67,18 +81,24 @@ function ticket(row) {
 async function submitChatEnquiry(context, identity) {
   const { request, env } = context;
   const body = await request.json().catch(() => ({}));
+  const requestedCategory = clean(body.category, 80);
+  const category = ALLOWED_CHAT_CATEGORIES.has(requestedCategory)
+    ? requestedCategory
+    : "Technical Support";
+  const startedAt = Number(body.startedAt);
   const enquiry = normaliseEnquiry({
     ...body,
     name: clean(body.name || identity.name || identity.email, 120),
     email: clean(body.email || identity.email, 254).toLowerCase(),
     subject: clean(body.subject, 180),
-    category: "Technical Support",
+    category,
     message: clean(body.message, 6000),
     formType: "Support Chat",
-    enquiryType: "Support Chat",
+    enquiryType: "AI Help Centre escalation",
     termsAccepted: body.termsAccepted === true,
     privacyAccepted: body.privacyAccepted === true,
-    marketingConsent: false
+    marketingConsent: false,
+    startedAt: Number.isFinite(startedAt) && startedAt > 0 ? startedAt : 0
   });
 
   if (enquiry.website) return json({ success: true, reference: "ENQ-RECEIVED" }, 201);
@@ -107,8 +127,8 @@ async function submitChatEnquiry(context, identity) {
     success: true,
     reference: result.reference,
     duplicate: result.duplicate,
-    category: "Technical Support",
-    source: "Support Chat",
+    category,
+    source: "AI Help Centre escalation",
     adminPath: `/admin/enquiries?reference=${encodeURIComponent(result.reference)}`,
     message: result.duplicate
       ? "This enquiry has already been received."
@@ -127,8 +147,7 @@ export async function onRequest(context) {
       return json({ success: false, error: "Request origin was rejected." }, 403);
     }
 
-    // The floating support assistant is available to signed-in and anonymous users.
-    // Every new submission is stored in the canonical Contact Enquiries workflow.
+    // New chatbot enquiries are stored in the canonical Contact Enquiries workflow.
     if (request.method === "POST" && parts[0] === "submit") {
       return submitChatEnquiry(context, identity);
     }
