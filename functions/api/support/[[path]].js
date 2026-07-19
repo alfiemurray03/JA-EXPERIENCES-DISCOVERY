@@ -6,19 +6,11 @@ import {
   storeEnquiry,
   validateEnquiry
 } from "../../_shared/enquiries.js";
+import { markConversationEscalated } from "../../_shared/support-assistant-monitor.js";
 
 const ALLOWED_CHAT_CATEGORIES = new Set([
-  "General Enquiry",
-  "Sales",
-  "Billing",
-  "Technical Support",
-  "Partnerships",
-  "Accessibility",
-  "Data Protection",
-  "Safeguarding",
-  "Complaints",
-  "Feedback",
-  "Other"
+  "General Enquiry", "Sales", "Billing", "Technical Support", "Partnerships",
+  "Accessibility", "Data Protection", "Safeguarding", "Complaints", "Feedback", "Other"
 ]);
 
 function json(data, status = 200) {
@@ -82,9 +74,7 @@ async function submitChatEnquiry(context, identity) {
   const { request, env } = context;
   const body = await request.json().catch(() => ({}));
   const requestedCategory = clean(body.category, 80);
-  const category = ALLOWED_CHAT_CATEGORIES.has(requestedCategory)
-    ? requestedCategory
-    : "Technical Support";
+  const category = ALLOWED_CHAT_CATEGORIES.has(requestedCategory) ? requestedCategory : "Technical Support";
   const startedAt = Number(body.startedAt);
   const enquiry = normaliseEnquiry({
     ...body,
@@ -102,22 +92,18 @@ async function submitChatEnquiry(context, identity) {
   });
 
   if (enquiry.website) return json({ success: true, reference: "ENQ-RECEIVED" }, 201);
-
   const errors = validateEnquiry(enquiry);
   if (enquiry.subject.length < 3) errors.unshift("Enter a subject of at least 3 characters.");
   if (errors.length) return json({ success: false, error: errors[0], errors }, 400);
 
   await ensureEnquiryTables(env.DB);
   const result = await storeEnquiry(env.DB, enquiry, request);
+  await markConversationEscalated(env.DB, clean(body.sessionId, 120), result.reference, enquiry.email);
 
   if (!result.duplicate) {
     await recordEnquiryConsent(env.DB, enquiry, request, result.reference);
     const notificationWork = sendNewEnquiryNotifications(env.DB, env, result.reference).catch((error) => {
-      console.error(JSON.stringify({
-        event: "support_chat_notification_failed",
-        reference: result.reference,
-        message: String(error?.message || error).slice(0, 240)
-      }));
+      console.error(JSON.stringify({ event: "support_chat_notification_failed", reference: result.reference, message: String(error?.message || error).slice(0, 240) }));
     });
     if (typeof context.waitUntil === "function") context.waitUntil(notificationWork);
     else await notificationWork;
@@ -130,9 +116,7 @@ async function submitChatEnquiry(context, identity) {
     category,
     source: "AI Help Centre escalation",
     adminPath: `/admin/enquiries?reference=${encodeURIComponent(result.reference)}`,
-    message: result.duplicate
-      ? "This enquiry has already been received."
-      : "Your enquiry has been sent to the JA Plan Studio team."
+    message: result.duplicate ? "This enquiry has already been received." : "Your enquiry has been sent to the JA Plan Studio team."
   }, result.duplicate ? 200 : 201);
 }
 
@@ -142,65 +126,33 @@ export async function onRequest(context) {
     if (!env.DB) return json({ success: false, error: "Support service is temporarily unavailable." }, 503);
     const parts = new URL(request.url).pathname.split("/").filter(Boolean).slice(2);
     const identity = identityOf(request);
-
-    if (request.method === "POST" && !sameOrigin(request)) {
-      return json({ success: false, error: "Request origin was rejected." }, 403);
-    }
-
-    // New chatbot enquiries are stored in the canonical Contact Enquiries workflow.
-    if (request.method === "POST" && parts[0] === "submit") {
-      return submitChatEnquiry(context, identity);
-    }
-
-    // Historical support-ticket conversations remain available to authenticated users.
+    if (request.method === "POST" && !sameOrigin(request)) return json({ success: false, error: "Request origin was rejected." }, 403);
+    if (request.method === "POST" && parts[0] === "submit") return submitChatEnquiry(context, identity);
     if (!identity.email) return json({ success: false, error: "Please sign in to view support conversations." }, 401);
     await ensureSupportTables(env.DB);
-
     if (parts[0] !== "tickets") return json({ success: false, error: "Support route not found." }, 404);
     const ticketId = parts[1];
     if (!ticketId && request.method === "GET") {
-      const rows = await env.DB.prepare(`SELECT * FROM support_tickets WHERE lower(customer_email)=lower(?) ORDER BY updated_at DESC`)
-        .bind(identity.email).all();
+      const rows = await env.DB.prepare("SELECT * FROM support_tickets WHERE lower(customer_email)=lower(?) ORDER BY updated_at DESC").bind(identity.email).all();
       return json({ success: true, tickets: (rows.results || []).map(ticket) });
     }
-
-    const owned = await env.DB.prepare(`SELECT * FROM support_tickets WHERE id=? AND lower(customer_email)=lower(?)`)
-      .bind(ticketId, identity.email).first();
+    const owned = await env.DB.prepare("SELECT * FROM support_tickets WHERE id=? AND lower(customer_email)=lower(?)").bind(ticketId, identity.email).first();
     if (!owned) return json({ success: false, error: "Support ticket not found." }, 404);
-
     if (parts[2] === "messages") {
       if (request.method === "POST") {
         const body = await request.json().catch(() => ({}));
         const message = clean(body.message, 8000);
         if (!message) return json({ success: false, error: "Message is required." }, 400);
-        await env.DB.prepare(`INSERT INTO support_ticket_messages (ticket_id,sender_type,sender_name,sender_email,message,read_by_admin) VALUES (?,'customer',?,?,?,0)`)
-          .bind(ticketId, identity.name || identity.email, identity.email, message).run();
-        await env.DB.prepare(`UPDATE support_tickets SET status=CASE WHEN lower(status) IN ('closed','resolved') THEN 'Open' ELSE status END,updated_at=CURRENT_TIMESTAMP WHERE id=?`)
-          .bind(ticketId).run();
+        await env.DB.prepare("INSERT INTO support_ticket_messages (ticket_id,sender_type,sender_name,sender_email,message,read_by_admin) VALUES (?,'customer',?,?,?,0)").bind(ticketId, identity.name || identity.email, identity.email, message).run();
+        await env.DB.prepare("UPDATE support_tickets SET status=CASE WHEN lower(status) IN ('closed','resolved') THEN 'Open' ELSE status END,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(ticketId).run();
       }
-      const rows = await env.DB.prepare(`SELECT id,sender_type,sender_name,message,created_at FROM support_ticket_messages WHERE ticket_id=? AND COALESCE(is_internal,0)=0 ORDER BY created_at,id`)
-        .bind(ticketId).all();
-      return json({
-        success: true,
-        messages: (rows.results || []).map((row) => ({
-          id: row.id,
-          senderType: row.sender_type,
-          senderName: row.sender_name,
-          message: row.message,
-          createdAt: row.created_at
-        }))
-      });
+      const rows = await env.DB.prepare("SELECT id,sender_type,sender_name,message,created_at FROM support_ticket_messages WHERE ticket_id=? AND COALESCE(is_internal,0)=0 ORDER BY created_at,id").bind(ticketId).all();
+      return json({ success: true, messages: (rows.results || []).map((row) => ({ id: row.id, senderType: row.sender_type, senderName: row.sender_name, message: row.message, createdAt: row.created_at })) });
     }
-
     return json({ success: true, ticket: ticket(owned) });
   } catch (error) {
     console.error(JSON.stringify({ event: "customer_support_error", message: String(error?.message || error) }));
     const status = Number(error?.status || 503);
-    return json({
-      success: false,
-      error: status === 429
-        ? String(error.message || "Too many enquiries have been sent. Please try again later.")
-        : "The support assistant could not complete that request. Please try again."
-    }, status);
+    return json({ success: false, error: status === 429 ? String(error.message || "Too many enquiries have been sent. Please try again later.") : "The support assistant could not complete that request. Please try again." }, status);
   }
 }
