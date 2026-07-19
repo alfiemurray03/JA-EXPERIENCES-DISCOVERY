@@ -1,15 +1,13 @@
-const TRIAGE_MARKER = "Escalation check";
-
 const FLOWS = {
   account: {
     label: "Account or sign-in",
     category: "Technical Support",
     priority: "High",
     questions: [
-      "Which sign-in method are you using to access your JA Plan Studio customer account?",
-      "What happens when you try to sign in, including the exact error message if one appears?",
-      "Which device and browser are you using?",
-      "When did the problem begin, and does it happen every time?"
+      "Which sign-in option are you using for your JA Plan Studio account?",
+      "What happens when you try to sign in? If you see an error message, please tell me exactly what it says.",
+      "What device and browser are you using?",
+      "When did this start, and does it happen every time you try?"
     ]
   },
   billing: {
@@ -17,10 +15,10 @@ const FLOWS = {
     category: "Billing",
     priority: "High",
     questions: [
-      "Which subscription plan or transaction is affected?",
-      "Was a payment taken? If so, provide the date, amount and invoice or receipt reference only.",
-      "Is this about a renewal, cancellation, trial, failed payment or unexpected charge?",
-      "What outcome would you like the support team to investigate?"
+      "Which subscription plan or payment do you need help with?",
+      "Was a payment taken? If so, please provide the date, amount and invoice or receipt reference. Do not send any card details.",
+      "Is the problem about a renewal, cancellation, trial, failed payment or an unexpected charge?",
+      "What would you like the support team to look into or put right?"
     ]
   },
   builders: {
@@ -28,10 +26,10 @@ const FLOWS = {
     category: "Technical Support",
     priority: "Normal",
     questions: [
-      "Which planning builder or saved plan is affected?",
-      "Were you trying to save, preview, edit or download the plan?",
-      "What happened, including any exact error message shown?",
-      "Can you reproduce the problem, and which device and browser are you using?"
+      "Which builder or saved plan are you having trouble with?",
+      "What were you trying to do — save, preview, edit or download the plan, or something else?",
+      "What happened? If an error message appeared, please tell me exactly what it said.",
+      "Does the same thing happen each time, and what device and browser are you using?"
     ]
   },
   privacy: {
@@ -39,10 +37,10 @@ const FLOWS = {
     category: "Data Protection",
     priority: "High",
     questions: [
-      "Does this concern access, correction, deletion, objection, restriction or a suspected data incident?",
-      "Which account, record or information is affected? Please do not include passwords or authentication codes.",
-      "When did you first become aware of the issue?",
-      "Is there any immediate risk to your personal data or account security?"
+      "Is this about accessing, correcting or deleting your information, restricting or objecting to its use, or reporting a possible data incident?",
+      "Which account or information is affected? Please do not send passwords or authentication codes.",
+      "When did you first notice this?",
+      "Do you think there is any immediate risk to your personal information or account security?"
     ]
   },
   technical: {
@@ -50,11 +48,11 @@ const FLOWS = {
     category: "Technical Support",
     priority: "Normal",
     questions: [
-      "Which page or feature is affected?",
-      "What were you trying to do when the problem occurred?",
-      "What exact error message or unexpected behaviour appeared?",
-      "Are you using the installed app or the website, and which device and browser are you using?",
-      "What time did it happen, and does it happen repeatedly?"
+      "Which page or feature are you having trouble with?",
+      "What were you trying to do when it happened?",
+      "What happened instead of what you expected? Please include the exact error message if there was one.",
+      "Are you using the installed app or the website, and what device and browser are you using?",
+      "Roughly when did it happen, and does it happen every time?"
     ]
   },
   general: {
@@ -62,9 +60,9 @@ const FLOWS = {
     category: "General Enquiry",
     priority: "Normal",
     questions: [
-      "Please briefly describe what you need the support team to help with.",
-      "Which page, account or service does this concern?",
-      "What have you already tried, and what outcome do you need?"
+      "Please tell me what you need help with and what has happened so far.",
+      "Which part of JA Plan Studio does this relate to?",
+      "What have you tried already, and what would you like to happen next?"
     ]
   }
 };
@@ -92,8 +90,14 @@ function detectFlow(message, history) {
   return "general";
 }
 
+const TRIAGE_QUESTIONS = Object.values(FLOWS).flatMap((flow) => flow.questions);
+
+function containsTriageQuestion(content) {
+  return TRIAGE_QUESTIONS.some((question) => content.includes(question));
+}
+
 function triageStarted(history) {
-  return history.some((item) => item.role === "assistant" && item.content.includes(TRIAGE_MARKER));
+  return history.some((item) => item.role === "assistant" && containsTriageQuestion(item.content));
 }
 
 function escalationRequested(message) {
@@ -104,7 +108,7 @@ function answeredQuestionCount(history) {
   let count = 0;
   for (let index = 0; index < history.length; index += 1) {
     const item = history[index];
-    if (item.role !== "assistant" || !item.content.includes(TRIAGE_MARKER)) continue;
+    if (item.role !== "assistant" || !containsTriageQuestion(item.content)) continue;
     const next = history[index + 1];
     if (next?.role === "user" && next.content) count += 1;
   }
@@ -129,9 +133,10 @@ export function guidedEscalation(config, message, rawHistory) {
   const answered = answeredQuestionCount(history);
 
   if (answered < flow.questions.length) {
-    const questionNumber = answered + 1;
+    const introduction = answered === 0 ? "Of course — I’ll ask a few questions so I can understand what has happened and help properly." : "";
+    const securityNote = answered === 0 ? "Please don’t send passwords, full payment-card numbers, security codes or authentication codes." : "";
     return {
-      reply: `${TRIAGE_MARKER} ${questionNumber} of ${flow.questions.length} — ${flow.label}\n\n${flow.questions[answered]}\n\nFor your security, never provide a password, full payment-card number, security code or authentication code.`,
+      reply: [introduction, flow.questions[answered], securityNote].filter(Boolean).join("\\n\\n"),
       suggestions: [],
       category: flow.category,
       suggestedSubject: `${flow.label} support request`,
@@ -143,7 +148,7 @@ export function guidedEscalation(config, message, rawHistory) {
 
   const priority = urgentPriority(flowKey, message, history);
   return {
-    reply: `Thank you — I have collected the relevant details. I can now escalate this to the JA Plan Studio team.\n\nCategory: ${flow.label}\nPriority: ${priority}\n\nI will now escalate this issue to the JA Plan Studio Support Team. Signed-in customers will receive an ENQ reference automatically. If you are signed out, I will only ask for the contact details needed for the team to reply. The full conversation and your answers will be attached automatically.`,
+    reply: `Thanks — I’ve got the information the support team needs. I’ll send this conversation to them now, including the answers you have given. You’ll receive an enquiry reference once it has been submitted.`,
     suggestions: ["Continue escalation", "Try another question"],
     category: flow.category,
     suggestedSubject: `[${priority}] ${flow.label} support request`,
