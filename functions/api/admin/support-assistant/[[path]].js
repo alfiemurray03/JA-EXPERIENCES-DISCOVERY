@@ -146,6 +146,7 @@ export async function onRequest(context) {
         model: settings.ai_chatbot_model || "",
         debugEnabled: settings.ai_chatbot_debug_enabled === "true",
         maintenanceEnabled: settings.ai_chatbot_maintenance_enabled === "true",
+        webhookDeliveryEnabled: settings.ai_chatbot_webhook_delivery_enabled !== "false",
         webhooks: webhookSlots(env).map(({ id, label, configured }) => ({ id, label, configured }))
       }
     });
