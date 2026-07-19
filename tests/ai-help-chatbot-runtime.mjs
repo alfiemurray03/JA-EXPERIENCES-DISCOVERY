@@ -234,3 +234,13 @@ test('webhook delivery can be disabled without disabling enquiry email', () => {
   assert.match(supportSubmit, /configuredWebhooks\.map/);
   assert.match(chatbot, /config\.welcomeMessage/);
 });
+
+
+test('name intake distinguishes names from customer questions', () => {
+  assert.match(chatbot, /function looksLikePersonName/);
+  assert.match(chatbot, /That looks like a question or request rather than a name/);
+  assert.match(chatbot, /\^\(\?:i\|we\).*want\|need/);
+  assert.match(chatbot, /\[\?!@:\/\\\\\]/);
+  assert.match(chatbot, /\\p\{L\}\\p\{M\}/);
+  assert.doesNotMatch(chatbot, /if \(value\.length < 2\).*setForm/s);
+});

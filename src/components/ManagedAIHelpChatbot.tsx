@@ -92,6 +92,17 @@ function id(prefix: string) {
   catch { return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`; }
 }
 
+function looksLikePersonName(value: string) {
+  const candidate = value.trim().replace(/\s+/g, ' ');
+  const words = candidate.split(' ').filter(Boolean);
+  if (candidate.length < 2 || candidate.length > 100 || words.length > 6) return false;
+  if (!/^[\p{L}\p{M}'’. -]+$/u.test(candidate) || /[?!@:/\\]/.test(candidate)) return false;
+  if (/^(?:i|we)\s+(?:want|need|would|have|am|cannot|can't|would like)\b/i.test(candidate)) return false;
+  if (/^(?:can|could|would|will|do|does|is|are|where|what|when|why|how)\s+(?:i|you|we|the|my|your)\b/i.test(candidate)) return false;
+  if (/^(?:show|tell|help|take|find|open|book|plan|search)\s+(?:me|us|a|an|the|my)\b/i.test(candidate)) return false;
+  return true;
+}
+
 function issueOnlyHistory(messages: ChatMessage[]) {
   let boundary = -1;
   messages.forEach((message, index) => {
@@ -271,11 +282,11 @@ export default function ManagedAIHelpChatbot() {
       setMessages(current => [...current, intakeMessage]);
       setInput('');
       if (intakeStep === 'name') {
-        if (value.length < 2) {
-          appendAssistant('Please tell me the full name you would like the Support Team to use.');
+        if (!looksLikePersonName(value)) {
+          appendAssistant('That looks like a question or request rather than a name. I can help with it, but first please tell me the full name you would like the support team to use.');
           return;
         }
-        setForm(current => ({ ...current, name: value }));
+        setForm(current => ({ ...current, name: value.trim().replace(/\\s+/g, ' ') }));
         setIntakeStep('email');
         appendAssistant(`Thanks, ${value}. What email address should we use to contact you about this conversation?`);
         return;
