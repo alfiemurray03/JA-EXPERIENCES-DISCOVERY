@@ -15,18 +15,28 @@ function isBlockedStatus(value) {
     .includes(String(value || "").trim().toLowerCase());
 }
 
+function isAnonymousEnquirySubmission(request) {
+  const url = new URL(request.url);
+  return request.method === "POST" && url.pathname === "/api/support/submit";
+}
+
 /**
  * Customer authentication boundary for /api/support/*.
  *
- * The root middleware intentionally bypasses generic /api/* routes. Without a
- * route-specific boundary the support handler never receives x-ja-auth-email,
- * even when the customer has a valid JA Group Services ID session.
+ * New Contact Enquiries may be submitted by signed-in or anonymous visitors.
+ * Ticket history, ticket messages and every other support route remain protected
+ * by the customer JA Group Services ID session.
  */
 export async function onRequest(context) {
   const { env, next } = context;
   let request = withIdentity(context.request, null);
-  let identity;
+  const publicSubmission = isAnonymousEnquirySubmission(request);
 
+  if (!assertSameOrigin(request)) {
+    return json({ success: false, error: "Request origin was rejected." }, 403);
+  }
+
+  let identity = null;
   try {
     identity = await getNativeSession(request, env, "customer");
   } catch (error) {
@@ -34,20 +44,20 @@ export async function onRequest(context) {
       event: "support_customer_session_error",
       message: error instanceof Error ? error.message : String(error)
     }));
-    return json({ success: false, error: "Customer support is temporarily unavailable. Please try again." }, 503);
+
+    // Anonymous enquiry submission must not depend on customer-session lookup.
+    if (!publicSubmission) {
+      return json({ success: false, error: "Customer support is temporarily unavailable. Please try again." }, 503);
+    }
   }
 
-  if (!identity) {
-    return json({ success: false, error: "Please sign in to use customer support." }, 401);
-  }
-
-  if (!assertSameOrigin(request)) {
-    return json({ success: false, error: "Request origin was rejected." }, 403);
+  if (!identity && !publicSubmission) {
+    return json({ success: false, error: "Please sign in to view customer support conversations." }, 401);
   }
 
   request = withIdentity(request, identity);
 
-  if (env.DB) {
+  if (identity && env.DB) {
     try {
       const profile = await env.DB
         .prepare("SELECT admin_customer_status FROM profiles WHERE lower(email)=lower(?)")
