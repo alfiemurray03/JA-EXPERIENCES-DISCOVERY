@@ -189,3 +189,32 @@ test('default knowledge contains hundreds of affiliate-safe support answers', ()
   assert.ok(merged.length >= 201);
   assert.ok(merged.some(article => article.id === 'custom'));
 });
+
+
+test('contact intake replies cannot trigger a premature enquiry', async () => {
+  const intakeHistory = [
+    { role: 'assistant', content: 'Before we look at the issue, what is your full name?' },
+    { role: 'user', content: 'alfie' },
+    { role: 'assistant', content: 'What email address should we use to contact you?' },
+    { role: 'user', content: 'alfie@jagroupservices.co.uk' },
+    { role: 'assistant', content: 'What telephone number should the Support Team use?' },
+    { role: 'user', content: 'skip' },
+    { role: 'assistant', content: 'Perfect — I have your contact details. Now, please tell me what you need help with.' },
+    { role: 'user', content: 'okay' },
+  ];
+  const response = await supportAssistant({
+    request: request('/api/support-assistant', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId: 'intake-guard-test', message: 'okay', history: intakeHistory }),
+    }),
+    env: {},
+  });
+  const data = await response.json();
+  assert.equal(response.status, 200);
+  assert.equal(data.escalate, false);
+  assert.equal(data.source, 'issue_intake_guard');
+  assert.match(data.reply, /still need a description of the issue/i);
+  assert.match(chatbot, /issueOnlyHistory\(next\)/);
+  assert.match(chatbot, /history: supportHistory\.map/);
+});
