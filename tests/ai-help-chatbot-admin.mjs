@@ -103,3 +103,14 @@ test('Admin Centre exposes the expanded support knowledge and affiliate controls
   assert.match(adminControl, /Customer contact is locked during maintenance/);
   assert.match(adminControl, /Configured start and end times are shown to visitors/);
 });
+
+
+test('Knowledge Centre uses a compact searchable master-detail layout', () => {
+  assert.match(adminControl, /knowledgeSearch/);
+  assert.match(adminControl, /knowledgeCategory/);
+  assert.match(adminControl, /filteredKnowledge/);
+  assert.match(adminControl, /Search articles, answers or keywords/);
+  assert.match(adminControl, /All categories/);
+  assert.match(adminControl, /overflow-y-auto/);
+  assert.match(adminControl, /No matching articles/);
+});
