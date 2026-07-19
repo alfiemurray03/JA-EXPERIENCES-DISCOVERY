@@ -39,8 +39,8 @@ function sameOrigin(request) {
   return !origin || origin === new URL(request.url).origin;
 }
 
-async function sendTeamsSupportCard(env, request, reference, enquiry, priority) {
-  const webhook = clean(env.TEAMS_SUPPORT_WEBHOOK_URL, 2000);
+async function sendTeamsSupportCard(webhookValue, request, reference, enquiry, priority) {
+  const webhook = clean(webhookValue, 2000);
   if (!webhook) return { sent: false, reason: "not_configured" };
 
   let target;
@@ -164,15 +164,23 @@ async function submitChatEnquiry(context, identity) {
     await recordEnquiryConsent(env.DB, enquiry, request, result.reference);
     const requestedPriority = clean(body.priority, 20);
     const priority = ["Urgent", "High", "Normal", "Low"].includes(requestedPriority) ? requestedPriority : "Normal";
-    const notificationWork = Promise.allSettled([
+    const configuredWebhooks = [
+      env.TEAMS_SUPPORT_WEBHOOK_URL,
+      env.SUPPORT_WEBHOOK_2_URL,
+      env.SUPPORT_WEBHOOK_3_URL,
+      env.SUPPORT_WEBHOOK_4_URL
+    ].filter(Boolean);
+    const deliveryTasks = [
       sendNewEnquiryNotifications(env.DB, env, result.reference),
-      sendTeamsSupportCard(env, request, result.reference, enquiry, priority)
-    ]).then((results) => {
+      ...configuredWebhooks.map((webhook) => sendTeamsSupportCard(webhook, request, result.reference, enquiry, priority))
+    ];
+    const notificationWork = Promise.allSettled(deliveryTasks).then((results) => {
       results.forEach((outcome, index) => {
         if (outcome.status === "rejected") {
           console.error(JSON.stringify({
-            event: index === 0 ? "support_chat_notification_failed" : "teams_support_webhook_failed",
+            event: index === 0 ? "support_chat_notification_failed" : "support_webhook_delivery_failed",
             reference: result.reference,
+            webhookSlot: index === 0 ? undefined : index,
             message: String(outcome.reason?.message || outcome.reason).slice(0, 240)
           }));
         }
