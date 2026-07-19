@@ -218,3 +218,11 @@ test('contact intake replies cannot trigger a premature enquiry', async () => {
   assert.match(chatbot, /issueOnlyHistory\(next\)/);
   assert.match(chatbot, /history: supportHistory\.map/);
 });
+
+
+test('support handover uses a clear confirmation and sending state', () => {
+  assert.match(chatbot, /Would you like me to send this conversation to the support team/);
+  assert.match(chatbot, /Sending your enquiry…/);
+  assert.match(chatbot, /Continuing the conversation…/);
+  assert.match(chatbot, /confirmingHandover/);
+});
