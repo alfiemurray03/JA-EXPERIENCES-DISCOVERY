@@ -438,7 +438,7 @@ export default function SupportChatbot() {
                       <div className="flex flex-col items-center justify-center px-6 py-12 text-center">
                         <MessageCircle className="mb-3 h-10 w-10 text-slate-300" />
                         <p className="text-sm font-semibold text-slate-900">No previous support conversations</p>
-                        <p className="mt-1 text-xs leading-5 text-slate-600">Send an enquiry and it will go directly to Contact Enquiries in the Admin Portal.</p>
+                        <p className="mt-1 text-xs leading-5 text-slate-600">Send an enquiry directly to the JA Plan Studio Support Team.</p>
                       </div>
                     ) : (
                       <div className="divide-y divide-slate-200">
@@ -619,7 +619,7 @@ export default function SupportChatbot() {
                     </Button>
                   </div>
                 )}
-                <p className="mt-2 text-center text-[10px] text-slate-500">Messages are sent to JA Plan Studio Contact Enquiries</p>
+                <p className="mt-2 text-center text-[10px] text-slate-500">Messages are sent securely to the JA Plan Studio Support Team</p>
               </div>
             </>
           )}
