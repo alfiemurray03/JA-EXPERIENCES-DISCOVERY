@@ -133,16 +133,19 @@ export function knowledgeFrom(settings) {
   try {
     const parsed = JSON.parse(settings.ai_chatbot_knowledge_json || "[]");
     if (!Array.isArray(parsed) || !parsed.length) return DEFAULT_ARTICLES;
-    return parsed.slice(0, 500).map((article, index) => ({
+    const custom = parsed.slice(0, 500).map((article, index) => ({
       id: clean(article.id || `article-${index + 1}`, 80),
       category: clean(article.category || "General", 80),
       title: clean(article.title, 160),
       summary: clean(article.summary, 500),
       answer: clean(article.answer || article.summary, 2400),
       keywords: Array.isArray(article.keywords) ? article.keywords.map((item) => clean(item, 80)).filter(Boolean).slice(0, 30) : clean(article.keywords, 800).split(",").map((item) => item.trim()).filter(Boolean).slice(0, 30),
-      steps: Array.isArray(article.steps) ? article.steps.map((item) => clean(item, 300)).filter(Boolean).slice(0, 10) : clean(article.steps, 1600).split("\n").map((item) => item.trim()).filter(Boolean).slice(0, 10),
+      steps: Array.isArray(article.steps) ? article.steps.map((item) => clean(item, 300)).filter(Boolean).slice(0, 10) : clean(article.steps, 1600).split("\\n").map((item) => item.trim()).filter(Boolean).slice(0, 10),
       href: clean(article.href || "/help-centre", 300)
     })).filter((article) => article.title && article.answer);
+    const merged = new Map(DEFAULT_ARTICLES.map((article) => [article.id, article]));
+    for (const article of custom) merged.set(article.id, article);
+    return Array.from(merged.values()).slice(0, 500);
   } catch {
     return DEFAULT_ARTICLES;
   }
