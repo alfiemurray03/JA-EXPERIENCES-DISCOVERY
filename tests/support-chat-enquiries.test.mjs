@@ -22,7 +22,7 @@ test('anonymous and signed-in support submissions use the Contact Enquiries work
   assert.match(chatbot, /privacyAccepted: newConsent/);
   assert.match(chatbot, /termsAccepted: anonConsent/);
   assert.match(chatbot, /privacyAccepted: anonConsent/);
-  assert.match(chatbot, /Contact Enquiries/);
+  assert.match(chatbot, /JA Plan Studio Support Team/);
   assert.match(chatbot, /Reference \{anonReference\}/);
 
   assert.match(supportRoute, /storeEnquiry\(env\.DB, enquiry, request\)/);
