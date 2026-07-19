@@ -124,3 +124,13 @@ test('support escalations use the server-side Teams workflow secret', () => {
   assert.doesNotMatch(chatbot, /TEAMS_SUPPORT_WEBHOOK_URL/);
   assert.doesNotMatch(supportSubmit, /sig=[A-Za-z0-9_-]+/);
 });
+
+
+test('complete transcript is stored, emailed and sent to Teams', () => {
+  assert.match(chatbot, /messages\.map\(message => \(\{ role: message\.role, content: message\.text \}\)\)/);
+  assert.doesNotMatch(chatbot, /messages\.slice\(-10\)\.map/);
+  assert.match(chatbot, /slice\(0, 20000\)/);
+  assert.match(supportSubmit, /Complete conversation transcript/);
+  assert.match(supportSubmit, /clean\(enquiry\.message, 20000\)/);
+  assert.match(chatbot, /Your enquiry has been submitted to the JA Plan Studio Support Team/);
+});
