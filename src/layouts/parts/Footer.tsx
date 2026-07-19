@@ -37,8 +37,9 @@ export const DEFAULT_FOOTER_COLUMNS: FooterColumn[] = [
   {
     heading: 'Support',
     links: [
-      { label: 'Contact Support',  href: '/support' },
-      { label: 'Service Status',   href: '/status' },
+      { label: 'Contact Us', href: '/contact' },
+      { label: 'Contact Support', href: '/support' },
+      { label: 'Service Status', href: '/status' },
       { label: 'Accessibility', href: '/accessibility-support' },
       { label: 'JA Group Services Ltd', href: 'https://jagroupservices.co.uk', external: true },
     ],

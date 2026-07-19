@@ -70,6 +70,9 @@ export default function SiteNavHeader() {
                 </div>
               </div>
             </div>)}
+            <Link to="/contact" className="px-3.5 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-all">
+              Contact
+            </Link>
           </nav>
 
           {/* Desktop right */}
@@ -160,6 +163,9 @@ export default function SiteNavHeader() {
         <div id="mobile-menu" className="md:hidden border-t border-border bg-card px-4 py-4 space-y-1"
           style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
           {navGroups.map(group => <div key={group.label} className="py-1"><p className="px-4 pt-2 pb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{group.label}</p>{group.links.map(link => <Link key={link.href} to={link.href} className="flex items-center px-4 py-2.5 rounded-xl text-sm font-medium text-foreground hover:bg-muted" onClick={() => setOpen(false)}>{link.label}</Link>)}</div>)}
+          <Link to="/contact" className="flex items-center px-4 py-3 rounded-xl text-sm font-semibold text-foreground hover:bg-muted" onClick={() => setOpen(false)}>
+            Contact
+          </Link>
 
           {!loading && (
             <div className="pt-3 border-t border-border space-y-2">
