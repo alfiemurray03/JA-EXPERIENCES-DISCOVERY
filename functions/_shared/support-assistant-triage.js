@@ -143,8 +143,8 @@ export function guidedEscalation(config, message, rawHistory) {
 
   const priority = urgentPriority(flowKey, message, history);
   return {
-    reply: `Thank you — I have collected the relevant details. I can now escalate this to the JA Plan Studio team.\n\nCategory: ${flow.label}\nPriority: ${priority}\n\nPlease choose “Create an enquiry” to review your contact details and consent before it is submitted. The full conversation and your answers will be attached automatically.`,
-    suggestions: ["Create an enquiry", "Try another question"],
+    reply: `Thank you — I have collected the relevant details. I can now escalate this to the JA Plan Studio team.\n\nCategory: ${flow.label}\nPriority: ${priority}\n\nI will now escalate this issue to the JA Plan Studio Support Team. Signed-in customers will receive an ENQ reference automatically. If you are signed out, I will only ask for the contact details needed for the team to reply. The full conversation and your answers will be attached automatically.`,
+    suggestions: ["Continue escalation", "Try another question"],
     category: flow.category,
     suggestedSubject: `[${priority}] ${flow.label} support request`,
     escalate: true,
