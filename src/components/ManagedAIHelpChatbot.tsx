@@ -94,7 +94,7 @@ export default function ManagedAIHelpChatbot() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const hiddenForPortal = typeof window !== 'undefined' && (window.location.pathname.startsWith('/admin') || window.location.pathname.startsWith('/reseller'));
-  const history = useMemo(() => messages.slice(-10).map(message => ({ role: message.role, content: message.text })), [messages]);
+  const history = useMemo(() => messages.map(message => ({ role: message.role, content: message.text })), [messages]);
 
   useEffect(() => {
     let active = true;
@@ -197,7 +197,7 @@ export default function ManagedAIHelpChatbot() {
           name,
           email,
           subject,
-          message: metadata.slice(0, 6000),
+          message: metadata.slice(0, 20000),
           category,
           priority: reply.priority || 'Normal',
           enquiryType: 'AI Support Assistant escalation',
@@ -270,7 +270,7 @@ export default function ManagedAIHelpChatbot() {
       const transcript = history.map(message => `${message.role === 'assistant' ? config.assistantName : 'Visitor'}: ${message.content}`).join('\n\n');
       const response = await fetch('/api/support/submit', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
-        body: JSON.stringify({ sessionId: sessionIdRef.current, name: form.name.trim(), email: form.email.trim(), subject: form.subject.trim(), message: `${form.message.trim()}${transcript ? `\n\n--- AI Help Centre conversation ---\n${transcript}` : ''}`.slice(0, 6000), category: form.category, termsAccepted: true, privacyAccepted: true, marketingConsent: false, startedAt: openedAtRef.current, website: '', idempotencyKey: `${sessionIdRef.current}-${form.subject.trim().toLowerCase()}`.slice(0, 120) }),
+        body: JSON.stringify({ sessionId: sessionIdRef.current, name: form.name.trim(), email: form.email.trim(), subject: form.subject.trim(), message: `${form.message.trim()}${transcript ? `\n\n--- AI Help Centre conversation ---\n${transcript}` : ''}`.slice(0, 20000), category: form.category, termsAccepted: true, privacyAccepted: true, marketingConsent: false, startedAt: openedAtRef.current, website: '', idempotencyKey: `${sessionIdRef.current}-${form.subject.trim().toLowerCase()}`.slice(0, 120) }),
       });
       const data = await response.json().catch(() => ({})) as { success?: boolean; reference?: string; error?: string; errors?: string[] };
       if (!response.ok || !data.success || !data.reference) throw new Error(data.error || data.errors?.[0] || 'The enquiry could not be sent.');
@@ -336,7 +336,7 @@ export default function ManagedAIHelpChatbot() {
             <Button type="button" onClick={() => void submitEnquiry()} disabled={submitting} style={{ backgroundColor: config.primaryColor }} className="w-full text-white">{submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}{submitting ? 'Sending enquiry…' : 'Send enquiry'}</Button>
           </div></div>}
 
-          {mode === 'sent' && <div className="flex flex-1 flex-col items-center justify-center bg-white px-6 text-center"><span className="flex h-14 w-14 items-center justify-center rounded-full bg-green-100"><CheckCircle2 className="h-8 w-8 text-green-600" /></span><h2 className="mt-4 text-lg font-bold">Enquiry received</h2><p className="mt-2 text-sm text-slate-600">Your support case has been sent to the JA Plan Studio Support Team.</p><div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"><p className="text-[10px] font-bold uppercase text-slate-500">Reference</p><p className="mt-1 font-mono text-sm font-bold">{reference}</p></div><p className="mt-3 text-xs text-slate-500">The team normally replies {config.responseTime}.</p><Button type="button" size="sm" className="mt-5" onClick={restart}>Start another conversation</Button></div>}
+          {mode === 'sent' && <div className="flex flex-1 flex-col items-center justify-center bg-white px-6 text-center"><span className="flex h-14 w-14 items-center justify-center rounded-full bg-green-100"><CheckCircle2 className="h-8 w-8 text-green-600" /></span><h2 className="mt-4 text-lg font-bold">Enquiry received</h2><p className="mt-2 text-sm text-slate-600">Your enquiry has been submitted to the JA Plan Studio Support Team.</p><div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"><p className="text-[10px] font-bold uppercase text-slate-500">Reference</p><p className="mt-1 font-mono text-sm font-bold">{reference}</p></div><p className="mt-3 text-xs text-slate-500">The team normally replies {config.responseTime}.</p><Button type="button" size="sm" className="mt-5" onClick={restart}>Start another conversation</Button></div>}
         </section>
       )}
     </div>
