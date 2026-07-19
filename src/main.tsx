@@ -8,6 +8,7 @@ import { installBrowserBranding } from './lib/browser-branding';
 import './styles/globals.css';
 import './styles/admin-polish.css';
 import './styles/admin-dark.css';
+import './styles/chatbot-admin-fixes.css';
 import './styles/pdf-document.css';
 
 installChunkRecovery();
