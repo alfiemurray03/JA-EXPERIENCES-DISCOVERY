@@ -225,6 +225,32 @@ function cleanEmail(value) {
   return clean(value, 254).toLowerCase();
 }
 
+function requestCookie(request, name) {
+  const raw = request?.headers?.get("Cookie") || "";
+  const match = raw.split(";").map((value) => value.trim()).find((value) => value.startsWith(`${name}=`));
+  return match ? decodeURIComponent(match.slice(name.length + 1)) : "";
+}
+
+async function sha256Hex(value) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(String(value || "")));
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+async function hasActiveAdminPinSession(DB, request, adminEmail) {
+  const token = requestCookie(request, "ja_admin_pin_session");
+  if (!token) return false;
+  try {
+    const session = await DB.prepare(`
+      SELECT token_hash FROM admin_pin_sessions
+      WHERE token_hash = ? AND lower(admin_email) = lower(?)
+        AND revoked_at IS NULL AND datetime(expires_at) > datetime('now')
+    `).bind(await sha256Hex(token), cleanEmail(adminEmail)).first();
+    return Boolean(session);
+  } catch {
+    return false;
+  }
+}
+
 function parseAuditHistory(value) {
   try {
     const parsed = JSON.parse(value || "[]");
@@ -3479,6 +3505,7 @@ export async function onRequest(context) {
           all(env.DB, `SELECT action,actor_email,summary,created_at FROM admin_audit_log WHERE lower(entity_id)=lower(?) ORDER BY created_at DESC LIMIT 100`, [email]).catch(() => [])
         ]);
         const verification = await getIdentityVerificationState(env.DB, email, identity.email, adminContext);
+        verification.admin_pin_override_available = await hasActiveAdminPinSession(env.DB, request, identity.email);
         const customerPayload = protectCustomerPayload({ ...customer, flags, timeline, supportCases, notifications, pins, notes, billing, builderOutputs, tokenLedger, savedItems, customerEnquiries, dataRequests, customerAudit }, verification);
         return json({ admin: adminContext, customer: customerPayload, plans, verification });
       }
@@ -3771,7 +3798,7 @@ export async function onRequest(context) {
         if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_users", "manage_crm"])) return json({ error: "Forbidden.", section }, 403);
         const email = cleanEmail(body.email);
         if (!email) return json({ error: "Customer email is required." }, 400);
-        const verificationAction = ["verify_identity", "verify_pin", "clear_identity_verification", "override_identity_lock"].includes(clean(body.action, 80));
+        const verificationAction = ["verify_identity", "verify_pin", "clear_identity_verification", "override_identity_lock", "admin_pin_override"].includes(clean(body.action, 80));
         if (!verificationAction) {
           const verification = await getIdentityVerificationState(env.DB, email, identity.email, adminContext);
           if (!verification.verified) {
@@ -3792,6 +3819,17 @@ export async function onRequest(context) {
           const expiresAt = await createCustomerVerificationSession(env.DB, identity, email, "Supervisor Override");
           await writeAudit(env.DB, identity, "customer_identity_verification_override", "profiles", email, `Supervisor override verified customer identity for ${email}.`, { reason, expires_at: expiresAt });
           return json({ saved: true, verification: await getIdentityVerificationState(env.DB, email, identity.email, adminContext) });
+        }
+        if (body.action === "admin_pin_override") {
+          if (!(await hasActiveAdminPinSession(env.DB, request, identity.email))) {
+            await writeAudit(env.DB, identity, "customer_admin_pin_override_rejected", "profiles", email, `Rejected expired or unavailable administrator PIN override for ${email}.`, {});
+            return json({ error: "Your administrator PIN session has expired. Lock and unlock the Admin Portal again." }, 403);
+          }
+          const reason = clean(body.reason, 500);
+          if (reason.length < 8) return json({ error: "Enter a clear reason for accessing this customer record." }, 400);
+          const expiresAt = await createCustomerVerificationSession(env.DB, identity, email, "Administrator PIN override");
+          await writeAudit(env.DB, identity, "customer_admin_pin_override", "profiles", email, `Administrator PIN override opened protected CRM data for ${email}.`, { reason, expires_at: expiresAt });
+          return json({ saved: true, verification: { ...(await getIdentityVerificationState(env.DB, email, identity.email, adminContext)), admin_pin_override_available: true } });
         }
         if (body.action === "verify_identity" || body.action === "verify_pin") {
           const method = clean(body.method, 80) || (body.action === "verify_pin" ? "Support PIN" : "Support PIN");
