@@ -50,7 +50,7 @@ const AdminForgotPasswordPage = lazy(() => import('./pages/admin/forgot-password
 
 const AdminDashboardPage = lazy(() => import('./pages/admin/dashboard'));
 const AdminUsersPage = lazy(() => import('./pages/admin/users'));
-const AdminSubscriptionsPage = lazy(() => import('./pages/admin/subscriptions'));
+const AdminCustomerCrmPage = lazy(() => import('./pages/admin/customer-crm'));
 const AdminContentPage = lazy(() => import('./pages/admin/content'));
 const AdminLegalPage = lazy(() => import('./pages/admin/legal'));
 const AdminPagesPage = lazy(() => import('./pages/admin/pages'));
@@ -383,8 +383,12 @@ export const adminRoutes: RouteObject[] = [
     element: wrap(<RequireAdmin><AdminUsersPage /></RequireAdmin>),
   },
   {
+    path: '/admin/users/:email',
+    element: wrap(<RequireAdmin><AdminCustomerCrmPage /></RequireAdmin>),
+  },
+  {
     path: '/admin/subscriptions',
-    element: wrap(<RequireAdmin><AdminSubscriptionsPage /></RequireAdmin>),
+    element: <Navigate to="/admin/users" replace />,
   },
   {
     path: '/admin/templates',

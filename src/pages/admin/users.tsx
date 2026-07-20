@@ -11,6 +11,7 @@
  * Theme-aware (light/dark/system via AdminThemeProvider).
  */
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import AdminLayout from '@/components/AdminLayout';
 import { Card, CardContent } from '@/components/ui/card';
@@ -194,6 +195,7 @@ function UserAvatar({ user, size = 'md' }: { user: CustomerUser; size?: 'sm' | '
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function AdminUsers() {
+  const navigate = useNavigate();
   const [users, setUsers]           = useState<CustomerUser[]>([]);
   const [loading, setLoading]       = useState(true);
   const [error, setError]           = useState('');
@@ -256,6 +258,8 @@ export default function AdminUsers() {
   // ── Load profile ────────────────────────────────────────────────────────────
 
   async function openProfile(u: CustomerUser) {
+    navigate(`/admin/users/${encodeURIComponent(u.email)}`);
+    return;
     setSelectedUser(u);
     setProfile(null);
     setProfileLoading(true);
