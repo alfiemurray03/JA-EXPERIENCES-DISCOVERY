@@ -1,6 +1,6 @@
-const CACHE_NAME = 'ja-plan-studio-shell-v5';
-const PUBLIC_LAUNCH = '/?source=pwa&launch=public-v5';
-const SHELL = ['/', PUBLIC_LAUNCH, '/manifest.webmanifest?v=5', '/pwa-icon.svg', '/favicon.svg'];
+const CACHE_NAME = 'ja-plan-studio-shell-v6';
+const PUBLIC_LAUNCH = '/?source=pwa&launch=public-v6';
+const SHELL = ['/', PUBLIC_LAUNCH, '/manifest.webmanifest?v=6', '/pwa-icon.svg', '/favicon.svg'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -28,7 +28,14 @@ function isIdentityResponse(pathname) {
   return pathname.includes('/callback') || pathname.includes('/logout') || pathname.startsWith('/signed-out');
 }
 
+function isAdminRoute(pathname) {
+  return pathname === '/admin' || pathname.startsWith('/admin/');
+}
+
 function isColdProtectedLaunch(request, url) {
+  // Admin routes must always reach the network. Serving the cached public PWA
+  // shell here made the old Admin Centre appear until the user refreshed.
+  if (isAdminRoute(url.pathname)) return false;
   if (request.mode !== 'navigate' || !isProtectedNavigation(url.pathname) || isIdentityResponse(url.pathname)) return false;
   const referrer = request.referrer || '';
   if (!referrer) return true;
@@ -49,6 +56,10 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return;
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
+
+  // Admin HTML and its authentication flow are network-only. Cloudflare's
+  // no-store headers remain authoritative and no cached shell may replace it.
+  if (isAdminRoute(url.pathname)) return;
 
   // A Home Screen app may resume its last protected URL before application
   // JavaScript can run. Serve the public app shell for a cold navigation with
@@ -93,6 +104,6 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (request.destination === 'manifest') {
-    event.respondWith(fetch(request, { cache: 'no-store' }).catch(() => caches.match('/manifest.webmanifest?v=5')));
+    event.respondWith(fetch(request, { cache: 'no-store' }).catch(() => caches.match('/manifest.webmanifest?v=6')));
   }
 });
