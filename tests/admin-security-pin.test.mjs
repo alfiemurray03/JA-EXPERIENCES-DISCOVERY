@@ -7,9 +7,10 @@ const read = path => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 test('administrator PIN is a Microsoft-bound, hashed step-up session', async () => {
   const endpoint = await read('functions/admin/api.js');
   assert.match(endpoint, /adminPinStatus/);
-  assert.match(endpoint, /deriveVerificationHash/);
+  assert.match(endpoint, /adminPinMac/);
   assert.match(endpoint, /pbkdf2_sha256\$210000/);
   assert.doesNotMatch(endpoint, /pin\s+TEXT/);
+  assert.match(endpoint, /ADMIN_OIDC_CLIENT_SECRET/);
   assert.match(endpoint, /attempts >= 5/);
   assert.match(endpoint, /locked for 15 minutes/);
   assert.match(endpoint, /HttpOnly; Secure; SameSite=Strict/);
