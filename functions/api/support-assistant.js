@@ -15,6 +15,7 @@ import {
   createCustomerVerificationSession,
   verifySupportPinRecord
 } from "../admin/api.js";
+import { getNativeSession, withIdentity } from "../_shared/oidc.js";
 
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -43,11 +44,19 @@ function acknowledgementOnly(message) {
 }
 
 export async function onRequest(context) {
-  const { request, env } = context;
+  const { env } = context;
+  let request = withIdentity(context.request, null);
   const settings = await loadAssistantSettings(env.DB);
   const config = configFrom(settings);
   const articles = knowledgeFrom(settings);
-  const identityEmail = clean(request.headers.get("x-ja-auth-email"), 254).toLowerCase();
+  let identity = null;
+  try {
+    identity = await getNativeSession(request, env, "customer");
+  } catch (error) {
+    console.error(JSON.stringify({ event: "support_assistant_session_error", message: error instanceof Error ? error.message : String(error) }));
+  }
+  request = withIdentity(request, identity);
+  const identityEmail = clean(identity?.email || request.headers.get("x-ja-auth-email"), 254).toLowerCase();
   const now = Date.now();
   const scheduledStart = config.maintenanceStart ? Date.parse(config.maintenanceStart) : 0;
   const scheduledEnd = config.maintenanceEnd ? Date.parse(config.maintenanceEnd) : 0;
@@ -88,6 +97,8 @@ export async function onRequest(context) {
       },
       categories: Array.from(new Set(articles.map((article) => article.category))).filter(Boolean),
       articleCount: articles.length,
+      authenticated: Boolean(identityEmail),
+      customer: identityEmail ? { email: identityEmail, name: clean(identity?.name, 180) } : null,
       articles: articles.map((article) => ({
         id: article.id,
         category: article.category,
