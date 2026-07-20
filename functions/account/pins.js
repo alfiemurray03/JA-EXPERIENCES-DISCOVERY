@@ -44,19 +44,22 @@ async function ensureTables(DB) {
 }
 
 async function hashPin(pin) {
-  return hashSecret(pin);
+  // Support PINs are short-lived, single-use secrets. Keep PBKDF2 within the
+  // Cloudflare Pages Function execution budget; the iteration count is stored
+  // in the hash and is honoured by the Admin verifier.
+  return hashSecret(pin, 10000);
 }
 
-async function hashSecret(value) {
+async function hashSecret(value, iterations = 210000) {
   const salt = crypto.randomUUID();
   const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(String(value || "")), "PBKDF2", false, ["deriveBits"]);
   const bits = await crypto.subtle.deriveBits(
-    { name: "PBKDF2", salt: new TextEncoder().encode(salt), iterations: 210000, hash: "SHA-256" },
+    { name: "PBKDF2", salt: new TextEncoder().encode(salt), iterations, hash: "SHA-256" },
     key,
     256
   );
   const hash = Array.from(new Uint8Array(bits), (byte) => byte.toString(16).padStart(2, "0")).join("");
-  return `pbkdf2_sha256$210000$${salt}$${hash}`;
+  return `pbkdf2_sha256$${iterations}$${salt}$${hash}`;
 }
 
 function generatePin() {
