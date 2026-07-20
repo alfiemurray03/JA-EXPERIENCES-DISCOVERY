@@ -30,11 +30,15 @@ async function ensureTables(DB) {
       updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )
   `).run();
-  for (const column of ["pin_ciphertext TEXT", "pin_iv TEXT"]) {
+  for (const column of [
+    "pin_ciphertext TEXT",
+    "pin_iv TEXT",
+    "audit_history TEXT NOT NULL DEFAULT '[]'"
+  ]) {
     try {
       await DB.prepare(`ALTER TABLE customer_support_pins ADD COLUMN ${column}`).run();
     } catch {
-      // Existing databases may already include the encrypted PIN columns.
+      // Existing databases may already include these upgraded PIN columns.
     }
   }
   await DB.prepare(`
