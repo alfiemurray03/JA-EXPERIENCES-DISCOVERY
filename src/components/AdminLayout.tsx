@@ -258,7 +258,7 @@ function AdminLayoutInner({ children, title }: AdminLayoutInnerProps) {
   useEffect(() => {
     if (!admin) return;
     let cancelled = false;
-    fetch('/api/admin/auth/admin-pin', { credentials: 'include', cache: 'no-store' })
+    fetch('/admin/api?section=adminpin', { credentials: 'include', cache: 'no-store' })
       .then(async response => ({ response, payload: await response.json().catch(() => ({})) as { configured?: boolean; unlocked?: boolean; expiresAt?: string; lockedUntil?: string; error?: string } }))
       .then(({ response, payload }) => {
         if (cancelled) return;
@@ -283,7 +283,7 @@ function AdminLayoutInner({ children, title }: AdminLayoutInnerProps) {
     }
     setPinSubmitting(true);
     try {
-      const response = await fetch('/api/admin/auth/admin-pin', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: pinState.configured ? 'verify' : 'setup', pin }) });
+      const response = await fetch('/admin/api?section=adminpin', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: pinState.configured ? 'verify' : 'setup', pin }) });
       const payload = await response.json().catch(() => ({})) as { configured?: boolean; unlocked?: boolean; expiresAt?: string; lockedUntil?: string; error?: string };
       if (!response.ok || !payload.unlocked) throw new Error(payload.error || 'The administrator PIN could not be verified.');
       setPin(''); setPinConfirm(''); setPinState({ loading: false, configured: true, unlocked: true, expiresAt: payload.expiresAt });
