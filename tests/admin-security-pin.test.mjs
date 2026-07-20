@@ -8,7 +8,11 @@ test('administrator CRM override PIN uses a correctly delimited HMAC and an audi
   const endpoint = await read('functions/admin/api.js');
   assert.match(endpoint, /adminPinStatus/);
   assert.match(endpoint, /adminPinMac/);
-  assert.match(endpoint, /hmac_sha256\$\$\{salt\}\$\$\{await adminPinMac/);
+  assert.match(endpoint, /\["hmac_sha256", salt, await adminPinMac\(env, pin, salt\)\]\.join\("\\$"\)/);
+  assert.match(endpoint, /function parseAdminPinHash/);
+  assert.match(endpoint, /parsedHash\?\.legacy/);
+  assert.match(endpoint, /normalisedHash/);
+  assert.doesNotMatch(endpoint, /const pinHash = `hmac_sha256\$\{salt\}/);
   assert.doesNotMatch(endpoint, /pin\s+TEXT/);
   assert.match(endpoint, /ADMIN_OIDC_CLIENT_SECRET/);
   assert.match(endpoint, /attempts >= 5/);
