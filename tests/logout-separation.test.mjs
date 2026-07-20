@@ -40,10 +40,11 @@ test('Microsoft logout uses distinct realm cookies, tables and return paths', as
   assert.match(source, /end_session_endpoint/);
 });
 
-test('signed-out pages confirm the other portal session is unchanged', async () => {
+test('Admin Microsoft sign-out returns automatically to the Admin Centre landing page', async () => {
   const source = await read('functions/signed-out/[[realm]].js');
-  assert.match(source, /customer portal session in this browser has not been changed/);
+  assert.match(source, /if \(realm === "admin"\)/);
+  assert.match(source, /Location: new URL\("\/admin", context\.request\.url\)\.toString\(\)/);
+  assert.match(source, /status: 302/);
   assert.match(source, /Admin Portal session in this browser has not been changed/);
-  assert.match(source, /Return to Admin sign in/);
   assert.match(source, /Return to customer sign in/);
 });

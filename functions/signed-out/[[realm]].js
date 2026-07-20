@@ -135,6 +135,17 @@ export async function onRequestGet(context) {
     });
   }
 
+  if (realm === "admin") {
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: new URL("/admin", context.request.url).toString(),
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+        "Referrer-Policy": "no-referrer"
+      }
+    });
+  }
+
   return new Response(html(realm), {
     status: 200,
     headers: {
