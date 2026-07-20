@@ -289,7 +289,7 @@ export async function verifySupportPinRecord(DB, env = {}, email, submittedPin, 
   const pin = clean(submittedPin, 12);
   if (!targetEmail || !pin) return { ok: false, error: "Customer email and PIN are required." };
 
-  const current = await DB.prepare(`SELECT * FROM customer_support_pins WHERE lower(email) = lower(?) ORDER BY created_at DESC LIMIT 1`).bind(targetEmail).first();
+  const current = await DB.prepare(`SELECT * FROM customer_support_pins_v2 WHERE lower(email) = lower(?) ORDER BY created_at DESC LIMIT 1`).bind(targetEmail).first();
   if (!current) return { ok: false, error: "No support PIN record was found for this customer." };
   if (current.revoked_at || current.status === "Revoked") return { ok: false, error: "The support PIN has been revoked." };
   if (current.used_at || current.status === "Verified" || current.status === "Used") return { ok: false, error: "The support PIN has already been used." };
@@ -307,7 +307,7 @@ export async function verifySupportPinRecord(DB, env = {}, email, submittedPin, 
 
   if (expired) {
     const updatedHistory = [...history, { ...baseEvent, detail: "Support PIN expired before verification." }];
-    await DB.prepare(`UPDATE customer_support_pins SET status = 'Expired', updated_at = CURRENT_TIMESTAMP, audit_history = ? WHERE id = ?`).bind(JSON.stringify(updatedHistory), current.id).run();
+    await DB.prepare(`UPDATE customer_support_pins_v2 SET status = 'Expired', updated_at = CURRENT_TIMESTAMP, audit_history = ? WHERE id = ?`).bind(JSON.stringify(updatedHistory), current.id).run();
     await DB.prepare(`INSERT INTO admin_audit_log (id, actor_email, action, entity_type, entity_id, summary, metadata) VALUES (?, ?, ?, 'customer_support_pins', ?, ?, ?)`).bind(
       crypto.randomUUID(),
       cleanEmail(actorEmail || targetEmail),
@@ -328,9 +328,9 @@ export async function verifySupportPinRecord(DB, env = {}, email, submittedPin, 
   }];
 
   if (success) {
-    await DB.prepare(`UPDATE customer_support_pins SET status = 'Verified', used_at = ?, last_used_at = ?, updated_at = CURRENT_TIMESTAMP, audit_history = ? WHERE id = ?`).bind(now, now, JSON.stringify(nextHistory), current.id).run();
+    await DB.prepare(`UPDATE customer_support_pins_v2 SET status = 'Verified', used_at = ?, last_used_at = ?, updated_at = CURRENT_TIMESTAMP, audit_history = ? WHERE id = ?`).bind(now, now, JSON.stringify(nextHistory), current.id).run();
   } else {
-    await DB.prepare(`UPDATE customer_support_pins SET updated_at = CURRENT_TIMESTAMP, audit_history = ? WHERE id = ?`).bind(JSON.stringify(nextHistory), current.id).run();
+    await DB.prepare(`UPDATE customer_support_pins_v2 SET updated_at = CURRENT_TIMESTAMP, audit_history = ? WHERE id = ?`).bind(JSON.stringify(nextHistory), current.id).run();
   }
 
   await DB.prepare(`INSERT INTO admin_audit_log (id, actor_email, action, entity_type, entity_id, summary, metadata) VALUES (?, ?, ?, 'customer_support_pins', ?, ?, ?)`).bind(
@@ -1449,7 +1449,7 @@ async function getMembership(DB) {
 
 async function getSecurity(DB) {
   const [pins, sessions, history] = await Promise.all([
-    safeAll(DB, `SELECT email, status, expires_at, used_at, revoked_at, last_used_at, updated_at, created_at FROM customer_support_pins ORDER BY updated_at DESC LIMIT 100`),
+    safeAll(DB, `SELECT email, status, expires_at, used_at, revoked_at, last_used_at, updated_at, created_at FROM customer_support_pins_v2 ORDER BY updated_at DESC LIMIT 100`),
     safeAll(DB, `SELECT email AS admin_email, created_at, absolute_expires_at AS expires_at, revoked_at, last_seen_at AS last_used_at FROM admin_oidc_sessions ORDER BY COALESCE(last_seen_at, created_at) DESC LIMIT 50`),
     safeAll(DB, `SELECT action, entity_type, entity_id, summary, created_at FROM admin_audit_log WHERE action LIKE '%session%' OR action LIKE '%pin%' ORDER BY created_at DESC LIMIT 50`)
   ]);
@@ -3467,7 +3467,7 @@ export async function onRequest(context) {
           all(env.DB, `SELECT * FROM customer_timeline_events WHERE lower(email) = lower(?) ORDER BY created_at DESC LIMIT 200`, [email]),
           all(env.DB, `SELECT * FROM customer_support_cases WHERE lower(email) = lower(?) ORDER BY updated_at DESC LIMIT 100`, [email]),
           all(env.DB, `SELECT * FROM customer_notifications WHERE lower(email) = lower(?) ORDER BY updated_at DESC LIMIT 100`, [email]),
-          all(env.DB, `SELECT * FROM customer_support_pins WHERE lower(email) = lower(?) ORDER BY updated_at DESC LIMIT 20`, [email]),
+          all(env.DB, `SELECT * FROM customer_support_pins_v2 WHERE lower(email) = lower(?) ORDER BY updated_at DESC LIMIT 20`, [email]),
           getPlans(env.DB),
           all(env.DB, `SELECT * FROM customer_internal_notes WHERE lower(email) = lower(?) ORDER BY pinned DESC, updated_at DESC LIMIT 100`, [email]),
           getCustomerStripeBilling(env.DB, env, email),
@@ -3914,7 +3914,7 @@ export async function onRequest(context) {
           all(env.DB, `SELECT * FROM customer_timeline_events WHERE lower(email) = lower(?) ORDER BY created_at DESC LIMIT 200`, [email]),
           all(env.DB, `SELECT * FROM customer_support_cases WHERE lower(email) = lower(?) ORDER BY updated_at DESC LIMIT 100`, [email]),
           all(env.DB, `SELECT * FROM customer_notifications WHERE lower(email) = lower(?) ORDER BY updated_at DESC LIMIT 100`, [email]),
-          all(env.DB, `SELECT * FROM customer_support_pins WHERE lower(email) = lower(?) ORDER BY updated_at DESC LIMIT 20`, [email]),
+          all(env.DB, `SELECT * FROM customer_support_pins_v2 WHERE lower(email) = lower(?) ORDER BY updated_at DESC LIMIT 20`, [email]),
           getPlans(env.DB),
           all(env.DB, `SELECT * FROM customer_internal_notes WHERE lower(email) = lower(?) ORDER BY pinned DESC, updated_at DESC LIMIT 100`, [email]),
           getCustomerStripeBilling(env.DB, env, email)
