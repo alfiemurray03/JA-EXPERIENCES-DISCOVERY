@@ -7,7 +7,7 @@ import {
   ClipboardList, HeadphonesIcon, ShieldCheck, BarChart2, LogOut,
   Menu, ChevronRight, Shield, Bell, Send,
   Globe, Wrench, FileEdit, Palette, Activity, FileText, HeartPulse,
-  X, UserCog, Clock, Mail, AlertTriangle, CircleDollarSign, PackagePlus, MoreHorizontal,
+  X, UserCog, Clock, Mail, AlertTriangle, CircleDollarSign, PackagePlus, MoreHorizontal, Lock,
   Bot, Moon, Sun,
 } from 'lucide-react';
 import { useAdminTheme } from '@/lib/admin-theme-context';
@@ -223,6 +223,10 @@ function AdminLayoutInner({ children, title }: AdminLayoutInnerProps) {
   const navigate = useNavigate();
   const { resolvedTheme, setTheme } = useAdminTheme();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [pinState, setPinState] = useState<{ loading: boolean; configured: boolean; unlocked: boolean; expiresAt?: string | null; lockedUntil?: string | null; error?: string }>({ loading: true, configured: false, unlocked: false });
+  const [pin, setPin] = useState('');
+  const [pinConfirm, setPinConfirm] = useState('');
+  const [pinSubmitting, setPinSubmitting] = useState(false);
 
   const visibleItems = NAV_GROUPS.flatMap(group => group.items)
     .filter(item => admin && hasPermission(admin, item.section));
@@ -251,15 +255,73 @@ function AdminLayoutInner({ children, title }: AdminLayoutInnerProps) {
     }
   }, [isLoading, admin]);
 
+  useEffect(() => {
+    if (!admin) return;
+    let cancelled = false;
+    fetch('/api/admin/auth/admin-pin', { credentials: 'include', cache: 'no-store' })
+      .then(async response => ({ response, payload: await response.json().catch(() => ({})) as { configured?: boolean; unlocked?: boolean; expiresAt?: string; lockedUntil?: string; error?: string } }))
+      .then(({ response, payload }) => {
+        if (cancelled) return;
+        setPinState({ loading: false, configured: Boolean(payload.configured), unlocked: Boolean(payload.unlocked), expiresAt: payload.expiresAt, lockedUntil: payload.lockedUntil, error: response.ok ? '' : (payload.error || 'Administrator PIN verification is unavailable.') });
+      })
+      .catch(() => !cancelled && setPinState({ loading: false, configured: false, unlocked: false, error: 'Administrator PIN verification is unavailable.' }));
+    return () => { cancelled = true; };
+  }, [admin]);
+
+  useEffect(() => {
+    if (!pinState.unlocked || !pinState.expiresAt) return;
+    const remaining = Date.parse(pinState.expiresAt) - Date.now();
+    if (remaining <= 0) { setPinState(current => ({ ...current, unlocked: false, error: 'Your administrator PIN session expired. Enter your PIN again.' })); return; }
+    const timer = window.setTimeout(() => setPinState(current => ({ ...current, unlocked: false, error: 'Your administrator PIN session expired. Enter your PIN again.' })), remaining);
+    return () => window.clearTimeout(timer);
+  }, [pinState.unlocked, pinState.expiresAt]);
+
+  async function submitAdminPin() {
+    if (!pinState.configured && pin !== pinConfirm) {
+      setPinState(current => ({ ...current, error: 'The PIN confirmation does not match.' }));
+      return;
+    }
+    setPinSubmitting(true);
+    try {
+      const response = await fetch('/api/admin/auth/admin-pin', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: pinState.configured ? 'verify' : 'setup', pin }) });
+      const payload = await response.json().catch(() => ({})) as { configured?: boolean; unlocked?: boolean; expiresAt?: string; lockedUntil?: string; error?: string };
+      if (!response.ok || !payload.unlocked) throw new Error(payload.error || 'The administrator PIN could not be verified.');
+      setPin(''); setPinConfirm(''); setPinState({ loading: false, configured: true, unlocked: true, expiresAt: payload.expiresAt });
+    } catch (reason) {
+      setPinState(current => ({ ...current, error: reason instanceof Error ? reason.message : 'The administrator PIN could not be verified.' }));
+    } finally { setPinSubmitting(false); }
+  }
+
   // Show a neutral loading shell while the session is being resolved.
   // This prevents child pages from firing API calls (and showing 401 banners)
   // before we know whether the admin is authenticated.
-  if (isLoading || !admin) {
+  if (isLoading || !admin || pinState.loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-slate-50">
         <div className="flex flex-col items-center gap-3 text-slate-400">
           <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           <span className="text-sm">Loading admin portal…</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!pinState.unlocked) {
+    const locked = Boolean(pinState.lockedUntil && Date.parse(pinState.lockedUntil) > Date.now());
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4 py-8">
+        <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+          <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10"><Lock className="h-5 w-5 text-primary" /></div>
+          <h1 className="text-xl font-semibold text-slate-950">Administrator security PIN</h1>
+          <p className="mt-2 text-sm leading-relaxed text-slate-600">{pinState.configured ? 'Enter your personal four-digit PIN to continue after Microsoft sign-in.' : 'Create your personal four-digit PIN. It will protect privileged Admin Portal and customer CRM access.'}</p>
+          <label htmlFor="admin-security-pin" className="mt-5 block text-xs font-semibold text-slate-800">Four-digit PIN</label>
+          <input id="admin-security-pin" type="password" inputMode="numeric" autoComplete={pinState.configured ? 'current-password' : 'new-password'} maxLength={4} value={pin} onChange={event => setPin(event.target.value.replace(/\D/g, '').slice(0, 4))} disabled={locked} className="mt-1 h-12 w-full rounded-lg border border-slate-300 px-3 text-center font-mono text-xl tracking-[0.5em] text-slate-950 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:bg-slate-100" />
+          {!pinState.configured && <><label htmlFor="admin-security-pin-confirm" className="mt-3 block text-xs font-semibold text-slate-800">Confirm PIN</label><input id="admin-security-pin-confirm" type="password" inputMode="numeric" autoComplete="new-password" maxLength={4} value={pinConfirm} onChange={event => setPinConfirm(event.target.value.replace(/\D/g, '').slice(0, 4))} className="mt-1 h-12 w-full rounded-lg border border-slate-300 px-3 text-center font-mono text-xl tracking-[0.5em] text-slate-950 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" /></>}
+          {pinState.error && <p role="alert" className="mt-3 text-xs text-red-700">{pinState.error}</p>}
+          {locked && <p role="alert" className="mt-3 text-xs text-amber-700">PIN access is locked until {new Date(pinState.lockedUntil!).toLocaleString('en-GB')}.</p>}
+          <button type="button" onClick={() => void submitAdminPin()} disabled={locked || pinSubmitting || pin.length !== 4 || (!pinState.configured && pinConfirm.length !== 4)} className="mt-5 h-11 w-full rounded-lg bg-primary px-4 text-sm font-semibold text-white transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50">{pinSubmitting ? 'Checking…' : pinState.configured ? 'Unlock Admin Portal' : 'Create PIN and continue'}</button>
+          <button type="button" onClick={() => void handleLogout()} className="mt-3 w-full text-xs font-medium text-slate-500 underline">Sign out of Microsoft</button>
+          <p className="mt-5 text-[11px] leading-relaxed text-slate-500">Your PIN is personal to you, cannot be displayed by administrators, and does not replace your Microsoft account security.</p>
         </div>
       </div>
     );

@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 
 type Row = Record<string, unknown>;
-type Verification = { verified?: boolean; method?: string; expires_at?: string; locked?: boolean };
+type Verification = { verified?: boolean; method?: string; expires_at?: string; locked?: boolean; admin_pin_override_available?: boolean };
 type CrmResponse = { customer?: Row; verification?: Verification; error?: string };
 
 const asText = (value: unknown, fallback = 'Not recorded') => {
@@ -58,6 +58,7 @@ export default function AdminCustomerCrm() {
   const [error, setError] = useState('');
   const [pin, setPin] = useState('');
   const [verifying, setVerifying] = useState(false);
+  const [overrideReason, setOverrideReason] = useState('');
   const [message, setMessage] = useState('');
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -96,6 +97,21 @@ export default function AdminCustomerCrm() {
       if (!response.ok || !payload.saved) throw new Error(payload.error || 'Identity could not be verified.');
       setPin(''); setMessage('Identity verified. The one-time PIN has been used and reset.'); await load();
     } catch (reason) { setMessage(reason instanceof Error ? reason.message : 'Identity could not be verified.'); }
+    finally { setVerifying(false); }
+  }
+
+  async function useAdministratorPin() {
+    if (overrideReason.trim().length < 8) { setMessage('Enter a clear reason for accessing the protected customer record.'); return; }
+    setVerifying(true); setMessage('');
+    try {
+      const response = await fetch('/admin/api?section=customer', {
+        method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'admin_pin_override', email, reason: overrideReason.trim() }),
+      });
+      const payload = await response.json().catch(() => ({})) as { saved?: boolean; error?: string };
+      if (!response.ok || !payload.saved) throw new Error(payload.error || 'Administrator access could not be authorised.');
+      setOverrideReason(''); setMessage('Protected CRM access authorised with your administrator PIN session. This access has been audited.'); await load();
+    } catch (reason) { setMessage(reason instanceof Error ? reason.message : 'Administrator access could not be authorised.'); }
     finally { setVerifying(false); }
   }
 
@@ -252,7 +268,7 @@ export default function AdminCustomerCrm() {
             <TabsContent value="support" className="mt-4 space-y-5"><section><h2 className="mb-3 font-semibold">Support cases</h2><Records rows={cases} title="Support cases" fields={[["reference","Reference"],["subject","Subject"],["status","Status"],["priority","Priority"],["updated_at","Updated"]]} /></section><section><h2 className="mb-3 font-semibold">Contact enquiries</h2><Records rows={enquiries} title="Contact enquiries" fields={[["reference","Reference"],["subject","Subject"],["status","Status"],["created_at","Submitted"]]} /></section></TabsContent>
             <TabsContent value="activity" className="mt-4"><Records rows={timeline} title="Timeline events" fields={[["title","Event"],["detail","Details"],["actor_email","Actor"],["created_at","Date"]]} /></TabsContent>
             <TabsContent value="builders" className="mt-4 space-y-5"><section><h2 className="mb-3 font-semibold">Builder outputs</h2><Records rows={outputs} title="Builder outputs" fields={[["builder_name","Builder"],["title","Title"],["status","Status"],["created_at","Created"]]} /></section><section><h2 className="mb-3 font-semibold">Saved items</h2><Records rows={saved} title="Saved items" fields={[["title","Item"],["item_type","Type"],["status","Status"],["updated_at","Updated"]]} /></section></TabsContent>
-            <TabsContent value="security" className="mt-4 space-y-4"><Card><CardHeader><CardTitle className="flex items-center gap-2 text-base"><Fingerprint className="h-4 w-4" />Verify customer identity</CardTitle></CardHeader><CardContent className="space-y-4"><p className="text-sm text-muted-foreground">Before discussing protected account information with a customer, enter their visible single-use Support PIN. It expires after ten minutes and resets after successful use.</p>{data.verification?.verified ? <Alert><CheckCircle2 className="h-4 w-4" /><AlertDescription>Verified using {data.verification.method || 'Support PIN'}. CRM access expires {date(data.verification.expires_at)}.</AlertDescription></Alert> : <div className="flex max-w-md gap-2"><Input aria-label="Customer Support PIN" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={pin} onChange={event => setPin(event.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="Six-digit PIN" className="font-mono tracking-[0.25em]" /><Button onClick={() => void verifyIdentity()} disabled={verifying || pin.length !== 6}><KeyRound className="mr-2 h-4 w-4" />{verifying ? 'Verifying…' : 'Verify'}</Button></div>}{message && <p role="status" className="text-sm text-muted-foreground">{message}</p>}</CardContent></Card><Records rows={asRows(customer.pins)} title="Support PIN history" fields={[["pin_last4","Last four"],["status","Status"],["expires_at","Expires"],["used_at","Used"]]} /></TabsContent>
+            <TabsContent value="security" className="mt-4 space-y-4"><Card><CardHeader><CardTitle className="flex items-center gap-2 text-base"><Fingerprint className="h-4 w-4" />Verify customer identity</CardTitle></CardHeader><CardContent className="space-y-4"><p className="text-sm text-muted-foreground">Before discussing protected account information with a customer, enter their visible single-use Support PIN. It expires after ten minutes and resets after successful use.</p>{data.verification?.verified ? <Alert><CheckCircle2 className="h-4 w-4" /><AlertDescription>Verified using {data.verification.method || 'Support PIN'}. CRM access expires {date(data.verification.expires_at)}.</AlertDescription></Alert> : <><div className="flex max-w-md gap-2"><Input aria-label="Customer Support PIN" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={pin} onChange={event => setPin(event.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="Six-digit PIN" className="font-mono tracking-[0.25em]" /><Button onClick={() => void verifyIdentity()} disabled={verifying || pin.length !== 6}><KeyRound className="mr-2 h-4 w-4" />{verifying ? 'Verifying…' : 'Verify'}</Button></div><div className="max-w-xl rounded-lg border border-amber-200 bg-amber-50 p-3"><p className="text-xs font-semibold text-amber-950">Administrator PIN override</p><p className="mt-1 text-xs leading-relaxed text-amber-800">Use this only when the customer cannot complete Support PIN verification. Your personal administrator PIN session must be active, and the reason and access are permanently audited.</p><Textarea className="mt-2 min-h-16 bg-white text-sm" value={overrideReason} onChange={event => setOverrideReason(event.target.value)} placeholder="Reason for accessing this protected record" maxLength={500} /><Button size="sm" variant="outline" className="mt-2" onClick={() => void useAdministratorPin()} disabled={verifying || overrideReason.trim().length < 8}><ShieldCheck className="mr-2 h-4 w-4" />Authorise with Admin PIN</Button></div></>}{message && <p role="status" className="text-sm text-muted-foreground">{message}</p>}</CardContent></Card><Records rows={asRows(customer.pins)} title="Support PIN history" fields={[["pin_last4","Last four"],["status","Status"],["expires_at","Expires"],["used_at","Used"]]} /></TabsContent>
             <TabsContent value="notes" className="mt-4 space-y-5"><Card><CardHeader><CardTitle className="text-base">Customer and Admin notes</CardTitle></CardHeader><CardContent className="grid gap-3 sm:grid-cols-2"><Detail label="Customer support notes" value={customer.support_notes} /><Detail label="Admin notes" value={customer.admin_notes} /></CardContent></Card><Records rows={notes} title="Internal notes" fields={[["note","Note"],["author_email","Author"],["pinned","Pinned"],["updated_at","Updated"]]} /></TabsContent>
             <TabsContent value="compliance" className="mt-4 space-y-4">
               <Alert><ShieldCheck className="h-4 w-4" /><AlertDescription>This record is restricted to authorised Admin roles. Protected details remain masked until identity verification, and CRM access and exports are written to the audit log.</AlertDescription></Alert>
