@@ -113,8 +113,6 @@ export default function AdminLoginPage() {
                 <p className="!text-xs !leading-5 !text-blue-900 dark:!text-blue-200"><LockKeyhole className="mr-1.5 inline h-3.5 w-3.5" />Authorised administrators only. Sign-ins and privileged actions are audited.</p>
               </div>
 
-              <div className="my-5 h-px bg-slate-200 dark:bg-slate-700" />
-              <Button type="button" variant="outline" className="h-10 w-full !text-sm !font-medium !text-black dark:border-slate-600 dark:bg-transparent dark:!text-white dark:hover:bg-slate-800" onClick={() => { window.location.href = '/login'; }}>Go to customer sign-in</Button>
             </section>
           </section>
         </main>
