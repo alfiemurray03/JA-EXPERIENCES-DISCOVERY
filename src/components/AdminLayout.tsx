@@ -306,7 +306,7 @@ function AdminLayoutInner({ children, title }: AdminLayoutInnerProps) {
     );
   }
 
-  if (false && !pinState.unlocked) {
+  if (!pinState.unlocked) {
     const locked = Boolean(pinState.lockedUntil && Date.parse(pinState.lockedUntil) > Date.now());
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4 py-8">

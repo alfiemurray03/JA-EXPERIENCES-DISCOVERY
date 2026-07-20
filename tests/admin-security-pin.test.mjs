@@ -22,10 +22,13 @@ test('administrator CRM override PIN uses a correctly delimited HMAC and an audi
   assert.match(endpoint, /admin_pin_verified/);
 });
 
-test('Admin Portal is never blocked by the CRM override PIN', async () => {
+test('Admin Portal requires the personal PIN after Microsoft authentication', async () => {
   const layout = await read('src/components/AdminLayout.tsx');
-  assert.doesNotMatch(layout, /if \(!pinState\.unlocked\)/);
-  assert.doesNotMatch(layout, /Create your personal four-digit PIN/);
+  assert.match(layout, /if \(!pinState\.unlocked\)/);
+  assert.match(layout, /Enter your personal four-digit PIN to continue after Microsoft sign-in/);
+  assert.match(layout, /Create your personal four-digit PIN/);
+  assert.match(layout, /\/admin\/api\?section=adminpin/);
+  assert.doesNotMatch(layout, /false && !pinState\.unlocked/);
 });
 
 test('customer Support PIN is the initial CRM tab and administrator override verifies inline', async () => {
