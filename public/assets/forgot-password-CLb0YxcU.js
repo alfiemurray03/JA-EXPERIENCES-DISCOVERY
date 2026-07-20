@@ -1,0 +1,1 @@
+import{r as t}from"./react-vendor-BkUIO39f.js";import{b as a}from"./router-vendor-CJDil55J.js";function s(){const r=a();return t.useEffect(()=>{r("/admin",{replace:!0})},[r]),null}export{s as default};
