@@ -135,6 +135,10 @@ export default function ManagedAIHelpChatbot() {
   const [suggestedCategory, setSuggestedCategory] = useState('Technical Support');
   const [form, setForm] = useState<EnquiryForm>({ name: '', email: '', telephone: '', subject: '', message: '', category: 'Technical Support', consent: false });
   const [intakeStep, setIntakeStep] = useState<'name' | 'email' | 'telephone' | 'issue'>('name');
+  const [supportPin, setSupportPin] = useState('');
+  const [pinError, setPinError] = useState('');
+  const [pinVerifying, setPinVerifying] = useState(false);
+  const [pendingEscalation, setPendingEscalation] = useState<{ reply: AssistantReply; conversation: ChatMessage[] } | null>(null);
   const sessionIdRef = useRef(id('support-session'));
   const openedAtRef = useRef(Date.now());
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -294,6 +298,29 @@ export default function ManagedAIHelpChatbot() {
     }
   }
 
+  async function verifySupportPin() {
+    if (!pendingEscalation || !/^\d{6}$/.test(supportPin)) {
+      setPinError('Enter the six-digit Support PIN shown in Settings → Security.');
+      return;
+    }
+    setPinVerifying(true); setPinError('');
+    try {
+      const response = await fetch('/api/support-assistant', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ event: 'verify_support_pin', pin: supportPin }),
+      });
+      const data = await response.json().catch(() => ({})) as { success?: boolean; error?: string };
+      setSupportPin('');
+      if (!response.ok || !data.success) throw new Error(data.error || 'The Support PIN could not be verified.');
+      const escalation = pendingEscalation;
+      setPendingEscalation(null);
+      appendAssistant('Thank you — your identity has been verified. I’m sending your enquiry to the Support Team now.');
+      await submitAutomaticEscalation(escalation.reply, escalation.conversation);
+    } catch (reason) {
+      setPinError(reason instanceof Error ? reason.message : 'The Support PIN could not be verified.');
+    } finally { setPinVerifying(false); }
+  }
+
   async function sendMessage(raw = input) {
     const value = raw.trim();
     if (!value || thinking) return;
@@ -357,7 +384,15 @@ export default function ManagedAIHelpChatbot() {
       if (data.category) setSuggestedCategory(data.category);
       const assistantMessage: ChatMessage = { id: id('assistant'), role: 'assistant', text: data.reply, article: data.article, suggestions: data.escalate && user?.email ? [] : data.suggestions };
       setMessages(current => [...current, assistantMessage]);
-      if (data.escalate) await submitAutomaticEscalation(data, [...next, assistantMessage]);
+      if (data.escalate) {
+        const conversation = [...next, assistantMessage];
+        if (user?.email) {
+          setPendingEscalation({ reply: data, conversation });
+          setSupportPin(''); setPinError('');
+        } else {
+          await submitAutomaticEscalation(data, conversation);
+        }
+      }
     } catch (reason) {
       const message = reason instanceof Error ? reason.message : 'The Help Centre assistant could not answer that question.';
       setChatError(message);
@@ -477,6 +512,7 @@ export default function ManagedAIHelpChatbot() {
                 {!!message.suggestions?.length && <div className="mt-2 flex flex-wrap gap-2">{message.suggestions.map(suggestion => <button key={`${message.id}-${suggestion}`} type="button" onClick={() => void sendMessage(suggestion)} className="rounded-full border bg-white px-3 py-1.5 text-xs font-medium shadow-sm hover:bg-slate-50" style={{ borderColor: config.accentColor, color: config.primaryColor }}>{suggestion}</button>)}</div>}
               </div></div>)}
               {thinking && <div className="flex justify-start"><div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-600"><Loader2 className="h-4 w-4 animate-spin" style={{ color: config.primaryColor }} />{thinkingLabel}</div></div>}
+              {pendingEscalation && <div className="rounded-2xl border border-blue-200 bg-white p-4 shadow-sm" role="group" aria-labelledby="support-pin-title"><p id="support-pin-title" className="text-sm font-bold text-slate-950">Verify your identity before human support</p><p className="mt-1 text-xs leading-relaxed text-slate-600">Enter your six-digit JA Plan Studio Support PIN. You can see or generate it in <a href="/settings?tab=security" className="font-semibold underline" target="_blank" rel="noreferrer">Settings → Security</a>. It expires after 10 minutes and resets after it is used.</p><label htmlFor="chat-support-pin" className="mt-3 block text-xs font-semibold text-slate-800">Support PIN</label><div className="mt-1 flex gap-2"><Input id="chat-support-pin" type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={supportPin} onChange={event => setSupportPin(event.target.value.replace(/\D/g, '').slice(0, 6))} className="h-10 bg-white font-mono text-lg tracking-[0.3em] text-slate-950" aria-describedby={pinError ? 'support-pin-error' : undefined} /><Button type="button" onClick={() => void verifySupportPin()} disabled={pinVerifying || supportPin.length !== 6} style={{ backgroundColor: config.primaryColor }} className="text-white">{pinVerifying ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Verify'}</Button></div>{pinError && <p id="support-pin-error" role="alert" className="mt-2 text-xs text-red-700">{pinError}</p>}<p className="mt-2 text-[11px] text-slate-500">Never give us your Microsoft sign-in code, password, card number or CVV. This prompt accepts only the JA Plan Studio Support PIN.</p></div>}
               <div ref={bottomRef} />
             </div>
             {!config.maintenanceEnabled && <footer className="shrink-0 border-t border-slate-200 bg-white p-3">{chatError && <p className="mb-2 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">{chatError}</p>}<div className="flex items-end gap-2"><Input ref={inputRef} value={input} onChange={event => setInput(event.target.value)} onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); void sendMessage(); } }} placeholder={config.inputPlaceholder} className="h-10 flex-1 border-slate-300 bg-white text-sm text-slate-900" /><Button type="button" onClick={() => void sendMessage()} disabled={thinking || !input.trim()} style={{ backgroundColor: config.primaryColor }} className="h-10 w-10 shrink-0 p-0 text-white"><Send className="h-4 w-4" /></Button></div><div className="mt-2 flex items-center justify-between text-[10px] text-slate-500"><span>{config.showPoweredBy ? 'Powered by JA Plan Studio Help Centre' : 'AI answers may be checked before acting.'}</span>{config.escalationEnabled && <button type="button" onClick={() => startEnquiry()} className="font-semibold hover:underline" style={{ color: config.primaryColor }}>Contact the team</button>}</div></footer>}

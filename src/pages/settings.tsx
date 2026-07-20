@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import DashboardLayout from '@/components/DashboardLayout';
 import { useAuth } from '@/lib/auth-context';
@@ -52,6 +52,7 @@ const planBadgeColors: Record<string, string> = {
 };
 
 export default function SettingsPage() {
+  const [searchParams] = useSearchParams();
   const { user, refreshUser } = useAuth();
   const { theme, setTheme } = useTheme();
   const { siteName, supportEmail } = useSiteSettings();
@@ -80,6 +81,23 @@ export default function SettingsPage() {
   // Usage stats
   const [docCount, setDocCount] = useState<number | null>(null);
   const [draftCount, setDraftCount] = useState<number | null>(null);
+  const [supportPin, setSupportPin] = useState<{ id: string; active_pin: string; expires_at: string } | null>(null);
+  const [pinLoading, setPinLoading] = useState(false);
+  const [pinMessage, setPinMessage] = useState('');
+
+  async function loadSupportPin(generate = false) {
+    setPinLoading(true); setPinMessage('');
+    try {
+      const response = await fetch('/account/pins', generate ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ action: 'generate' }) } : { credentials: 'include' });
+      const data = await response.json() as { pins?: Array<{ id: string; active_pin: string; expires_at: string }>; id?: string; pin?: string; expiresAt?: string; error?: string };
+      if (!response.ok) throw new Error(data.error || 'Could not load your Support PIN.');
+      const pin = generate ? { id: data.id || '', active_pin: data.pin || '', expires_at: data.expiresAt || '' } : data.pins?.[0];
+      if (!pin?.active_pin) throw new Error('Could not display your Support PIN.');
+      setSupportPin(pin);
+      if (generate) setPinMessage('A new single-use Support PIN has been generated.');
+    } catch (reason) { setPinMessage(reason instanceof Error ? reason.message : 'Could not load your Support PIN.'); }
+    finally { setPinLoading(false); }
+  }
 
   useEffect(() => {
     if (user) setProfile({
@@ -103,6 +121,8 @@ export default function SettingsPage() {
       setDraftCount(docs.filter(d => d.status === 'draft').length);
     }).catch(() => {});
   }, []);
+
+  useEffect(() => { if (user?.email) void loadSupportPin(); }, [user?.email]);
 
   async function handleProfileSave(e: React.FormEvent) {
     e.preventDefault();
@@ -167,7 +187,7 @@ export default function SettingsPage() {
             <p className="text-muted-foreground text-sm mt-1">Manage your profile, security, and preferences</p>
           </div>
 
-          <Tabs defaultValue="profile" className="space-y-6">
+          <Tabs defaultValue={searchParams.get('tab') === 'security' ? 'security' : 'profile'} className="space-y-6">
             <TabsList className="grid grid-cols-6 w-full">
               <TabsTrigger value="profile" className="gap-1.5 text-xs sm:text-sm">
                 <User className="w-3.5 h-3.5" aria-hidden="true" />
@@ -353,6 +373,10 @@ export default function SettingsPage() {
 
             {/* ── Security Tab ── */}
             <TabsContent value="security" className="space-y-5">
+              <Card className="border-primary/30">
+                <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><Lock className="w-4 h-4 text-primary" />Support identity PIN</CardTitle></CardHeader>
+                <CardContent className="space-y-4"><p className="text-sm text-muted-foreground">If you ask the chatbot to transfer you to a human, enter this JA Plan Studio Support PIN. It is visible by design, expires after 10 minutes, and can be used only once.</p><div className="rounded-xl border bg-muted/30 p-4 text-center"><p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Your current Support PIN</p><p className="mt-2 font-mono text-3xl font-bold tracking-[0.35em] text-foreground" aria-live="polite">{pinLoading ? 'Loading…' : supportPin?.active_pin || 'Unavailable'}</p>{supportPin?.expires_at && <p className="mt-2 text-xs text-muted-foreground">Expires {new Date(supportPin.expires_at).toLocaleString('en-GB')}</p>}</div>{pinMessage && <p className="text-xs text-muted-foreground" role="status">{pinMessage}</p>}<div className="flex flex-wrap gap-2"><Button type="button" variant="outline" onClick={() => void loadSupportPin()} disabled={pinLoading}>Refresh</Button><Button type="button" onClick={() => void loadSupportPin(true)} disabled={pinLoading}>{pinLoading ? 'Generating…' : 'Generate new PIN'}</Button></div><p className="text-xs text-muted-foreground">Never share your Microsoft sign-in code, password, card number or CVV. Support will only request this PIN during a human-support handover.</p></CardContent>
+              </Card>
               {/* OIDC auth info */}
               <Card>
                 <CardHeader className="pb-4">
