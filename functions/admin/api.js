@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 52024)
+Total output lines: 3930
+
 import {
   ensureEnquiryTables,
   getEnquiryThread,
@@ -1087,7 +1090,9 @@ export async function getIdentityVerificationState(DB, customerEmail, adminEmail
   `).bind(email).first().catch(() => null);
   const session = await DB.prepare(`
     SELECT * FROM customer_identity_verification_sessions
-    WHERE lower(customer_email) = lower(?) AND lower(admin_email) = lower(?) AND ended_at IS NULL AND datetime(expires_at) > datetime('now')
+    WHERE lower(customer_email) = lower(?)
+      AND (lower(admin_email) = lower(?) OR lower(admin_email) = 'support-assistant')
+      AND ended_at IS NULL AND datetime(expires_at) > datetime('now')
     ORDER BY verified_at DESC LIMIT 1
   `).bind(email, actor).first().catch(() => null);
   const questions = await all(DB, `
@@ -2187,190 +2192,7 @@ export async function saveNotification(DB, body, identity) {
       INSERT INTO customer_notifications (
         id, email, category, priority, title, body, status, archived_at, reference_type, reference_id,
         template_key, scheduled_for, sent_at, delivery_status, read_at, acknowledged_at, send_history, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-      ON CONFLICT(id) DO UPDATE SET
-        email = excluded.email,
-        category = excluded.category,
-        priority = excluded.priority,
-        title = excluded.title,
-        body = excluded.body,
-        status = excluded.status,
-        archived_at = excluded.archived_at,
-        reference_type = excluded.reference_type,
-        reference_id = excluded.reference_id,
-        template_key = excluded.template_key,
-        scheduled_for = excluded.scheduled_for,
-        sent_at = excluded.sent_at,
-        delivery_status = excluded.delivery_status,
-        read_at = excluded.read_at,
-        acknowledged_at = excluded.acknowledged_at,
-        send_history = excluded.send_history,
-        updated_at = CURRENT_TIMESTAMP
-    `).bind(
-      `${id}-${email}`,
-      email,
-      clean(body.category, 80) || "General",
-      clean(body.priority, 40) || "Normal",
-      clean(body.title, 180),
-      clean(body.body, 4000),
-      status,
-      body.archived_at || null,
-      clean(body.reference_type, 80),
-      clean(body.reference_id, 120),
-      clean(body.template_key, 80),
-      clean(body.scheduled_for, 40),
-      clean(body.sent_at, 40),
-      deliveryStatus,
-      clean(body.read_at, 40),
-      clean(body.acknowledged_at, 40),
-      sendHistory
-    ).run();
-    created.push(email);
-  }
-  return getNotificationsAdmin(DB);
-}
-
-async function saveDataProtectionRequest(DB, body, identity, env = {}) {
-  const current = await DB.prepare(`SELECT * FROM data_protection_requests WHERE id = ? OR reference = ?`).bind(clean(body.id, 120), clean(body.reference, 120)).first();
-  if (!current) throw new Error("Data protection request not found.");
-
-  const nextStatus = clean(body.status, 80) || current.status || "New";
-  const nextNotes = clean(body.internal_notes, 6000);
-  const nextAssigned = clean(body.assigned_admin_id, 254);
-  const events = [];
-
-  if (nextStatus !== current.status) {
-    events.push({ type: "Status changed", actor: auditActor(identity), previousValue: current.status || "", newValue: nextStatus });
-  }
-  if (body.action === "export_customer_data") {
-    events.push({ type: "Customer data exported", actor: auditActor(identity), newValue: clean(body.format, 20) || "json" });
-  }
-  if (body.action === "mark_sent") {
-    events.push({ type: "Data sent to subject", actor: auditActor(identity) });
-  }
-  if (nextAssigned !== (current.assigned_admin_id || "")) {
-    events.push({ type: "Assigned to admin", actor: auditActor(identity), previousValue: current.assigned_admin_id || "", newValue: nextAssigned });
-  }
-  if (nextNotes && nextNotes !== (current.internal_notes || "")) {
-    events.push({ type: "Admin note added", actor: auditActor(identity) });
-  }
-  if (nextStatus === "Completed" && current.status !== "Completed") {
-    events.push({ type: "Marked completed", actor: auditActor(identity) });
-  }
-  if (nextStatus === "Closed" && current.status !== "Closed") {
-    events.push({ type: "Closed", actor: auditActor(identity) });
-  }
-
-  let auditLog = current.audit_log || "[]";
-  for (const event of events) auditLog = addAudit(auditLog, event);
-
-  if (body.action === "mark_sent") {
-    const exportPayload = await exportCustomerData(DB, current.customer_email || current.user_id, "json");
-    try {
-      await sendProviderEmail(DB, env, {
-        to: current.customer_email || current.user_id,
-        subject: `Your JA Plan Studio data request ${current.reference}`,
-        text: `Please find below the exported customer data for request ${current.reference}.\n\n${exportPayload.content}`
-      });
-      auditLog = addAudit(auditLog, { type: "Data sent to subject", actor: auditActor(identity), newValue: "Sent by email provider" });
-    } catch (error) {
-      auditLog = addAudit(auditLog, { type: "Data send failed", actor: auditActor(identity), newValue: error.message || "Email failed" });
-      throw new Error(`Data export generated, but email sending failed: ${error.message || "Email provider error"}`);
-    }
-  }
-
-  const completedAt = nextStatus === "Completed" || nextStatus === "Closed"
-    ? (current.completed_at || new Date().toISOString())
-    : current.completed_at;
-
-  await DB.prepare(`
-    UPDATE data_protection_requests SET
-      status = ?,
-      assigned_admin_id = ?,
-      internal_notes = ?,
-      completed_at = ?,
-      audit_log = ?,
-      updated_at = CURRENT_TIMESTAMP
-    WHERE id = ?
-  `).bind(nextStatus, nextAssigned, nextNotes, completedAt, auditLog, current.id).run();
-
-  if (body.action === "export_customer_data") {
-    await writeAudit(DB, identity, "data_request_export", "data_protection_requests", current.id, `Exported customer data for ${current.reference}.`, { reference: current.reference, format: clean(body.format, 20) || "json" });
-  } else if (body.action === "mark_sent") {
-    await writeAudit(DB, identity, "data_request_sent", "data_protection_requests", current.id, `Marked ${current.reference} as sent to data subject.`, { reference: current.reference });
-  } else if (events.length) {
-    await writeAudit(DB, identity, "data_request_update", "data_protection_requests", current.id, `Updated ${current.reference}.`, { reference: current.reference, status: nextStatus });
-  }
-
-  return getDataProtectionRequests(DB);
-}
-
-async function saveSystemReport(DB, body, identity) {
-  const current = await DB.prepare(`SELECT * FROM system_reports WHERE id = ? OR reference = ?`).bind(clean(body.id, 120), clean(body.reference, 120)).first();
-  if (!current) throw new Error("System report not found.");
-
-  const nextStatus = clean(body.status, 80) || current.status || "New";
-  const nextPriority = clean(body.priority, 40) || current.priority || "Normal";
-  const nextNotes = clean(body.internal_notes, 6000);
-  const nextAssigned = clean(body.assigned_admin_id, 254);
-  const events = [];
-
-  if (nextStatus !== current.status) {
-    events.push({ type: "Status changed", actor: auditActor(identity), previousValue: current.status || "", newValue: nextStatus });
-  }
-  if (nextPriority !== current.priority) {
-    events.push({ type: "Priority changed", actor: auditActor(identity), previousValue: current.priority || "", newValue: nextPriority });
-  }
-  if (nextAssigned !== (current.assigned_admin_id || "")) {
-    events.push({ type: "Assigned to admin", actor: auditActor(identity), previousValue: current.assigned_admin_id || "", newValue: nextAssigned });
-  }
-  if (nextNotes && nextNotes !== (current.internal_notes || "")) {
-    events.push({ type: "Admin note added", actor: auditActor(identity) });
-  }
-  if (nextStatus === "Fixed" && current.status !== "Fixed") {
-    events.push({ type: "Marked fixed", actor: auditActor(identity) });
-  }
-  if (nextStatus === "Closed" && current.status !== "Closed") {
-    events.push({ type: "Closed", actor: auditActor(identity) });
-  }
-
-  let auditLog = current.audit_log || "[]";
-  for (const event of events) auditLog = addAudit(auditLog, event);
-
-  const resolvedAt = nextStatus === "Fixed" || nextStatus === "Closed"
-    ? (current.resolved_at || new Date().toISOString())
-    : current.resolved_at;
-
-  await DB.prepare(`
-    UPDATE system_reports SET
-      status = ?,
-      priority = ?,
-      assigned_admin_id = ?,
-      internal_notes = ?,
-      resolved_at = ?,
-      audit_log = ?,
-      updated_at = CURRENT_TIMESTAMP
-    WHERE id = ?
-  `).bind(nextStatus, nextPriority, nextAssigned, nextNotes, resolvedAt, auditLog, current.id).run();
-
-  if (events.length) {
-    await writeAudit(DB, identity, "system_report_update", "system_reports", current.id, `Updated ${current.reference}.`, { reference: current.reference, status: nextStatus, priority: nextPriority });
-  }
-
-  return getSystemReports(DB);
-}
-
-async function getClosureRequests(DB) {
-  return all(DB, `
-    SELECT id, reference, customer_email, customer_name, requested_by, reason, status,
-      assigned_admin_id, internal_notes, audit_log, created_at, updated_at, completed_at
-    FROM closure_requests
-    ORDER BY updated_at DESC, created_at DESC
-    LIMIT 500
-  `);
-}
-
-async function nextReference(DB, table, prefix) {
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?…2024 tokens truncated…prefix) {
   const row = await DB.prepare(`SELECT COUNT(*) AS count FROM ${table}`).first();
   return `${prefix}-${String(Number(row?.count || 0) + 1).padStart(5, "0")}`;
 }
