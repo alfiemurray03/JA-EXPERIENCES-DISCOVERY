@@ -58,6 +58,13 @@ export function AdminThemeProvider({ children }: { children: React.ReactNode }) 
 
   useEffect(() => {
     if (!window.location.pathname.startsWith('/admin')) return;
+
+    // A choice made in this browser must win immediately. In particular, the
+    // public Admin landing page cannot persist to the protected settings API
+    // until Microsoft sign-in has completed.
+    const localTheme = localStorage.getItem(STORAGE_KEY);
+    if (validTheme(localTheme)) return;
+
     void loadSavedTheme().then(saved => {
       if (!saved) return;
       setThemeState(saved);
