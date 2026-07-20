@@ -7,13 +7,28 @@ export function installPwaSupport() {
   if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
   if (import.meta.env.MODE === 'development') return;
 
+  const isAdminRoute = window.location.pathname === '/admin' || window.location.pathname.startsWith('/admin/');
+  if (isAdminRoute) {
+    // The Admin Centre is intentionally never PWA-controlled. Remove legacy
+    // workers and their shell caches after the network-only Admin page loads.
+    void navigator.serviceWorker.getRegistrations()
+      .then(registrations => Promise.all(registrations.map(registration => registration.unregister())))
+      .catch(() => {});
+    if ('caches' in window) {
+      void caches.keys()
+        .then(keys => Promise.all(keys.filter(key => key.startsWith('ja-plan-studio-shell-')).map(key => caches.delete(key))))
+        .catch(() => {});
+    }
+    return;
+  }
+
   if (isStandaloneApp()) {
     document.documentElement.dataset.displayMode = 'standalone';
     document.cookie = 'ja_pwa_mode=1; Path=/; Max-Age=31536000; SameSite=Lax; Secure';
   }
 
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js?v=6', { scope: '/', updateViaCache: 'none' })
+    navigator.serviceWorker.register('/sw.js?v=7', { scope: '/', updateViaCache: 'none' })
       .then((registration) => {
         void registration.update();
       })
