@@ -43,8 +43,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Customer Operations',
     items: [
-      { label: 'Customers',       href: '/admin/users',       icon: Users,           section: 'customers' },
-      { label: 'Membership',      href: '/admin/subscriptions', icon: CreditCard,    section: 'membership' },
+      { label: 'Customer CRM',    href: '/admin/users',       icon: Users,           section: 'customers' },
       { label: 'Security',        href: '/admin/security',    icon: ShieldCheck,     section: 'security' },
       { label: 'Notifications',   href: '/admin/notifications', icon: Mail,          section: 'notifications' },
       { label: 'Data Protection Requests', href: '/admin/gdpr', icon: Shield,        section: 'datarequests' },
