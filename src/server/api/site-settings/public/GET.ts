@@ -20,6 +20,7 @@ const DEFAULTS: Record<string, string> = {
   admin_tab_name: 'JA Plan Studio Admin Portal',
   favicon_url: '/favicon.svg?v=20260718-4',
   admin_theme_mode: 'light',
+  google_analytics_id: '',
   nav_links: JSON.stringify([
     { id: 'nl-1', label: 'Pricing', href: '/pricing', openNewTab: false },
     { id: 'nl-2', label: 'Contact', href: '/contact', openNewTab: false },
@@ -46,7 +47,7 @@ export default async function handler(_req: Request, res: Response) {
       'site_name', 'brand_name', 'tagline', 'support_email', 'company_name',
       'primary_color', 'accent_color', 'logo_url',
       'browser_tab_name', 'admin_tab_name', 'favicon_url', 'admin_theme_mode',
-      'nav_links', 'footer_links', 'affiliate_coming_soon',
+      'nav_links', 'footer_links', 'affiliate_coming_soon', 'google_analytics_id',
     ];
     const settings: Record<string, string> = {};
     for (const k of PUBLIC_KEYS) settings[k] = all[k] ?? '';
