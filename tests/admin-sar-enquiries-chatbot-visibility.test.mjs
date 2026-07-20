@@ -26,12 +26,18 @@ test('Contact Enquiries uses a dedicated Admin viewer', async () => {
   assert.match(api, /updateEnquiryAsAdmin/);
 });
 
-test('chatbot settings and confirmation remain visible', async () => {
+test('Admin utilities remain accessible without covering page content', async () => {
   const theme = await read('src/lib/admin-theme-context.tsx');
+  const layout = await read('src/components/AdminLayout.tsx');
   const css = await read('src/styles/chatbot-admin-fixes.css');
   const main = await read('src/main.tsx');
-  assert.match(theme, /Chatbot settings/);
-  assert.match(theme, /\/admin\/ai-chatbot/);
+  assert.doesNotMatch(theme, /fixed bottom-20 right-4/);
+  assert.doesNotMatch(theme, /Chatbot settings/);
+  assert.match(layout, /AI Chatbot Control/);
+  assert.match(layout, /\/admin\/ai-chatbot/);
+  assert.match(layout, /Sidebar utilities/);
+  assert.match(layout, /Switch Admin Portal to light mode/);
+  assert.match(layout, /hidden xl:inline/);
   assert.match(css, /aria-label\$=" chat"/);
   assert.match(css, /p\.font-mono/);
   assert.match(css, /data-slot="card"/);
