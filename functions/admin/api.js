@@ -3833,6 +3833,26 @@ export async function onRequest(context) {
           return json({ url: portalUrl });
         }
         const cols = await getProfilesColumns(env.DB);
+        if (body.action === "update_profile") {
+          const verifiedName = clean(body.verified_name, 180);
+          const displayName = clean(body.display_name, 180);
+          const contactEmail = cleanEmail(body.contact_email);
+          const phone = clean(body.phone, 60);
+          const preference = clean(body.communication_preference, 80);
+          const supportNotes = clean(body.support_notes, 4000);
+          const adminNotes = clean(body.admin_notes, 4000);
+          if (!verifiedName && !displayName) return json({ error: "A verified or display name is required." }, 400);
+          if (body.contact_email && !contactEmail) return json({ error: "Enter a valid contact email address." }, 400);
+          const current = await env.DB.prepare(`SELECT verified_name,display_name,contact_email,phone,communication_preference,support_notes,admin_notes FROM profiles WHERE lower(email)=lower(?)`).bind(email).first();
+          if (!current) return json({ error: "Customer profile not found." }, 404);
+          await env.DB.prepare(`UPDATE profiles SET verified_name=?,display_name=?,contact_email=?,phone=?,communication_preference=?,support_notes=?,admin_notes=?,admin_updated_at=CURRENT_TIMESTAMP,updated_at=CURRENT_TIMESTAMP WHERE lower(email)=lower(?)`).bind(
+            verifiedName || null, displayName || null, contactEmail || null, phone || null, preference || null, supportNotes || null, adminNotes || null, email
+          ).run();
+          const changedFields = ["verified_name","display_name","contact_email","phone","communication_preference","support_notes","admin_notes"].filter((field) => String(current[field] || "") !== String({ verified_name: verifiedName, display_name: displayName, contact_email: contactEmail, phone, communication_preference: preference, support_notes: supportNotes, admin_notes: adminNotes }[field] || ""));
+          await env.DB.prepare(`INSERT INTO customer_timeline_events (id,email,event_type,title,detail,actor_type,actor_email,metadata) VALUES (?,?,'profile_amended','Customer profile amended','An authorised administrator corrected customer profile information.','admin',?,?)`).bind(crypto.randomUUID(), email, identity.email, JSON.stringify({ changed_fields: changedFields })).run();
+          await writeAudit(env.DB, identity, "customer_profile_amended", "profiles", email, `Amended customer profile for ${email}.`, { changed_fields: changedFields });
+          return json({ saved: true, changed_fields: changedFields });
+        }
         if (body.action === "suspend_account" || body.action === "reactivate_account") {
           const reason = clean(body.reason, 1000);
           const note = clean(body.internal_note, 2000);
