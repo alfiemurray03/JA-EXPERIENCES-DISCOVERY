@@ -53,6 +53,9 @@ jobs:
           grep -R --include='*.js' -F 'accountType=' public/assets >/dev/null
           grep -R --include='*.js' -F 'Secure application recovery' public/assets >/dev/null
           grep -F 'analytics-compat-refresh' public/assets/analytics-XYhWdSNH.js >/dev/null
+          grep -F "ja-plan-studio-shell-v7" public/sw.js >/dev/null
+          grep -F "if (isAdminRoute(url.pathname)) return false;" public/sw.js >/dev/null
+          grep -F "fetch(request, { cache: 'no-store', redirect: 'follow' })" public/sw.js >/dev/null
 
       - name: Upload deployable bundle
         uses: actions/upload-artifact@v4
