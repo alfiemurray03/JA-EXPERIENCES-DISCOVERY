@@ -13,7 +13,7 @@ export function installPwaSupport() {
   }
 
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js?v=5', { scope: '/', updateViaCache: 'none' })
+    navigator.serviceWorker.register('/sw.js?v=6', { scope: '/', updateViaCache: 'none' })
       .then((registration) => {
         void registration.update();
       })
