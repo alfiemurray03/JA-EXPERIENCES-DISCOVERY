@@ -12,7 +12,7 @@ function getAccessIdentity(request) {
 
 async function ensureTables(DB) {
   await DB.prepare(`
-    CREATE TABLE IF NOT EXISTS customer_support_pins (
+    CREATE TABLE IF NOT EXISTS customer_support_pins_v2 (
       id TEXT PRIMARY KEY,
       email TEXT NOT NULL,
       pin_hash TEXT NOT NULL,
@@ -30,16 +30,6 @@ async function ensureTables(DB) {
       updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )
   `).run();
-  const schema = await DB.prepare("PRAGMA table_info(customer_support_pins)").all();
-  const columns = new Set((schema.results || []).map((column) => String(column.name || "")));
-  const upgrades = [
-    ["pin_ciphertext", "ALTER TABLE customer_support_pins ADD COLUMN pin_ciphertext TEXT"],
-    ["pin_iv", "ALTER TABLE customer_support_pins ADD COLUMN pin_iv TEXT"],
-    ["audit_history", "ALTER TABLE customer_support_pins ADD COLUMN audit_history TEXT DEFAULT '[]'"]
-  ];
-  for (const [name, statement] of upgrades) {
-    if (!columns.has(name)) await DB.prepare(statement).run();
-  }
   await DB.prepare(`
     CREATE TABLE IF NOT EXISTS customer_security_questions (
       id TEXT PRIMARY KEY,
@@ -51,17 +41,6 @@ async function ensureTables(DB) {
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
   `).run();
-}
-
-async function ensureCustomerProfile(DB, identity) {
-  await DB.prepare(`
-    INSERT INTO profiles (email, verified_name, display_name, contact_email, updated_at)
-    VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
-    ON CONFLICT(email) DO UPDATE SET
-      display_name = COALESCE(NULLIF(profiles.display_name, ''), excluded.display_name),
-      contact_email = COALESCE(NULLIF(profiles.contact_email, ''), excluded.contact_email),
-      updated_at = CURRENT_TIMESTAMP
-  `).bind(identity.email, identity.name || identity.email, identity.name || identity.email, identity.email).run();
 }
 
 async function hashPin(pin) {
@@ -132,8 +111,8 @@ async function createSupportPinRecord(DB, env, email, actorEmail, pin = null) {
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
   const payload = JSON.stringify([{ event: "generated", at: new Date().toISOString(), actor: actorEmail }]);
   const encrypted = await encryptPin(env, supportPin);
-  await DB.prepare(`UPDATE customer_support_pins SET status = 'Revoked', revoked_at = CURRENT_TIMESTAMP, revoked_by = ?, updated_at = CURRENT_TIMESTAMP WHERE lower(email) = lower(?) AND status = 'Active' AND revoked_at IS NULL`).bind(actorEmail, email).run();
-  await DB.prepare(`INSERT INTO customer_support_pins (id, email, pin_hash, pin_ciphertext, pin_iv, pin_last4, status, expires_at, audit_history) VALUES (?, ?, ?, ?, ?, ?, 'Active', ?, ?)`).bind(
+  await DB.prepare(`UPDATE customer_support_pins_v2 SET status = 'Revoked', revoked_at = CURRENT_TIMESTAMP, revoked_by = ?, updated_at = CURRENT_TIMESTAMP WHERE lower(email) = lower(?) AND status = 'Active' AND revoked_at IS NULL`).bind(actorEmail, email).run();
+  await DB.prepare(`INSERT INTO customer_support_pins_v2 (id, email, pin_hash, pin_ciphertext, pin_iv, pin_last4, status, expires_at, audit_history) VALUES (?, ?, ?, ?, ?, ?, 'Active', ?, ?)`).bind(
     id,
     email,
     await hashPin(supportPin),
@@ -169,10 +148,9 @@ export async function onRequest(context) {
   if (!identity.email) return json({ error: "Not signed in." }, 401);
   try {
     await ensureTables(env.DB);
-    await ensureCustomerProfile(env.DB, identity);
 
   if (request.method === "GET") {
-    const result = await env.DB.prepare(`SELECT id, pin_hash, pin_ciphertext, pin_iv, pin_last4, status, expires_at, used_at, revoked_at, revoked_by, last_used_at, created_at, updated_at FROM customer_support_pins WHERE lower(email) = lower(?) ORDER BY created_at DESC LIMIT 50`).bind(identity.email).all();
+    const result = await env.DB.prepare(`SELECT id, pin_hash, pin_ciphertext, pin_iv, pin_last4, status, expires_at, used_at, revoked_at, revoked_by, last_used_at, created_at, updated_at FROM customer_support_pins_v2 WHERE lower(email) = lower(?) ORDER BY created_at DESC LIMIT 50`).bind(identity.email).all();
     const pins = result.results || [];
     let active = pins.find((pin) => pin.status === "Active" && !pin.revoked_at && new Date(pin.expires_at).getTime() > Date.now()) || null;
     let activePin = "";
@@ -235,17 +213,17 @@ export async function onRequest(context) {
       }
       return json({ saved: true });
     }
-    const current = await env.DB.prepare(`SELECT * FROM customer_support_pins WHERE id = ? AND lower(email) = lower(?)`).bind(id, identity.email).first();
+    const current = await env.DB.prepare(`SELECT * FROM customer_support_pins_v2 WHERE id = ? AND lower(email) = lower(?)`).bind(id, identity.email).first();
     if (!current) return json({ error: "PIN not found." }, 404);
     if (action === "revoke") {
-      await env.DB.prepare(`UPDATE customer_support_pins SET status = 'Revoked', revoked_at = CURRENT_TIMESTAMP, revoked_by = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`).bind(identity.email, id).run();
+      await env.DB.prepare(`UPDATE customer_support_pins_v2 SET status = 'Revoked', revoked_at = CURRENT_TIMESTAMP, revoked_by = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`).bind(identity.email, id).run();
       return json({ revoked: true });
     }
     if (action === "rotate") {
       const pin = generatePin();
       const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
       const encrypted = await encryptPin(env, pin);
-      await env.DB.prepare(`UPDATE customer_support_pins SET pin_hash = ?, pin_ciphertext = ?, pin_iv = ?, pin_last4 = ?, status = 'Active', expires_at = ?, revoked_at = NULL, revoked_by = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ?`).bind(await hashPin(pin), encrypted.ciphertext, encrypted.iv, pin.slice(-4), expiresAt, id).run();
+      await env.DB.prepare(`UPDATE customer_support_pins_v2 SET pin_hash = ?, pin_ciphertext = ?, pin_iv = ?, pin_last4 = ?, status = 'Active', expires_at = ?, revoked_at = NULL, revoked_by = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ?`).bind(await hashPin(pin), encrypted.ciphertext, encrypted.iv, pin.slice(-4), expiresAt, id).run();
       return json({ pin, expiresAt });
     }
     return json({ error: "Unknown action." }, 400);
