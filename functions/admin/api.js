@@ -251,6 +251,63 @@ async function hasActiveAdminPinSession(DB, request, adminEmail) {
   }
 }
 
+async function ensureAdminPinTables(DB) {
+  await DB.prepare(`CREATE TABLE IF NOT EXISTS admin_security_pins (
+    admin_email TEXT PRIMARY KEY, pin_hash TEXT NOT NULL, failed_attempts INTEGER DEFAULT 0,
+    locked_until TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP, updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+  )`).run();
+  await DB.prepare(`CREATE TABLE IF NOT EXISTS admin_pin_sessions (
+    token_hash TEXT PRIMARY KEY, admin_email TEXT NOT NULL, created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    expires_at TEXT NOT NULL, revoked_at TEXT
+  )`).run();
+}
+
+async function adminPinStatus(DB, request, adminEmail) {
+  await ensureAdminPinTables(DB);
+  const record = await DB.prepare(`SELECT failed_attempts, locked_until FROM admin_security_pins WHERE lower(admin_email) = lower(?)`).bind(cleanEmail(adminEmail)).first();
+  const token = requestCookie(request, "ja_admin_pin_session");
+  const session = token ? await DB.prepare(`SELECT expires_at FROM admin_pin_sessions WHERE token_hash = ? AND lower(admin_email) = lower(?) AND revoked_at IS NULL AND datetime(expires_at) > datetime('now')`).bind(await sha256Hex(token), cleanEmail(adminEmail)).first() : null;
+  const locked = Boolean(record?.locked_until && Date.parse(record.locked_until) > Date.now());
+  return { configured: Boolean(record), unlocked: Boolean(session), expiresAt: session?.expires_at || null, locked, lockedUntil: locked ? record.locked_until : null, attemptsRemaining: Math.max(0, 5 - Number(record?.failed_attempts || 0)) };
+}
+
+async function handleAdminPinPost(DB, request, identity, body) {
+  await ensureAdminPinTables(DB);
+  const email = cleanEmail(identity.email);
+  const action = clean(body.action, 20) || "verify";
+  const pin = clean(body.pin, 4);
+  if (action === "lock") {
+    const token = requestCookie(request, "ja_admin_pin_session");
+    if (token) await DB.prepare(`UPDATE admin_pin_sessions SET revoked_at = CURRENT_TIMESTAMP WHERE token_hash = ?`).bind(await sha256Hex(token)).run();
+    await writeAudit(DB, identity, "admin_pin_session_locked", "admin_security_pin", email, "Administrator locked their PIN session.", {});
+    return jsonWithHeaders({ success: true, configured: true, unlocked: false }, { "Set-Cookie": "ja_admin_pin_session=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Strict" });
+  }
+  if (!/^\d{4}$/.test(pin)) return json({ success: false, error: "Enter exactly four numbers." }, 400);
+  const existing = await DB.prepare(`SELECT * FROM admin_security_pins WHERE lower(admin_email) = lower(?)`).bind(email).first();
+  if (action === "setup") {
+    if (existing) return json({ success: false, error: "A PIN already exists. Reload and enter it instead." }, 409);
+    const salt = crypto.randomUUID();
+    await DB.prepare(`INSERT INTO admin_security_pins (admin_email, pin_hash) VALUES (?, ?)`).bind(email, `pbkdf2_sha256$210000$${salt}$${await deriveVerificationHash(pin, salt)}`).run();
+    await writeAudit(DB, identity, "admin_pin_created", "admin_security_pin", email, "Created an individual administrator security PIN.", {});
+  } else {
+    if (!existing) return json({ success: false, error: "Create your administrator PIN first." }, 409);
+    if (existing.locked_until && Date.parse(existing.locked_until) > Date.now()) return json({ success: false, error: "PIN access is temporarily locked.", lockedUntil: existing.locked_until }, 423);
+    if (!(await verifySecretHash(pin, existing.pin_hash))) {
+      const attempts = Number(existing.failed_attempts || 0) + 1;
+      const lockedUntil = attempts >= 5 ? new Date(Date.now() + 15 * 60 * 1000).toISOString() : null;
+      await DB.prepare(`UPDATE admin_security_pins SET failed_attempts = ?, locked_until = ?, updated_at = CURRENT_TIMESTAMP WHERE lower(admin_email) = lower(?)`).bind(lockedUntil ? 0 : attempts, lockedUntil, email).run();
+      await writeAudit(DB, identity, "admin_pin_verification_failed", "admin_security_pin", email, "Administrator PIN verification failed.", { attempts, locked: Boolean(lockedUntil) });
+      return json({ success: false, error: lockedUntil ? "Too many attempts. PIN access is locked for 15 minutes." : "The administrator PIN is incorrect.", attemptsRemaining: lockedUntil ? 0 : 5 - attempts }, lockedUntil ? 423 : 401);
+    }
+  }
+  const token = `${crypto.randomUUID()}${crypto.randomUUID()}`;
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+  await DB.prepare(`UPDATE admin_security_pins SET failed_attempts = 0, locked_until = NULL, updated_at = CURRENT_TIMESTAMP WHERE lower(admin_email) = lower(?)`).bind(email).run();
+  await DB.prepare(`INSERT INTO admin_pin_sessions (token_hash, admin_email, expires_at) VALUES (?, ?, ?)`).bind(await sha256Hex(token), email, expiresAt).run();
+  await writeAudit(DB, identity, "admin_pin_verified", "admin_security_pin", email, "Administrator PIN verified and privileged session opened.", { expires_at: expiresAt });
+  return jsonWithHeaders({ success: true, configured: true, unlocked: true, expiresAt }, { "Set-Cookie": `ja_admin_pin_session=${encodeURIComponent(token)}; Path=/; Max-Age=900; HttpOnly; Secure; SameSite=Strict` });
+}
+
 function parseAuditHistory(value) {
   try {
     const parsed = JSON.parse(value || "[]");
@@ -3430,6 +3487,7 @@ export async function onRequest(context) {
     const ownerAccess = ownerBypass(adminContext.permissions, adminContext);
 
     if (request.method === "GET") {
+      if (section === "adminpin") return json({ success: true, ...(await adminPinStatus(env.DB, request, identity.email)) });
       if (!ownerAccess && !canAccessSection(adminContext.permissions, section)) return json({ error: "Forbidden.", section }, 403);
       if (section === "overview") return json({ admin: adminContext, overview: await getOverview(env.DB) });
       if (section === "operations") return json({ admin: adminContext, operations: await getOverview(env.DB) });
@@ -3567,6 +3625,7 @@ export async function onRequest(context) {
     if (request.method === "POST") {
       if (!isSameOriginRequest(request)) return json({ error: "This request could not be verified." }, 403);
       const body = await request.json().catch(() => ({}));
+      if (section === "adminpin") return handleAdminPinPost(env.DB, request, identity, body);
       if (section === "prefs") return json({ preferences: await saveAdminPreferences(env.DB, body, identity), saved: true });
       if (section === "builders") {
         if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_plans", "manage_pricing", "manage_crm"])) return json({ error: "Forbidden.", section }, 403);
