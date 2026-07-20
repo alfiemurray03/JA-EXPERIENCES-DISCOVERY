@@ -7,6 +7,7 @@
  */
 import { Sun, Moon, Monitor } from 'lucide-react';
 import { useTheme, type ThemeMode } from '@/lib/theme-context';
+import { useAdminTheme } from '@/lib/admin-theme-context';
 
 type Pref = ThemeMode;
 
@@ -17,7 +18,11 @@ interface ThemeToggleProps {
 }
 
 export default function ThemeToggle({ className = '', expanded = false }: ThemeToggleProps) {
-  const { theme: pref, resolvedTheme, setTheme } = useTheme();
+  const publicTheme = useTheme();
+  const adminTheme = useAdminTheme();
+  const isAdminRoute = typeof window !== 'undefined' &&
+    (window.location.pathname === '/admin' || window.location.pathname.startsWith('/admin/'));
+  const { theme: pref, resolvedTheme, setTheme } = isAdminRoute ? adminTheme : publicTheme;
 
   const cycle = () => {
     const order: Pref[] = ['light', 'dark', 'system'];
@@ -45,6 +50,7 @@ export default function ThemeToggle({ className = '', expanded = false }: ThemeT
         {(['light', 'dark', 'system'] as Pref[]).map(p => (
           <button
             key={p}
+            type="button"
             onClick={() => setTheme(p)}
             aria-label={`Switch to ${labels[p]} mode`}
             className={`
@@ -67,6 +73,7 @@ export default function ThemeToggle({ className = '', expanded = false }: ThemeT
 
   return (
     <button
+      type="button"
       onClick={cycle}
       aria-label={`Appearance: ${labels[pref]} — click to change`}
       title={`Appearance: ${labels[pref]} — click to change`}
