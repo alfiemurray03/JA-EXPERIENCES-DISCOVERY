@@ -3,6 +3,8 @@ import { Helmet } from '@dr.pogodin/react-helmet';
 import AdminLayout from '@/components/AdminLayout';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   ShieldCheck, ShieldAlert, AlertTriangle, Lock, Users, RefreshCw,
   CheckCircle2, XCircle, Clock,
@@ -36,6 +38,11 @@ export default function AdminSecurity() {
   const [attempts, setAttempts] = useState<LoginAttempt[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingAttempts, setLoadingAttempts] = useState(true);
+  const [directorPinStatus, setDirectorPinStatus] = useState<{ configured?: boolean; eligible?: boolean; locked?: boolean; lockedUntil?: string | null }>({});
+  const [directorPin, setDirectorPin] = useState('');
+  const [directorPinConfirm, setDirectorPinConfirm] = useState('');
+  const [directorPinMessage, setDirectorPinMessage] = useState('');
+  const [savingDirectorPin, setSavingDirectorPin] = useState(false);
 
   const card = 'bg-white border-gray-200 dark:bg-slate-800 dark:border-slate-700';
   const text = 'text-gray-900 dark:text-white';
@@ -65,6 +72,37 @@ export default function AdminSecurity() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  const loadDirectorPinStatus = useCallback(async () => {
+    try {
+      const response = await fetch('/admin/api?section=adminpin', { credentials: 'include', cache: 'no-store' });
+      const payload = await response.json().catch(() => ({}));
+      if (response.ok) setDirectorPinStatus(payload);
+    } catch {
+      setDirectorPinMessage('The director PIN status could not be loaded.');
+    }
+  }, []);
+
+  useEffect(() => { void loadDirectorPinStatus(); }, [loadDirectorPinStatus]);
+
+  async function saveDirectorPin() {
+    if (!/^\d{4}$/.test(directorPin)) { setDirectorPinMessage('Enter exactly four numbers.'); return; }
+    if (directorPin !== directorPinConfirm) { setDirectorPinMessage('The PINs do not match.'); return; }
+    setSavingDirectorPin(true); setDirectorPinMessage('');
+    try {
+      const response = await fetch('/admin/api?section=adminpin', {
+        method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: directorPinStatus.configured ? 'reset' : 'setup', pin: directorPin }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || !payload.success) throw new Error(payload.error || 'The director PIN could not be saved.');
+      setDirectorPin(''); setDirectorPinConfirm('');
+      setDirectorPinMessage(directorPinStatus.configured ? 'Your director CRM override PIN has been replaced.' : 'Your director CRM override PIN has been created.');
+      await loadDirectorPinStatus();
+    } catch (reason) {
+      setDirectorPinMessage(reason instanceof Error ? reason.message : 'The director PIN could not be saved.');
+    } finally { setSavingDirectorPin(false); }
+  }
 
   const activeAdmins = admins.filter((a) => !a.suspended).length;
   const pendingReset = admins.filter((a) => a.mustResetPassword).length;
@@ -102,6 +140,33 @@ export default function AdminSecurity() {
               );
             })}
           </div>
+
+          {/* Director CRM override PIN */}
+          <Card className={card}>
+            <CardHeader className={`pb-3 pt-4 px-4 border-b ${divider}`}>
+              <div className="flex items-center gap-2">
+                <Lock className="w-4 h-4 text-primary" />
+                <h3 className={`text-sm font-semibold ${text}`}>Director CRM override PIN</h3>
+              </div>
+              <p className={`mt-1 text-xs ${muted}`}>A personal four-digit PIN for each director. It is requested only inside a customer CRM when the customer Support PIN cannot be used. It never controls Admin Portal sign-in.</p>
+            </CardHeader>
+            <CardContent className="px-4 pb-4 pt-3">
+              {directorPinStatus.eligible === false ? (
+                <p className={`text-xs ${muted}`}>This control is available to directors and platform owners.</p>
+              ) : (
+                <div className="max-w-md space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Badge className={directorPinStatus.configured ? "bg-green-500/15 text-green-600" : "bg-amber-500/15 text-amber-600"}>{directorPinStatus.configured ? 'Configured' : 'Not configured'}</Badge>
+                    {directorPinStatus.locked && <Badge className="bg-red-500/15 text-red-600">Locked until {directorPinStatus.lockedUntil ? new Date(directorPinStatus.lockedUntil).toLocaleString('en-GB') : 'later'}</Badge>}
+                  </div>
+                  <label className={`block text-xs font-medium ${text}`}>{directorPinStatus.configured ? 'New four-digit PIN' : 'Four-digit PIN'}<Input className="mt-1" type="password" inputMode="numeric" autoComplete="new-password" maxLength={4} value={directorPin} onChange={event => setDirectorPin(event.target.value.replace(/\D/g, '').slice(0, 4))} /></label>
+                  <label className={`block text-xs font-medium ${text}`}>Confirm PIN<Input className="mt-1" type="password" inputMode="numeric" autoComplete="new-password" maxLength={4} value={directorPinConfirm} onChange={event => setDirectorPinConfirm(event.target.value.replace(/\D/g, '').slice(0, 4))} /></label>
+                  <Button size="sm" onClick={() => void saveDirectorPin()} disabled={savingDirectorPin || directorPin.length !== 4 || directorPinConfirm.length !== 4}>{savingDirectorPin ? 'Saving…' : directorPinStatus.configured ? 'Replace PIN' : 'Create PIN'}</Button>
+                  {directorPinMessage && <p role="status" aria-live="polite" className={`text-xs ${muted}`}>{directorPinMessage}</p>}
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Admin accounts */}
           <Card className={card}>

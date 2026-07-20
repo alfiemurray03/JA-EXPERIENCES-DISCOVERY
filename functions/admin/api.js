@@ -285,7 +285,8 @@ async function verifyAdminPin(env, pin, storedHash) {
   return verifySecretHash(pin, storedHash);
 }
 
-async function handleAdminPinPost(DB, env, request, identity, body) {
+async function handleAdminPinPost(DB, env, request, identity, adminContext, body) {
+  if (!isSupervisorContext(adminContext)) return json({ success: false, error: "Director access is required to use a CRM override PIN." }, 403);
   await ensureAdminPinTables(DB);
   const email = cleanEmail(identity.email);
   const action = clean(body.action, 20) || "verify";
@@ -298,11 +299,17 @@ async function handleAdminPinPost(DB, env, request, identity, body) {
   }
   if (!/^\d{4}$/.test(pin)) return json({ success: false, error: "Enter exactly four numbers." }, 400);
   const existing = await DB.prepare(`SELECT * FROM admin_security_pins WHERE lower(admin_email) = lower(?)`).bind(email).first();
-  if (action === "setup") {
-    if (existing) return json({ success: false, error: "A PIN already exists. Reload and enter it instead." }, 409);
+  if (action === "setup" || action === "reset") {
+    if (action === "setup" && existing) return json({ success: false, error: "A PIN already exists. Use Replace PIN instead." }, 409);
     const salt = crypto.randomUUID();
-    await DB.prepare(`INSERT INTO admin_security_pins (admin_email, pin_hash) VALUES (?, ?)`).bind(email, `hmac_sha256${salt}${await adminPinMac(env, pin, salt)}`).run();
-    await writeAudit(DB, identity, "admin_pin_created", "admin_security_pin", email, "Created an individual administrator security PIN.", {});
+    const pinHash = `hmac_sha256${salt}${await adminPinMac(env, pin, salt)}`;
+    if (existing) {
+      await DB.prepare(`UPDATE admin_security_pins SET pin_hash = ?, failed_attempts = 0, locked_until = NULL, updated_at = CURRENT_TIMESTAMP WHERE lower(admin_email) = lower(?)`).bind(pinHash, email).run();
+      await DB.prepare(`UPDATE admin_pin_sessions SET revoked_at = CURRENT_TIMESTAMP WHERE lower(admin_email) = lower(?) AND revoked_at IS NULL`).bind(email).run();
+    } else {
+      await DB.prepare(`INSERT INTO admin_security_pins (admin_email, pin_hash) VALUES (?, ?)`).bind(email, pinHash).run();
+    }
+    await writeAudit(DB, identity, action === "reset" ? "admin_pin_reset" : "admin_pin_created", "admin_security_pin", email, action === "reset" ? "Director replaced their CRM override PIN after Microsoft authentication." : "Created an individual director CRM override PIN.", {});
   } else {
     if (!existing) return json({ success: false, error: "Create your administrator PIN first." }, 409);
     if (existing.locked_until && Date.parse(existing.locked_until) > Date.now()) return json({ success: false, error: "PIN access is temporarily locked.", lockedUntil: existing.locked_until }, 423);
@@ -3501,7 +3508,7 @@ export async function onRequest(context) {
     const ownerAccess = ownerBypass(adminContext.permissions, adminContext);
 
     if (request.method === "GET") {
-      if (section === "adminpin") return json({ success: true, ...(await adminPinStatus(env.DB, request, identity.email)) });
+      if (section === "adminpin") return json({ success: true, eligible: isSupervisorContext(adminContext), ...(await adminPinStatus(env.DB, request, identity.email)) });
       if (!ownerAccess && !canAccessSection(adminContext.permissions, section)) return json({ error: "Forbidden.", section }, 403);
       if (section === "overview") return json({ admin: adminContext, overview: await getOverview(env.DB) });
       if (section === "operations") return json({ admin: adminContext, operations: await getOverview(env.DB) });
@@ -3639,7 +3646,7 @@ export async function onRequest(context) {
     if (request.method === "POST") {
       if (!isSameOriginRequest(request)) return json({ error: "This request could not be verified." }, 403);
       const body = await request.json().catch(() => ({}));
-      if (section === "adminpin") return handleAdminPinPost(env.DB, env, request, identity, body);
+      if (section === "adminpin") return handleAdminPinPost(env.DB, env, request, identity, adminContext, body);
       if (section === "prefs") return json({ preferences: await saveAdminPreferences(env.DB, body, identity), saved: true });
       if (section === "builders") {
         if (!ownerAccess && !hasAnyPermission(adminContext.permissions, ["manage_plans", "manage_pricing", "manage_crm"])) return json({ error: "Forbidden.", section }, 403);
@@ -3894,12 +3901,13 @@ export async function onRequest(context) {
           return json({ saved: true, verification: await getIdentityVerificationState(env.DB, email, identity.email, adminContext) });
         }
         if (body.action === "admin_pin_override") {
+          if (!isSupervisorContext(adminContext)) return json({ error: "Director access is required for a CRM override." }, 403);
           if (!(await hasActiveAdminPinSession(env.DB, request, identity.email))) {
             await writeAudit(env.DB, identity, "customer_admin_pin_override_rejected", "profiles", email, `Rejected expired or unavailable administrator PIN override for ${email}.`, {});
-            return json({ error: "Your administrator PIN session has expired. Lock and unlock the Admin Portal again." }, 403);
+            return json({ error: "Verify your director CRM override PIN and try again." }, 403);
           }
           const reason = clean(body.reason, 500);
-          if (reason.length < 8) return json({ error: "Enter a clear reason for accessing this customer record." }, 400);
+          if (reason.length < 4) return json({ error: "Enter a reason of at least four characters for accessing this customer record." }, 400);
           const expiresAt = await createCustomerVerificationSession(env.DB, identity, email, "Administrator PIN override");
           await writeAudit(env.DB, identity, "customer_admin_pin_override", "profiles", email, `Administrator PIN override opened protected CRM data for ${email}.`, { reason, expires_at: expiresAt });
           return json({ saved: true, verification: { ...(await getIdentityVerificationState(env.DB, email, identity.email, adminContext)), admin_pin_override_available: true } });
