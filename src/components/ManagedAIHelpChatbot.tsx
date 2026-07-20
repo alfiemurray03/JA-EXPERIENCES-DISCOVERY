@@ -232,7 +232,7 @@ export default function ManagedAIHelpChatbot() {
 
   async function submitAutomaticEscalation(reply: AssistantReply, conversation: ChatMessage[]) {
     const name = form.name.trim() || displayName(user);
-    const email = form.email.trim() || user?.email?.trim() || '';
+    const email = user?.email?.trim() || form.email.trim() || '';
     const subject = reply.suggestedSubject || suggestedSubject || 'Help with JA Plan Studio';
     const category = reply.category || suggestedCategory || 'Technical Support';
 
@@ -335,9 +335,14 @@ export default function ManagedAIHelpChatbot() {
           appendAssistant('That looks like a question or request rather than a name. I can help with it, but first please tell me the full name you would like the support team to use.');
           return;
         }
-        setForm(current => ({ ...current, name: value.trim().replace(/\\s+/g, ' ') }));
-        setIntakeStep('email');
-        appendAssistant(`Thanks, ${value}. What email address should we use to contact you about this conversation?`);
+        setForm(current => ({ ...current, name: value.trim().replace(/\s+/g, ' '), email: user?.email || current.email }));
+        if (user?.email) {
+          setIntakeStep('telephone');
+          appendAssistant(`Thanks, ${value}. I’ve securely matched this conversation to your signed-in JA Plan Studio account. What telephone number should the Support Team use if a call is necessary? You can type “skip”.`);
+        } else {
+          setIntakeStep('email');
+          appendAssistant(`Thanks, ${value}. What email address should we use to contact you about this conversation?`);
+        }
         return;
       }
       if (intakeStep === 'email') {
@@ -418,7 +423,7 @@ export default function ManagedAIHelpChatbot() {
       const transcript = history.map(message => `${message.role === 'assistant' ? config.assistantName : 'Visitor'}: ${message.content}`).join('\n\n');
       const response = await fetch('/api/support/submit', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
-        body: JSON.stringify({ sessionId: sessionIdRef.current, name: form.name.trim(), email: form.email.trim(), telephone: form.telephone.trim(), subject: form.subject.trim(), message: `${form.message.trim()}${transcript ? `\n\n--- AI Help Centre conversation ---\n${transcript}` : ''}`.slice(0, 20000), category: form.category, termsAccepted: true, privacyAccepted: true, marketingConsent: false, startedAt: openedAtRef.current, website: '', idempotencyKey: `${sessionIdRef.current}-${form.subject.trim().toLowerCase()}`.slice(0, 120) }),
+        body: JSON.stringify({ sessionId: sessionIdRef.current, name: form.name.trim(), email: user?.email || form.email.trim(), telephone: form.telephone.trim(), subject: form.subject.trim(), message: `${form.message.trim()}${transcript ? `\n\n--- AI Help Centre conversation ---\n${transcript}` : ''}`.slice(0, 20000), category: form.category, termsAccepted: true, privacyAccepted: true, marketingConsent: false, startedAt: openedAtRef.current, website: '', idempotencyKey: `${sessionIdRef.current}-${form.subject.trim().toLowerCase()}`.slice(0, 120) }),
       });
       const data = await response.json().catch(() => ({})) as { success?: boolean; reference?: string; error?: string; errors?: string[] };
       if (!response.ok || !data.success || !data.reference) throw new Error(data.error || data.errors?.[0] || 'The enquiry could not be sent.');

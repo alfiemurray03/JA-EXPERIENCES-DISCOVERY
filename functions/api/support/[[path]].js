@@ -149,7 +149,9 @@ async function submitChatEnquiry(context, identity, assistantConfig) {
   const enquiry = normaliseEnquiry({
     ...body,
     name: clean(body.name || identity.name || identity.email, 120),
-    email: clean(body.email || identity.email, 254).toLowerCase(),
+    // A signed-in session is authoritative. Never let typed form data attach a
+    // support case to a different customer's CRM record.
+    email: clean(identity.email || body.email, 254).toLowerCase(),
     subject: clean(body.subject, 180),
     category,
     message: clean(body.message, 20000),
