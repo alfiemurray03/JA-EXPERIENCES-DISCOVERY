@@ -53,6 +53,17 @@ async function ensureTables(DB) {
   `).run();
 }
 
+async function ensureCustomerProfile(DB, identity) {
+  await DB.prepare(`
+    INSERT INTO profiles (email, verified_name, display_name, contact_email, updated_at)
+    VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+    ON CONFLICT(email) DO UPDATE SET
+      display_name = COALESCE(NULLIF(profiles.display_name, ''), excluded.display_name),
+      contact_email = COALESCE(NULLIF(profiles.contact_email, ''), excluded.contact_email),
+      updated_at = CURRENT_TIMESTAMP
+  `).bind(identity.email, identity.name || identity.email, identity.name || identity.email, identity.email).run();
+}
+
 async function hashPin(pin) {
   return hashSecret(pin);
 }
@@ -158,6 +169,7 @@ export async function onRequest(context) {
   if (!identity.email) return json({ error: "Not signed in." }, 401);
   try {
     await ensureTables(env.DB);
+    await ensureCustomerProfile(env.DB, identity);
 
   if (request.method === "GET") {
     const result = await env.DB.prepare(`SELECT id, pin_hash, pin_ciphertext, pin_iv, pin_last4, status, expires_at, used_at, revoked_at, revoked_by, last_used_at, created_at, updated_at FROM customer_support_pins WHERE lower(email) = lower(?) ORDER BY created_at DESC LIMIT 50`).bind(identity.email).all();
