@@ -20,7 +20,6 @@ import { FeatureConfigProvider } from './lib/feature-config-context';
 import { SiteSettingsProvider } from './lib/site-settings-context';
 import { ResellerAuthProvider } from './lib/reseller-auth-context';
 import AIHelpChatbot from '@/components/AIHelpChatbot';
-import GoogleAnalytics from '@/components/GoogleAnalytics';
 import './styles/accessibility-global.css';
 
 const StandardBusinessHomePage = lazy(() => import('./pages/home'));
@@ -90,7 +89,6 @@ export default function App() {
                   <ResellerAuthProvider>
                     <>
                       <AccessibilityRuntime />
-                      <GoogleAnalytics />
                       <RouterProvider router={router} />
                       <CookieBannerErrorBoundary>
                         <Suspense fallback={null}>
