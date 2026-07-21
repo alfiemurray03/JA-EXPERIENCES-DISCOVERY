@@ -154,9 +154,7 @@ export async function onRequest({ request, env }) {
 
   const context = await ownerAccess(env.DB, email);
   if (!context.entitlements.canShareItineraries) {
-    const error = context.accountType === "individual"
-      ? "Individual accounts are private. Select an Organisation account to invite itinerary viewers."
-      : "An active Explore, Plan, Complete or Together subscription is required for organisation itinerary access.";
+    const error = "An active Explore, Plan, Complete or Together subscription is required to share an itinerary.";
     return json({ success: false, error, code: "ITINERARY_ACCESS_NOT_INCLUDED" }, 403);
   }
 
