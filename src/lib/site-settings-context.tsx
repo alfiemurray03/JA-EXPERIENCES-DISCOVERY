@@ -32,7 +32,7 @@ const DEFAULTS: SiteSettings = {
   tagline:     'Personalised Plans, Generated in Minutes',
   supportEmail: 'japlanstudio@jagroupservices.co.uk',
   logoUrl:     '',
-  googleAnalyticsId: '',
+  googleAnalyticsId: 'G-50QJHHL7H7',
 };
 
 const SiteSettingsContext = createContext<SiteSettings>(DEFAULTS);

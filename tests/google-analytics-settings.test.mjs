@@ -25,6 +25,7 @@ test('Google Analytics is public-runtime configured and consent gated', async ()
 
   assert.match(publicSettings, /google_analytics_id/);
   assert.match(context, /googleAnalyticsId/);
+  assert.match(context, /G-50QJHHL7H7/);
   assert.match(runtime, /getAnalyticsConsent/);
   assert.match(runtime, /onConsentChange/);
   assert.match(runtime, /googletagmanager\.com\/gtag\/js/);
