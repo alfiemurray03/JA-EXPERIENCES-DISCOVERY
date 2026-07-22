@@ -54,7 +54,7 @@ async function sendTeamsSupportCard(webhookValue, request, reference, enquiry, p
     throw new Error("The Teams support webhook host is not permitted.");
   }
 
-  const caseUrl = new URL(`/admin/enquiries?reference=${encodeURIComponent(reference)}`, request.url).toString();
+  const submittedAt = new Date().toLocaleString("en-GB", { timeZone: "Europe/London", dateStyle: "medium", timeStyle: "short" });
   const card = {
     type: "message",
     attachments: [{
@@ -65,24 +65,24 @@ async function sendTeamsSupportCard(webhookValue, request, reference, enquiry, p
         version: "1.4",
         $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
         body: [
-          { type: "TextBlock", size: "Large", weight: "Bolder", text: "JA Plan Studio support escalation", wrap: true },
+          { type: "TextBlock", size: "Large", weight: "Bolder", text: "Chatbot escalation", wrap: true },
           { type: "TextBlock", text: `Reference: ${reference}`, weight: "Bolder", wrap: true },
           {
             type: "FactSet",
             facts: [
+              { title: "Source", value: "JA Plan Studio Support Assistant" },
+              { title: "Submitted", value: `${submittedAt} (UK time)` },
               { title: "Priority", value: priority },
               { title: "Category", value: clean(enquiry.category, 80) || "General Enquiry" },
               { title: "Customer", value: clean(enquiry.name, 120) || "Customer" },
               { title: "Email", value: clean(enquiry.email, 254) },
+              { title: "Telephone", value: clean(enquiry.telephone, 40) || "Not provided" },
               { title: "Subject", value: clean(enquiry.subject, 180) }
             ]
           },
-          { type: "TextBlock", text: "A customer support case has been escalated after AI-guided triage.", wrap: true, spacing: "Medium" },
-          { type: "TextBlock", text: "Complete conversation transcript", weight: "Bolder", wrap: true, spacing: "Medium" },
-          { type: "TextBlock", text: clean(enquiry.message, 20000), wrap: true, fontType: "Monospace", size: "Small" }
-        ],
-        actions: [
-          { type: "Action.OpenUrl", title: "Open support case", url: caseUrl }
+          { type: "TextBlock", text: "Complete conversation transcript", weight: "Bolder", wrap: true, spacing: "Medium", separator: true },
+          { type: "TextBlock", text: clean(enquiry.message, 20000), wrap: true, fontType: "Monospace", size: "Small" },
+          { type: "TextBlock", text: "To email the customer from Teams, open this message's More actions menu, choose Workflows, then select JA Plan Studio – Reply to Customer.", wrap: true, spacing: "Medium", separator: true, isSubtle: true }
         ]
       }
     }]
@@ -114,7 +114,7 @@ async function sendManualSupportCard(webhookValue, request, reference, enquiry, 
     throw new Error("The manual support webhook host is not permitted.");
   }
 
-  const caseUrl = new URL(`/admin/enquiries?reference=${encodeURIComponent(reference)}`, request.url).toString();
+  const submittedAt = new Date().toLocaleString("en-GB", { timeZone: "Europe/London", dateStyle: "medium", timeStyle: "short" });
   const card = {
     type: "message",
     attachments: [{
@@ -131,19 +131,19 @@ async function sendManualSupportCard(webhookValue, request, reference, enquiry, 
             type: "FactSet",
             facts: [
               { title: "Source", value: "Contact Support form (manual enquiry)" },
+              { title: "Submitted", value: `${submittedAt} (UK time)` },
               { title: "Priority", value: priority },
               { title: "Category", value: clean(enquiry.category, 80) || "General Enquiry" },
               { title: "Customer", value: clean(enquiry.name, 120) || "Customer" },
               { title: "Email", value: clean(enquiry.email, 254) },
+              { title: "Telephone", value: clean(enquiry.telephone, 40) || "Not provided" },
               { title: "Subject", value: clean(enquiry.subject, 180) }
             ]
           },
           { type: "TextBlock", text: "This enquiry was submitted manually. The AI chatbot has not spoken with the customer.", wrap: true, spacing: "Medium" },
-          { type: "TextBlock", text: "Customer message", weight: "Bolder", wrap: true, spacing: "Medium" },
-          { type: "TextBlock", text: clean(enquiry.message, 20000), wrap: true, size: "Small" }
-        ],
-        actions: [
-          { type: "Action.OpenUrl", title: "Open support enquiry", url: caseUrl }
+          { type: "TextBlock", text: "Complete customer message", weight: "Bolder", wrap: true, spacing: "Medium", separator: true },
+          { type: "TextBlock", text: clean(enquiry.message, 20000), wrap: true, size: "Small" },
+          { type: "TextBlock", text: "To email the customer from Teams, open this message's More actions menu, choose Workflows, then select JA Plan Studio – Reply to Customer.", wrap: true, spacing: "Medium", separator: true, isSubtle: true }
         ]
       }
     }]
