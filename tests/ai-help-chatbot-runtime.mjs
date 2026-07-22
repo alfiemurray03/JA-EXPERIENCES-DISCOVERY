@@ -119,8 +119,9 @@ test('support escalations use the server-side Teams workflow secret', () => {
   assert.match(supportSubmit, /env\.TEAMS_SUPPORT_WEBHOOK_URL/);
   assert.match(supportSubmit, /sendTeamsSupportCard/);
   assert.match(supportSubmit, /application\/vnd\.microsoft\.card\.adaptive/);
-  assert.match(supportSubmit, /JA Plan Studio support escalation/);
-  assert.match(supportSubmit, /Action\.OpenUrl/);
+  assert.match(supportSubmit, /Chatbot escalation/);
+  assert.match(supportSubmit, /JA Plan Studio – Reply to Customer/);
+  assert.doesNotMatch(supportSubmit, /Action\.OpenUrl/);
   assert.match(supportSubmit, /\.environment\.api\.powerplatform\.com/);
   assert.match(supportSubmit, /Promise\.allSettled/);
   assert.doesNotMatch(chatbot, /TEAMS_SUPPORT_WEBHOOK_URL/);
@@ -134,6 +135,7 @@ test('complete transcript is stored, emailed and sent to Teams', () => {
   assert.match(chatbot, /slice\(0, 20000\)/);
   assert.match(supportSubmit, /Complete conversation transcript/);
   assert.match(supportSubmit, /clean\(enquiry\.message, 20000\)/);
+  assert.match(supportSubmit, /clean\(enquiry\.telephone, 40\)/);
   assert.match(chatbot, /Your enquiry has been submitted to the JA Plan Studio Support Team/);
 });
 
