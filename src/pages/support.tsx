@@ -161,7 +161,7 @@ export default function SupportPage() {
     if (!validateForm()) return;
     setSubmitting(true);
     try {
-      const res = await fetch('/api/support/submit', {
+      const res = await fetch('/api/support/manual-submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
