@@ -4,9 +4,9 @@ import test from 'node:test';
 
 const read = path => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
-test('Admin landing page is branded for JA Plan Studio operations', async () => {
+test('Admin landing page is branded for Planyx operations', async () => {
   const page = await read('src/pages/admin/login.tsx');
-  assert.match(page, /JA Plan Studio/);
+  assert.match(page, /Planyx/);
   assert.match(page, /Admin Centre/);
   assert.match(page, /Planning platform operations/);
   assert.match(page, /Experience builders/);
