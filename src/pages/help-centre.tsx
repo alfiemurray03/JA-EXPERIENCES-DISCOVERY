@@ -90,10 +90,10 @@ export default function PublicHelpCentrePage() {
   return (
     <>
       <Helmet>
-        <title>Help Centre — JA Plan Studio</title>
+        <title>Help Centre — Planyx</title>
         <meta
           name="description"
-          content="Search JA Plan Studio Help Centre guidance or speak to the AI-assisted support chatbot."
+          content="Search Planyx Help Centre guidance or speak to the AI-assisted support chatbot."
         />
       </Helmet>
 
@@ -102,7 +102,7 @@ export default function PublicHelpCentrePage() {
           <div className="mx-auto max-w-5xl text-center">
             <span className="inline-flex items-center gap-2 rounded-full border border-blue-400/30 bg-blue-500/10 px-3 py-1 text-xs font-semibold text-blue-200">
               <BookOpen className="h-3.5 w-3.5" />
-              JA Plan Studio Help Centre
+              Planyx Help Centre
             </span>
             <h1 className="mt-5 text-3xl font-bold tracking-tight sm:text-5xl">
               Find an answer or ask the support assistant
