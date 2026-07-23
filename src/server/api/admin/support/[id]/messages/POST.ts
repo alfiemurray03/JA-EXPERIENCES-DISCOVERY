@@ -77,7 +77,7 @@ export default async function handler(req: Request, res: Response) {
           html: `
             <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
               <div style="background:#1B4F8A;padding:24px;text-align:center;">
-                <h1 style="color:#fff;margin:0;font-size:22px;">JA Plan Studio</h1>
+                <h1 style="color:#fff;margin:0;font-size:22px;">Planyx</h1>
                 <p style="color:#cce0ff;margin:4px 0 0;">Support Centre</p>
               </div>
               <div style="padding:32px;background:#f9fafb;border:1px solid #e5e7eb;">
@@ -87,7 +87,7 @@ export default async function handler(req: Request, res: Response) {
                 <div style="background:#fff;border-left:4px solid #1B4F8A;padding:16px 20px;margin:20px 0;border-radius:0 4px 4px 0;">
                   <p style="margin:0;color:#374151;white-space:pre-wrap;">${message.trim().replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
                 </div>
-                <p style="color:#6b7280;font-size:13px;">— ${adminName}, JA Plan Studio Support</p>
+                <p style="color:#6b7280;font-size:13px;">— ${adminName}, Planyx Support</p>
                 <div style="text-align:center;margin:24px 0;">
                   <a href="${appUrl}/support/tickets/${ticket.uuid}"
                      style="background:#1B4F8A;color:#fff;padding:12px 28px;text-decoration:none;border-radius:6px;font-weight:bold;font-size:14px;display:inline-block;">
@@ -100,11 +100,11 @@ export default async function handler(req: Request, res: Response) {
                 </p>
               </div>
               <div style="padding:16px;text-align:center;color:#6b7280;font-size:12px;">
-                JA Group Services &bull; JA Plan Studio Support
+                JA Group Services &bull; Planyx Support
               </div>
             </div>
           `,
-          text: `Hi ${ticket.name},\n\nOur support team has replied to your ticket: ${ticket.subject}\n\n---\n${message.trim()}\n---\n\n— ${adminName}, JA Plan Studio Support\n\nView your ticket at: ${appUrl}/support/tickets/${ticket.uuid}\nReference: Ticket #${ticketId}`,
+          text: `Hi ${ticket.name},\n\nOur support team has replied to your ticket: ${ticket.subject}\n\n---\n${message.trim()}\n---\n\n— ${adminName}, Planyx Support\n\nView your ticket at: ${appUrl}/support/tickets/${ticket.uuid}\nReference: Ticket #${ticketId}`,
         });
         console.log(`admin.ticket.reply.email-sent ticketId=${ticketId} to=${ticket.email}`);
       } catch (emailErr) {
