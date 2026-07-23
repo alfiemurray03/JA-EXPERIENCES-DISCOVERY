@@ -1,5 +1,5 @@
 /**
- * Central plan configuration for JA Plan Studio.
+ * Central plan configuration for Planyx.
  * All plan limits, features, and metadata live here.
  * Admin can override limits via system config (DB), but these are the defaults.
  */
