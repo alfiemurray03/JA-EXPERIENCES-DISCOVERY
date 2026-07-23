@@ -11,7 +11,7 @@ export default function NotFoundPage() {
   return (
     <>
       <Helmet>
-        <title>Page Not Found — JA Plan Studio</title>
+        <title>Page Not Found — Planyx</title>
         <meta name="robots" content="noindex" />
       </Helmet>
       <div className="flex flex-col items-center justify-center py-24 px-4 text-center">
