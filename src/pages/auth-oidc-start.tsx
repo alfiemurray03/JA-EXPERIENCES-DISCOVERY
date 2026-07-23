@@ -62,7 +62,7 @@ export default function AuthOidcStartPage() {
   return (
     <>
       <Helmet>
-        <title>Signing In — JA Plan Studio</title>
+        <title>Signing In — Planyx</title>
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
 
@@ -83,7 +83,7 @@ export default function AuthOidcStartPage() {
               <FileText className="w-6 h-6 text-white" />
             </div>
             <div className="text-left">
-              <p className="text-white font-bold text-lg leading-tight">JA Plan Studio</p>
+              <p className="text-white font-bold text-lg leading-tight">Planyx</p>
               <p className="text-white/40 text-xs">by JA Group Services</p>
             </div>
           </Link>
