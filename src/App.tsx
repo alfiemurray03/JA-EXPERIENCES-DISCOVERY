@@ -34,9 +34,9 @@ const CookieBanner = lazy(() =>
 );
 
 const SpinnerFallback = () => (
-  <div className="flex justify-center py-8 h-screen items-center" role="status" aria-live="polite" aria-label="Loading JA Plan Studio">
+  <div className="flex justify-center py-8 h-screen items-center" role="status" aria-live="polite" aria-label="Loading Planyx">
     <Spinner />
-    <span className="sr-only">Loading JA Plan Studio…</span>
+    <span className="sr-only">Loading Planyx…</span>
   </div>
 );
 
