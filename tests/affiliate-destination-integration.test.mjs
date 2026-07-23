@@ -5,10 +5,10 @@ import vm from "node:vm";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
-test("provider pages are separate JA Plan Studio pages with shared shell, search and disclosures", async () => {
+test("provider pages are separate Planyx pages with shared shell, search and disclosures", async () => {
   const [gyg, headout] = await Promise.all([read("public/getyourguide/index.html"), read("public/headout/index.html")]);
   for (const [provider, html] of [["GetYourGuide", gyg], ["Headout", headout]]) {
-    assert.match(html, new RegExp(`<title>[^<]*${provider}[^<]*JA Plan Studio`));
+    assert.match(html, new RegExp(`<title>[^<]*${provider}[^<]*Planyx`));
     assert.match(html, /id="siteShellHeader"/);
     assert.match(html, /id="siteShellFooter"/);
     assert.match(html, /affiliate-widget-data\.js/);
