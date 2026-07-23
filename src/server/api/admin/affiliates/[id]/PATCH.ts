@@ -56,10 +56,10 @@ export default async function handler(req: Request, res: Response) {
       try {
         await sendEmail({
           to: aff.email,
-          subject: 'Your Affiliate Application Has Been Approved — JA Plan Studio',
+          subject: 'Your Affiliate Application Has Been Approved — Planyx',
           html: `
             <h2>Congratulations, ${aff.full_name}!</h2>
-            <p>Your affiliate application for JA Plan Studio has been <strong>approved</strong>.</p>
+            <p>Your affiliate application for Planyx has been <strong>approved</strong>.</p>
             <p><strong>Your referral code:</strong> <code>${code}</code></p>
             <p><strong>Your referral link:</strong> <a href="https://japlanstudio.jagroupservices.co.uk/?ref=${code}">https://japlanstudio.jagroupservices.co.uk/?ref=${code}</a></p>
             <p>Log in to your affiliate dashboard to track your clicks, signups, and commissions.</p>
@@ -81,11 +81,11 @@ export default async function handler(req: Request, res: Response) {
       try {
         await sendEmail({
           to: aff.email,
-          subject: 'Affiliate Application Update — JA Plan Studio',
+          subject: 'Affiliate Application Update — Planyx',
           html: `
             <h2>Application Update</h2>
             <p>Dear ${aff.full_name},</p>
-            <p>Thank you for your interest in the JA Plan Studio Affiliate Programme.</p>
+            <p>Thank you for your interest in the Planyx Affiliate Programme.</p>
             <p>After reviewing your application, we are unable to approve it at this time.</p>
             <p>If you believe this is an error or would like to discuss further, please contact us at <a href="mailto:hello@jagroupservices.co.uk">hello@jagroupservices.co.uk</a>.</p>
             <br/><p>Kind regards,<br/>JA Group Services</p>
