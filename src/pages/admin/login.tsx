@@ -42,7 +42,7 @@ export default function AdminLoginPage() {
   return (
     <>
       <Helmet>
-        <title>Admin Centre — JA Plan Studio</title>
+        <title>Admin Centre — Planyx</title>
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
 
@@ -66,7 +66,7 @@ export default function AdminLoginPage() {
                 <MapPinned className="h-3.5 w-3.5" />Planning platform operations
               </div>
               <h1 className="max-w-2xl !text-3xl !font-semibold tracking-[-0.035em] !text-black sm:!text-4xl lg:!text-[44px] lg:!leading-[1.08] dark:!text-white">
-                The control centre for <span className="!text-[#2463eb] dark:!text-blue-400">JA Plan Studio.</span>
+                The control centre for <span className="!text-[#2463eb] dark:!text-blue-400">Planyx.</span>
               </h1>
               <p className="mt-4 max-w-2xl !text-sm !leading-6 !text-slate-700 sm:!text-base dark:!text-slate-300">
                 Manage planning experiences, customers, memberships, support and platform operations from one secure workspace.
