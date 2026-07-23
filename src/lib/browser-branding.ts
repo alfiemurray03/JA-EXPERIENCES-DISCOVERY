@@ -5,8 +5,8 @@ export interface BrowserBrandingSettings {
 }
 
 const DEFAULTS: BrowserBrandingSettings = {
-  browserTabName: 'JA Plan Studio',
-  adminTabName: 'JA Plan Studio Admin Portal',
+  browserTabName: 'Planyx',
+  adminTabName: 'Planyx Admin Portal',
   faviconUrl: '/favicon.svg?v=20260718-4',
 };
 
