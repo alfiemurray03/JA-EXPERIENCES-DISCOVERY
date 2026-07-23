@@ -240,7 +240,7 @@ export default function OrgMembersPage() {
   return (
     <>
       <Helmet>
-        <title>Organisation Members — JA Plan Studio</title>
+        <title>Organisation Members — Planyx</title>
         <meta name="robots" content="noindex" />
       </Helmet>
       <DashboardLayout>
@@ -383,7 +383,7 @@ export default function OrgMembersPage() {
                             aria-describedby="invite-email-hint"
                           />
                           <p id="invite-email-hint" className="text-xs text-muted-foreground">
-                            They must already have a JA Plan Studio account.
+                            They must already have a Planyx account.
                           </p>
                         </div>
                         <div className="space-y-1.5">
