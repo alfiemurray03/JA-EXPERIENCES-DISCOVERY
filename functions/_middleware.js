@@ -622,7 +622,7 @@ export async function onRequest(context) {
           .bind(identity.email).first();
         const status = String(profile?.admin_customer_status || "").trim().toLowerCase();
         if (["blocked", "closed", "disabled", "suspended"].includes(status)) {
-          return new Response("Your account is currently suspended. Please contact JA Plan Studio for assistance.", {
+          return new Response("Your account is currently suspended. Please contact Planyx for assistance.", {
             status: 403,
             headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" }
           });
@@ -649,7 +649,7 @@ export async function onRequest(context) {
     const headers = new Headers(response.headers);
     headers.set("Cache-Control", "no-store");
     headers.delete("Content-Length");
-    // The JA Plan Studio administration portal is intentionally light-only.
+    // The Planyx administration portal is intentionally light-only.
     // Do not inject the public website's saved theme into the admin document.
     return new Response(injectAccessibility(injectNativeIdentity(await response.text(), requestIdentitySnapshot(request))), {
       status: response.status,
