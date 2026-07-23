@@ -46,7 +46,7 @@ export default function PersonalPlanPage() {
   return (
     <>
       <Helmet>
-        <title>Personal Plan — £5.99/month | JA Plan Studio</title>
+        <title>Personal Plan — £5.99/month | Planyx</title>
         <meta name="description" content="Core planning builders and up to 3 active plans for £5.99/month." />
       </Helmet>
 
