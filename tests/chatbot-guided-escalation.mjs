@@ -41,7 +41,7 @@ test('asks normal billing questions in sequence and excludes sensitive payment d
 test('asks for confirmation before submitting to the support team', () => {
   const history = [
     { role: 'user', content: 'My account is locked and I cannot access my paid plan' },
-    ...exchange('Which sign-in option are you using for your JA Plan Studio account?', 'Microsoft sign-in'),
+    ...exchange('Which sign-in option are you using for your Planyx account?', 'Microsoft sign-in'),
     ...exchange('What happens when you try to sign in? If you see an error message, please tell me exactly what it says.', 'It says account unavailable'),
     ...exchange('What device and browser are you using?', 'iPhone Safari'),
     ...exchange('When did this start, and does it happen every time you try?', 'Since today, every time'),
