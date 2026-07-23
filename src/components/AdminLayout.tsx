@@ -119,7 +119,7 @@ function Sidebar({ onClose }: SidebarProps) {
             <p className="font-bold text-white text-sm leading-tight">
               Admin Portal
             </p>
-            <p className="text-xs text-slate-400">JA Plan Studio</p>
+            <p className="text-xs text-slate-400">Planyx</p>
           </div>
         </div>
       </div>
@@ -243,7 +243,7 @@ function AdminLayoutInner({ children, title }: AdminLayoutInnerProps) {
     navigate('/admin', { replace: true });
   }
 
-  // JA Plan Studio's administration portal is intentionally light-only.
+  // Planyx's administration portal is intentionally light-only.
   useEffect(() => {
     document.documentElement.classList.remove('dark');
   }, []);

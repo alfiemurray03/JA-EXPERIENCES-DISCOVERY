@@ -20,7 +20,7 @@ export default function BuilderPlaceholder({ builderName }: PlaceholderProps) {
   return (
     <>
       <Helmet>
-        <title>{name} — JA Plan Studio</title>
+        <title>{name} — Planyx</title>
         <meta name="robots" content="noindex" />
       </Helmet>
       <DashboardLayout>

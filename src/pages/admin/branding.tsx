@@ -195,12 +195,12 @@ export default function AdminBrandingPage() {
                 <div className="space-y-2">
                   <Label htmlFor="browser-tab-name">Public website tab name</Label>
                   <Input id="browser-tab-name" value={form.browserTabName} maxLength={90} onChange={event => update('browserTabName', event.target.value)} disabled={loading} />
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Used for customer and public JA Plan Studio pages.</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Used for customer and public Planyx pages.</p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="admin-tab-name">Admin Portal tab name</Label>
                   <Input id="admin-tab-name" value={form.adminTabName} maxLength={90} onChange={event => update('adminTabName', event.target.value)} disabled={loading} />
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Admin pages may prefix the section, for example “Analytics — JA Plan Studio Admin Portal”.</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Admin pages may prefix the section, for example “Analytics — Planyx Admin Portal”.</p>
                 </div>
               </CardContent>
             </Card>

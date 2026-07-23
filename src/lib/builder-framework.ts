@@ -1,5 +1,5 @@
 /**
- * Shared Builder Framework — JA Plan Studio
+ * Shared Builder Framework — Planyx
  * Central types, helpers, and constants used by all document builders.
  */
 

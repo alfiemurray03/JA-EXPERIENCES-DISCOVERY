@@ -29,8 +29,8 @@ export default function LoginPage() {
   return (
     <>
       <Helmet>
-        <title>Sign In — JA Plan Studio</title>
-        <meta name="description" content="Sign in to your JA Plan Studio account." />
+        <title>Sign In — Planyx</title>
+        <meta name="description" content="Sign in to your Planyx account." />
         <link rel="canonical" href="/sign-in" />
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
@@ -41,7 +41,7 @@ export default function LoginPage() {
             <div className="w-16 h-16 rounded-2xl bg-blue-100 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-700 flex items-center justify-center mx-auto mb-5">
               <ShieldCheck className="w-8 h-8 text-blue-600 dark:text-blue-400" />
             </div>
-            <h1 className="text-2xl font-bold text-foreground mb-2">Sign in to JA Plan Studio</h1>
+            <h1 className="text-2xl font-bold text-foreground mb-2">Sign in to Planyx</h1>
             <p className="text-muted-foreground text-xs">Secured by JA Group Services ID</p>
           </div>
 
@@ -63,7 +63,7 @@ export default function LoginPage() {
 
             <div className="rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 p-3.5 flex gap-2.5">
               <ShieldCheck className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
-              <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">Enterprise-grade authentication. No separate JA Plan Studio password to remember.</p>
+              <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">Enterprise-grade authentication. No separate Planyx password to remember.</p>
             </div>
 
             <div className="border-t border-border pt-4">

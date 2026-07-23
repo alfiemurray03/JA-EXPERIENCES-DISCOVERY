@@ -26,7 +26,7 @@ export default async function handler(req: Request, res: Response) {
     if (reseller?.notifyCommission) {
       await sendEmail({
         to: reseller.email,
-        subject: 'Commission Approved — JA Plan Studio',
+        subject: 'Commission Approved — Planyx',
         html: `<h2>Commission Approved</h2><p>Dear ${reseller.fullName},</p><p>A commission of <strong>£${(comm.commissionGbp / 100).toFixed(2)}</strong> has been approved.</p><p>Kind regards,<br/>JA Group Services</p>`,
         text: `Commission of £${(comm.commissionGbp / 100).toFixed(2)} approved.`,
       }).catch(() => {});
@@ -39,7 +39,7 @@ export default async function handler(req: Request, res: Response) {
     if (reseller?.notifyCommission) {
       await sendEmail({
         to: reseller.email,
-        subject: 'Commission Paid — JA Plan Studio',
+        subject: 'Commission Paid — Planyx',
         html: `<h2>Commission Paid</h2><p>Dear ${reseller.fullName},</p><p>A commission of <strong>£${(comm.commissionGbp / 100).toFixed(2)}</strong> has been paid.${paymentRef ? ` Ref: <strong>${paymentRef}</strong>` : ''}</p><p>Kind regards,<br/>JA Group Services</p>`,
         text: `Commission of £${(comm.commissionGbp / 100).toFixed(2)} paid.`,
       }).catch(() => {});

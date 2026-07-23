@@ -1,9 +1,9 @@
 /**
- * JA Plan Studio — Document Layout System
+ * Planyx — Document Layout System
  * 14 professional layout styles.
  *
  * BRANDING POLICY:
- * - No hardcoded platform branding (no "JA Group Services", no "JA Plan Studio")
+ * - No hardcoded platform branding (no "JA Group Services", no "Planyx")
  * - All header fields (ref, date, version, status) are optional — only shown when
  *   the caller passes showRef/showDate/showVersion/showStatus = true
  * - Disclaimer is opt-in via showDisclaimer = true

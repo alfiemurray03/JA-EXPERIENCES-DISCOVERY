@@ -60,16 +60,16 @@ export default async function handler(req: Request, res: Response) {
 
       const result = await sendEmail({
         to,
-        subject: '[JA Plan Studio] Email Gateway Test',
+        subject: '[Planyx] Email Gateway Test',
         html: `
           <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
             <div style="background:#1B4F8A;padding:24px;text-align:center;">
-              <h1 style="color:#fff;margin:0;font-size:22px;">JA Plan Studio</h1>
+              <h1 style="color:#fff;margin:0;font-size:22px;">Planyx</h1>
               <p style="color:#cce0ff;margin:4px 0 0;">Admin Test Tools</p>
             </div>
             <div style="padding:32px;background:#f9fafb;border:1px solid #e5e7eb;">
               <h2 style="color:#1B4F8A;margin-top:0;">✅ Email Gateway Test</h2>
-              <p>This is a test email sent from the JA Plan Studio Admin Test Tools panel.</p>
+              <p>This is a test email sent from the Planyx Admin Test Tools panel.</p>
               <p>If you received this, the email gateway is working correctly.</p>
               <table style="width:100%;border-collapse:collapse;margin:16px 0;">
                 <tr><td style="padding:8px;font-weight:bold;color:#374151;width:120px;">Sent at:</td><td style="padding:8px;color:#111827;">${new Date().toLocaleString('en-GB', { timeZone: 'Europe/London' })}</td></tr>
@@ -77,7 +77,7 @@ export default async function handler(req: Request, res: Response) {
               </table>
             </div>
             <div style="padding:16px;text-align:center;color:#6b7280;font-size:12px;">
-              JA Group Services &bull; JA Plan Studio &bull; Admin Test Tools
+              JA Group Services &bull; Planyx &bull; Admin Test Tools
             </div>
           </div>
         `,
@@ -129,14 +129,14 @@ export default async function handler(req: Request, res: Response) {
       const appUrl = process.env.APP_URL ?? 'https://japlanstudio.jagroupservices.co.uk';
       const result = await sendEmail({
         to:      normalised,
-        subject: '[TEST] Your JA Plan Studio Password Reset PIN',
+        subject: '[TEST] Your Planyx Password Reset PIN',
         html: `
           <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
             <div style="background:#dc2626;padding:8px;text-align:center;">
               <p style="color:#fff;margin:0;font-size:13px;font-weight:bold;">⚠️ TEST EMAIL — Sent from Admin Test Tools</p>
             </div>
             <div style="background:#1B4F8A;padding:24px;text-align:center;">
-              <h1 style="color:#fff;margin:0;font-size:22px;">JA Plan Studio</h1>
+              <h1 style="color:#fff;margin:0;font-size:22px;">Planyx</h1>
               <p style="color:#cce0ff;margin:4px 0 0;">JA Group Services</p>
             </div>
             <div style="padding:32px;background:#f9fafb;border:1px solid #e5e7eb;">
@@ -152,7 +152,7 @@ export default async function handler(req: Request, res: Response) {
               </div>
             </div>
             <div style="padding:16px;text-align:center;color:#6b7280;font-size:12px;">
-              JA Group Services &bull; JA Plan Studio &bull; PIN expires ${expiresAt.toLocaleString('en-GB', { timeZone: 'Europe/London' })}
+              JA Group Services &bull; Planyx &bull; PIN expires ${expiresAt.toLocaleString('en-GB', { timeZone: 'Europe/London' })}
             </div>
           </div>
         `,
@@ -193,14 +193,14 @@ export default async function handler(req: Request, res: Response) {
 
       const result = await sendEmail({
         to:      admin.email,
-        subject: '[TEST] Your JA Plan Studio Admin Temporary Password',
+        subject: '[TEST] Your Planyx Admin Temporary Password',
         html: `
           <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
             <div style="background:#dc2626;padding:8px;text-align:center;">
               <p style="color:#fff;margin:0;font-size:13px;font-weight:bold;">⚠️ TEST EMAIL — Sent from Admin Test Tools</p>
             </div>
             <div style="background:#1B4F8A;padding:24px;text-align:center;">
-              <h1 style="color:#fff;margin:0;font-size:22px;">JA Plan Studio</h1>
+              <h1 style="color:#fff;margin:0;font-size:22px;">Planyx</h1>
               <p style="color:#cce0ff;margin:4px 0 0;">Administration Portal</p>
             </div>
             <div style="padding:32px;background:#f9fafb;border:1px solid #e5e7eb;">
@@ -215,7 +215,7 @@ export default async function handler(req: Request, res: Response) {
               </div>
             </div>
             <div style="padding:16px;text-align:center;color:#6b7280;font-size:12px;">
-              JA Group Services &bull; JA Plan Studio &bull; Admin Test Tools
+              JA Group Services &bull; Planyx &bull; Admin Test Tools
             </div>
           </div>
         `,
@@ -229,7 +229,7 @@ export default async function handler(req: Request, res: Response) {
     // ── 4. Ticket reply test ─────────────────────────────────────────────────
     if (action === 'ticket_reply') {
       const ticketId = payload.ticketId as number | string;
-      const message  = (payload.message as string) || 'This is a test reply from the JA Plan Studio support team.';
+      const message  = (payload.message as string) || 'This is a test reply from the Planyx support team.';
       if (!ticketId) return res.status(400).json({ success: false, error: 'payload.ticketId is required.' });
 
       const tickets = await db
@@ -252,7 +252,7 @@ export default async function handler(req: Request, res: Response) {
               <p style="color:#fff;margin:0;font-size:13px;font-weight:bold;">⚠️ TEST EMAIL — Sent from Admin Test Tools</p>
             </div>
             <div style="background:#1B4F8A;padding:24px;text-align:center;">
-              <h1 style="color:#fff;margin:0;font-size:22px;">JA Plan Studio</h1>
+              <h1 style="color:#fff;margin:0;font-size:22px;">Planyx</h1>
               <p style="color:#cce0ff;margin:4px 0 0;">Support Centre</p>
             </div>
             <div style="padding:32px;background:#f9fafb;border:1px solid #e5e7eb;">
@@ -270,7 +270,7 @@ export default async function handler(req: Request, res: Response) {
               </div>
             </div>
             <div style="padding:16px;text-align:center;color:#6b7280;font-size:12px;">
-              JA Group Services &bull; JA Plan Studio Support
+              JA Group Services &bull; Planyx Support
             </div>
           </div>
         `,
@@ -290,14 +290,14 @@ export default async function handler(req: Request, res: Response) {
 
       const result = await sendEmail({
         to,
-        subject: '[TEST] JA Plan Studio — Out of Office',
+        subject: '[TEST] Planyx — Out of Office',
         html: `
           <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
             <div style="background:#dc2626;padding:8px;text-align:center;">
               <p style="color:#fff;margin:0;font-size:13px;font-weight:bold;">⚠️ TEST EMAIL — Sent from Admin Test Tools</p>
             </div>
             <div style="background:#1B4F8A;padding:24px;text-align:center;">
-              <h1 style="color:#fff;margin:0;font-size:22px;">JA Plan Studio</h1>
+              <h1 style="color:#fff;margin:0;font-size:22px;">Planyx</h1>
               <p style="color:#cce0ff;margin:4px 0 0;">Support Centre</p>
             </div>
             <div style="padding:32px;background:#f9fafb;border:1px solid #e5e7eb;">
@@ -307,7 +307,7 @@ export default async function handler(req: Request, res: Response) {
               <p style="color:#6b7280;font-size:13px;">Your enquiry has been received and will be addressed upon our return. Thank you for your patience.</p>
             </div>
             <div style="padding:16px;text-align:center;color:#6b7280;font-size:12px;">
-              JA Group Services &bull; JA Plan Studio Support
+              JA Group Services &bull; Planyx Support
             </div>
           </div>
         `,
@@ -336,13 +336,13 @@ export default async function handler(req: Request, res: Response) {
               <p style="color:#fff;margin:0;font-size:13px;font-weight:bold;">⚠️ TEST EMAIL — Sent from Admin Test Tools</p>
             </div>
             <div style="background:#1B4F8A;padding:24px;text-align:center;">
-              <h1 style="color:#fff;margin:0;font-size:22px;">JA Plan Studio</h1>
+              <h1 style="color:#fff;margin:0;font-size:22px;">Planyx</h1>
             </div>
             <div style="padding:32px;background:#f9fafb;border:1px solid #e5e7eb;">
               <p style="white-space:pre-wrap;color:#374151;">${body.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
             </div>
             <div style="padding:16px;text-align:center;color:#6b7280;font-size:12px;">
-              JA Group Services &bull; JA Plan Studio
+              JA Group Services &bull; Planyx
             </div>
           </div>
         `,

@@ -1001,10 +1001,10 @@ async function initialiseAdminSchema(DB, env) {
   try {
     await DB.prepare(`
       UPDATE company_branding
-      SET trading_name = 'JA Plan Studio',
-          service_name = 'JA Plan Studio',
-          registered_notice = 'JA Plan Studio is a service line of JA Group Services Ltd.',
-          footer_notice = 'JA Plan Studio is operated by JA Group Services Ltd.'
+      SET trading_name = 'Planyx',
+          service_name = 'Planyx',
+          registered_notice = 'Planyx is a service line of JA Group Services Ltd.',
+          footer_notice = 'Planyx is operated by JA Group Services Ltd.'
       WHERE id = 'main' AND (trading_name LIKE '%Exper%' OR service_name LIKE '%Exper%' OR footer_notice LIKE '%Exper%')
     `).run();
   } catch (_) {}
@@ -1021,7 +1021,7 @@ async function initialiseAdminSchema(DB, env) {
 
     await DB.prepare(`
       UPDATE site_settings
-      SET value = replace(replace(replace(replace(replace(value, ?, 'JA Plan Studio'), ?, 'JA Plan Studio'), ?, 'JA Plan Studio'), ?, 'JA Plan Studio'), ?, 'JA Plan Studio')
+      SET value = replace(replace(replace(replace(replace(value, ?, 'Planyx'), ?, 'Planyx'), ?, 'Planyx'), ?, 'Planyx'), ?, 'Planyx')
       WHERE value LIKE '%Exper%' AND (value LIKE '%Discovery%' OR value LIKE '%JA%')
     `).bind(oldBrandWithAmp, oldBrandPlain, oldBrandAnd, oldBrandPlainAnd, oldBrandJust).run();
   } catch (_) {}
@@ -1038,7 +1038,7 @@ async function initialiseAdminSchema(DB, env) {
 
     await DB.prepare(`
       UPDATE policy_pages
-      SET content = replace(replace(replace(replace(replace(content, ?, 'JA Plan Studio'), ?, 'JA Plan Studio'), ?, 'JA Plan Studio'), ?, 'JA Plan Studio'), ?, 'JA Plan Studio')
+      SET content = replace(replace(replace(replace(replace(content, ?, 'Planyx'), ?, 'Planyx'), ?, 'Planyx'), ?, 'Planyx'), ?, 'Planyx')
       WHERE content LIKE '%Exper%' AND (content LIKE '%Discovery%' OR content LIKE '%JA%')
     `).bind(oldBrandWithAmp, oldBrandPlain, oldBrandAnd, oldBrandPlainAnd, oldBrandJust).run();
   } catch (_) {}
@@ -1411,14 +1411,14 @@ async function seedDefaults(DB) {
     `).bind(
       "main",
       "JA Group Services Ltd",
-      "JA Plan Studio",
-      "JA Plan Studio",
+      "Planyx",
+      "Planyx",
       "japlanstudio@jagroupservices.co.uk",
       "japlanstudio@jagroupservices.co.uk",
       "",
       "https://japlanstudio.jagroupservices.co.uk",
-      "JA Plan Studio is a service line of JA Group Services Ltd.",
-      "JA Plan Studio is operated by JA Group Services Ltd.",
+      "Planyx is a service line of JA Group Services Ltd.",
+      "Planyx is operated by JA Group Services Ltd.",
       "Curated discovery, planning and experience guidance.",
       "",
       ""
@@ -1426,12 +1426,12 @@ async function seedDefaults(DB) {
   }
 
   const policies = [
-    ["terms-of-service", "Terms of Service", "# Terms of Service\n\nThese terms explain the basis on which JA Plan Studio provides discovery, planning and guidance services.", "markdown", "1.0", "2026-06-21", "published", 1],
-    ["privacy-notice", "Privacy Notice", "# Privacy Notice\n\nThis notice explains how JA Plan Studio handles customer account, enquiry and service information.", "markdown", "1.0", "2026-06-21", "published", 1],
-    ["cookie-policy", "Cookie Policy", "# Cookie Policy\n\nThis policy explains how cookies and similar technologies are used by JA Plan Studio.", "markdown", "1.0", "2026-06-21", "draft", 0],
+    ["terms-of-service", "Terms of Service", "# Terms of Service\n\nThese terms explain the basis on which Planyx provides discovery, planning and guidance services.", "markdown", "1.0", "2026-06-21", "published", 1],
+    ["privacy-notice", "Privacy Notice", "# Privacy Notice\n\nThis notice explains how Planyx handles customer account, enquiry and service information.", "markdown", "1.0", "2026-06-21", "published", 1],
+    ["cookie-policy", "Cookie Policy", "# Cookie Policy\n\nThis policy explains how cookies and similar technologies are used by Planyx.", "markdown", "1.0", "2026-06-21", "draft", 0],
     ["refund-policy", "Refund and Cancellation Policy", "# Refund and Cancellation Policy\n\nThis policy explains refunds, cancellations and service delivery boundaries for paid planning services.", "markdown", "1.0", "2026-06-21", "draft", 0],
-    ["affiliate-disclosure", "Affiliate Disclosure", "# Affiliate Disclosure\n\nJA Plan Studio may earn commission from third-party providers where customers book through affiliate links.", "markdown", "1.0", "2026-06-21", "draft", 0],
-    ["important-information", "Important Information", "# Important Information\n\nJA Plan Studio provides planning and guidance support only. Third-party bookings remain subject to provider terms.", "markdown", "1.0", "2026-06-21", "draft", 0]
+    ["affiliate-disclosure", "Affiliate Disclosure", "# Affiliate Disclosure\n\nPlanyx may earn commission from third-party providers where customers book through affiliate links.", "markdown", "1.0", "2026-06-21", "draft", 0],
+    ["important-information", "Important Information", "# Important Information\n\nPlanyx provides planning and guidance support only. Third-party bookings remain subject to provider terms.", "markdown", "1.0", "2026-06-21", "draft", 0]
   ];
 
   for (const policy of policies) {
@@ -2395,7 +2395,7 @@ async function saveDataProtectionRequest(DB, body, identity, env = {}) {
     try {
       await sendProviderEmail(DB, env, {
         to: current.customer_email || current.user_id,
-        subject: `Your JA Plan Studio data request ${current.reference}`,
+        subject: `Your Planyx data request ${current.reference}`,
         text: `Please find below the exported customer data for request ${current.reference}.\n\n${exportPayload.content}`
       });
       auditLog = addAudit(auditLog, { type: "Data sent to subject", actor: auditActor(identity), newValue: "Sent by email provider" });
@@ -2670,7 +2670,7 @@ function existingAffiliateBlocks() {
       source_key: "destination-affiliate-browser-notice",
       block_type: "Destination block",
       title: "Destination activity browser notice",
-      body: "Destination activity pages should help customers compare current third-party activity options by country, city and interest before leaving JA Plan Studio for booking.",
+      body: "Destination activity pages should help customers compare current third-party activity options by country, city and interest before leaving Planyx for booking.",
       cta_label: "Browse activity partners",
       cta_url: "/activities/",
       legal_notice: "Customers should check suitability, accessibility, provider terms and cancellation conditions before booking.",
@@ -2798,7 +2798,7 @@ async function getEmailSettings(DB, env) {
     smtp_host: "smtp.jagroupservices.co.uk",
     smtp_port: "587",
     smtp_username: "noreply@jagroupservices.co.uk",
-    smtp_from_name: "JA Plan Studio",
+    smtp_from_name: "Planyx",
     smtp_from_email: "noreply@jagroupservices.co.uk",
     smtp_security: "STARTTLS",
     email_provider: "resend"
@@ -2827,7 +2827,7 @@ async function saveEmailSettings(DB, body, env, identity) {
     smtp_port: clean(body.smtp_port, 10) || "587",
     smtp_username: clean(body.smtp_username, 254) || "noreply@jagroupservices.co.uk",
     smtp_password: clean(body.smtp_password, 500) || current.smtp_password || env.SMTP_PASSWORD || "",
-    smtp_from_name: clean(body.smtp_from_name, 180) || "JA Plan Studio",
+    smtp_from_name: clean(body.smtp_from_name, 180) || "Planyx",
     smtp_from_email: clean(body.smtp_from_email, 254) || "noreply@jagroupservices.co.uk",
     smtp_security: clean(body.smtp_security, 40) || "STARTTLS",
     email_provider: clean(body.email_provider, 40) || "resend",
@@ -2847,7 +2847,7 @@ async function providerSettings(DB, env) {
     provider,
     apiKey,
     endpoint: stored.email_api_endpoint || env.EMAIL_API_ENDPOINT || "",
-    fromName: stored.smtp_from_name || "JA Plan Studio",
+    fromName: stored.smtp_from_name || "Planyx",
     fromEmail: stored.smtp_from_email || "noreply@jagroupservices.co.uk",
     to: stored.admin_notification_email || env.ADMIN_NOTIFICATION_EMAIL || ""
   };
@@ -2896,8 +2896,8 @@ async function testNotification(DB, body, env, identity) {
   let result;
   try {
     const sent = await sendProviderEmail(DB, env, {
-      subject: `JA Plan Studio test notification: ${notificationType}`,
-      text: `This is a ${notificationType} test notification from the JA Plan Studio admin centre.`
+      subject: `Planyx test notification: ${notificationType}`,
+      text: `This is a ${notificationType} test notification from the Planyx admin centre.`
     });
     result = {
       sent: true,
@@ -3620,7 +3620,7 @@ export async function onRequest(context) {
         }
         const platform = await getBuilderPlatform(env.DB);
         const generalSettings = await settingMap(env.DB, ["platform_name", "default_builder"], {});
-        platform.name = generalSettings.platform_name || "JA Plan Studio";
+        platform.name = generalSettings.platform_name || "Planyx";
         platform.defaultBuilder = generalSettings.default_builder || "experience";
         const siteStatus = await getSiteStatus(env.DB);
         const [csHeadline, csSubtext, csLaunchDate, csCountdownEnabled, stripe, plans, email, appearance, policies] = await Promise.all([
@@ -3683,7 +3683,7 @@ export async function onRequest(context) {
           return json({ error: "Forbidden.", section }, 403);
         }
         if (body.action === "update_general_settings") {
-          const platformName = clean(body.platform_name, 120) || "JA Plan Studio";
+          const platformName = clean(body.platform_name, 120) || "Planyx";
           const defaultBuilder = clean(body.default_builder, 80) || "experience";
           await saveSettings(env.DB, { platform_name: platformName, default_builder: defaultBuilder });
           await writeAudit(env.DB, identity, "general_settings_update", "site_settings", "general", "General system settings updated.", { platform_name: platformName, default_builder: defaultBuilder });

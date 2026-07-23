@@ -53,7 +53,7 @@ export default async function handler(req: Request, res: Response) {
     try {
       await sendEmail({
         to: 'hello@jagroupservices.co.uk',
-        subject: 'New Affiliate Application — JA Plan Studio',
+        subject: 'New Affiliate Application — Planyx',
         html: `
           <h2>New Affiliate Application</h2>
           <p><strong>Name:</strong> ${fullName}</p>
@@ -70,10 +70,10 @@ export default async function handler(req: Request, res: Response) {
     try {
       await sendEmail({
         to: email,
-        subject: 'Affiliate Application Received — JA Plan Studio',
+        subject: 'Affiliate Application Received — Planyx',
         html: `
           <h2>Thank you for applying, ${fullName}!</h2>
-          <p>We've received your affiliate application for JA Plan Studio.</p>
+          <p>We've received your affiliate application for Planyx.</p>
           <p>Our team will review your application and get back to you within 3–5 business days.</p>
           <p>If you have any questions in the meantime, please contact us at <a href="mailto:hello@jagroupservices.co.uk">hello@jagroupservices.co.uk</a>.</p>
           <br/>

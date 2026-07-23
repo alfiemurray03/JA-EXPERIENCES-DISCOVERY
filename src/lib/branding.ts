@@ -24,9 +24,9 @@ export interface Branding {
 }
 
 const DEFAULTS: Branding = {
-  platform_name: 'JA Plan Studio',
+  platform_name: 'Planyx',
   platform_tagline: 'Personalised plans, built step by step.',
-  platform_description: 'Build destination, itinerary, experience, accessibility and practical travel plans with guided JA Plan Studio tools and planning support.',
+  platform_description: 'Build destination, itinerary, experience, accessibility and practical travel plans with guided Planyx tools and planning support.',
   platform_url: 'https://japlanstudio.jagroupservices.co.uk',
   platform_logo_url: '',
   platform_favicon_url: '',

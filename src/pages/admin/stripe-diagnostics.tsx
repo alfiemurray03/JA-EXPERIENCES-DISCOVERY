@@ -210,7 +210,7 @@ export default function AdminStripeDiagnostics() {
   const [keysError,      setKeysError]      = useState('');
   const [showLiveWarning, setShowLiveWarning] = useState(false);
 
-  // Prices form — the four live JA Plan Studio subscriptions
+  // Prices form — the four live Planyx subscriptions
   const [pricePersonal,        setPricePersonal]        = useState('');
   const [priceStandard,        setPriceStandard]        = useState('');
   const [priceProfessional,    setPriceProfessional]    = useState('');

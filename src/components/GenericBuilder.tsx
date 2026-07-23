@@ -360,7 +360,7 @@ export default function GenericBuilder({
   return (
     <>
       <Helmet>
-        <title>{title} — JA Plan Studio</title>
+        <title>{title} — Planyx</title>
         <meta name="description" content={metaDescription} />
       </Helmet>
       <DashboardLayout noPadding>

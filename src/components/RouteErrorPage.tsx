@@ -45,13 +45,13 @@ export default function RouteErrorPage() {
   );
 
   const title = isChunkError
-    ? 'This page needs the latest JA Plan Studio files'
+    ? 'This page needs the latest Planyx files'
     : details.status === '404'
       ? 'We could not find that page'
       : 'Something went wrong';
 
   const explanation = isChunkError
-    ? 'JA Plan Studio was updated while this browser tab was open. Refreshing will load the current version safely.'
+    ? 'Planyx was updated while this browser tab was open. Refreshing will load the current version safely.'
     : 'The page could not be completed. Your account and saved information have not been changed by this error.';
 
   const copyDetails = async () => {
@@ -82,7 +82,7 @@ export default function RouteErrorPage() {
                 JA
               </div>
               <div>
-                <p className="font-bold tracking-tight text-white">JA Plan Studio</p>
+                <p className="font-bold tracking-tight text-white">Planyx</p>
                 <p className="text-sm text-slate-400">Secure application recovery</p>
               </div>
             </div>
@@ -143,7 +143,7 @@ export default function RouteErrorPage() {
                 className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-5 py-3 font-semibold text-slate-100 transition hover:bg-white/10"
               >
                 <Home className="h-4 w-4" />
-                {isAdmin ? 'Admin dashboard' : 'JA Plan Studio home'}
+                {isAdmin ? 'Admin dashboard' : 'Planyx home'}
               </a>
               <button
                 type="button"

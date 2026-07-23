@@ -40,7 +40,7 @@ test("Subscription Plans page has no hard-coded plan cards or prices", async () 
 
 test("shared footer uses one compact wordmark and one contact email", async () => {
   const footer = await readFile(new URL("../public/assets/includes/footer.html", import.meta.url), "utf8");
-  assert.match(footer, /aria-label="JA Plan Studio"/);
+  assert.match(footer, /aria-label="Planyx"/);
   assert.match(footer, /class="brand-ja"[^>]*>JA<\/span><span class="brand-name"[^>]*>Plan Studio<\/span>/);
   assert.doesNotMatch(footer, /site-footer-email/);
   assert.equal((footer.match(/mailto:japlanstudio@jagroupservices\.co\.uk/g) || []).length, 1);
@@ -63,7 +63,7 @@ test("shared header and footer use refined typography and a visible full footer 
   assert.match(styles, /\.site-footer \.site-footer-brand \.brand-name\s*{\s*color:\s*#60a5fa/);
 });
 
-test("shared public shell uses the JA Plan Studio Google Fonts typography", async () => {
+test("shared public shell uses the Planyx Google Fonts typography", async () => {
   const styles = await readFile(new URL("../src/styles/tailwind.css", import.meta.url), "utf8");
   assert.match(styles, /@import url\('https:\/\/fonts\.googleapis\.com\/css2\?family=Plus\+Jakarta\+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap'\)/);
   assert.match(styles, /\.site-header\s*{[\s\S]*?font-family:\s*"Inter"/);

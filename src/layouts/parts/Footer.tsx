@@ -108,7 +108,7 @@ export default function Footer() {
               {branding.platform_logo_url ? (
                 <img
                   src={branding.platform_logo_url}
-                  alt={branding.platform_name || 'JA Plan Studio'}
+                  alt={branding.platform_name || 'Planyx'}
                   className="h-9 w-auto object-contain"
                 />
               ) : (
@@ -118,7 +118,7 @@ export default function Footer() {
               )}
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed mb-3">
-              {branding.platform_description || 'Build destination, itinerary, experience, accessibility and practical travel plans with JA Plan Studio.'}
+              {branding.platform_description || 'Build destination, itinerary, experience, accessibility and practical travel plans with Planyx.'}
             </p>
             {branding.support_email && (
               <a
@@ -155,11 +155,11 @@ export default function Footer() {
         {/* Bottom bar */}
         <div className="border-t border-border mt-10 pt-6 space-y-2">
           <p className="text-sm text-muted-foreground">
-            © {year} {branding.platform_name || 'JA Plan Studio'}. All rights reserved.
+            © {year} {branding.platform_name || 'Planyx'}. All rights reserved.
             {branding.footer_tagline ? ` ${branding.footer_tagline}.` : ''}
           </p>
           <p className="text-xs text-muted-foreground leading-relaxed max-w-3xl">
-            JA Plan Studio is a service brand operated by JA Group Services Ltd, a company registered in England and Wales. The service provides guided discovery, experience and practical planning tools and support.
+            Planyx is a service brand operated by JA Group Services Ltd, a company registered in England and Wales. The service provides guided discovery, experience and practical planning tools and support.
           </p>
           <p className="text-xs text-muted-foreground">
             Third-party bookings, availability, prices, refunds and provider terms remain the responsibility of the relevant provider.

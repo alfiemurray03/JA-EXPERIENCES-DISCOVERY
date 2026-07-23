@@ -92,8 +92,8 @@ export default function ContactPage() {
   return (
     <>
       <Helmet>
-        <title>Contact Support — JA Plan Studio</title>
-        <meta name="description" content="Get help with JA Plan Studio. Submit a support request and our team will be in touch." />
+        <title>Contact Support — Planyx</title>
+        <meta name="description" content="Get help with Planyx. Submit a support request and our team will be in touch." />
       </Helmet>
 
       <div className="min-h-screen bg-background">
@@ -273,7 +273,7 @@ export default function ContactPage() {
                   className="text-sm text-primary hover:underline font-medium">{PLAN_STUDIO_EMAIL}
                 </a>
                 <p className="text-xs text-muted-foreground">
-                  JA Plan Studio support, customer accounts and account deletion.
+                  Planyx support, customer accounts and account deletion.
                 </p>
                 <div className="pt-3 mt-3 border-t border-border space-y-1 text-xs text-muted-foreground">
                   <p>General JA Group Services enquiries: <a href={`mailto:${GROUP_CONTACT_EMAIL}`} className="text-primary hover:underline">{GROUP_CONTACT_EMAIL}</a></p>
@@ -312,7 +312,7 @@ export default function ContactPage() {
           {/* Disclaimer */}
           <div className="bg-muted/40 border border-border rounded-xl p-4 text-center">
             <p className="text-xs text-muted-foreground">
-              JA Plan Studio provides document creation tools only. We do not provide legal, financial, or professional advice.
+              Planyx provides document creation tools only. We do not provide legal, financial, or professional advice.
               For legal or professional matters, please consult a qualified professional.
             </p>
           </div>

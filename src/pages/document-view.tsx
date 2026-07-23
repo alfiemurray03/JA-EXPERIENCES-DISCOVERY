@@ -294,7 +294,7 @@ export default function DocumentViewPage() {
   return (
     <>
       <Helmet>
-        <title>{doc.title} — JA Plan Studio</title>
+        <title>{doc.title} — Planyx</title>
       </Helmet>
       <DashboardLayout noPadding>
         {/* ── Top bar ── */}

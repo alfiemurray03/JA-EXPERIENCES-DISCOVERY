@@ -1,7 +1,7 @@
 {
   "id": "/?app=ja-plan-studio-v5",
-  "name": "JA Plan Studio",
-  "short_name": "JA Plan Studio",
+  "name": "Planyx",
+  "short_name": "Planyx",
   "description": "Guided planning builders, destination discovery and secure customer support.",
   "start_url": "/?source=pwa&launch=public-v5",
   "scope": "/",
@@ -23,7 +23,7 @@
   ],
   "shortcuts": [
     {
-      "name": "JA Plan Studio Home",
+      "name": "Planyx Home",
       "short_name": "Home",
       "url": "/?source=pwa&launch=public-v5",
       "icons": [{ "src": "/pwa-icon.svg", "sizes": "any", "type": "image/svg+xml" }]

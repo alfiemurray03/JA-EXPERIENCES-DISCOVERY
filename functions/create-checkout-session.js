@@ -77,11 +77,11 @@ async function createCheckoutSession(planCode, env) {
   params.append("subscription_data[trial_period_days]", "30");
   params.append("success_url", siteUrl + "/payment-success/?session_id={CHECKOUT_SESSION_ID}");
   params.append("cancel_url", siteUrl + "/pricing/?payment=cancelled");
-  params.append("metadata[service_line]", "JA Plan Studio");
+  params.append("metadata[service_line]", "Planyx");
   params.append("metadata[plan_code]", selectedPlan.id);
   params.append("metadata[plan_name]", selectedPlan.plan_name || selectedPlan.id);
   params.append("metadata[plan_type]", selectedPlan.plan_type || "");
-  params.append("subscription_data[metadata][service_line]", "JA Plan Studio");
+  params.append("subscription_data[metadata][service_line]", "Planyx");
   params.append("subscription_data[metadata][plan_code]", selectedPlan.id);
   params.append("subscription_data[metadata][plan_name]", selectedPlan.plan_name || selectedPlan.id);
 
@@ -197,10 +197,10 @@ async function resolveStripePriceId(plan, env, DB) {
   if (!response.ok) return "";
   const catalogue = await response.json();
   const stripeProductNames = {
-    personal: "JA Plan Studio – Explore",
-    standard: "JA Plan Studio – Plan",
-    professional: "JA Plan Studio – Complete",
-    org_starter: "JA Plan Studio – Together"
+    personal: "Planyx – Explore",
+    standard: "Planyx – Plan",
+    professional: "Planyx – Complete",
+    org_starter: "Planyx – Together"
   };
   const acceptedNames = new Set([
     String(plan.plan_name || "").trim().toLowerCase(),

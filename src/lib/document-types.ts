@@ -1,4 +1,4 @@
-// Document types and template definitions for JA Plan Studio
+// Document types and template definitions for Planyx
 
 export type DocumentStatus = 'draft' | 'complete' | 'completed' | 'archived';
 export type PlanType = 'free' | 'professional' | 'business';

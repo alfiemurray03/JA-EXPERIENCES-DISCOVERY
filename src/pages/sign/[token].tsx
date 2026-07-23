@@ -159,7 +159,7 @@ export default function PublicSignerPage() {
     finally { setSubmitting(false); }
   }
 
-  const APP_NAME = 'JA Plan Studio';
+  const APP_NAME = 'Planyx';
 
   if (loading) return (
     <div className="min-h-screen bg-muted/20 flex items-center justify-center">

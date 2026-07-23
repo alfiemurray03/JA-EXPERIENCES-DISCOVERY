@@ -58,8 +58,8 @@ export default function RootLayout({ children }: RootLayoutProps) {
     return (
       <Website>
         <Helmet>
-          <title>JA Plan Studio — Guided Planning Builders</title>
-          <meta name="description" content="Build personalised destination, itinerary, experience, accessibility and practical travel plans with guided JA Plan Studio tools." />
+          <title>Planyx — Guided Planning Builders</title>
+          <meta name="description" content="Build personalised destination, itinerary, experience, accessibility and practical travel plans with guided Planyx tools." />
         </Helmet>
         <ScrollRestoration />
         <a href="#main-content" className="skip-nav">
@@ -78,8 +78,8 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <Website>
       <Helmet>
-        <title>JA Plan Studio — Guided Planning Builders</title>
-        <meta name="description" content="Build personalised destination, itinerary, experience, accessibility and practical travel plans with guided JA Plan Studio tools." />
+        <title>Planyx — Guided Planning Builders</title>
+        <meta name="description" content="Build personalised destination, itinerary, experience, accessibility and practical travel plans with guided Planyx tools." />
       </Helmet>
       <ScrollRestoration />
       <a href="#main-content" className="skip-nav">

@@ -72,7 +72,7 @@ const DEFAULT_CONFIG: SiteConfig = {
   comingSoonSubtext: 'We are putting the finishing touches on something great.',
   comingSoonLaunchDate: '',
   comingSoonCountdownEnabled: false,
-  siteName:    'JA Plan Studio',
+  siteName:    'Planyx',
   brandName:   'JA Group Services',
   tagline:     'Personalised Plans, Built Step by Step',
   supportEmail: 'japlanstudio@jagroupservices.co.uk',
@@ -478,7 +478,7 @@ export default function AdminSiteSettings() {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   {([
-                    ['normal', 'Live', 'The public JA Plan Studio website is available normally.'],
+                    ['normal', 'Live', 'The public Planyx website is available normally.'],
                     ['coming_soon', 'Coming Soon', 'Show the launch gate while the website is prepared.'],
                     ['maintenance', 'Maintenance', 'Temporarily take the public website offline.'],
                   ] as const).map(([value, label, description]) => {
@@ -537,7 +537,7 @@ export default function AdminSiteSettings() {
                 <h3 className={`text-sm font-semibold ${'text-gray-900 dark:text-white'}`}>Platform Identity</h3>
                 <p className={`text-xs ${muted}`}>The product/platform name shown in page titles, dashboards, and the browser tab.</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Field label="Platform Name (Product)" hint='Shown in page titles and the browser tab — e.g. "JA Plan Studio"'>
+                  <Field label="Platform Name (Product)" hint='Shown in page titles and the browser tab — e.g. "Planyx"'>
                     <Input value={cfg.siteName} onChange={e => update({ siteName: e.target.value })} className={`h-9 ${inputCls}`} />
                   </Field>
                   <Field label="Tagline">

@@ -33,7 +33,7 @@ export function installPwaSupport() {
         void registration.update();
       })
       .catch((error) => {
-        console.warn('JA Plan Studio service worker registration failed.', error);
+        console.warn('Planyx service worker registration failed.', error);
       });
   }, { once: true });
 }

@@ -13,7 +13,7 @@ test("customer support API has a customer-session middleware boundary", async ()
   assert.match(middleware, /Please sign in to use customer support/);
 });
 
-test("Stripe Verify All route covers exactly the four live JA Plan Studio plans", async () => {
+test("Stripe Verify All route covers exactly the four live Planyx plans", async () => {
   const route = await readFile(new URL("functions/api/admin/stripe/verify-prices.js", root), "utf8");
   for (const key of ["personal", "standard", "professional", "org_starter"]) {
     assert.match(route, new RegExp(`key: "${key}"`));

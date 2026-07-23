@@ -36,7 +36,7 @@ const DEFAULT_TOGGLES: FeatureToggle[] = [
 ];
 
 const DEFAULT_GENERAL: Record<string, string> = {
-  platform_name:  'JA Plan Studio',
+  platform_name:  'Planyx',
   platform_url:   'https://japlanstudio.com',
   support_email:  'japlanstudio@jagroupservices.co.uk',
   company_name:   'JA Group Services',
@@ -48,7 +48,7 @@ const DEFAULT_EMAIL: Record<string, string> = {
   smtp_host:   'smtp.japlanstudio.com',
   smtp_port:   '587',
   smtp_user:   'noreply@japlanstudio.com',
-  from_name:   'JA Plan Studio',
+  from_name:   'Planyx',
   from_email:  'noreply@japlanstudio.com',
 };
 
@@ -61,7 +61,7 @@ const DEFAULT_SECURITY: Record<string, string> = {
 };
 
 const DEFAULT_BRANDING: Record<string, string> = {
-  brand_name:      'JA Plan Studio',
+  brand_name:      'Planyx',
   brand_tagline:   'Professional Document Creation',
   primary_color:   '#1B4F8A',
   secondary_color: '#1e1b8a',

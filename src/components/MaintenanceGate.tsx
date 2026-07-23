@@ -31,7 +31,7 @@ export default function MaintenanceGate({ children }: { children: React.ReactNod
         <div className="space-y-2">
           <h1 className="text-2xl font-bold text-foreground">Under Maintenance</h1>
           <p className="text-muted-foreground text-base leading-relaxed">
-            JA Plan Studio is currently undergoing scheduled maintenance.
+            Planyx is currently undergoing scheduled maintenance.
             We'll be back online shortly.
           </p>
         </div>

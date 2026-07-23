@@ -96,7 +96,7 @@ export default function PrivacyPage() {
                 <div className="space-y-4 text-muted-foreground">
                   <div>
                     <p className="font-medium text-foreground mb-1">Account data</p>
-                    <p>We receive your name, email address and authentication identifiers from JA Group Services ID/Microsoft Entra External ID. JA Plan Studio does not create or store a separate customer password.</p>
+                    <p>We receive your name, email address and authentication identifiers from JA Group Services ID/Microsoft Entra External ID. Planyx does not create or store a separate customer password.</p>
                   </div>
                   <div>
                     <p className="font-medium text-foreground mb-1">Document data</p>

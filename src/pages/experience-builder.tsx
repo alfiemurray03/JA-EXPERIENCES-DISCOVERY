@@ -252,7 +252,7 @@ export default function ExperienceBuilderPage() {
   return (
     <>
       <Helmet>
-        <title>{builder?.name || "Experience Builder"} — JA Plan Studio</title>
+        <title>{builder?.name || "Experience Builder"} — Planyx</title>
       </Helmet>
       <DashboardLayout>
         <main className="max-w-4xl mx-auto px-6 py-10">

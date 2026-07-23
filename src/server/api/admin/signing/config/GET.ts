@@ -58,8 +58,8 @@ export default async function handler(req: Request, res: Response) {
       signing_max_attachment_size_mb: '20',
       signing_allowed_attachment_types: 'pdf,png,jpg,jpeg,doc,docx,xls,xlsx,txt',
       signing_append_to_final_pack_default: 'false',
-      signing_branding_company_name: 'JA Plan Studio',
-      signing_branding_footer_text: 'This document was signed electronically via JA Plan Studio.',
+      signing_branding_company_name: 'Planyx',
+      signing_branding_footer_text: 'This document was signed electronically via Planyx.',
     };
     return res.json({ success: true, config: { ...defaults, ...config } });
   } catch (err) {

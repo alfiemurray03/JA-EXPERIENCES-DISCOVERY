@@ -8,7 +8,7 @@ const PLAN_PRICES = [
     label: "Explore Plan",
     amount: 599,
     productId: "prod_UtkvP5dvxrwLNa",
-    productNames: ["Explore Plan", "JA Plan Studio – Explore", "JA Plan Studio - Explore"],
+    productNames: ["Explore Plan", "Planyx – Explore", "Planyx - Explore"],
     defaultPriceId: "price_1TtxPrDZzb3r6Q3cIViE64O4"
   },
   {
@@ -18,7 +18,7 @@ const PLAN_PRICES = [
     label: "Plan Plan",
     amount: 799,
     productId: "prod_UtkvpswzvV53y7",
-    productNames: ["Plan Plan", "JA Plan Studio – Plan", "JA Plan Studio - Plan"],
+    productNames: ["Plan Plan", "Planyx – Plan", "Planyx - Plan"],
     defaultPriceId: "price_1TtxPyDZzb3r6Q3cg9hcgXeA"
   },
   {
@@ -28,7 +28,7 @@ const PLAN_PRICES = [
     label: "Complete Plan",
     amount: 1499,
     productId: "prod_Utkv85XaRxReja",
-    productNames: ["Complete Plan", "JA Plan Studio – Complete", "JA Plan Studio - Complete"],
+    productNames: ["Complete Plan", "Planyx – Complete", "Planyx - Complete"],
     defaultPriceId: "price_1TtxQ5DZzb3r6Q3c0XxvHRDY"
   },
   {
@@ -38,7 +38,7 @@ const PLAN_PRICES = [
     label: "Together Plan",
     amount: 3999,
     productId: "prod_Utkwas33GBC6Yn",
-    productNames: ["Together Plan", "JA Plan Studio – Together", "JA Plan Studio - Together"],
+    productNames: ["Together Plan", "Planyx – Together", "Planyx - Together"],
     defaultPriceId: "price_1TtxQDDZzb3r6Q3cI8rCEJwJ"
   }
 ];
@@ -218,7 +218,7 @@ async function writeAudit(env, identity, results) {
         "stripe.verify_prices",
         "stripe",
         "subscription_prices",
-        "Verified all JA Plan Studio Stripe Price IDs.",
+        "Verified all Planyx Stripe Price IDs.",
         JSON.stringify({ valid: Object.values(results).filter((item) => item.valid).length, total: PLAN_PRICES.length })
       )
       .run();

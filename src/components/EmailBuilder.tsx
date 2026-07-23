@@ -355,7 +355,7 @@ export default function EmailBuilder() {
   return (
     <>
       <Helmet>
-        <title>Email Builder — JA Plan Studio</title>
+        <title>Email Builder — Planyx</title>
         <meta name="description" content="Create professional emails with structured sections, variable placeholders, and email-style preview." />
       </Helmet>
       <DashboardLayout noPadding>

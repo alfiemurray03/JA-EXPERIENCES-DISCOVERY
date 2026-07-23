@@ -15,13 +15,13 @@ async function getSiteName(): Promise<string> {
       .from(ja_site_settings)
       .where(eq(ja_site_settings.settingKey, 'site_name'))
       .limit(1);
-    return rows[0]?.value ?? 'JA Plan Studio';
+    return rows[0]?.value ?? 'Planyx';
   } catch {
-    return 'JA Plan Studio';
+    return 'Planyx';
   }
 }
 
-function brandedHtml(title: string, body: string, appName = 'JA Plan Studio'): string {
+function brandedHtml(title: string, body: string, appName = 'Planyx'): string {
   return `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">

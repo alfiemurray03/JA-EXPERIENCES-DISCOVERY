@@ -17,10 +17,10 @@ function pageForRealm(realm) {
   const admin = realm === "admin";
   return {
     title: admin ? "Admin session ended" : "Customer session ended",
-    eyebrow: admin ? "JA Plan Studio Admin Portal" : "JA Plan Studio",
+    eyebrow: admin ? "Planyx Admin Portal" : "Planyx",
     message: admin
-      ? "Your staff Microsoft session and JA Plan Studio Admin session have been ended securely."
-      : "Your JA Group Services ID session and JA Plan Studio customer session have been ended securely.",
+      ? "Your staff Microsoft session and Planyx Admin session have been ended securely."
+      : "Your JA Group Services ID session and Planyx customer session have been ended securely.",
     isolation: admin
       ? "Any customer portal session in this browser has not been changed."
       : "Any Admin Portal session in this browser has not been changed.",
@@ -37,7 +37,7 @@ function html(realm) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
-  <title>${escapeHtml(page.title)} — JA Plan Studio</title>
+  <title>${escapeHtml(page.title)} — Planyx</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=20260718-4">
   <style>
     * { box-sizing: border-box; }

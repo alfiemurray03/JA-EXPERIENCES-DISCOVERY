@@ -2,11 +2,11 @@ const TOPICS = [
   [
     "account-sign-in",
     "Account & access",
-    "Sign in to JA Plan Studio",
+    "Sign in to Planyx",
     "Use the Log In button and complete Microsoft sign-in in the same browser tab. Keep essential cookies enabled and avoid switching between several sign-in tabs.",
     [
       "Close duplicate sign-in tabs.",
-      "Return to JA Plan Studio and choose Log In.",
+      "Return to Planyx and choose Log In.",
       "Complete Microsoft sign-in in the same browser."
     ],
     [
@@ -22,9 +22,9 @@ const TOPICS = [
     "account-loop",
     "Account & access",
     "Sign-in page keeps returning",
-    "A sign-in loop is commonly resolved by closing duplicate tabs, allowing essential cookies and starting a fresh sign-in from JA Plan Studio.",
+    "A sign-in loop is commonly resolved by closing duplicate tabs, allowing essential cookies and starting a fresh sign-in from Planyx.",
     [
-      "Close other JA Plan Studio tabs.",
+      "Close other Planyx tabs.",
       "Allow essential cookies for the site.",
       "Open a fresh tab and sign in once."
     ],
@@ -39,10 +39,10 @@ const TOPICS = [
     "account-email",
     "Account & access",
     "Account email does not match",
-    "Use the Microsoft account associated with your JA Plan Studio customer account. Sign out of other Microsoft accounts if the browser selects the wrong identity.",
+    "Use the Microsoft account associated with your Planyx customer account. Sign out of other Microsoft accounts if the browser selects the wrong identity.",
     [
       "Sign out of the incorrect Microsoft identity.",
-      "Open JA Plan Studio in a fresh tab.",
+      "Open Planyx in a fresh tab.",
       "Choose the intended Microsoft account."
     ],
     [
@@ -55,7 +55,7 @@ const TOPICS = [
     "account-security",
     "Account & access",
     "Keep sign-in details secure",
-    "JA Plan Studio support will never ask for your password, full payment-card number, CVV or one-time authentication code.",
+    "Planyx support will never ask for your password, full payment-card number, CVV or one-time authentication code.",
     [
       "Do not share security credentials in chat.",
       "Use the official sign-in screen only.",
@@ -287,7 +287,7 @@ const TOPICS = [
     "gyg-discover",
     "Affiliate travel partners",
     "Discover activities with GetYourGuide",
-    "JA Plan Studio can help you discover activity ideas and provide an affiliate link to GetYourGuide. JA Plan Studio does not sell or fulfil the activity.",
+    "Planyx can help you discover activity ideas and provide an affiliate link to GetYourGuide. Planyx does not sell or fulfil the activity.",
     [
       "Tell the assistant the destination and interests.",
       "Review the suggested activity type.",
@@ -305,7 +305,7 @@ const TOPICS = [
     "gyg-booking",
     "Affiliate travel partners",
     "GetYourGuide booking support",
-    "JA Plan Studio provides affiliate links only. The activity is offered and fulfilled by GetYourGuide or its supplier. Booking confirmation, changes, cancellations and refunds are handled by the partner under its terms.",
+    "Planyx provides affiliate links only. The activity is offered and fulfilled by GetYourGuide or its supplier. Booking confirmation, changes, cancellations and refunds are handled by the partner under its terms.",
     [
       "Open the GetYourGuide confirmation or account.",
       "Locate the partner booking reference.",
@@ -354,7 +354,7 @@ const TOPICS = [
     "headout-discover",
     "Affiliate travel partners",
     "Discover experiences with Headout",
-    "JA Plan Studio can help you explore experience ideas and provide an affiliate link to Headout. JA Plan Studio does not sell or fulfil the experience.",
+    "Planyx can help you explore experience ideas and provide an affiliate link to Headout. Planyx does not sell or fulfil the experience.",
     [
       "Tell the assistant where you are going.",
       "Describe the type of experience you want.",
@@ -372,7 +372,7 @@ const TOPICS = [
     "headout-booking",
     "Affiliate travel partners",
     "Headout booking support",
-    "JA Plan Studio provides affiliate links only. The experience is offered and fulfilled by Headout or its supplier. Booking confirmation, changes, cancellations and refunds are handled by the partner under its terms.",
+    "Planyx provides affiliate links only. The experience is offered and fulfilled by Headout or its supplier. Booking confirmation, changes, cancellations and refunds are handled by the partner under its terms.",
     [
       "Open the Headout confirmation or account.",
       "Locate the partner booking reference.",
@@ -420,8 +420,8 @@ const TOPICS = [
   [
     "affiliate-role",
     "Affiliate travel partners",
-    "How JA Plan Studio affiliate links work",
-    "JA Plan Studio may earn a commission when an eligible purchase is made through an affiliate link. The partner remains responsible for its product, booking, payment, fulfilment and support.",
+    "How Planyx affiliate links work",
+    "Planyx may earn a commission when an eligible purchase is made through an affiliate link. The partner remains responsible for its product, booking, payment, fulfilment and support.",
     [
       "Review the affiliate notice.",
       "Open the partner page for live information.",
@@ -471,7 +471,7 @@ const TOPICS = [
     "affiliate-confirm",
     "Affiliate travel partners",
     "Missing partner confirmation",
-    "JA Plan Studio cannot access GetYourGuide or Headout booking systems. Check spam folders and the partner account, then contact the named partner with the booking details.",
+    "Planyx cannot access GetYourGuide or Headout booking systems. Check spam folders and the partner account, then contact the named partner with the booking details.",
     [
       "Check email spam and promotions folders.",
       "Sign in to the partner account.",
@@ -507,7 +507,7 @@ const TOPICS = [
     "Privacy when opening an affiliate link",
     "Opening an affiliate link takes you to a separate partner service with its own privacy and cookie information. Review the partner notice before providing details.",
     [
-      "Recognise that you are leaving JA Plan Studio.",
+      "Recognise that you are leaving Planyx.",
       "Review the partner privacy and cookie notice.",
       "Only provide information you are comfortable sharing."
     ],
@@ -538,10 +538,10 @@ const TOPICS = [
   [
     "pwa-install",
     "Website & app",
-    "Install JA Plan Studio as an app",
+    "Install Planyx as an app",
     "Use the browser install option where supported. The installed PWA uses the same customer account and online services as the website.",
     [
-      "Open JA Plan Studio in a supported browser.",
+      "Open Planyx in a supported browser.",
       "Choose Install app or Add to Home Screen.",
       "Open the installed app and sign in."
     ],
@@ -558,7 +558,7 @@ const TOPICS = [
     "A normal refresh may resolve stale content. If needed, close existing tabs and reopen the site; avoid clearing all browser data unless necessary.",
     [
       "Refresh the page once.",
-      "Close duplicate JA Plan Studio tabs.",
+      "Close duplicate Planyx tabs.",
       "Reopen the site and sign in if required."
     ],
     [

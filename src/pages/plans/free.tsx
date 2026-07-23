@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, X, FileText, Download, Lock, ArrowLeft, AlertTriangle } from 'lucide-react';
 
 const INCLUDED = [
-  'Browse every JA Plan Studio builder',
+  'Browse every Planyx builder',
   'Try 1 guided planning builder',
   'Preview your personalised plan',
 ];
@@ -24,8 +24,8 @@ export default function FreePlanPage() {
   return (
     <>
       <Helmet>
-        <title>Free Plan — JA Plan Studio</title>
-        <meta name="description" content="Try one JA Plan Studio guided planning builder at no cost." />
+        <title>Free Plan — Planyx</title>
+        <meta name="description" content="Try one Planyx guided planning builder at no cost." />
       </Helmet>
 
       <div className="max-w-3xl mx-auto px-4 py-12">

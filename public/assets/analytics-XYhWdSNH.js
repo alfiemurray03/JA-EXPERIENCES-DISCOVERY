@@ -19,7 +19,7 @@ if (!previousAttempt || now - previousAttempt > 60000) {
   url.searchParams.set('_japs_refresh', String(now));
   window.location.replace(url.toString());
 } else {
-  document.title = 'JA Plan Studio — Page update required';
+  document.title = 'Planyx — Page update required';
   const app = document.getElementById('app');
   if (app) {
     app.replaceChildren();
@@ -28,14 +28,14 @@ if (!previousAttempt || now - previousAttempt > 60000) {
     const card = document.createElement('div');
     card.style.cssText = 'width:min(680px,100%);padding:32px;border-radius:24px;border:1px solid rgba(255,255,255,.12);background:#0f172a;box-shadow:0 30px 80px rgba(0,0,0,.4)';
     const title = document.createElement('h1');
-    title.textContent = 'JA Plan Studio needs to be refreshed';
+    title.textContent = 'Planyx needs to be refreshed';
     title.style.cssText = 'margin:0;color:#fff;font-size:30px;line-height:1.2';
     const detail = document.createElement('p');
     detail.textContent = 'The Analytics page belongs to an earlier application version. Refresh the page to load the current secure release.';
     detail.style.cssText = 'margin:16px 0 24px;color:#cbd5e1;line-height:1.65';
     const refresh = document.createElement('button');
     refresh.type = 'button';
-    refresh.textContent = 'Refresh JA Plan Studio';
+    refresh.textContent = 'Refresh Planyx';
     refresh.style.cssText = 'min-height:44px;border:1px solid #3b82f6;border-radius:12px;background:#2563eb;color:#fff;padding:11px 18px;font:600 14px Segoe UI,Arial,sans-serif;cursor:pointer';
     refresh.addEventListener('click', () => {
       const next = new URL(window.location.href);

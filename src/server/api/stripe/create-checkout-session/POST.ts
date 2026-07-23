@@ -1,6 +1,6 @@
 /**
  * POST /api/stripe/create-checkout-session
- * Creates a Stripe Checkout Session for a live JA Plan Studio subscription.
+ * Creates a Stripe Checkout Session for a live Planyx subscription.
  */
 import type { Request, Response } from 'express';
 import Stripe from 'stripe';
@@ -22,10 +22,10 @@ const PRICE_CONFIG_KEY: Partial<Record<PlanId, string>> = {
 };
 
 const EXPECTED_PRICE: Partial<Record<PlanId, { amount: number; productNames: string[] }>> = {
-  personal: { amount: 599, productNames: ['Explore Plan', 'JA Plan Studio – Explore', 'JA Plan Studio - Explore'] },
-  standard: { amount: 799, productNames: ['Plan Plan', 'JA Plan Studio – Plan', 'JA Plan Studio - Plan'] },
-  professional: { amount: 1499, productNames: ['Complete Plan', 'JA Plan Studio – Complete', 'JA Plan Studio - Complete'] },
-  org_starter: { amount: 3999, productNames: ['Together Plan', 'JA Plan Studio – Together', 'JA Plan Studio - Together'] },
+  personal: { amount: 599, productNames: ['Explore Plan', 'Planyx – Explore', 'Planyx - Explore'] },
+  standard: { amount: 799, productNames: ['Plan Plan', 'Planyx – Plan', 'Planyx - Plan'] },
+  professional: { amount: 1499, productNames: ['Complete Plan', 'Planyx – Complete', 'Planyx - Complete'] },
+  org_starter: { amount: 3999, productNames: ['Together Plan', 'Planyx – Together', 'Planyx - Together'] },
 };
 
 async function configValue(key: string): Promise<string> {
@@ -89,7 +89,7 @@ export default async function handler(req: Request, res: Response) {
     if (!(await paymentsAreEnabled())) {
       return res.status(503).json({
         success: false,
-        error: 'Payments are coming soon. Checkout is currently switched off by JA Plan Studio.',
+        error: 'Payments are coming soon. Checkout is currently switched off by Planyx.',
       });
     }
   } catch (error) {
@@ -105,13 +105,13 @@ export default async function handler(req: Request, res: Response) {
   };
 
   if (!PAID_PLANS.includes(plan as PlanId)) {
-    return res.status(400).json({ success: false, error: 'Please select one of the available JA Plan Studio subscriptions.' });
+    return res.status(400).json({ success: false, error: 'Please select one of the available Planyx subscriptions.' });
   }
 
   const planId = plan as PlanId;
   const secretKey = String(getSecret('STRIPE_SECRET_KEY') ?? '').trim();
   if (!secretKey) {
-    return res.status(503).json({ success: false, error: 'Checkout is temporarily unavailable. Please contact JA Plan Studio.' });
+    return res.status(503).json({ success: false, error: 'Checkout is temporarily unavailable. Please contact Planyx.' });
   }
 
   const stripe = new Stripe(secretKey, { apiVersion: '2026-05-27.dahlia' });

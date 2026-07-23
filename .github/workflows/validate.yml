@@ -1,4 +1,4 @@
-name: Validate JA Plan Studio
+name: Validate Planyx
 
 on:
   pull_request:

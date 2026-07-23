@@ -59,8 +59,8 @@ export async function onRequestGet({ env }) {
 <html lang="en-GB">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Affiliate Disclosure | JA Plan Studio</title>
-  <meta name="description" content="How affiliate links and third-party activity bookings work on JA Plan Studio.">
+  <title>Affiliate Disclosure | Planyx</title>
+  <meta name="description" content="How affiliate links and third-party activity bookings work on Planyx.">
   <link rel="stylesheet" href="/assets/css/tailwind.css?v=20260711-launch-1">
 </head>
 <body><div id="siteShellHeader"></div><main id="main">

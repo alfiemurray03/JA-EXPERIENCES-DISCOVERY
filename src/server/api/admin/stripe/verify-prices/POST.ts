@@ -1,6 +1,6 @@
 /**
  * POST /api/admin/stripe/verify-prices
- * Verifies the four live JA Plan Studio subscription Price IDs against Stripe
+ * Verifies the four live Planyx subscription Price IDs against Stripe
  * and checks that each one belongs to the correct product, amount and interval.
  */
 import type { Request, Response } from 'express';
@@ -25,25 +25,25 @@ const PRICE_SLOTS = [
   {
     key: 'personal', configKey: 'stripe_price_personal_override', envSecrets: ['STRIPE_PRICE_EXPLORE', 'STRIPE_PRICE_PERSONAL'],
     label: 'Explore Plan', amount: 599, productId: 'prod_UtkvP5dvxrwLNa',
-    productNames: ['Explore Plan', 'JA Plan Studio – Explore', 'JA Plan Studio - Explore'],
+    productNames: ['Explore Plan', 'Planyx – Explore', 'Planyx - Explore'],
     defaultPriceId: 'price_1TtxPrDZzb3r6Q3cIViE64O4',
   },
   {
     key: 'standard', configKey: 'stripe_price_standard_override', envSecrets: ['STRIPE_PRICE_PLAN', 'STRIPE_PRICE_STANDARD'],
     label: 'Plan Plan', amount: 799, productId: 'prod_UtkvpswzvV53y7',
-    productNames: ['Plan Plan', 'JA Plan Studio – Plan', 'JA Plan Studio - Plan'],
+    productNames: ['Plan Plan', 'Planyx – Plan', 'Planyx - Plan'],
     defaultPriceId: 'price_1TtxPyDZzb3r6Q3cg9hcgXeA',
   },
   {
     key: 'professional', configKey: 'stripe_price_professional_override', envSecrets: ['STRIPE_PRICE_COMPLETE', 'STRIPE_PRICE_PROFESSIONAL'],
     label: 'Complete Plan', amount: 1499, productId: 'prod_Utkv85XaRxReja',
-    productNames: ['Complete Plan', 'JA Plan Studio – Complete', 'JA Plan Studio - Complete'],
+    productNames: ['Complete Plan', 'Planyx – Complete', 'Planyx - Complete'],
     defaultPriceId: 'price_1TtxQ5DZzb3r6Q3c0XxvHRDY',
   },
   {
     key: 'org_starter', configKey: 'stripe_price_org_starter_override', envSecrets: ['STRIPE_PRICE_TOGETHER', 'STRIPE_PRICE_ORG_STARTER'],
     label: 'Together Plan', amount: 3999, productId: 'prod_Utkwas33GBC6Yn',
-    productNames: ['Together Plan', 'JA Plan Studio – Together', 'JA Plan Studio - Together'],
+    productNames: ['Together Plan', 'Planyx – Together', 'Planyx - Together'],
     defaultPriceId: 'price_1TtxQDDZzb3r6Q3cI8rCEJwJ',
   },
 ] as const;

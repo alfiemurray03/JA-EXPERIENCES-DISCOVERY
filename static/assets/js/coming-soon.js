@@ -91,7 +91,7 @@
       const config = await response.json();
       if (!config || config.success === false) return;
 
-      setText("platform-name", config.platformName || "JA Plan Studio");
+      setText("platform-name", config.platformName || "Planyx");
       setText("coming-soon-title", config.headline || "Coming Soon");
       setText("coming-soon-subtext", config.subtext || "We are putting the finishing touches on something great.");
       setText("coming-soon-description", config.description || "");
@@ -99,7 +99,7 @@
       startCountdown(config.launchDate, config.countdownEnabled === true);
 
       const title = String(config.headline || "Coming Soon").trim();
-      document.title = `${title} — ${String(config.platformName || "JA Plan Studio").trim()}`;
+      document.title = `${title} — ${String(config.platformName || "Planyx").trim()}`;
     } catch (error) {
       console.warn("Coming Soon configuration could not be loaded.", error instanceof Error ? error.message : error);
     }
@@ -115,7 +115,7 @@
         });
         if (!response.ok) continue;
         const data = await response.json();
-        const tabName = String(data.browser?.tab_name || data.settings?.browser_tab_name || "JA Plan Studio").trim();
+        const tabName = String(data.browser?.tab_name || data.settings?.browser_tab_name || "Planyx").trim();
         const faviconUrl = String(data.browser?.favicon_url || data.settings?.favicon_url || "").trim();
         if (faviconUrl) {
           document.querySelectorAll('link[rel~="icon"], link[rel="shortcut icon"]').forEach((link) => {
@@ -123,7 +123,7 @@
           });
         }
         const headline = String(byId("coming-soon-title")?.textContent || "Coming Soon").trim();
-        document.title = `${headline} — ${tabName || "JA Plan Studio"}`;
+        document.title = `${headline} — ${tabName || "Planyx"}`;
         return;
       } catch {
         // Try the next public settings endpoint.

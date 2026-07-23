@@ -42,7 +42,7 @@ export default function OrgProfessionalPage() {
   return (
     <>
       <Helmet>
-        <title>Organisation Professional Plan — JA Plan Studio</title>
+        <title>Organisation Professional Plan — Planyx</title>
         <meta name="description" content="Organisation Professional: 10 user seats, advanced permissions, reporting tools, all templates. £99.99/month." />
       </Helmet>
 

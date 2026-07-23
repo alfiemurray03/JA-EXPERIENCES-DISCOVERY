@@ -4,8 +4,8 @@ const DEFAULT_CONFIG = {
   subtext: "We are putting the finishing touches on something great.",
   launchDate: "",
   countdownEnabled: false,
-  platformName: "JA Plan Studio",
-  description: "JA Plan Studio is a self-service experience planning platform that helps you build, save and manage everyday, travel and support planning outputs.",
+  platformName: "Planyx",
+  description: "Planyx is a self-service experience planning platform that helps you build, save and manage everyday, travel and support planning outputs.",
   features: [
     "Guided Experience Builders",
     "Builder Usage Tokens",

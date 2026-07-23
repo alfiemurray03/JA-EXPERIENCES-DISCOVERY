@@ -271,8 +271,8 @@ export default function HomePage() {
       {
         '@type': 'WebSite',
         '@id': `${site}/#website`,
-        name: 'JA Plan Studio',
-        alternateName: 'JA Plan Studio by JA Group Services',
+        name: 'Planyx',
+        alternateName: 'Planyx by JA Group Services',
         url: `${site}/`,
         potentialAction: {
           '@type': 'SearchAction',
@@ -283,7 +283,7 @@ export default function HomePage() {
       {
         '@type': 'Organization',
         '@id': `${site}/#organization`,
-        name: 'JA Plan Studio',
+        name: 'Planyx',
         legalName: 'JA Group Services Ltd',
         url: `${site}/`,
         logo: `${site}/airo-assets/images/logo/main`,
@@ -291,7 +291,7 @@ export default function HomePage() {
       },
       {
         '@type': 'WebPage', '@id': `${site}/#webpage`, url: `${site}/`,
-        name: 'JA Plan Studio | Guided Planning Made Simple',
+        name: 'Planyx | Guided Planning Made Simple',
         isPartOf: { '@id': `${site}/#website` },
         about: { '@id': `${site}/#organization` },
         datePublished: '2025-01-01', dateModified: '2026-07-12',
@@ -303,16 +303,16 @@ export default function HomePage() {
     <>
     <div className="relative">
       <Helmet>
-        <title>JA Plan Studio | Guided Planning Made Simple</title>
+        <title>Planyx | Guided Planning Made Simple</title>
         <meta name="description" content="Create personalised day trips, family days out, itineraries, budgets, accessibility checklists, occasions and holiday plans with guided builders." />
-        <meta property="og:title" content="JA Plan Studio | Guided Planning Made Simple" />
+        <meta property="og:title" content="Planyx | Guided Planning Made Simple" />
         <meta property="og:description" content="Build personalised everyday, travel and accessibility plans in minutes." />
         <meta property="og:type" content="website" />
         <meta property="og:url" content={`${site}/`} />
         <meta property="og:image" content={`${site}/og-image.png`} />
-        <meta property="og:site_name" content="JA Plan Studio" />
+        <meta property="og:site_name" content="Planyx" />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="JA Plan Studio | Guided Planning Made Simple" />
+        <meta name="twitter:title" content="Planyx | Guided Planning Made Simple" />
         <meta name="twitter:description" content="Build personalised everyday, travel and accessibility plans in minutes." />
         <meta name="twitter:image" content={`${site}/og-image.png`} />
         <link rel="canonical" href={`${site}/`} />
@@ -361,7 +361,7 @@ export default function HomePage() {
               transition={{ duration: 0.6, ease: 'easeOut' as const }}
               style={{ isolation: 'isolate' }}
             >
-              <SectionBadge>JA Plan Studio · Guided planning builders</SectionBadge>
+              <SectionBadge>Planyx · Guided planning builders</SectionBadge>
               <h1 className="text-4xl sm:text-5xl lg:text-[3.25rem] font-extrabold text-foreground leading-[1.1] tracking-tight mb-6">
                 Build personalised plans,{' '}
                 <span className="bg-gradient-to-r from-blue-500 to-blue-700 bg-clip-text text-transparent">
@@ -520,7 +520,7 @@ export default function HomePage() {
               Everything managed from one place
             </h2>
             <p className="text-muted-foreground text-base max-w-2xl mx-auto">
-              Your JA Plan Studio dashboard gives you full control over builders, saved plans, organisation members and settings—all in one clean interface.
+              Your Planyx dashboard gives you full control over builders, saved plans, organisation members and settings—all in one clean interface.
             </p>
           </motion.div>
 
@@ -528,7 +528,7 @@ export default function HomePage() {
             {[
               { icon: <Layout className="w-5 h-5" />,    title: 'Planning Builders',       desc: 'Use guided builders for trips, itineraries, budgets, accessibility, occasions and more.' },
               { icon: <Link2 className="w-5 h-5" />,     title: 'Builder Library',         desc: 'Browse the available planning tools and choose the right starting point.' },
-              { icon: <QrCode className="w-5 h-5" />,    title: 'Guided Questions',        desc: 'Answer clear questions while JA Plan Studio organises your plan.' },
+              { icon: <QrCode className="w-5 h-5" />,    title: 'Guided Questions',        desc: 'Answer clear questions while Planyx organises your plan.' },
               { icon: <BarChart3 className="w-5 h-5" />, title: 'My Plans',                desc: 'Find active, recent and completed plans from one place.' },
               { icon: <Mail className="w-5 h-5" />,      title: 'Reminders',               desc: 'Keep track of bookings, preparation and important planning dates.' },
               { icon: <Palette className="w-5 h-5" />,   title: 'Personalised Results',    desc: 'Shape plans around your priorities, budget, accessibility and preferred pace.' },
@@ -576,7 +576,7 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
               { step: '01', title: 'Choose a planning builder', desc: 'Select the day trip, itinerary, budget, accessibility, occasion or holiday tool you need.' },
-              { step: '02', title: 'Answer the guided questions', desc: 'Add your needs, timings, budget and preferences while JA Plan Studio organises the details.' },
+              { step: '02', title: 'Answer the guided questions', desc: 'Add your needs, timings, budget and preferences while Planyx organises the details.' },
               { step: '03', title: 'Save, download or share', desc: 'Keep your plan securely, return to it later, print it or share it with the people involved.' },
             ].map((s, i) => (
               <motion.div
@@ -672,7 +672,7 @@ export default function HomePage() {
               Simple, transparent pricing
             </h2>
             <p className="text-muted-foreground text-base">
-              Choose Explore, Plan, Complete or Together. Every option is a monthly JA Plan Studio subscription.
+              Choose Explore, Plan, Complete or Together. Every option is a monthly Planyx subscription.
             </p>
           </motion.div>
 
@@ -732,7 +732,7 @@ export default function HomePage() {
               </div>
 
               <p className="text-center text-xs text-muted-foreground mt-5">
-                All subscriptions are billed monthly. <Link to="/pricing" className="text-primary font-semibold hover:underline">Compare every JA Plan Studio subscription.</Link>
+                All subscriptions are billed monthly. <Link to="/pricing" className="text-primary font-semibold hover:underline">Compare every Planyx subscription.</Link>
               </p>
             </>
           )}
@@ -760,14 +760,14 @@ export default function HomePage() {
 
           <div className="space-y-3">
             {[
-              { q: 'What is JA Plan Studio?', a: 'JA Plan Studio is a secure guided-planning service for individuals and organisations. It turns clear questions into organised, personalised plans.' },
+              { q: 'What is Planyx?', a: 'Planyx is a secure guided-planning service for individuals and organisations. It turns clear questions into organised, personalised plans.' },
               { q: 'Which builders are included?', a: 'The catalogue contains more than 200 guided templates across personal travel, families, business, education, government, police, community groups, accessibility, destinations, events and contingency planning. Availability follows your subscription.' },
               { q: 'What does the dashboard include?', a: 'Your dashboard brings together planning builders, saved plans, organisation members, account settings and support.' },
               { q: 'Is there a free plan?', a: 'Yes. The Free plan lets you try one guided builder. Paid plans unlock more builders, saved plans and longer retention.' },
-              { q: 'Can organisations use JA Plan Studio?', a: 'Yes. Organisation plans provide shared planning, managed seats and central controls for teams and groups.' },
-              { q: 'Who can use JA Plan Studio?', a: 'JA Plan Studio supports individuals, families, businesses, charities, community groups and organisations that want simpler planning.' },
+              { q: 'Can organisations use Planyx?', a: 'Yes. Organisation plans provide shared planning, managed seats and central controls for teams and groups.' },
+              { q: 'Who can use Planyx?', a: 'Planyx supports individuals, families, businesses, charities, community groups and organisations that want simpler planning.' },
               { q: 'How do I get started?', a: 'Sign in through JA Group Services ID, choose a planning builder and answer the guided questions. Your account is created automatically on first sign-in.' },
-              { q: 'Who operates JA Plan Studio?', a: 'JA Plan Studio is a service brand operated by JA Group Services Ltd, a company registered in England and Wales.' },
+              { q: 'Who operates Planyx?', a: 'Planyx is a service brand operated by JA Group Services Ltd, a company registered in England and Wales.' },
             ].map((item, i) => (
               <motion.div
                 key={i}

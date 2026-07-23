@@ -1,5 +1,5 @@
 /**
- * JA Plan Studio admin dashboard with live Plan Studio data.
+ * Planyx admin dashboard with live Plan Studio data.
  */
 import { useState, useEffect, useCallback } from 'react';
 import { Helmet } from '@dr.pogodin/react-helmet';
@@ -119,10 +119,10 @@ export default function AdminDashboard() {
   return (
     <>
       <Helmet>
-        <title>Admin Dashboard — JA Plan Studio</title>
+        <title>Admin Dashboard — Planyx</title>
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
-      <AdminLayout title="Dashboard" subtitle="JA Plan Studio Administration">
+      <AdminLayout title="Dashboard" subtitle="Planyx Administration">
         <div className="max-w-6xl mx-auto pb-20 lg:pb-0">
           <div className="mb-8">
             <div className="flex items-center justify-between gap-3 mb-1">

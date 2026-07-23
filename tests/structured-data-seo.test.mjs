@@ -18,11 +18,11 @@ test("homepage exposes one canonical WebSite and Organization", async () => {
   const organizations = entities.filter(entity => entity["@type"] === "Organization");
   assert.equal(websites.length, 1);
   assert.equal(organizations.length, 1);
-  assert.equal(websites[0].name, "JA Plan Studio");
-  assert.equal(websites[0].alternateName, "JA Plan Studio by JA Group Services Ltd");
+  assert.equal(websites[0].name, "Planyx");
+  assert.equal(websites[0].alternateName, "Planyx by JA Group Services Ltd");
   assert.equal(websites[0]["@id"], `${productionUrl}/#website`);
   assert.deepEqual(websites[0].publisher, { "@id": `${productionUrl}/#organization` });
-  assert.equal(organizations[0].name, "JA Plan Studio");
+  assert.equal(organizations[0].name, "Planyx");
   assert.equal(organizations[0].legalName, "JA Group Services Ltd");
   assert.equal(organizations[0].identifier.value, "16314179");
   assert.equal(organizations[0].email, "japlanstudio@jagroupservices.co.uk");
@@ -35,7 +35,7 @@ test("homepage exposes one canonical WebSite and Organization", async () => {
     addressCountry: "GB"
   });
   assert.match(html, /<link rel="canonical" href="https:\/\/japlanstudio\.jagroupservices\.co\.uk\/">/);
-  assert.match(html, /<meta property="og:site_name" content="JA Plan Studio">/);
+  assert.match(html, /<meta property="og:site_name" content="Planyx">/);
 });
 
 test("generated destination pages contain canonical WebPage data and real breadcrumbs", async () => {
@@ -54,9 +54,9 @@ test("Coming Soon retains intentional noindex while using canonical current iden
   const html = await readPublic("/coming-soon/");
   const entities = schemas(html);
   assert.match(html, /<meta name="robots" content="noindex, nofollow"/);
-  assert.match(html, /<meta property="og:site_name" content="JA Plan Studio">/);
+  assert.match(html, /<meta property="og:site_name" content="Planyx">/);
   assert.equal(entities.filter(entity => entity["@type"] === "WebSite").length, 1);
-  assert.equal(entities.find(entity => entity["@type"] === "WebSite").name, "JA Plan Studio");
+  assert.equal(entities.find(entity => entity["@type"] === "WebSite").name, "Planyx");
   assert.equal(entities.find(entity => entity["@type"] === "Organization").legalName, "JA Group Services Ltd");
 });
 

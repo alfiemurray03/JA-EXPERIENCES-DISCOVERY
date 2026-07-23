@@ -30,7 +30,7 @@ test('chatbot performs guided self-help and Contact Enquiry escalation', () => {
   assert.match(chatbot, /fetch\('\/api\/support\/submit'/);
   assert.match(chatbot, /sessionId: sessionIdRef\.current/);
   assert.match(chatbot, /startedAt: openedAtRef\.current/);
-  assert.match(chatbot, /JA Plan Studio Support Team/);
+  assert.match(chatbot, /Planyx Support Team/);
 });
 
 test('anonymous enquiry submission bypasses only the submit middleware route', async () => {
@@ -120,7 +120,7 @@ test('support escalations use the server-side Teams workflow secret', () => {
   assert.match(supportSubmit, /sendTeamsSupportCard/);
   assert.match(supportSubmit, /application\/vnd\.microsoft\.card\.adaptive/);
   assert.match(supportSubmit, /Chatbot escalation/);
-  assert.match(supportSubmit, /JA Plan Studio – Reply to Customer/);
+  assert.match(supportSubmit, /Planyx – Reply to Customer/);
   assert.doesNotMatch(supportSubmit, /Action\.OpenUrl/);
   assert.match(supportSubmit, /\.environment\.api\.powerplatform\.com/);
   assert.match(supportSubmit, /Promise\.allSettled/);
@@ -136,7 +136,7 @@ test('complete transcript is stored, emailed and sent to Teams', () => {
   assert.match(supportSubmit, /Complete conversation transcript/);
   assert.match(supportSubmit, /clean\(enquiry\.message, 20000\)/);
   assert.match(supportSubmit, /clean\(enquiry\.telephone, 40\)/);
-  assert.match(chatbot, /Your enquiry has been submitted to the JA Plan Studio Support Team/);
+  assert.match(chatbot, /Your enquiry has been submitted to the Planyx Support Team/);
 });
 
 

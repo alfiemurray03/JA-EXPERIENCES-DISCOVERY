@@ -8,8 +8,8 @@ const destinations = JSON.parse(source.match(/\[(.*)\]/s)[0]);
 
 for (const destination of destinations) {
   const route = `/destinations/${destination.slug}/`;
-  const title = `${destination.name} Travel Planning Guide | JA Plan Studio`;
-  const description = `Practical ${destination.name} travel planning guidance and personalised research support from JA Plan Studio.`;
+  const title = `${destination.name} Travel Planning Guide | Planyx`;
+  const description = `Practical ${destination.name} travel planning guidance and personalised research support from Planyx.`;
   const seo = renderSeoHead({
     route,
     name: title,

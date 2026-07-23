@@ -6,10 +6,10 @@ export const organization = {
   "@context": "https://schema.org",
   "@type": "Organization",
   "@id": ORGANIZATION_ID,
-  name: "JA Plan Studio",
+  name: "Planyx",
   legalName: "JA Group Services Ltd",
   url: `${SITE_URL}/`,
-  description: "JA Plan Studio is the experience planning platform operated by JA Group Services Ltd.",
+  description: "Planyx is the experience planning platform operated by JA Group Services Ltd.",
   email: "japlanstudio@jagroupservices.co.uk",
   identifier: {
     "@type": "PropertyValue",
@@ -31,8 +31,8 @@ export const website = {
   "@type": "WebSite",
   "@id": WEBSITE_ID,
   url: `${SITE_URL}/`,
-  name: "JA Plan Studio",
-  alternateName: "JA Plan Studio by JA Group Services Ltd",
+  name: "Planyx",
+  alternateName: "Planyx by JA Group Services Ltd",
   description: "A self-service platform for building, saving and managing personalised experience plans.",
   publisher: { "@id": ORGANIZATION_ID }
 };
@@ -70,8 +70,8 @@ export function renderSeoHead({ route, name, description, type = "WebPage", incl
 
   return [
     `<link rel="canonical" href="${url}">`,
-    `<meta name="application-name" content="JA Plan Studio">`,
-    `<meta property="og:site_name" content="JA Plan Studio">`,
+    `<meta name="application-name" content="Planyx">`,
+    `<meta property="og:site_name" content="Planyx">`,
     `<meta property="og:type" content="website">`,
     `<meta property="og:title" content="${escapeAttribute(name)}">`,
     `<meta property="og:description" content="${escapeAttribute(description)}">`,

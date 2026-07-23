@@ -48,7 +48,7 @@ export default function OrgStarterPage() {
   return (
     <>
       <Helmet>
-        <title>Organisation Starter Plan — JA Plan Studio</title>
+        <title>Organisation Starter Plan — Planyx</title>
         <meta name="description" content="Organisation Starter: 2 user seats, all templates, 10 shared drafts, 30-day retention. £29.99/month." />
       </Helmet>
 
