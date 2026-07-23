@@ -8,7 +8,7 @@ async function source(path) {
   return readFile(new URL(path, root), 'utf8');
 }
 
-test('all route families use the branded JA Plan Studio error page', async () => {
+test('all route families use the branded Planyx error page', async () => {
   const app = await source('src/App.tsx');
   const page = await source('src/components/RouteErrorPage.tsx');
 
@@ -17,7 +17,7 @@ test('all route families use the branded JA Plan Studio error page', async () =>
   assert.match(app, /adminRoutes\.map\(withErrorPage\)/);
   assert.match(app, /resellerRoutes\.map\(withErrorPage\)/);
 
-  assert.match(page, /JA Plan Studio/);
+  assert.match(page, /Planyx/);
   assert.match(page, /Secure application recovery/);
   assert.match(page, /Error details/);
   assert.match(page, /details\.message/);
@@ -60,7 +60,7 @@ test('the exact missing Analytics chunk has a safe compatibility module', async 
 
   assert.match(compatibility, /analytics-compat-refresh/);
   assert.match(compatibility, /window\.location\.replace/);
-  assert.match(compatibility, /JA Plan Studio needs to be refreshed/);
+  assert.match(compatibility, /Planyx needs to be refreshed/);
   assert.match(compatibility, /export default function AnalyticsCompatibilityPage/);
 
   assert.match(workflow, /test -f public\/assets\/analytics-XYhWdSNH\.js/);
