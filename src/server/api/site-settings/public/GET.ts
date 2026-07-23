@@ -8,7 +8,7 @@ import { db } from '../../../db/client.js';
 import { ja_site_settings } from '../../../db/schema.js';
 
 const DEFAULTS: Record<string, string> = {
-  site_name:    'JA Plan Studio',
+  site_name:    'Planyx',
   brand_name:   'JA Group Services',
   tagline:      'Personalised Plans, Generated in Minutes',
   support_email: 'japlanstudio@jagroupservices.co.uk',
@@ -16,8 +16,8 @@ const DEFAULTS: Record<string, string> = {
   primary_color: '#1B4F8A',
   accent_color:  '#8a561b',
   logo_url:      '',
-  browser_tab_name: 'JA Plan Studio',
-  admin_tab_name: 'JA Plan Studio Admin Portal',
+  browser_tab_name: 'Planyx',
+  admin_tab_name: 'Planyx Admin Portal',
   favicon_url: '/favicon.svg?v=20260718-4',
   admin_theme_mode: 'light',
   google_analytics_id: '',
