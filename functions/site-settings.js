@@ -23,8 +23,8 @@ async function settingMap(DB, keys, defaults = {}) {
 }
 
 const browserDefaults = {
-  browser_tab_name: "JA Plan Studio",
-  admin_tab_name: "JA Plan Studio Admin Portal",
+  browser_tab_name: "Planyx",
+  admin_tab_name: "Planyx Admin Portal",
   favicon_url: "/favicon.svg?v=20260718-4",
   admin_theme_mode: "light"
 };
