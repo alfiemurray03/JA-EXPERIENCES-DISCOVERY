@@ -71,7 +71,7 @@ export function PartnerDiscoveryPage({ provider }: { provider: Provider }) {
       <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
         <span className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 py-1 text-sm"><Compass className="h-4 w-4" /> {isHeadout ? 'Primary' : 'Secondary'} affiliate partner</span>
         <h1 className="mt-5 max-w-3xl font-heading text-4xl font-bold tracking-tight sm:text-5xl">Explore activities with {isHeadout ? 'Headout' : 'GetYourGuide'}</h1>
-        <p className="mt-5 max-w-2xl text-lg text-white/80">Choose a destination and browse live tours, attractions, tickets and experiences without leaving JA Plan Studio.</p>
+        <p className="mt-5 max-w-2xl text-lg text-white/80">Choose a destination and browse live tours, attractions, tickets and experiences without leaving Planyx.</p>
       </div>
     </section>
     <section className="bg-background py-14" id="destinations">
