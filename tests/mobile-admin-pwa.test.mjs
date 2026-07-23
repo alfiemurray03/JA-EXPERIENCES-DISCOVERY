@@ -18,7 +18,7 @@ test('Admin Portal supports horizontal touch scrolling on mobile', () => {
 });
 
 test('mobile web app launches only on public pages', () => {
-  assert.equal(manifest.name, 'JA Plan Studio');
+  assert.equal(manifest.name, 'Planyx');
   assert.equal(manifest.display, 'standalone');
   assert.equal(manifest.scope, '/');
   assert.equal(manifest.start_url, '/?source=pwa&launch=public-v5');
