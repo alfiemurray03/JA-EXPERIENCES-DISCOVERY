@@ -134,7 +134,7 @@ export async function onRequest(context) {
   if (event === "verify_support_pin") {
     if (!identityEmail) return json({ success: false, error: "Please sign in before verifying your identity." }, 401);
     if (!/^\d{6}$/.test(String(body.pin || "").trim())) {
-      return json({ success: false, error: "Enter the six-digit JA Plan Studio Support PIN." }, 400);
+      return json({ success: false, error: "Enter the six-digit Planyx Support PIN." }, 400);
     }
     const result = await verifySupportPinRecord(env.DB, env, identityEmail, String(body.pin).trim(), "support-assistant");
     if (!result.ok) return json({ success: false, error: result.error || "The Support PIN could not be verified." }, 400);
