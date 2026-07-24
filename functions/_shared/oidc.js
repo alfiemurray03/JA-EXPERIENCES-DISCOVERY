@@ -1,3 +1,5 @@
+import { claimPaidStripeSubscription } from "./stripe-subscription-claim.js";
+
 const REALMS = {
   admin: {
     prefix: "ADMIN_OIDC",
@@ -493,6 +495,10 @@ async function syncCustomerProfileFromClaims(context, claims, email) {
     preferredLanguage,
     photoUrl
   ).run();
+
+  // A subscription created by staff in Stripe can pre-date the Planyx account.
+  // Claim it only after JA Group Services ID has verified the identical email.
+  await claimPaidStripeSubscription(context.env.DB, profileEmail);
 }
 
 export function nativeOidcEnabled(env) {
