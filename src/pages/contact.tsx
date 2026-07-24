@@ -11,12 +11,12 @@ import {
 } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
-  ArrowRight, Bot, CheckCircle2, ChevronRight, Headphones,
-  LifeBuoy, Loader2, Mail, MessageSquare, Phone, Send,
-  ShieldCheck, Sparkles, WandSparkles, AlertTriangle
+  Bot, Building2, CheckCircle2, Clock, Headphones,
+  LifeBuoy, Loader2, Mail, MapPin, MessageSquare, Phone, Send,
+  ShieldCheck, Sparkles, Smartphone, AlertTriangle
 } from 'lucide-react';
 import {
-  GROUP_CONTACT_EMAIL, GROUP_PHONE_DISPLAY, GROUP_PHONE_HREF, PLAN_STUDIO_EMAIL
+  DATA_PROTECTION_EMAIL, GROUP_CONTACT_EMAIL, GROUP_PHONE_DISPLAY, GROUP_PHONE_HREF, PLAN_STUDIO_EMAIL
 } from '@/lib/contact-details';
 
 const CATEGORIES = [
@@ -36,16 +36,16 @@ const PRIORITIES = [
   { value: 'urgent', label: 'Urgent — I cannot use Planyx' }
 ];
 
-const AI_PROMPTS = [
-  'I cannot sign in',
-  'Help with my subscription',
-  'My plan did not save',
-  'How do I use a builder?'
-];
-
 export default function ContactPage() {
   const { user } = useAuth();
   const [showForm, setShowForm] = useState(false);
+  const [aiEnquiry, setAiEnquiry] = useState('');
+  const [aiGuidance, setAiGuidance] = useState<null | {
+    category: string;
+    priority: string;
+    heading: string;
+    advice: string;
+  }>(null);
   const [form, setForm] = useState({
     name: user ? `${user.firstName} ${user.lastName}`.trim() : '',
     email: user?.email ?? '',
@@ -62,19 +62,59 @@ export default function ContactPage() {
     setForm((previous) => ({ ...previous, [field]: value }));
   }
 
-  function openAssistant(prompt = '') {
-    const launcher = document.querySelector<HTMLButtonElement>(
-      'button[aria-label="Open Help Centre assistant"]'
-    );
-    launcher?.click();
-    if (prompt) {
-      window.setTimeout(() => {
-        const input = document.querySelector<HTMLInputElement>(
-          'input[placeholder="Ask a Help Centre question…"]'
-        );
-        input?.focus();
-      }, 150);
+  function analyseEnquiry() {
+    const text = aiEnquiry.trim().toLowerCase();
+    if (!text) {
+      setError('Please briefly describe what you need help with.');
+      return;
     }
+
+    setError('');
+    let category = 'general';
+    let priority = 'normal';
+    let heading = 'General enquiry';
+    let advice = 'Our team can review this and direct it to the right person.';
+
+    if (/payment|charged|charge|invoice|refund|subscription|billing|cancel/.test(text)) {
+      category = 'billing';
+      heading = 'Billing and subscription support';
+      advice = 'Include the date, amount and the email address connected to your Planyx account. Never include full card details.';
+    } else if (/sign in|login|password|account|access|verification|code/.test(text)) {
+      category = 'account';
+      heading = 'Account and access support';
+      advice = 'Tell us the email address used for the account and copy any error message shown. Never send us your password.';
+    } else if (/save|error|broken|not working|failed|network|export|pdf|share/.test(text)) {
+      category = 'technical';
+      priority = 'high';
+      heading = 'Technical support';
+      advice = 'Include the page or builder affected, your device/browser and the exact error message. A screenshot can also help.';
+    } else if (/builder|itinerary|plan|experience|activity|destination/.test(text)) {
+      category = 'planning';
+      heading = 'Planning and builder help';
+      advice = 'Tell us which builder or itinerary you are using and what you are trying to create.';
+    } else if (/data|privacy|personal information|subject access|delete my data/.test(text)) {
+      heading = 'Data protection enquiry';
+      advice = 'For privacy rights or personal-data matters, contact our Data Protection Officer directly at ' + DATA_PROTECTION_EMAIL + '.';
+    }
+
+    if (/urgent|cannot use|can't use|locked out|charged twice|duplicate charge/.test(text)) {
+      priority = 'urgent';
+    }
+
+    setAiGuidance({ category, priority, heading, advice });
+  }
+
+  function prepareEnquiry() {
+    if (!aiGuidance) return;
+    setForm((current) => ({
+      ...current,
+      category: aiGuidance.category,
+      priority: aiGuidance.priority,
+      subject: aiGuidance.heading,
+      message: aiEnquiry
+    }));
+    setShowForm(true);
+    window.setTimeout(() => document.getElementById('support-request-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
   }
 
   async function handleSubmit(event: React.FormEvent) {
@@ -132,62 +172,58 @@ export default function ContactPage() {
             </div>
 
             <div className="mt-10 max-w-4xl mx-auto rounded-[28px] border border-primary/20 bg-card/95 shadow-2xl shadow-primary/10 overflow-hidden backdrop-blur">
-              <div className="grid lg:grid-cols-[1.15fr_0.85fr]">
+              <div className="grid lg:grid-cols-[0.8fr_1.2fr]">
                 <div className="p-6 sm:p-9 bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-600 text-white">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center">
-                      <Bot className="w-7 h-7" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h2 className="text-xl font-bold">Ask Planyx AI</h2>
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide bg-emerald-400/20 border border-emerald-300/30 rounded-full px-2 py-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-300" />
-                          Online
-                        </span>
-                      </div>
-                      <p className="text-sm text-blue-100 mt-1">Fast help, available any time.</p>
-                    </div>
+                  <div className="w-14 h-14 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center">
+                    <Bot className="w-7 h-7" />
                   </div>
-
-                  <p className="mt-6 text-sm sm:text-base text-blue-50 leading-relaxed">
-                    Describe what you need in your own words. The assistant searches Planyx
-                    help content, suggests the next step and can prepare an enquiry if needed.
+                  <h2 className="mt-5 text-2xl font-bold">AI-assisted contact</h2>
+                  <p className="mt-3 text-sm text-blue-50 leading-relaxed">
+                    Tell us what you need in plain English. Planyx will organise the enquiry,
+                    suggest what information to include and prepare it for the correct support route.
                   </p>
-
-                  <Button
-                    type="button"
-                    size="lg"
-                    onClick={() => openAssistant()}
-                    className="mt-7 w-full sm:w-auto bg-white text-indigo-700 hover:bg-blue-50 font-bold shadow-lg gap-2"
-                  >
-                    <WandSparkles className="w-4 h-4" />
-                    Start a conversation
-                    <ArrowRight className="w-4 h-4" />
-                  </Button>
+                  <div className="mt-6 rounded-xl border border-white/20 bg-white/10 p-4 text-xs text-blue-50">
+                    This does not open the chatbot or send anything automatically. You stay in control
+                    and review the completed contact form before submitting it.
+                  </div>
                 </div>
 
                 <div className="p-6 sm:p-9">
-                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">
-                    Popular questions
+                  <Label htmlFor="ai-enquiry" className="text-base font-bold text-foreground">
+                    What can we help you with?
+                  </Label>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Include what you were trying to do and what went wrong.
                   </p>
-                  <div className="mt-4 space-y-2">
-                    {AI_PROMPTS.map((prompt) => (
-                      <button
-                        key={prompt}
-                        type="button"
-                        onClick={() => openAssistant(prompt)}
-                        className="w-full flex items-center justify-between gap-3 rounded-xl border border-border bg-background/60 px-4 py-3 text-left text-sm font-medium text-foreground hover:border-primary/40 hover:bg-primary/5 hover:text-primary transition-all group"
-                      >
-                        <span>{prompt}</span>
-                        <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                      </button>
-                    ))}
-                  </div>
+                  <Textarea
+                    id="ai-enquiry"
+                    value={aiEnquiry}
+                    onChange={(event) => {
+                      setAiEnquiry(event.target.value);
+                      setAiGuidance(null);
+                    }}
+                    placeholder="For example: I was charged twice for my subscription and need help checking the payments…"
+                    className="mt-4 min-h-[130px] resize-y"
+                  />
+                  <Button type="button" onClick={analyseEnquiry} className="mt-4 w-full sm:w-auto gap-2">
+                    <Sparkles className="w-4 h-4" />
+                    Help prepare my enquiry
+                  </Button>
+
+                  {aiGuidance && (
+                    <div className="mt-5 rounded-2xl border border-primary/20 bg-primary/5 p-5">
+                      <p className="text-xs font-bold uppercase tracking-wide text-primary">Suggested route</p>
+                      <h3 className="mt-1 font-bold text-foreground">{aiGuidance.heading}</h3>
+                      <p className="mt-2 text-sm text-muted-foreground">{aiGuidance.advice}</p>
+                      <Button type="button" variant="outline" onClick={prepareEnquiry} className="mt-4 gap-2">
+                        <MessageSquare className="w-4 h-4" />
+                        Continue to contact form
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
-          </div>
         </section>
 
         <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
@@ -260,7 +296,7 @@ export default function ContactPage() {
                   </Button>
                 </div>
               ) : (
-                <form onSubmit={handleSubmit} className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-xl shadow-primary/5">
+                <form id="support-request-form" onSubmit={handleSubmit} className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-xl shadow-primary/5 scroll-mt-24">
                   <div className="flex items-start justify-between gap-4 mb-7">
                     <div>
                       <div className="flex items-center gap-2 text-primary">
@@ -358,6 +394,77 @@ export default function ContactPage() {
               )}
             </div>
           )}
+
+          <div className="mt-12 grid lg:grid-cols-[1.05fr_0.95fr] gap-6">
+            <div className="rounded-3xl border border-border bg-card p-6 sm:p-8">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center">
+                  <Clock className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-primary">What happens next</p>
+                  <h2 className="text-xl font-bold text-foreground">Response times</h2>
+                </div>
+              </div>
+              <div className="mt-6 space-y-4 text-sm">
+                <div className="flex justify-between gap-4 border-b border-border pb-3">
+                  <span className="font-medium text-foreground">Online support requests</span>
+                  <span className="text-right text-muted-foreground">Usually within 2 working days</span>
+                </div>
+                <div className="flex justify-between gap-4 border-b border-border pb-3">
+                  <span className="font-medium text-foreground">Account or technical issues</span>
+                  <span className="text-right text-muted-foreground">Prioritised by impact</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="font-medium text-foreground">Data protection requests</span>
+                  <span className="text-right text-muted-foreground">Handled under applicable legal timescales</span>
+                </div>
+              </div>
+              <p className="mt-5 text-xs leading-relaxed text-muted-foreground">
+                Times are estimates, not guaranteed service levels. Complex enquiries may take longer.
+                Please avoid submitting the same enquiry more than once, as duplicates can delay handling.
+                If your issue prevents you using Planyx, mark the request as urgent and explain the impact.
+              </p>
+            </div>
+
+            <div className="rounded-3xl border border-border bg-muted/30 p-6 sm:p-8">
+              <p className="text-sm font-semibold text-primary">Full contact details</p>
+              <h2 className="mt-1 text-xl font-bold text-foreground">JA Group Services Ltd</h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Planyx is operated by JA Group Services Ltd, registered in England and Wales.
+              </p>
+              <div className="mt-6 space-y-4 text-sm">
+                <a href={GROUP_PHONE_HREF} className="flex gap-3 hover:text-primary">
+                  <Phone className="w-4 h-4 mt-0.5 text-primary shrink-0" />
+                  <span><strong className="block text-foreground">Telephone</strong>{GROUP_PHONE_DISPLAY}</span>
+                </a>
+                <a href="tel:+447886158834" className="flex gap-3 hover:text-primary">
+                  <Smartphone className="w-4 h-4 mt-0.5 text-primary shrink-0" />
+                  <span><strong className="block text-foreground">Business mobile and WhatsApp</strong>+44 7886 158834</span>
+                </a>
+                <a href={'mailto:' + PLAN_STUDIO_EMAIL} className="flex gap-3 hover:text-primary">
+                  <Mail className="w-4 h-4 mt-0.5 text-primary shrink-0" />
+                  <span className="min-w-0"><strong className="block text-foreground">Planyx support</strong><span className="break-all">{PLAN_STUDIO_EMAIL}</span></span>
+                </a>
+                <a href={'mailto:' + DATA_PROTECTION_EMAIL} className="flex gap-3 hover:text-primary">
+                  <ShieldCheck className="w-4 h-4 mt-0.5 text-primary shrink-0" />
+                  <span className="min-w-0"><strong className="block text-foreground">Data Protection Officer</strong><span className="break-all">{DATA_PROTECTION_EMAIL}</span></span>
+                </a>
+                <div className="flex gap-3">
+                  <MapPin className="w-4 h-4 mt-0.5 text-primary shrink-0" />
+                  <span><strong className="block text-foreground">Registered office</strong>167–169 Great Portland Street, 5th Floor, London, W1W 5PF</span>
+                </div>
+                <div className="flex gap-3">
+                  <Building2 className="w-4 h-4 mt-0.5 text-primary shrink-0" />
+                  <span><strong className="block text-foreground">Company details</strong>Company number 16314179 · ICO registration ZB877370</span>
+                </div>
+              </div>
+              <p className="mt-5 text-xs text-muted-foreground">
+                Telephone and WhatsApp availability may vary. Please use the secure form or email for
+                account-specific matters so we can keep a written record of your request.
+              </p>
+            </div>
+          </div>
 
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 text-xs text-muted-foreground">
             <div className="flex items-center gap-1.5">
