@@ -18,13 +18,19 @@ test('account type is explicit and historic both records fail safely to Individu
   assert.equal(accountTypeFromProfile({ account_type: 'individual', usage_type: 'business' }), 'individual');
 });
 
-test('Individual accounts never receive organisation itinerary permissions', () => {
+test('paid Individual accounts may invite read-only viewers but never editors', () => {
   for (const plan of ['personal', 'standard', 'professional', 'org_starter']) {
     const entitlement = accountPlanEntitlements('individual', plan);
-    assert.equal(entitlement.canShareItineraries, false);
+    assert.equal(entitlement.canShareItineraries, true);
+    assert.equal(entitlement.canInviteViewers, true);
     assert.equal(entitlement.canInviteEditors, false);
-    assert.equal(entitlement.maximumSharePermission, 'none');
+    assert.equal(entitlement.maximumSharePermission, 'view');
+    assert.equal(enforceSharePermission('individual', plan, 'edit'), 'view');
   }
+
+  const freeEntitlement = accountPlanEntitlements('individual', 'free');
+  assert.equal(freeEntitlement.canShareItineraries, false);
+  assert.equal(freeEntitlement.maximumSharePermission, 'none');
 });
 
 test('the first three organisation plans are view-only', () => {
@@ -73,7 +79,8 @@ test('pricing and builders render separate Individual and Organisation experienc
   assert.match(pricing, /Who will use this account\?/);
   assert.match(builders, /Workspace setup/);
   assert.match(builders, /Shared with me/);
-  assert.match(builders, /Individual itineraries are private/);
+  assert.match(builders, /Your private individual planning workspace/);
+  assert.match(builders, /entitlements\.isIndividual/);
   assert.match(plans, /Maximum invited-user permission/);
   assert.match(plans, /Recipient must sign in with invited email/);
   assert.match(plans, /Review and revoke invitations/);
