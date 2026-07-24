@@ -38,6 +38,9 @@ interface ChatbotSettings {
   contactPhoneHref: string; contactRegisteredOffice: string; contactCompanyDetails: string;
   contactResponseStandard: string; contactResponseTechnical: string; contactResponseData: string;
   contactResponseNote: string; contactEmailEnabled: boolean; contactTelephoneEnabled: boolean;
+  contactPageStatus: 'online' | 'maintenance' | 'offline';
+  contactMaintenanceTitle: string; contactMaintenanceReason: string; contactMaintenanceMessage: string;
+  contactMaintenanceStart: string; contactMaintenanceExpectedReturn: string; contactOfflineMessage: string;
 }
 
 interface Conversation {
@@ -144,6 +147,13 @@ const DEFAULT_SETTINGS: ChatbotSettings = {
   contactResponseNote: 'Times are estimates, not guaranteed service levels. Complex enquiries may take longer. Please avoid submitting the same enquiry more than once, as duplicates can delay handling.',
   contactEmailEnabled: true,
   contactTelephoneEnabled: true,
+  contactPageStatus: 'online',
+  contactMaintenanceTitle: 'Contact support is temporarily unavailable',
+  contactMaintenanceReason: 'Contact service maintenance',
+  contactMaintenanceMessage: 'We are carrying out essential work on the Planyx contact service. Please check back shortly.',
+  contactMaintenanceStart: '',
+  contactMaintenanceExpectedReturn: '',
+  contactOfflineMessage: 'The Contact Us page is currently offline. Please use the published contact details if your enquiry cannot wait.',
 };
 
 const EMPTY_STATS: ChatbotStats = {
@@ -220,6 +230,15 @@ function fromRecord(record: Record<string, string>): ChatbotSettings {
     contactResponseNote: record.contact_response_note || DEFAULT_SETTINGS.contactResponseNote,
     contactEmailEnabled: bool(record.contact_email_enabled, true),
     contactTelephoneEnabled: bool(record.contact_telephone_enabled, true),
+    contactPageStatus: ['online', 'maintenance', 'offline'].includes(record.contact_page_status)
+      ? record.contact_page_status as ChatbotSettings['contactPageStatus']
+      : 'online',
+    contactMaintenanceTitle: record.contact_maintenance_title || DEFAULT_SETTINGS.contactMaintenanceTitle,
+    contactMaintenanceReason: record.contact_maintenance_reason || DEFAULT_SETTINGS.contactMaintenanceReason,
+    contactMaintenanceMessage: record.contact_maintenance_message || DEFAULT_SETTINGS.contactMaintenanceMessage,
+    contactMaintenanceStart: record.contact_maintenance_start || '',
+    contactMaintenanceExpectedReturn: record.contact_maintenance_expected_return || '',
+    contactOfflineMessage: record.contact_offline_message || DEFAULT_SETTINGS.contactOfflineMessage,
   };
 }
 
@@ -278,6 +297,13 @@ function toRecord(settings: ChatbotSettings): Record<string, string> {
     contact_response_note: settings.contactResponseNote,
     contact_email_enabled: String(settings.contactEmailEnabled),
     contact_telephone_enabled: String(settings.contactTelephoneEnabled),
+    contact_page_status: settings.contactPageStatus,
+    contact_maintenance_title: settings.contactMaintenanceTitle,
+    contact_maintenance_reason: settings.contactMaintenanceReason,
+    contact_maintenance_message: settings.contactMaintenanceMessage,
+    contact_maintenance_start: settings.contactMaintenanceStart,
+    contact_maintenance_expected_return: settings.contactMaintenanceExpectedReturn,
+    contact_offline_message: settings.contactOfflineMessage,
   };
 }
 
@@ -544,7 +570,45 @@ export default function AIChatbotControlCenter() {
             </div>}
 
             {tab === 'contact' && <div className="space-y-5">
-              <Alert><ShieldCheck className="h-4 w-4" /><AlertDescription>Changes made here control the live Contact Us page and its AI-assisted enquiry box. Email and Teams delivery controls remain under Integrations so secret webhook addresses are never exposed.</AlertDescription></Alert>
+              <Alert><ShieldCheck className="h-4 w-4" /><AlertDescription>This is the single control area for the live Contact Us page: availability, maintenance, published content, contact channels and its AI-assisted enquiry box. Email and Teams delivery controls remain under Integrations so secret webhook addresses are never exposed.</AlertDescription></Alert>
+              <Card>
+                <CardHeader>
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div><CardTitle className="text-base">Contact Us page status</CardTitle><p className="mt-1 text-xs text-muted-foreground">Control only <code>/contact</code>. The rest of Planyx remains available.</p></div>
+                    <Badge className={settings.contactPageStatus === 'online' ? 'border border-blue-300 bg-blue-100 text-blue-900 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-200' : settings.contactPageStatus === 'maintenance' ? 'border border-amber-300 bg-amber-100 text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200' : 'border border-slate-300 bg-slate-100 text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200'}>{settings.contactPageStatus === 'online' ? 'Online' : settings.contactPageStatus === 'maintenance' ? 'Maintenance' : 'Offline'}</Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                  <div className="grid gap-3 md:grid-cols-3">
+                    {([
+                      ['online', 'Online', 'Show the Contact Us page and accept enquiries normally.'],
+                      ['maintenance', 'Maintenance', 'Show the branded contact maintenance page and schedule.'],
+                      ['offline', 'Offline', 'Take the Contact Us page and enquiry form out of public use.'],
+                    ] as const).map(([value, label, description]) => {
+                      const selected = settings.contactPageStatus === value;
+                      return <button key={value} type="button" onClick={() => patch('contactPageStatus', value)}
+                        className={`rounded-xl border p-4 text-left transition ${selected ? 'border-blue-600 bg-blue-50 ring-2 ring-blue-600/15 dark:bg-blue-950/30' : 'border-border bg-background hover:border-blue-300 dark:hover:border-blue-700'}`}>
+                        <span className="flex items-center justify-between gap-3"><span className="text-sm font-semibold text-foreground">{label}</span><span className={`flex h-4 w-4 items-center justify-center rounded-full border ${selected ? 'border-blue-600 bg-blue-600' : 'border-slate-300 dark:border-slate-600'}`}>{selected && <span className="h-1.5 w-1.5 rounded-full bg-white" />}</span></span>
+                        <span className="mt-2 block text-xs leading-relaxed text-muted-foreground">{description}</span>
+                      </button>;
+                    })}
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div><Label>Maintenance page heading</Label><Input value={settings.contactMaintenanceTitle} onChange={event => patch('contactMaintenanceTitle', event.target.value)} /></div>
+                    <div><Label>Reason for maintenance</Label><Input value={settings.contactMaintenanceReason} onChange={event => patch('contactMaintenanceReason', event.target.value)} /></div>
+                    <div><Label>Maintenance started</Label><Input type="datetime-local" value={settings.contactMaintenanceStart.slice(0, 16)} onChange={event => patch('contactMaintenanceStart', event.target.value)} /><p className="mt-1 text-xs text-muted-foreground">Useful for customer updates and debugging.</p></div>
+                    <div><Label>Expected return</Label><Input type="datetime-local" value={settings.contactMaintenanceExpectedReturn.slice(0, 16)} onChange={event => patch('contactMaintenanceExpectedReturn', event.target.value)} /><p className="mt-1 text-xs text-muted-foreground">Leave blank if no reliable estimate is available.</p></div>
+                  </div>
+                  <div><Label>Maintenance message</Label><Textarea rows={3} value={settings.contactMaintenanceMessage} onChange={event => patch('contactMaintenanceMessage', event.target.value)} /></div>
+                  <div><Label>Offline message</Label><Textarea rows={3} value={settings.contactOfflineMessage} onChange={event => patch('contactOfflineMessage', event.target.value)} /></div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button asChild variant="outline" size="sm"><a href="/maintenance/contact/?view=maintenance" target="_blank" rel="noreferrer"><Eye className="mr-2 h-4 w-4" />Preview maintenance</a></Button>
+                    <Button asChild variant="outline" size="sm"><a href="/maintenance/contact/?view=offline" target="_blank" rel="noreferrer"><Eye className="mr-2 h-4 w-4" />Preview offline</a></Button>
+                    <Button asChild variant="outline" size="sm"><a href="/contact" target="_blank" rel="noreferrer"><Contact className="mr-2 h-4 w-4" />Open Contact Us</a></Button>
+                  </div>
+                  <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-xs leading-5 text-blue-900 dark:border-blue-800 dark:bg-blue-950/30 dark:text-blue-200"><strong>Route diagnostic:</strong> after saving, <code>/contact</code> will resolve as <strong>{settings.contactPageStatus}</strong>. Both previews use this same saved wording, and Admin Centre access remains available in every state.</div>
+                </CardContent>
+              </Card>
               <div className="grid gap-5 lg:grid-cols-2">
                 <Card><CardHeader><CardTitle className="text-base">Page availability and channels</CardTitle></CardHeader><CardContent className="space-y-3">
                   <Toggle checked={settings.contactPageEnabled} onChange={value => patch('contactPageEnabled', value)} label="Accept Contact Us enquiries" description="Switch the public enquiry form on or off without removing the contact-information page." />

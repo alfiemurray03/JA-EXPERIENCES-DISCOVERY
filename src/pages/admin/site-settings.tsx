@@ -614,69 +614,6 @@ export default function AdminSiteSettings() {
                   </div>
               </div>
 
-              <div className={sectionCls}>
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Contact Us page status</h3>
-                  <p className={`mt-1 text-xs ${muted}`}>Control only the public Contact Us page. This does not change the status of the rest of Planyx.</p>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  {([
-                    ['online', 'Online', 'The Contact Us page and enquiry form work normally.'],
-                    ['maintenance', 'Maintenance', 'Show a contact-specific maintenance page while work is carried out.'],
-                    ['offline', 'Offline', 'Take the Contact Us page out of public use until you put it back online.'],
-                  ] as const).map(([value, label, description]) => {
-                    const selected = cfg.contactPageStatus === value;
-                    return (
-                      <button key={value} type="button" onClick={() => update({ contactPageStatus: value })}
-                        className={`text-left rounded-xl border p-4 transition-all ${selected ? 'border-primary bg-primary/5 ring-2 ring-primary/15' : 'border-slate-200 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-slate-600'}`}>
-                        <div className="flex items-center justify-between gap-3">
-                          <span className="text-sm font-semibold text-slate-900 dark:text-white">{label}</span>
-                          <span className={`w-4 h-4 rounded-full border flex items-center justify-center ${selected ? 'border-primary bg-primary' : 'border-slate-300 dark:border-slate-600'}`}>
-                            {selected && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
-                          </span>
-                        </div>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">{description}</p>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-2">
-                  <Field label="Maintenance page heading">
-                    <Input value={cfg.contactMaintenanceTitle} onChange={e => update({ contactMaintenanceTitle: e.target.value })} className={`h-9 ${inputCls}`} />
-                  </Field>
-                  <Field label="Reason for maintenance">
-                    <Input value={cfg.contactMaintenanceReason} onChange={e => update({ contactMaintenanceReason: e.target.value })} className={`h-9 ${inputCls}`} />
-                  </Field>
-                  <Field label="Maintenance started" hint="Useful for debugging and customer updates.">
-                    <Input type="datetime-local" value={cfg.contactMaintenanceStart.slice(0, 16)} onChange={e => update({ contactMaintenanceStart: e.target.value })} className={`h-9 ${inputCls}`} />
-                  </Field>
-                  <Field label="Expected return" hint="Leave blank if no reliable estimate is available.">
-                    <Input type="datetime-local" value={cfg.contactMaintenanceExpectedReturn.slice(0, 16)} onChange={e => update({ contactMaintenanceExpectedReturn: e.target.value })} className={`h-9 ${inputCls}`} />
-                  </Field>
-                </div>
-                <Field label="Maintenance message">
-                  <Textarea value={cfg.contactMaintenanceMessage} onChange={e => update({ contactMaintenanceMessage: e.target.value })} rows={3} className={`resize-y text-sm ${inputCls}`} />
-                </Field>
-                <Field label="Offline message">
-                  <Textarea value={cfg.contactOfflineMessage} onChange={e => update({ contactOfflineMessage: e.target.value })} rows={3} className={`resize-y text-sm ${inputCls}`} />
-                </Field>
-
-                <div className="flex flex-wrap gap-2">
-                  <a href="/maintenance/contact/?view=maintenance" target="_blank" rel="noreferrer"
-                    className="inline-flex h-9 items-center rounded-lg border border-blue-300 bg-blue-50 px-3 text-xs font-semibold text-blue-700 transition hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-950/40 dark:text-blue-200">
-                    Preview maintenance page
-                  </a>
-                  <a href="/maintenance/contact/?view=offline" target="_blank" rel="noreferrer"
-                    className="inline-flex h-9 items-center rounded-lg border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
-                    Preview offline page
-                  </a>
-                </div>
-
-                <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-xs leading-5 text-blue-900 dark:border-blue-800 dark:bg-blue-950/30 dark:text-blue-200">
-                  <strong>Route diagnostic:</strong> <code>/contact</code> will currently resolve as <strong>{cfg.contactPageStatus}</strong> after you save. Preview links use the same saved wording. Administrators retain access to the Admin Centre in every state.
-                </div>
-              </div>
             </TabsContent>
 
             {/* ── Branding ── */}
