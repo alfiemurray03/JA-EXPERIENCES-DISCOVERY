@@ -47,12 +47,49 @@ jobs:
           set -euo pipefail
           test -f public/index.html
           test -f public/.asset-manifest.json
-          test -f public/assets/analytics-XYhWdSNH.js
-          grep -R --include='*.js' -F 'Standard Plans' public/assets >/dev/null
-          grep -R --include='*.js' -F 'Business Plans' public/assets >/dev/null
-          grep -R --include='*.js' -F 'accountType=' public/assets >/dev/null
-          grep -R --include='*.js' -F 'Secure application recovery' public/assets >/dev/null
-          grep -F 'analytics-compat-refresh' public/assets/analytics-XYhWdSNH.js >/dev/null
+
+          node --input-type=module <<'NODE'
+          import { readFile } from 'node:fs/promises';
+          import path from 'node:path';
+
+          const manifest = JSON.parse(await readFile('public/.asset-manifest.json', 'utf8'));
+          if (manifest.version !== 2 || !Array.isArray(manifest.currentAssets)) {
+            throw new Error('The production asset manifest is not the current version 2 format.');
+          }
+
+          const assets = [...new Set(manifest.currentAssets)];
+          if (assets.length !== manifest.currentAssets.length) {
+            throw new Error('The production asset manifest contains duplicate entries.');
+          }
+          if (assets.length === 0 || assets.length > 500) {
+            throw new Error(`Unexpected current production asset count: ${assets.length}.`);
+          }
+
+          const JavaScriptAssets = assets.filter(asset => asset.startsWith('assets/') && asset.endsWith('.js'));
+          if (JavaScriptAssets.length === 0) {
+            throw new Error('No current JavaScript production assets were recorded.');
+          }
+
+          const bundles = await Promise.all(JavaScriptAssets.map(async asset => ({
+            asset,
+            content: await readFile(path.join('public', asset), 'utf8'),
+          })));
+
+          const requiredMarkers = [
+            'Standard Plans',
+            'Business Plans',
+            'accountType=',
+            'Secure application recovery',
+            'analytics-compat-refresh',
+          ];
+
+          for (const marker of requiredMarkers) {
+            if (!bundles.some(({ content }) => content.includes(marker))) {
+              throw new Error(`Current production assets do not contain required marker: ${marker}`);
+            }
+          }
+          NODE
+
           grep -F "planyx-shell-v7" public/sw.js >/dev/null
           grep -F "if (isAdminRoute(url.pathname)) return false;" public/sw.js >/dev/null
           grep -F "fetch(request, { cache: 'no-store', redirect: 'follow' })" public/sw.js >/dev/null
