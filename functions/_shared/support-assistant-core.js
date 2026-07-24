@@ -70,6 +70,10 @@ export function clean(value, max = 4000) {
   return String(value ?? "").replace(/\u0000/g, "").trim().slice(0, max);
 }
 
+export function replaceRetiredBrand(value, max = 4000) {
+  return clean(value, max).replace(/\bJA[\s_-]*Plan[\s_-]*Studio\b/gi, "Planyx");
+}
+
 function bool(value, fallback) {
   if (value === undefined || value === null || value === "") return fallback;
   return ["1", "true", "yes", "on"].includes(String(value).toLowerCase());
@@ -125,17 +129,17 @@ export function configFrom(settings) {
     escalationEnabled: bool(settings.ai_chatbot_escalation_enabled, DEFAULT_CONFIG.escalationEnabled),
     webhookDeliveryEnabled: bool(settings.ai_chatbot_webhook_delivery_enabled, DEFAULT_CONFIG.webhookDeliveryEnabled),
     debugEnabled: bool(settings.ai_chatbot_debug_enabled, DEFAULT_CONFIG.debugEnabled),
-    assistantName: clean(settings.ai_chatbot_name || DEFAULT_CONFIG.assistantName, 80),
+    assistantName: replaceRetiredBrand(settings.ai_chatbot_name || DEFAULT_CONFIG.assistantName, 80),
     logoUrl: safeAssetUrl(settings.ai_chatbot_logo_url),
     avatarUrl: safeAssetUrl(settings.ai_chatbot_avatar_url),
     fontFamily: ["inherit", "system-ui", "Segoe UI", "Arial", "Helvetica", "Verdana", "Tahoma", "Trebuchet MS", "Calibri", "Open Sans", "Roboto", "Lato", "Poppins", "Montserrat", "Nunito", "Atkinson Hyperlegible", "Georgia", "Garamond", "Cambria", "Times New Roman", "Courier New"].includes(settings.ai_chatbot_font_family) ? settings.ai_chatbot_font_family : DEFAULT_CONFIG.fontFamily,
-    welcomeMessage: clean(settings.ai_chatbot_welcome_message || DEFAULT_CONFIG.welcomeMessage, 500),
+    welcomeMessage: replaceRetiredBrand(settings.ai_chatbot_welcome_message || DEFAULT_CONFIG.welcomeMessage, 500),
     responseTime: clean(settings.ai_chatbot_response_time || DEFAULT_CONFIG.responseTime, 120),
     maxSelfHelpTurns: integer(settings.ai_chatbot_max_self_help_turns, DEFAULT_CONFIG.maxSelfHelpTurns, 1, 8),
     provider: ["built_in", "workers_ai"].includes(settings.ai_chatbot_provider) ? settings.ai_chatbot_provider : DEFAULT_CONFIG.provider,
     model: clean(settings.ai_chatbot_model || DEFAULT_CONFIG.model, 180),
     tone: ["friendly", "professional", "concise"].includes(settings.ai_chatbot_tone) ? settings.ai_chatbot_tone : DEFAULT_CONFIG.tone,
-    escalationPrompt: clean(settings.ai_chatbot_escalation_prompt || DEFAULT_CONFIG.escalationPrompt, 500),
+    escalationPrompt: replaceRetiredBrand(settings.ai_chatbot_escalation_prompt || DEFAULT_CONFIG.escalationPrompt, 500),
     position: settings.ai_chatbot_position === "bottom-left" ? "bottom-left" : "bottom-right",
     primaryColor: colour(settings.ai_chatbot_primary_color, DEFAULT_CONFIG.primaryColor),
     accentColor: colour(settings.ai_chatbot_accent_color, DEFAULT_CONFIG.accentColor),
@@ -175,12 +179,12 @@ export function knowledgeFrom(settings) {
     if (!Array.isArray(parsed) || !parsed.length) return DEFAULT_ARTICLES;
     const custom = parsed.slice(0, 500).map((article, index) => ({
       id: clean(article.id || `article-${index + 1}`, 80),
-      category: clean(article.category || "General", 80),
-      title: clean(article.title, 160),
-      summary: clean(article.summary, 500),
-      answer: clean(article.answer || article.summary, 2400),
-      keywords: Array.isArray(article.keywords) ? article.keywords.map((item) => clean(item, 80)).filter(Boolean).slice(0, 30) : clean(article.keywords, 800).split(",").map((item) => item.trim()).filter(Boolean).slice(0, 30),
-      steps: Array.isArray(article.steps) ? article.steps.map((item) => clean(item, 300)).filter(Boolean).slice(0, 10) : clean(article.steps, 1600).split("\\n").map((item) => item.trim()).filter(Boolean).slice(0, 10),
+      category: replaceRetiredBrand(article.category || "General", 80),
+      title: replaceRetiredBrand(article.title, 160),
+      summary: replaceRetiredBrand(article.summary, 500),
+      answer: replaceRetiredBrand(article.answer || article.summary, 2400),
+      keywords: Array.isArray(article.keywords) ? article.keywords.map((item) => replaceRetiredBrand(item, 80)).filter(Boolean).slice(0, 30) : replaceRetiredBrand(article.keywords, 800).split(",").map((item) => item.trim()).filter(Boolean).slice(0, 30),
+      steps: Array.isArray(article.steps) ? article.steps.map((item) => replaceRetiredBrand(item, 300)).filter(Boolean).slice(0, 10) : replaceRetiredBrand(article.steps, 1600).split("\\n").map((item) => item.trim()).filter(Boolean).slice(0, 10),
       href: clean(article.href || "/help-centre", 300)
     })).filter((article) => article.title && article.answer);
     const merged = new Map(DEFAULT_ARTICLES.map((article) => [article.id, article]));
