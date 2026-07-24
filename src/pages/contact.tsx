@@ -7,42 +7,45 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from
-'@/components/ui/select';
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
+} from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
-  MessageSquare, Mail, Clock, CheckCircle2, AlertTriangle,
-  FileText, CreditCard, Settings, HelpCircle, Loader2 } from
-'lucide-react';
-import { GROUP_CONTACT_EMAIL, GROUP_PHONE_DISPLAY, GROUP_PHONE_HREF, PLAN_STUDIO_EMAIL } from '@/lib/contact-details';
+  ArrowRight, Bot, CheckCircle2, ChevronRight, Headphones,
+  LifeBuoy, Loader2, Mail, MessageSquare, Phone, Send,
+  ShieldCheck, Sparkles, WandSparkles, AlertTriangle
+} from 'lucide-react';
+import {
+  GROUP_CONTACT_EMAIL, GROUP_PHONE_DISPLAY, GROUP_PHONE_HREF, PLAN_STUDIO_EMAIL
+} from '@/lib/contact-details';
 
 const CATEGORIES = [
-{ value: 'general', label: 'General enquiry' },
-{ value: 'billing', label: 'Billing & subscriptions' },
-{ value: 'technical', label: 'Technical issue' },
-{ value: 'planning', label: 'Experience builders & plans' },
-{ value: 'account', label: 'Account & access' },
-{ value: 'feedback', label: 'Feedback & suggestions' },
-{ value: 'other', label: 'Other' }];
-
+  { value: 'general', label: 'General enquiry' },
+  { value: 'billing', label: 'Billing & subscriptions' },
+  { value: 'technical', label: 'Technical issue' },
+  { value: 'planning', label: 'Experience builders & plans' },
+  { value: 'account', label: 'Account & access' },
+  { value: 'feedback', label: 'Feedback & suggestions' },
+  { value: 'other', label: 'Other' }
+];
 
 const PRIORITIES = [
-{ value: 'low', label: 'Low — general question' },
-{ value: 'normal', label: 'Normal — standard request' },
-{ value: 'high', label: 'High — affecting my work' },
-{ value: 'urgent', label: 'Urgent — cannot use the platform' }];
+  { value: 'low', label: 'Low — general question' },
+  { value: 'normal', label: 'Normal — standard request' },
+  { value: 'high', label: 'High — affecting my work' },
+  { value: 'urgent', label: 'Urgent — I cannot use Planyx' }
+];
 
-
-const QUICK_LINKS = [
-{ icon: CreditCard, title: 'Billing & Plans', description: 'Upgrade, downgrade, or cancel your subscription.', href: '/pricing' },
-{ icon: Settings, title: 'Account Settings', description: 'Update your profile, password, and preferences.', href: '/settings' },
-{ icon: FileText, title: 'Experience Builders', description: 'Build plans for activities, days out, occasions and trips.', href: '/builders' },
-{ icon: HelpCircle, title: 'Plans & Pricing', description: 'Compare plans and see what\'s included.', href: '/pricing' }];
-
+const AI_PROMPTS = [
+  'I cannot sign in',
+  'Help with my subscription',
+  'My plan did not save',
+  'How do I use a builder?'
+];
 
 export default function ContactPage() {
   const { user } = useAuth();
-
+  const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({
     name: user ? `${user.firstName} ${user.lastName}`.trim() : '',
     email: user?.email ?? '',
@@ -56,13 +59,27 @@ export default function ContactPage() {
   const [error, setError] = useState('');
 
   function update(field: string, value: string) {
-    setForm((prev) => ({ ...prev, [field]: value }));
+    setForm((previous) => ({ ...previous, [field]: value }));
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError('');
+  function openAssistant(prompt = '') {
+    const launcher = document.querySelector<HTMLButtonElement>(
+      'button[aria-label="Open Help Centre assistant"]'
+    );
+    launcher?.click();
+    if (prompt) {
+      window.setTimeout(() => {
+        const input = document.querySelector<HTMLInputElement>(
+          'input[placeholder="Ask a Help Centre question…"]'
+        );
+        input?.focus();
+      }, 150);
+    }
+  }
 
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    setError('');
     if (!form.name.trim() || !form.email.trim() || !form.subject.trim() || !form.message.trim()) {
       setError('Please fill in all required fields.');
       return;
@@ -70,18 +87,15 @@ export default function ContactPage() {
 
     setSubmitting(true);
     try {
-      const res = await fetch('/api/support/submit', {
+      const response = await fetch('/api/support/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify(form)
       });
-      const data = (await res.json()) as {success: boolean;error?: string;};
-      if (data.success) {
-        setSuccess(true);
-      } else {
-        setError(data.error ?? 'Failed to submit. Please try again.');
-      }
+      const data = (await response.json()) as { success: boolean; error?: string };
+      if (data.success) setSuccess(true);
+      else setError(data.error ?? 'We could not submit your request. Please try again.');
     } catch {
       setError('Network error. Please check your connection and try again.');
     } finally {
@@ -92,233 +106,272 @@ export default function ContactPage() {
   return (
     <>
       <Helmet>
-        <title>Contact Support — Planyx</title>
-        <meta name="description" content="Get help with Planyx. Submit a support request and our team will be in touch." />
+        <title>Help & Contact — Planyx</title>
+        <meta
+          name="description"
+          content="Get quick answers from Planyx AI or contact the Planyx support team."
+        />
       </Helmet>
 
-      <div className="min-h-screen bg-background">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-10">
-
-          {/* Header */}
-          <div className="text-center max-w-xl mx-auto space-y-3">
-            <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
-              <MessageSquare className="w-7 h-7 text-primary" />
+      <main className="min-h-screen bg-background">
+        <section className="relative overflow-hidden border-b border-border/60">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_10%,hsl(var(--primary)/0.20),transparent_32%),radial-gradient(circle_at_85%_20%,rgb(124_58_237/0.16),transparent_30%)]" />
+          <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20">
+            <div className="max-w-3xl mx-auto text-center">
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary mb-5">
+                <Sparkles className="w-3.5 h-3.5" />
+                Planyx intelligent support
+              </div>
+              <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-foreground">
+                How can we help?
+              </h1>
+              <p className="mt-4 text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
+                Start with Planyx AI for a quick answer. If it cannot sort the issue,
+                it can guide you towards the right support option.
+              </p>
             </div>
-            <h1 className="text-3xl font-extrabold text-foreground">Contact Support</h1>
-            <p className="text-muted-foreground">
-              Have a question or need help? Fill in the form below and our team will get back to you.
-            </p>
+
+            <div className="mt-10 max-w-4xl mx-auto rounded-[28px] border border-primary/20 bg-card/95 shadow-2xl shadow-primary/10 overflow-hidden backdrop-blur">
+              <div className="grid lg:grid-cols-[1.15fr_0.85fr]">
+                <div className="p-6 sm:p-9 bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-600 text-white">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center">
+                      <Bot className="w-7 h-7" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h2 className="text-xl font-bold">Ask Planyx AI</h2>
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide bg-emerald-400/20 border border-emerald-300/30 rounded-full px-2 py-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-300" />
+                          Online
+                        </span>
+                      </div>
+                      <p className="text-sm text-blue-100 mt-1">Fast help, available any time.</p>
+                    </div>
+                  </div>
+
+                  <p className="mt-6 text-sm sm:text-base text-blue-50 leading-relaxed">
+                    Describe what you need in your own words. The assistant searches Planyx
+                    help content, suggests the next step and can prepare an enquiry if needed.
+                  </p>
+
+                  <Button
+                    type="button"
+                    size="lg"
+                    onClick={() => openAssistant()}
+                    className="mt-7 w-full sm:w-auto bg-white text-indigo-700 hover:bg-blue-50 font-bold shadow-lg gap-2"
+                  >
+                    <WandSparkles className="w-4 h-4" />
+                    Start a conversation
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </div>
+
+                <div className="p-6 sm:p-9">
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">
+                    Popular questions
+                  </p>
+                  <div className="mt-4 space-y-2">
+                    {AI_PROMPTS.map((prompt) => (
+                      <button
+                        key={prompt}
+                        type="button"
+                        onClick={() => openAssistant(prompt)}
+                        className="w-full flex items-center justify-between gap-3 rounded-xl border border-border bg-background/60 px-4 py-3 text-left text-sm font-medium text-foreground hover:border-primary/40 hover:bg-primary/5 hover:text-primary transition-all group"
+                      >
+                        <span>{prompt}</span>
+                        <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+          <div className="text-center mb-8">
+            <p className="text-sm font-semibold text-primary">Prefer a person?</p>
+            <h2 className="mt-1 text-2xl sm:text-3xl font-bold text-foreground">Contact the support team</h2>
+            <p className="mt-2 text-sm text-muted-foreground">Choose the easiest way to reach us.</p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-4">
+            <button
+              type="button"
+              onClick={() => setShowForm(true)}
+              className="rounded-2xl border border-border bg-card p-6 text-left hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-lg transition-all"
+            >
+              <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                <MessageSquare className="w-5 h-5" />
+              </div>
+              <h3 className="mt-4 font-bold text-foreground">Send a support request</h3>
+              <p className="mt-1 text-sm text-muted-foreground">Tell us what happened using our secure form.</p>
+              <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-primary">
+                Open form <ChevronRight className="w-4 h-4" />
+              </span>
+            </button>
 
-            {/* Form */}
-            <div className="lg:col-span-2">
-              {success ?
-              <div className="bg-card border border-border rounded-2xl p-10 text-center space-y-4">
-                  <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto">
-                    <CheckCircle2 className="w-8 h-8 text-green-600" />
+            <a
+              href={`mailto:${PLAN_STUDIO_EMAIL}`}
+              className="rounded-2xl border border-border bg-card p-6 hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-lg transition-all"
+            >
+              <div className="w-11 h-11 rounded-xl bg-violet-500/10 flex items-center justify-center text-violet-500">
+                <Mail className="w-5 h-5" />
+              </div>
+              <h3 className="mt-4 font-bold text-foreground">Email Planyx</h3>
+              <p className="mt-1 text-sm text-muted-foreground">Accounts, subscriptions, technical help and account deletion.</p>
+              <span className="mt-4 block text-sm font-semibold text-primary break-all">{PLAN_STUDIO_EMAIL}</span>
+            </a>
+
+            <a
+              href={GROUP_PHONE_HREF}
+              className="rounded-2xl border border-border bg-card p-6 hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-lg transition-all"
+            >
+              <div className="w-11 h-11 rounded-xl bg-cyan-500/10 flex items-center justify-center text-cyan-500">
+                <Phone className="w-5 h-5" />
+              </div>
+              <h3 className="mt-4 font-bold text-foreground">Call JA Group Services</h3>
+              <p className="mt-1 text-sm text-muted-foreground">For general company enquiries and telephone assistance.</p>
+              <span className="mt-4 block text-sm font-semibold text-primary">{GROUP_PHONE_DISPLAY}</span>
+            </a>
+          </div>
+
+          {showForm && (
+            <div className="mt-8 max-w-4xl mx-auto">
+              {success ? (
+                <div className="rounded-3xl border border-emerald-500/20 bg-card p-10 text-center shadow-lg">
+                  <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 flex items-center justify-center mx-auto">
+                    <CheckCircle2 className="w-8 h-8 text-emerald-500" />
                   </div>
-                  <h2 className="text-xl font-bold text-foreground">Request submitted</h2>
-                  <p className="text-muted-foreground text-sm max-w-sm mx-auto">
-                    Thank you — we've received your support request and will be in touch shortly.
+                  <h2 className="mt-5 text-2xl font-bold text-foreground">Your request is with us</h2>
+                  <p className="mt-2 text-sm text-muted-foreground max-w-md mx-auto">
+                    We have received your message. The Planyx support team will reply using the email address you provided.
                   </p>
-                  <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
-                    <Button onClick={() => {setSuccess(false);setForm((f) => ({ ...f, subject: '', message: '' }));}}>
-                      Submit another request
-                    </Button>
-                    {user &&
-                  <Button variant="outline" asChild>
-                        <Link to="/dashboard">Back to dashboard</Link>
-                      </Button>
-                  }
+                  <Button
+                    className="mt-6"
+                    onClick={() => {
+                      setSuccess(false);
+                      setForm((current) => ({ ...current, subject: '', message: '' }));
+                    }}
+                  >
+                    Send another request
+                  </Button>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit} className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-xl shadow-primary/5">
+                  <div className="flex items-start justify-between gap-4 mb-7">
+                    <div>
+                      <div className="flex items-center gap-2 text-primary">
+                        <Headphones className="w-5 h-5" />
+                        <span className="text-xs font-bold uppercase tracking-wide">Human support</span>
+                      </div>
+                      <h2 className="mt-2 text-2xl font-bold text-foreground">Tell us what you need</h2>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Include what you expected, what happened and any error message you saw.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowForm(false)}
+                      className="text-sm font-semibold text-muted-foreground hover:text-foreground"
+                    >
+                      Close
+                    </button>
                   </div>
-                </div> :
 
-              <form onSubmit={handleSubmit} className="bg-card border border-border rounded-2xl p-6 space-y-5">
-                  <h2 className="text-base font-bold text-foreground">Submit a support request</h2>
-
-                  {error &&
-                <Alert variant="destructive">
+                  {error && (
+                    <Alert variant="destructive" className="mb-5">
                       <AlertTriangle className="w-4 h-4" />
                       <AlertDescription>{error}</AlertDescription>
                     </Alert>
-                }
+                  )}
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="name">Full name <span className="text-destructive">*</span></Label>
-                      <Input
-                      id="name"
-                      value={form.name}
-                      onChange={(e) => update('name', e.target.value)}
-                      placeholder="Your name"
-                      required />
-                    
+                  <div className="grid sm:grid-cols-2 gap-5">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Full name *</Label>
+                      <Input id="name" value={form.name} onChange={(e) => update('name', e.target.value)} required />
                     </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="email">Email address <span className="text-destructive">*</span></Label>
-                      <Input
-                      id="email"
-                      type="email"
-                      value={form.email}
-                      onChange={(e) => update('email', e.target.value)}
-                      placeholder="you@example.com"
-                      required />
-                    
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email address *</Label>
+                      <Input id="email" type="email" value={form.email} onChange={(e) => update('email', e.target.value)} required />
                     </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="category">Category</Label>
-                      <Select value={form.category} onValueChange={(v) => update('category', v)}>
-                        <SelectTrigger id="category">
-                          <SelectValue />
-                        </SelectTrigger>
+                    <div className="space-y-2">
+                      <Label htmlFor="category">What is this about?</Label>
+                      <Select value={form.category} onValueChange={(value) => update('category', value)}>
+                        <SelectTrigger id="category"><SelectValue /></SelectTrigger>
                         <SelectContent>
-                          {CATEGORIES.map((c) =>
-                        <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
-                        )}
+                          {CATEGORIES.map((category) => (
+                            <SelectItem key={category.value} value={category.value}>{category.label}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="priority">Priority</Label>
-                      <Select value={form.priority} onValueChange={(v) => update('priority', v)}>
-                        <SelectTrigger id="priority">
-                          <SelectValue />
-                        </SelectTrigger>
+                    <div className="space-y-2">
+                      <Label htmlFor="priority">How much is it affecting you?</Label>
+                      <Select value={form.priority} onValueChange={(value) => update('priority', value)}>
+                        <SelectTrigger id="priority"><SelectValue /></SelectTrigger>
                         <SelectContent>
-                          {PRIORITIES.map((p) =>
-                        <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
-                        )}
+                          {PRIORITIES.map((priority) => (
+                            <SelectItem key={priority.value} value={priority.value}>{priority.label}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
 
-                  <div className="space-y-1.5">
-                    <Label htmlFor="subject">Subject <span className="text-destructive">*</span></Label>
+                  <div className="mt-5 space-y-2">
+                    <Label htmlFor="subject">Subject *</Label>
                     <Input
-                    id="subject"
-                    value={form.subject}
-                    onChange={(e) => update('subject', e.target.value)}
-                    placeholder="Brief description of your issue"
-                    required />
-                  
+                      id="subject"
+                      value={form.subject}
+                      onChange={(e) => update('subject', e.target.value)}
+                      placeholder="A short summary of the problem"
+                      required
+                    />
                   </div>
 
-                  <div className="space-y-1.5">
-                    <Label htmlFor="message">Message <span className="text-destructive">*</span></Label>
+                  <div className="mt-5 space-y-2">
+                    <Label htmlFor="message">What happened? *</Label>
                     <Textarea
-                    id="message"
-                    value={form.message}
-                    onChange={(e) => update('message', e.target.value)}
-                    placeholder="Please describe your issue in as much detail as possible…"
-                    className="min-h-[140px]"
-                    required />
-                  
+                      id="message"
+                      value={form.message}
+                      onChange={(e) => update('message', e.target.value)}
+                      placeholder="Describe the issue, what you were trying to do and any error message shown…"
+                      className="min-h-[150px]"
+                      required
+                    />
                   </div>
 
-                  <div className="flex items-center justify-between pt-1">
-                    <p className="text-xs text-muted-foreground">
-                      <span className="text-destructive">*</span> Required fields
-                    </p>
+                  <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-t border-border pt-5">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                      Your details are used to respond to this request.
+                    </div>
                     <Button type="submit" disabled={submitting} className="gap-2">
-                      {submitting ?
-                    <><Loader2 className="w-4 h-4 animate-spin" />Submitting…</> :
-                    <><MessageSquare className="w-4 h-4" />Submit request</>}
+                      {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                      {submitting ? 'Sending…' : 'Send request'}
                     </Button>
                   </div>
                 </form>
-              }
+              )}
             </div>
+          )}
 
-            {/* Sidebar */}
-            <div className="space-y-5">
-
-              {/* Response time */}
-              <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-primary" />
-                  <h3 className="text-sm font-semibold text-foreground">Response times</h3>
-                </div>
-                <div className="space-y-2 text-xs">
-                  {[
-                  { label: 'Urgent', time: 'Within 4 hours', color: 'text-red-500' },
-                  { label: 'High', time: 'Within 24 hours', color: 'text-amber-500' },
-                  { label: 'Normal', time: 'Within 2 days', color: 'text-blue-500' },
-                  { label: 'Low', time: 'Within 5 days', color: 'text-slate-400' }].
-                  map((r) =>
-                  <div key={r.label} className="flex items-center justify-between">
-                      <span className={`font-medium ${r.color}`}>{r.label}</span>
-                      <span className="text-muted-foreground">{r.time}</span>
-                    </div>
-                  )}
-                </div>
-                <p className="text-[10px] text-muted-foreground border-t border-border pt-2">
-                  Priority support customers (Professional &amp; Organisation plans) receive faster responses.
-                </p>
-              </div>
-
-              {/* Email */}
-              <div className="bg-card border border-border rounded-2xl p-5 space-y-2">
-                <div className="flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-primary" />
-                  <h3 className="text-sm font-semibold text-foreground">Email us directly</h3>
-                </div>
-                <a
-                  href={`mailto:${PLAN_STUDIO_EMAIL}`}
-                  className="text-sm text-primary hover:underline font-medium">{PLAN_STUDIO_EMAIL}
-                </a>
-                <p className="text-xs text-muted-foreground">
-                  Planyx support, customer accounts and account deletion.
-                </p>
-                <div className="pt-3 mt-3 border-t border-border space-y-1 text-xs text-muted-foreground">
-                  <p>General JA Group Services enquiries: <a href={`mailto:${GROUP_CONTACT_EMAIL}`} className="text-primary hover:underline">{GROUP_CONTACT_EMAIL}</a></p>
-                  <p>Telephone: <a href={GROUP_PHONE_HREF} className="text-primary hover:underline">{GROUP_PHONE_DISPLAY}</a></p>
-                </div>
-              </div>
-
-              {/* Quick links */}
-              <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
-                <h3 className="text-sm font-semibold text-foreground">Quick links</h3>
-                <div className="space-y-2">
-                  {QUICK_LINKS.map((ql) => {
-                    const Icon = ql.icon;
-                    return (
-                      <Link
-                        key={ql.title}
-                        to={ql.href}
-                        className="flex items-start gap-3 p-2.5 rounded-lg hover:bg-muted/50 transition-colors group">
-                        
-                        <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                          <Icon className="w-3.5 h-3.5 text-primary" />
-                        </div>
-                        <div>
-                          <p className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors">{ql.title}</p>
-                          <p className="text-[10px] text-muted-foreground leading-relaxed">{ql.description}</p>
-                        </div>
-                      </Link>);
-
-                  })}
-                </div>
-              </div>
-
+          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1.5">
+              <LifeBuoy className="w-4 h-4" />
+              General JA Group Services enquiries:
             </div>
+            <a href={`mailto:${GROUP_CONTACT_EMAIL}`} className="font-semibold text-primary hover:underline">
+              {GROUP_CONTACT_EMAIL}
+            </a>
+            <span className="hidden sm:inline">•</span>
+            <Link to="/privacy" className="hover:text-foreground hover:underline">Privacy</Link>
           </div>
-
-          {/* Disclaimer */}
-          <div className="bg-muted/40 border border-border rounded-xl p-4 text-center">
-            <p className="text-xs text-muted-foreground">
-              Planyx provides document creation tools only. We do not provide legal, financial, or professional advice.
-              For legal or professional matters, please consult a qualified professional.
-            </p>
-          </div>
-
-        </div>
-      </div>
-    </>);
-
+        </section>
+      </main>
+    </>
+  );
 }
