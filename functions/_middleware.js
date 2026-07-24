@@ -112,6 +112,19 @@ ${(started || expected) ? `<div class="timeline">${started ? `<div class="time">
 </html>`;
 }
 
+function contactStatusHtml(settings, mode) {
+  const maintenance = mode === "maintenance";
+  const title = maintenance ? (settings.contact_maintenance_title || "Contact support is temporarily unavailable") : "Contact Us is currently offline";
+  const reason = maintenance ? (settings.contact_maintenance_reason || "Contact service maintenance") : "Contact page unavailable";
+  const message = maintenance ? (settings.contact_maintenance_message || "We are carrying out essential work on the Planyx contact service. Please check back shortly.") : (settings.contact_offline_message || "The Contact Us page is currently offline.");
+  const started = maintenance ? escapeHtml(settings.contact_maintenance_start || "") : "";
+  const expected = maintenance ? escapeHtml(settings.contact_maintenance_expected_return || "") : "";
+  const statusLabel = maintenance ? "Maintenance in progress" : "Contact page offline";
+  return `<!doctype html><html lang="en-GB"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)} — Planyx</title><meta name="robots" content="noindex,nofollow"><link rel="icon" href="/assets/brand/planyx-icon.png?v=1">
+<style>*{box-sizing:border-box}body{margin:0;min-height:100vh;background:#07101f;color:#eef6ff;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}body:before{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(circle at 14% 12%,rgba(37,99,235,.23),transparent 35%),radial-gradient(circle at 86% 78%,rgba(14,165,233,.12),transparent 32%)}.shell{position:relative;min-height:100vh;display:flex;flex-direction:column}.top{display:flex;align-items:center;justify-content:space-between;gap:1rem;width:min(1120px,calc(100% - 2rem));margin:0 auto;padding:1.4rem 0;border-bottom:1px solid rgba(148,163,184,.16)}.logo{height:42px;width:auto;max-width:180px;object-fit:contain}.status{display:inline-flex;align-items:center;gap:.55rem;color:#a9c3e6;font-size:.8rem}.dot{width:8px;height:8px;border-radius:999px;background:#38bdf8;box-shadow:0 0 0 6px rgba(56,189,248,.1)}main{flex:1;display:grid;place-items:center;width:min(900px,calc(100% - 2rem));margin:0 auto;padding:clamp(3rem,8vw,7rem) 0}.card{width:100%;border:1px solid rgba(96,165,250,.22);border-radius:24px;background:linear-gradient(145deg,rgba(15,30,51,.88),rgba(9,20,37,.92));box-shadow:0 28px 90px rgba(0,0,0,.28);padding:clamp(1.5rem,5vw,3.5rem)}.eyebrow{display:inline-flex;margin:0 0 1.15rem;color:#7dd3fc;font-size:.76rem;font-weight:650;letter-spacing:.1em;text-transform:uppercase}h1{max-width:760px;margin:0;font-size:clamp(2rem,5vw,4rem);font-weight:560;line-height:1.08;letter-spacing:-.04em}.message{max-width:700px;margin:1.35rem 0 0;color:#b9cbe2;font-size:clamp(1rem,2vw,1.15rem);line-height:1.75}.timeline{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;margin-top:2rem;overflow:hidden;border:1px solid rgba(148,163,184,.17);border-radius:16px;background:rgba(148,163,184,.17)}.time{padding:1rem 1.15rem;background:rgba(6,16,31,.74)}.time small{display:block;margin-bottom:.35rem;color:#7187a5;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em}.time strong{font-size:.94rem;font-weight:520;color:#ddecff}.actions{display:flex;flex-wrap:wrap;gap:.75rem;margin-top:1.5rem}.actions a{display:inline-flex;align-items:center;min-height:42px;padding:.65rem 1rem;border-radius:10px;border:1px solid rgba(96,165,250,.3);color:#bfdbfe;text-decoration:none;background:rgba(37,99,235,.1);font-size:.86rem;font-weight:650}footer{width:min(1120px,calc(100% - 2rem));margin:0 auto;padding:1.4rem 0 2rem;border-top:1px solid rgba(148,163,184,.16);display:flex;justify-content:space-between;gap:1rem;color:#7187a5;font-size:.76rem}footer a{color:#9ab7da;text-decoration:none}footer nav{display:flex;gap:1rem;flex-wrap:wrap}@media(max-width:640px){.top{padding-top:1rem}.logo{height:34px}.timeline{grid-template-columns:1fr}footer{flex-direction:column}.status{font-size:.72rem}}</style></head><body><div class="shell"><header class="top"><a href="/"><img class="logo" src="/assets/brand/planyx-logo.svg?v=1" alt="Planyx"></a><div class="status"><span class="dot"></span>${escapeHtml(statusLabel)}</div></header><main><section class="card"><p class="eyebrow">${escapeHtml(reason)}</p><h1>${escapeHtml(title)}</h1><p class="message">${escapeHtml(message)}</p>${(started || expected) ? `<div class="timeline">${started ? `<div class="time"><small>Work started</small><strong data-date="${started}">${started}</strong></div>` : ""}${expected ? `<div class="time"><small>Expected return</small><strong data-date="${expected}">${expected}</strong></div>` : ""}</div>` : ""}<div class="actions"><a href="/">Return to Planyx</a><a href="mailto:planyx@jagroupservices.co.uk">Email Planyx support</a></div></section></main><footer><span>© ${new Date().getFullYear()} Planyx · Operated by JA Group Services Ltd</span><nav><a href="/legal/terms/">Terms</a><a href="/legal/privacy/">Privacy</a><a href="/legal/cookies/">Cookies</a></nav></footer></div><script>document.querySelectorAll("[data-date]").forEach(function(el){var d=new Date(el.dataset.date);if(!isNaN(d))el.textContent=new Intl.DateTimeFormat("en-GB",{dateStyle:"medium",timeStyle:"short"}).format(d)})</script></body></html>`;
+}
+
 async function getSiteSettings(DB) {
   try {
     const result = await DB.prepare(`
@@ -127,6 +140,13 @@ async function getSiteSettings(DB) {
         'maintenance_start',
         'maintenance_expected_return',
         'maintenance_contact_text',
+        'contact_page_status',
+        'contact_maintenance_title',
+        'contact_maintenance_reason',
+        'contact_maintenance_message',
+        'contact_maintenance_start',
+        'contact_maintenance_expected_return',
+        'contact_offline_message',
         'launchgateway_enabled',
         'launchgateway_content_mode',
         'launchgateway_content',
@@ -151,7 +171,8 @@ async function getSiteSettings(DB) {
       launchgateway_content_mode: "plain",
       launchgateway_content: "",
       site_theme_mode: "dark",
-      site_status: "maintenance"
+      site_status: "maintenance",
+      contact_page_status: "online"
     };
   }
 }
@@ -488,8 +509,36 @@ export async function onRequest(context) {
     });
   }
 
+  // Contact-page-only preview for administrators, using the live saved renderer.
+  if (env.DB && (path === "/maintenance/contact" || path === "/maintenance/contact/")) {
+    if (!adminIdentity) return new Response("Not found", { status: 404 });
+    settings = settings || await getSiteSettings(env.DB);
+    const previewMode = url.searchParams.get("view") === "offline" ? "offline" : "maintenance";
+    return new Response(contactStatusHtml(settings, previewMode), {
+      status: 200,
+      headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" }
+    });
+  }
+
   // Enforce site status gates first for non-administrators, excluding absolute system bypasses
   if (!adminIdentity) {
+    // Contact status is enforced before React loads so cached client code cannot bypass it.
+    if (env.DB && (path === "/contact" || path === "/contact/") && isHtmlNavigationRequest(request)) {
+      settings = settings || await getSiteSettings(env.DB);
+      const contactStatus = ["online", "maintenance", "offline"].includes(settings.contact_page_status)
+        ? settings.contact_page_status
+        : "online";
+      if (contactStatus !== "online") {
+        return new Response(contactStatusHtml(settings, contactStatus), {
+          status: contactStatus === "maintenance" ? 503 : 404,
+          headers: {
+            "Content-Type": "text/html; charset=utf-8",
+            "Cache-Control": "no-store",
+            ...(contactStatus === "maintenance" ? { "Retry-After": "3600" } : {})
+          }
+        });
+      }
+    }
     const isStatusBypass =
       path === "/coming-soon" ||
       path === "/coming-soon/" ||
