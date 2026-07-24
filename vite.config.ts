@@ -7,6 +7,11 @@ const rootDir = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   plugins: [react()],
+  // /public is the committed production bundle, not a Vite source directory.
+  // Source-owned static files are copied from /static by sync-vite-output.mjs.
+  // Disabling Vite's default publicDir prevents old hashed production assets
+  // from being copied back into /dist and accumulating on every deployment.
+  publicDir: false,
   resolve: {
     dedupe: ['react', 'react-dom', 'react-router-dom'],
     alias: {
