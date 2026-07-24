@@ -1,18 +1,18 @@
 const DEFAULT_CONFIG = {
   success: true,
-  headline: "Coming Soon",
-  subtext: "We are putting the finishing touches on something great.",
+  headline: "Your next experience starts here.",
+  subtext: "We are shaping a smarter, calmer way to turn ideas into experiences worth remembering.",
   launchDate: "",
   countdownEnabled: false,
   platformName: "Planyx",
-  description: "Planyx is a self-service experience planning platform that helps you build, save and manage everyday, travel and support planning outputs.",
+  description: "Build plans around the people, places and moments that matter—then keep everything together in one beautifully organised space.",
   features: [
-    "Guided Experience Builders",
-    "Builder Usage Tokens",
-    "Saved Plans and outputs",
-    "Destination discovery tools",
-    "Accessibility and support planning",
-    "Membership plans and add-ons"
+    "Guided experience planning",
+    "Ideas shaped around you",
+    "Places worth discovering",
+    "Plans kept in one place",
+    "Less admin, more living",
+    "Designed to feel effortless"
   ]
 };
 
@@ -43,6 +43,17 @@ async function readSiteSetting(env, key) {
   }
 }
 
+const LEGACY_COPY = {
+  "Coming Soon": DEFAULT_CONFIG.headline,
+  "We are putting the finishing touches on something great.": DEFAULT_CONFIG.subtext,
+  "Planyx is a self-service experience planning platform that helps you build, save and manage everyday, travel and support planning outputs.": DEFAULT_CONFIG.description
+};
+
+function refreshLegacyCopy(value, fallback) {
+  const cleaned = typeof value === "string" ? value.trim() : "";
+  return LEGACY_COPY[cleaned] || cleaned || fallback;
+}
+
 function parseFeatures(value) {
   if (!value) return DEFAULT_CONFIG.features;
   try {
@@ -70,11 +81,11 @@ export async function onRequestGet({ env }) {
 
   return json({
     ...DEFAULT_CONFIG,
-    headline: headline.value || DEFAULT_CONFIG.headline,
-    subtext: subtext.value || DEFAULT_CONFIG.subtext,
+    headline: refreshLegacyCopy(headline.value, DEFAULT_CONFIG.headline),
+    subtext: refreshLegacyCopy(subtext.value, DEFAULT_CONFIG.subtext),
     launchDate: launchDate.found ? launchDate.value : "",
     countdownEnabled: countdownEnabled.found && countdownEnabled.value === "true",
-    description: description.value || DEFAULT_CONFIG.description,
+    description: refreshLegacyCopy(description.value, DEFAULT_CONFIG.description),
     features: parseFeatures(features.value)
   });
 }
