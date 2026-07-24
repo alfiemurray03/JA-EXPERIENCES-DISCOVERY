@@ -73,6 +73,8 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: 'Branding',        href: '/admin/branding',      icon: Palette,       section: 'branding' },
       { label: 'Website CMS',     href: '/admin/content',     icon: FileEdit,        section: 'cms' },
+      { label: 'Website Pages',   href: '/admin/pages',       icon: Globe,           section: 'cms' },
+      { label: 'Legal Policies',  href: '/admin/legal',       icon: FileText,        section: 'cms' },
       { label: 'Affiliate Content', href: '/admin/affiliate-content', icon: Globe,   section: 'affiliate' },
     ],
   },
@@ -428,6 +430,8 @@ function AdminLayoutInner({ children, title }: AdminLayoutInnerProps) {
                 <div className="space-y-2 text-sm">
                   <Link to="/admin/builders" className="block text-slate-600 transition-colors hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400">Experience builders</Link>
                   <Link to="/admin/content" className="block text-slate-600 transition-colors hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400">Website CMS</Link>
+                  <Link to="/admin/pages" className="block text-slate-600 transition-colors hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400">Website pages</Link>
+                  <Link to="/admin/legal" className="block text-slate-600 transition-colors hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400">Legal policies</Link>
                   <Link to="/admin/branding" className="block text-slate-600 transition-colors hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400">Branding</Link>
                   <Link to="/admin/site-settings" className="block text-slate-600 transition-colors hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400">Site settings</Link>
                 </div>
