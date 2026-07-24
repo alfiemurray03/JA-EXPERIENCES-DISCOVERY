@@ -39,8 +39,36 @@ function pageHtml(settings, page) {
 
   if (mode === "html") return content;
 
-  const title = prefix === "launchgateway" ? "Launch Gateway" : "Maintenance";
+  const title = prefix === "launchgateway" ? "Launch Gateway" : (settings.maintenance_title || "We are making Planyx even better");
   const plainContent = escapeHtml(content).replace(/\r?\n/g, "<br>");
+
+  if (prefix === "maintenance") {
+    const reason = escapeHtml(settings.maintenance_reason || "Planned platform maintenance");
+    const message = escapeHtml(settings.maintenance_message || content || "Planyx is temporarily unavailable while our team completes essential improvements.");
+    const started = escapeHtml(settings.maintenance_start || "");
+    const expected = escapeHtml(settings.maintenance_expected_return || "");
+    const contact = escapeHtml(settings.maintenance_contact_text || "Need help while we are away? Contact planyx@jagroupservices.co.uk or call 020 3834 2790.");
+    return `<!doctype html><html lang="en-GB"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${escapeHtml(title)} — Planyx</title><meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="/assets/brand/planyx-icon.png?v=1">
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:#07101f;color:#eef6ff;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(circle at 15% 15%,rgba(37,99,235,.24),transparent 34%),radial-gradient(circle at 85% 75%,rgba(6,182,212,.14),transparent 32%)}
+.shell{position:relative;min-height:100vh;display:flex;flex-direction:column}.top{display:flex;align-items:center;justify-content:space-between;gap:1rem;width:min(1120px,calc(100% - 2rem));margin:0 auto;padding:1.4rem 0;border-bottom:1px solid rgba(148,163,184,.16)}
+.logo{height:42px;width:auto;max-width:180px;object-fit:contain}.status{display:inline-flex;align-items:center;gap:.55rem;color:#a9c3e6;font-size:.8rem}.dot{width:8px;height:8px;border-radius:999px;background:#38bdf8;box-shadow:0 0 0 6px rgba(56,189,248,.1)}
+main{flex:1;display:grid;place-items:center;width:min(920px,calc(100% - 2rem));margin:0 auto;padding:clamp(3rem,8vw,7rem) 0}.card{width:100%;border:1px solid rgba(96,165,250,.22);border-radius:24px;background:linear-gradient(145deg,rgba(15,30,51,.88),rgba(9,20,37,.92));box-shadow:0 28px 90px rgba(0,0,0,.28);padding:clamp(1.5rem,5vw,3.5rem)}
+.eyebrow{display:inline-flex;margin:0 0 1.15rem;color:#7dd3fc;font-size:.76rem;font-weight:650;letter-spacing:.1em;text-transform:uppercase}h1{max-width:760px;margin:0;font-size:clamp(2rem,5vw,4.2rem);font-weight:560;line-height:1.06;letter-spacing:-.045em}h1 span{color:#60a5fa}.message{max-width:700px;margin:1.35rem 0 0;color:#b9cbe2;font-size:clamp(1rem,2vw,1.15rem);line-height:1.75}
+.timeline{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;margin-top:2rem;overflow:hidden;border:1px solid rgba(148,163,184,.17);border-radius:16px;background:rgba(148,163,184,.17)}.time{padding:1rem 1.15rem;background:rgba(6,16,31,.74)}.time small{display:block;margin-bottom:.35rem;color:#7187a5;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em}.time strong{font-size:.94rem;font-weight:520;color:#ddecff}
+.contact{margin:1.25rem 0 0;padding:1rem 1.15rem;border-left:2px solid #3b82f6;border-radius:0 12px 12px 0;background:rgba(37,99,235,.09);color:#a9c3e6;font-size:.9rem;line-height:1.65}footer{width:min(1120px,calc(100% - 2rem));margin:0 auto;padding:1.4rem 0 2rem;border-top:1px solid rgba(148,163,184,.16);display:flex;justify-content:space-between;gap:1rem;color:#7187a5;font-size:.76rem}footer a{color:#9ab7da;text-decoration:none}footer nav{display:flex;gap:1rem;flex-wrap:wrap}
+@media(max-width:640px){.top{padding-top:1rem}.logo{height:34px}.timeline{grid-template-columns:1fr}footer{flex-direction:column}.status{font-size:.72rem}}
+</style></head><body><div class="shell">
+<header class="top"><img class="logo" src="/assets/brand/planyx-logo.svg?v=1" alt="Planyx"><div class="status"><span class="dot"></span>Maintenance in progress</div></header>
+<main><section class="card" aria-labelledby="maintenance-title"><p class="eyebrow">${reason}</p><h1 id="maintenance-title">${escapeHtml(title).replace("Planyx", "<span>Planyx</span>")}</h1><p class="message">${message}</p>
+${(started || expected) ? `<div class="timeline">${started ? `<div class="time"><small>Work started</small><strong data-date="${started}">${started}</strong></div>` : ""}${expected ? `<div class="time"><small>Expected return</small><strong data-date="${expected}">${expected}</strong></div>` : ""}</div>` : ""}
+<p class="contact">${contact}</p></section></main><footer><span>© ${new Date().getFullYear()} Planyx · Operated by JA Group Services Ltd</span><nav><a href="/legal/terms/">Terms</a><a href="/legal/privacy/">Privacy</a><a href="/legal/cookies/">Cookies</a></nav></footer>
+</div><script>document.querySelectorAll("[data-date]").forEach(function(el){var d=new Date(el.dataset.date);if(!isNaN(d))el.textContent=new Intl.DateTimeFormat("en-GB",{dateStyle:"medium",timeStyle:"short"}).format(d)})</script></body></html>`;
+  }
 
   return `<!doctype html>
 <html lang="en-GB">
@@ -93,6 +121,12 @@ async function getSiteSettings(DB) {
         'maintenance_enabled',
         'maintenance_content_mode',
         'maintenance_content',
+        'maintenance_title',
+        'maintenance_reason',
+        'maintenance_message',
+        'maintenance_start',
+        'maintenance_expected_return',
+        'maintenance_contact_text',
         'launchgateway_enabled',
         'launchgateway_content_mode',
         'launchgateway_content',
