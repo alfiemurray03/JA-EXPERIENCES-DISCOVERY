@@ -233,8 +233,8 @@ function AdminLayoutInner({ children, title }: AdminLayoutInnerProps) {
   }
 
   return (
-    <div className="admin-portal min-h-screen bg-slate-50 flex flex-col">
-      <header className="sticky top-0 z-40 border-b border-slate-800 bg-slate-950 text-white shadow-xl backdrop-blur-xl">
+    <div className="admin-portal min-h-screen bg-slate-50 text-slate-900 transition-colors dark:bg-slate-950 dark:text-slate-100 flex flex-col">
+      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white text-slate-900 shadow-xl backdrop-blur-xl transition-colors dark:border-slate-800 dark:bg-slate-950 dark:text-white">
         <div className="mx-auto flex h-16 w-full max-w-[1600px] items-center gap-4 px-4 sm:px-6 lg:px-8">
           <Link
             to="/admin/dashboard"
@@ -262,7 +262,7 @@ function AdminLayoutInner({ children, title }: AdminLayoutInnerProps) {
                   className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                     active
                       ? 'bg-blue-600 text-white shadow-lg shadow-blue-950/30'
-                      : 'text-slate-300 hover:bg-white/10 hover:text-white'
+                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white'
                   }`}
                   aria-current={active ? 'page' : undefined}
                 >
@@ -273,7 +273,7 @@ function AdminLayoutInner({ children, title }: AdminLayoutInnerProps) {
           </nav>
 
           <details className="group relative ml-auto lg:ml-0">
-            <summary className="flex min-h-10 cursor-pointer list-none items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-3 text-sm font-semibold text-slate-200 transition hover:bg-white/10 hover:text-white [&::-webkit-details-marker]:hidden">
+            <summary className="flex min-h-10 cursor-pointer list-none items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-slate-950 dark:border-white/15 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10 dark:hover:text-white [&::-webkit-details-marker]:hidden">
               <Menu className="h-4 w-4" />
               <span className="hidden sm:inline">All admin tools</span>
               <ChevronRight className="h-3.5 w-3.5 rotate-90 transition-transform group-open:-rotate-90" />
@@ -318,28 +318,28 @@ function AdminLayoutInner({ children, title }: AdminLayoutInnerProps) {
           <button
             type="button"
             onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-            className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg border border-white/15 bg-white/5 text-slate-300 transition hover:bg-white/10 hover:text-white"
+            className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 transition hover:bg-slate-100 hover:text-slate-950 dark:border-white/15 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white"
             aria-label={resolvedTheme === 'dark' ? 'Switch Admin Centre to light mode' : 'Switch Admin Centre to dark mode'}
           >
             {resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
 
-          <div ref={accountMenuRef} className="relative border-l border-white/15 pl-3">
+          <div ref={accountMenuRef} className="relative border-l border-slate-200 pl-3 dark:border-white/15">
             <button
               type="button"
               onClick={() => setAccountMenuOpen(open => !open)}
-              className="flex min-h-10 items-center gap-2 rounded-lg px-1.5 py-1 text-left transition hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+              className="flex min-h-10 items-center gap-2 rounded-lg px-1.5 py-1 text-left transition hover:bg-slate-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
               aria-haspopup="menu"
               aria-expanded={accountMenuOpen}
             >
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-blue-400/30 bg-blue-500/15">
-                <span className="text-xs font-bold text-blue-300">{admin.name.charAt(0)}</span>
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-blue-300 bg-blue-50 dark:border-blue-400/30 dark:bg-blue-500/15">
+                <span className="text-xs font-bold text-blue-700 dark:text-blue-300">{admin.name.charAt(0)}</span>
               </div>
               <div className="hidden max-w-28 md:block">
-                <p className="truncate text-xs font-semibold text-white">{admin.name.split(' ')[0]}</p>
-                <p className="text-[10px] uppercase tracking-wide text-slate-400">Administrator</p>
+                <p className="truncate text-xs font-semibold text-slate-900 dark:text-white">{admin.name.split(' ')[0]}</p>
+                <p className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">Administrator</p>
               </div>
-              <ChevronDown className={`hidden h-3.5 w-3.5 text-slate-400 transition-transform md:block ${accountMenuOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown className={`hidden h-3.5 w-3.5 text-slate-500 transition-transform dark:text-slate-400 md:block ${accountMenuOpen ? 'rotate-180' : ''}`} />
             </button>
             {accountMenuOpen && (
               <div
@@ -367,33 +367,33 @@ function AdminLayoutInner({ children, title }: AdminLayoutInnerProps) {
           </div>
         </div>
 
-        <div className="border-t border-slate-800 bg-slate-900/95">
+        <div className="border-t border-slate-200 bg-slate-50/95 transition-colors dark:border-slate-800 dark:bg-slate-900/95">
           <div className="mx-auto flex h-10 w-full max-w-[1600px] items-center gap-2 overflow-x-auto px-4 text-xs sm:px-6 lg:px-8">
-            <Link to="/admin/dashboard" className="shrink-0 text-slate-400 transition hover:text-white focus:outline-none focus-visible:underline">
+            <Link to="/admin/dashboard" className="shrink-0 text-slate-500 transition hover:text-slate-950 dark:text-slate-400 dark:hover:text-white focus:outline-none focus-visible:underline">
               Admin Centre
             </Link>
-            <ChevronRight className="h-3.5 w-3.5 shrink-0 text-slate-600" />
+            <ChevronRight className="h-3.5 w-3.5 shrink-0 text-slate-400 dark:text-slate-600" />
             {currentGroup && (
               <>
                 <Link
                   to={currentGroup.label === 'Site Status & Settings' ? '/admin/site-settings' : (currentGroup.items[0]?.href || '/admin/dashboard')}
-                  className="shrink-0 text-slate-400 transition hover:text-white focus:outline-none focus-visible:underline"
+                  className="shrink-0 text-slate-500 transition hover:text-slate-950 dark:text-slate-400 dark:hover:text-white focus:outline-none focus-visible:underline"
                 >
                   {currentGroup.label}
                 </Link>
-                <ChevronRight className="h-3.5 w-3.5 shrink-0 text-slate-600" />
+                <ChevronRight className="h-3.5 w-3.5 shrink-0 text-slate-400 dark:text-slate-600" />
               </>
             )}
             {currentItem ? (
               <Link
                 to={currentItem.href}
                 aria-current="page"
-                className="truncate font-semibold text-white transition hover:text-blue-300 focus:outline-none focus-visible:underline"
+                className="truncate font-semibold text-slate-900 transition hover:text-blue-700 dark:text-white dark:hover:text-blue-300 focus:outline-none focus-visible:underline"
               >
                 {currentItem.label}
               </Link>
             ) : (
-              <span className="truncate font-semibold text-white">{title || 'Dashboard'}</span>
+              <span className="truncate font-semibold text-slate-900 dark:text-white">{title || 'Dashboard'}</span>
             )}
           </div>
         </div>
@@ -403,47 +403,47 @@ function AdminLayoutInner({ children, title }: AdminLayoutInnerProps) {
         {children}
       </main>
 
-      <footer className="mt-auto border-t border-slate-800 bg-slate-900 text-slate-300">
+      <footer className="mt-auto border-t border-slate-200 bg-white text-slate-700 transition-colors dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
         <div className="mx-auto w-full max-w-[1600px] px-4 py-10 sm:px-6 lg:px-8">
           <div className="grid gap-8 md:grid-cols-[1.2fr_2fr]">
             <div>
               <img src={branding.platform_logo_url} alt="Planyx" className="h-10 w-auto max-w-[180px] object-contain" />
-              <p className="mt-3 max-w-sm text-sm leading-relaxed text-slate-400">
+              <p className="mt-3 max-w-sm text-sm leading-relaxed text-slate-600 dark:text-slate-400">
                 Secure administration for the Planyx planning platform.
               </p>
-              <p className="mt-4 text-xs text-slate-500">Signed in as {admin.name} · {admin.email}</p>
+              <p className="mt-4 text-xs text-slate-500 dark:text-slate-400">Signed in as {admin.name} · {admin.email}</p>
             </div>
             <div className="grid grid-cols-2 gap-6 sm:grid-cols-3">
               <div>
-                <p className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-200">Operations</p>
+                <p className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">Operations</p>
                 <div className="space-y-2 text-sm">
-                  <Link to="/admin/dashboard" className="block text-slate-400 transition-colors hover:text-blue-400">Dashboard</Link>
-                  <Link to="/admin/users" className="block text-slate-400 transition-colors hover:text-blue-400">Customer CRM</Link>
-                  <Link to="/admin/enquiries" className="block text-slate-400 transition-colors hover:text-blue-400">Contact enquiries</Link>
-                  <Link to="/admin/reports" className="block text-slate-400 transition-colors hover:text-blue-400">Reports</Link>
+                  <Link to="/admin/dashboard" className="block text-slate-600 transition-colors hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400">Dashboard</Link>
+                  <Link to="/admin/users" className="block text-slate-600 transition-colors hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400">Customer CRM</Link>
+                  <Link to="/admin/enquiries" className="block text-slate-600 transition-colors hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400">Contact enquiries</Link>
+                  <Link to="/admin/reports" className="block text-slate-600 transition-colors hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400">Reports</Link>
                 </div>
               </div>
               <div>
-                <p className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-200">Platform</p>
+                <p className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">Platform</p>
                 <div className="space-y-2 text-sm">
-                  <Link to="/admin/builders" className="block text-slate-400 transition-colors hover:text-blue-400">Experience builders</Link>
-                  <Link to="/admin/content" className="block text-slate-400 transition-colors hover:text-blue-400">Website CMS</Link>
-                  <Link to="/admin/branding" className="block text-slate-400 transition-colors hover:text-blue-400">Branding</Link>
-                  <Link to="/admin/site-settings" className="block text-slate-400 transition-colors hover:text-blue-400">Site settings</Link>
+                  <Link to="/admin/builders" className="block text-slate-600 transition-colors hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400">Experience builders</Link>
+                  <Link to="/admin/content" className="block text-slate-600 transition-colors hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400">Website CMS</Link>
+                  <Link to="/admin/branding" className="block text-slate-600 transition-colors hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400">Branding</Link>
+                  <Link to="/admin/site-settings" className="block text-slate-600 transition-colors hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400">Site settings</Link>
                 </div>
               </div>
               <div>
-                <p className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-200">Account</p>
+                <p className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">Account</p>
                 <div className="space-y-2 text-sm">
-                  <Link to="/admin/security" className="block text-slate-400 transition-colors hover:text-blue-400">Security</Link>
-                  <Link to="/admin/audit" className="block text-slate-400 transition-colors hover:text-blue-400">Audit log</Link>
-                  <Link to="/dashboard" className="block text-slate-400 transition-colors hover:text-blue-400">Customer dashboard</Link>
+                  <Link to="/admin/security" className="block text-slate-600 transition-colors hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400">Security</Link>
+                  <Link to="/admin/audit" className="block text-slate-600 transition-colors hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400">Audit log</Link>
+                  <Link to="/dashboard" className="block text-slate-600 transition-colors hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400">Customer dashboard</Link>
                   <button type="button" onClick={() => void handleLogout()} className="block text-left text-red-600 hover:text-red-700">Sign out</button>
                 </div>
               </div>
             </div>
           </div>
-          <div className="mt-8 flex flex-col gap-2 border-t border-slate-800 pt-5 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-8 flex flex-col gap-2 border-t border-slate-200 pt-5 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400 sm:flex-row sm:items-center sm:justify-between">
             <span>Planyx Admin Centre</span>
             <span>Restricted to authorised administrators</span>
           </div>
