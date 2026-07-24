@@ -1,4 +1,5 @@
 import { readFeatureFlag } from "./_shared/feature-flags.js";
+import { getNativeSession, loginRedirect } from "./_shared/oidc.js";
 
 const DEFAULT_PLANS = [
   ["personal", "Explore Plan", "Monthly subscription", "£5.99", 599, "prod_UtkvP5dvxrwLNa", "price_1TtxPrDZzb3r6Q3cIViE64O4", "Essential planning builders", "Save and revisit your plans", "A simple starting point for exploring ideas and building clear, practical plans.", "Start 30-day free trial", 1, 0, 10],
@@ -16,7 +17,9 @@ export async function onRequestGet(context) {
       return redirectTo(getSiteUrl(context.env) + "/pricing/");
     }
 
-    return await createCheckoutSession(planCode, context.env);
+    const identity = await customerIdentity(context);
+    if (!identity?.email) return loginRedirect(context.request, "customer");
+    return await createCheckoutSession(planCode, context.env, identity);
   } catch (error) {
     console.error(JSON.stringify({ event: "checkout_get_failed", message: errorMessage(error) }));
     return redirectTo(getSiteUrl(context.env) + "/pricing/?checkout=unavailable");
@@ -27,14 +30,25 @@ export async function onRequestPost(context) {
   try {
     const formData = await context.request.formData();
     const planCode = String(formData.get("plan") || "").trim();
-    return await createCheckoutSession(planCode, context.env);
+    const identity = await customerIdentity(context);
+    if (!identity?.email) return loginRedirect(context.request, "customer");
+    return await createCheckoutSession(planCode, context.env, identity);
   } catch (error) {
     console.error(JSON.stringify({ event: "checkout_post_failed", message: errorMessage(error) }));
     return redirectTo(getSiteUrl(context.env) + "/pricing/?checkout=unavailable");
   }
 }
 
-async function createCheckoutSession(planCode, env) {
+async function customerIdentity(context) {
+  try {
+    return await getNativeSession(context.request, context.env, "customer");
+  } catch (error) {
+    console.error(JSON.stringify({ event: "checkout_customer_session_unavailable", message: errorMessage(error) }));
+    return null;
+  }
+}
+
+async function createCheckoutSession(planCode, env, identity) {
   const siteUrl = getSiteUrl(env);
   if (!env || !env.DB) {
     return redirectTo(siteUrl + "/pricing/?checkout=unavailable");
@@ -74,6 +88,13 @@ async function createCheckoutSession(planCode, env) {
   params.append("line_items[0][quantity]", "1");
   params.append("billing_address_collection", "auto");
   params.append("allow_promotion_codes", "true");
+  const accountEmail = String(identity.email || "").trim().toLowerCase();
+  const profile = await env.DB.prepare(`
+    SELECT stripe_customer_id FROM profiles WHERE lower(email) = lower(?)
+  `).bind(accountEmail).first().catch(() => null);
+  if (profile?.stripe_customer_id) params.append("customer", String(profile.stripe_customer_id));
+  else params.append("customer_email", accountEmail);
+  params.append("client_reference_id", accountEmail);
   params.append("subscription_data[trial_period_days]", "30");
   params.append("success_url", siteUrl + "/payment-success/?session_id={CHECKOUT_SESSION_ID}");
   params.append("cancel_url", siteUrl + "/pricing/?payment=cancelled");
@@ -81,9 +102,11 @@ async function createCheckoutSession(planCode, env) {
   params.append("metadata[plan_code]", selectedPlan.id);
   params.append("metadata[plan_name]", selectedPlan.plan_name || selectedPlan.id);
   params.append("metadata[plan_type]", selectedPlan.plan_type || "");
+  params.append("metadata[account_email]", accountEmail);
   params.append("subscription_data[metadata][service_line]", "Planyx");
   params.append("subscription_data[metadata][plan_code]", selectedPlan.id);
   params.append("subscription_data[metadata][plan_name]", selectedPlan.plan_name || selectedPlan.id);
+  params.append("subscription_data[metadata][customer_email]", accountEmail);
 
   const stripeResponse = await fetch("https://api.stripe.com/v1/checkout/sessions", {
     method: "POST",
@@ -138,31 +161,13 @@ async function syncServicePlans(DB) {
 
   await safeAlter(DB, `ALTER TABLE service_plans ADD COLUMN stripe_product_id TEXT`);
 
-  const currentIds = DEFAULT_PLANS.map((plan) => plan[0]);
-  const placeholders = currentIds.map(() => "?").join(", ");
-  await DB.prepare(`DELETE FROM service_plans WHERE id NOT IN (${placeholders})`).bind(...currentIds).run();
-
   for (const plan of DEFAULT_PLANS) {
     await DB.prepare(`
       INSERT INTO service_plans (
         id, plan_name, plan_type, price_label, price_pence, stripe_product_id, stripe_price_id,
         delivery_time, revisions, description, button_label, is_active, is_featured, sort_order
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT(id) DO UPDATE SET
-        plan_name = excluded.plan_name,
-        plan_type = excluded.plan_type,
-        price_label = excluded.price_label,
-        price_pence = excluded.price_pence,
-        stripe_product_id = CASE WHEN COALESCE(service_plans.stripe_product_id, '') = '' THEN excluded.stripe_product_id ELSE service_plans.stripe_product_id END,
-        stripe_price_id = CASE WHEN COALESCE(service_plans.stripe_price_id, '') = '' THEN excluded.stripe_price_id ELSE service_plans.stripe_price_id END,
-        delivery_time = excluded.delivery_time,
-        revisions = excluded.revisions,
-        description = excluded.description,
-        button_label = excluded.button_label,
-        is_active = excluded.is_active,
-        is_featured = excluded.is_featured,
-        sort_order = excluded.sort_order,
-        updated_at = CURRENT_TIMESTAMP
+      ON CONFLICT(id) DO NOTHING
     `).bind(...plan).run();
   }
 }
