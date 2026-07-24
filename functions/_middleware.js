@@ -452,7 +452,7 @@ export async function onRequest(context) {
 
   const adminIdentity = await getAuthenticatedAdminIdentity(request, env);
 
-  if (adminIdentity && (path.startsWith("/coming-soon") || path.startsWith("/maintenance"))) {
+  if (adminIdentity && path.startsWith("/coming-soon")) {
     return new Response(null, {
       status: 302,
       headers: {
@@ -469,6 +469,24 @@ export async function onRequest(context) {
   ]).has(path);
 
   let settings = null;
+
+  // Canonical maintenance-page preview. Render the exact saved D1 content
+  // instead of falling through to the hard-coded static HTML file.
+  if (
+    env.DB &&
+    (path === "/maintenance" || path === "/maintenance/" || path.startsWith("/maintenance/"))
+  ) {
+    settings = await getSiteSettings(env.DB);
+    const maintenanceActive = settings.site_status === "maintenance" && !adminIdentity;
+    return new Response(pageHtml(settings, "maintenance"), {
+      status: maintenanceActive ? 503 : 200,
+      headers: {
+        "Content-Type": "text/html; charset=utf-8",
+        "Cache-Control": "no-store",
+        ...(maintenanceActive ? { "Retry-After": "3600" } : {})
+      }
+    });
+  }
 
   // Enforce site status gates first for non-administrators, excluding absolute system bypasses
   if (!adminIdentity) {
@@ -555,9 +573,9 @@ export async function onRequest(context) {
 
   if (adminDocumentRequest) {
     const retiredTransferredRoutes = new Set([
-      "/admin/affiliate", "/admin/resellers", "/admin/signing", "/admin/pages",
+      "/admin/affiliate", "/admin/resellers", "/admin/signing",
       "/admin/portal-nav", "/admin/stripe-diagnostics", "/admin/test-tools",
-      "/admin/password-resets", "/admin/legal"
+      "/admin/password-resets"
     ]);
     const normalisedPath = path.endsWith("/") ? path.slice(0, -1) : path;
     if (retiredTransferredRoutes.has(normalisedPath)) {
