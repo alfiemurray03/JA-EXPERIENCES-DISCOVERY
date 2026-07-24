@@ -15,9 +15,9 @@
   "dir": "auto",
   "icons": [
     {
-      "src": "/pwa-icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/assets/brand/planyx-icon.png",
+      "sizes": "2000x2000",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ],
@@ -26,19 +26,19 @@
       "name": "Planyx Home",
       "short_name": "Home",
       "url": "/?source=pwa&launch=public-v5",
-      "icons": [{ "src": "/pwa-icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+      "icons": [{ "src": "/assets/brand/planyx-icon.png", "sizes": "2000x2000", "type": "image/png" }]
     },
     {
       "name": "Help Centre",
       "short_name": "Help",
       "url": "/help-centre?source=pwa",
-      "icons": [{ "src": "/pwa-icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+      "icons": [{ "src": "/assets/brand/planyx-icon.png", "sizes": "2000x2000", "type": "image/png" }]
     },
     {
       "name": "Get Your Guide",
       "short_name": "GetYourGuide",
       "url": "/getyourguide?source=pwa",
-      "icons": [{ "src": "/pwa-icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+      "icons": [{ "src": "/assets/brand/planyx-icon.png", "sizes": "2000x2000", "type": "image/png" }]
     }
   ]
 }
