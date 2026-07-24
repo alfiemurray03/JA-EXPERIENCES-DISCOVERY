@@ -1370,28 +1370,13 @@ async function seedServicePlans(DB) {
     ["org_starter", "Together", "Monthly subscription", "£39.99", 3999, "", "", "Shared planning for groups", "All builders and collaborative tools", "Shared planning for households, families and groups who want to build plans together.", "Subscribe to Together", 1, 0, 40]
   ];
 
-  const currentIds = plans.map((plan) => plan[0]);
-  await DB.prepare(`DELETE FROM service_plans WHERE id NOT IN (?, ?, ?, ?)`).bind(...currentIds).run();
-
   for (const plan of plans) {
     await DB.prepare(`
       INSERT INTO service_plans (
         id, plan_name, plan_type, price_label, price_pence, stripe_product_id, stripe_price_id,
         delivery_time, revisions, description, button_label, is_active, is_featured, sort_order
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT(id) DO UPDATE SET
-        plan_name = excluded.plan_name,
-        plan_type = excluded.plan_type,
-        price_label = excluded.price_label,
-        price_pence = excluded.price_pence,
-        delivery_time = excluded.delivery_time,
-        revisions = excluded.revisions,
-        description = excluded.description,
-        button_label = excluded.button_label,
-        is_active = excluded.is_active,
-        is_featured = excluded.is_featured,
-        sort_order = excluded.sort_order,
-        updated_at = CURRENT_TIMESTAMP
+      ON CONFLICT(id) DO NOTHING
     `).bind(...plan).run();
   }
 
