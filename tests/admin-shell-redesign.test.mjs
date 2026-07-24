@@ -19,9 +19,9 @@ test("shared Admin Centre shell keeps protected navigation and accessible mobile
 
 test("sidebar uses the approved full brand and favourites cannot duplicate Overview", () => {
   assert.match(dashboard, /aria-label="Planyx"/);
-  assert.match(dashboard, />Plan Studio<\/span>/);
+  assert.match(dashboard, />Planyx<\/span>/);
   assert.match(dashboard, />Admin Centre<\/span>/);
-  assert.doesNotMatch(dashboard, /Plan Studio Admin<\/span>/);
+  assert.doesNotMatch(dashboard, /Planyx Admin<\/span>/);
   assert.match(client, /section !== "overview"/);
 });
 

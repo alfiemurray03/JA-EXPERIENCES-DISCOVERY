@@ -10,8 +10,8 @@ const DEFAULTS: BrowserBrandingSettings = {
   faviconUrl: '/favicon.svg?v=20260718-4',
 };
 
-const CACHE_KEY = 'ja_browser_branding_v1';
-const EVENT_NAME = 'ja-browser-branding-change';
+const CACHE_KEY = 'planyx_browser_branding_v2';
+const EVENT_NAME = 'planyx-browser-branding-change';
 let activeSettings: BrowserBrandingSettings = DEFAULTS;
 let headObserver: MutationObserver | null = null;
 
@@ -35,8 +35,8 @@ function escapeRegExp(value: string): string {
 
 export function normaliseBrowserBranding(value: Partial<BrowserBrandingSettings> = {}): BrowserBrandingSettings {
   return {
-    browserTabName: cleanName(value.browserTabName, DEFAULTS.browserTabName),
-    adminTabName: cleanName(value.adminTabName, DEFAULTS.adminTabName),
+    browserTabName: DEFAULTS.browserTabName,
+    adminTabName: DEFAULTS.adminTabName,
     faviconUrl: cleanFavicon(value.faviconUrl),
   };
 }

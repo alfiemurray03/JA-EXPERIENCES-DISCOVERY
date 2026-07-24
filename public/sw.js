@@ -1,6 +1,6 @@
-const CACHE_NAME = 'planyx-shell-v7';
-const PUBLIC_LAUNCH = '/?source=pwa&launch=public-v7';
-const SHELL = ['/', PUBLIC_LAUNCH, '/manifest.webmanifest?v=7', '/pwa-icon.svg', '/favicon.svg'];
+const CACHE_NAME = 'planyx-shell-v8';
+const PUBLIC_LAUNCH = '/?source=pwa&launch=public-v8';
+const SHELL = ['/', PUBLIC_LAUNCH, '/manifest.webmanifest?v=8', '/pwa-icon.svg', '/favicon.svg'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -104,6 +104,6 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (request.destination === 'manifest') {
-    event.respondWith(fetch(request, { cache: 'no-store' }).catch(() => caches.match('/manifest.webmanifest?v=7')));
+    event.respondWith(fetch(request, { cache: 'no-store' }).catch(() => caches.match('/manifest.webmanifest?v=8')));
   }
 });

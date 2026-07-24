@@ -73,7 +73,7 @@ async function fetchStatuspageJson(path) {
   const response = await fetch(`${STATUSPAGE_ORIGIN}${path}`, {
     headers: {
       "Accept": "application/json",
-      "User-Agent": "JA-Plan-Studio-Status-Centre/1.0"
+      "User-Agent": "Planyx-Status-Centre/1.0"
     },
     cf: {
       cacheEverything: true,

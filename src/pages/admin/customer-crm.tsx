@@ -207,7 +207,7 @@ export default function AdminCustomerCrm() {
         pdf.text('Private and confidential - intended for the named customer', margin, 289);
         pdf.text(`Page ${page} of ${pages}`, pageWidth - margin, 289, { align: 'right' });
       }
-      pdf.save(`JA-Plan-Studio-SAR-${email.replace(/[^a-z0-9]+/gi, '-')}.pdf`);
+      pdf.save(`Planyx-SAR-${email.replace(/[^a-z0-9]+/gi, '-')}.pdf`);
       setMessage('Formatted SAR PDF downloaded and the export has been recorded in the audit log.');
     } catch (reason) { setMessage(reason instanceof Error ? reason.message : 'The SAR PDF could not be prepared.'); }
   }

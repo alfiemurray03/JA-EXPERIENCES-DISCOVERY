@@ -41,7 +41,7 @@ test("Subscription Plans page has no hard-coded plan cards or prices", async () 
 test("shared footer uses one compact wordmark and one contact email", async () => {
   const footer = await readFile(new URL("../public/assets/includes/footer.html", import.meta.url), "utf8");
   assert.match(footer, /aria-label="Planyx"/);
-  assert.match(footer, /class="brand-ja"[^>]*>JA<\/span><span class="brand-name"[^>]*>Plan Studio<\/span>/);
+  assert.match(footer, /class="brand-ja"[^>]*>JA<\/span><span class="brand-name"[^>]*>Planyx<\/span>/);
   assert.doesNotMatch(footer, /site-footer-email/);
   assert.equal((footer.match(/mailto:planyx@jagroupservices\.co\.uk/g) || []).length, 1);
 });

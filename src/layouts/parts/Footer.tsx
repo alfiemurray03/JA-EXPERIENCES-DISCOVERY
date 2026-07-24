@@ -113,7 +113,7 @@ export default function Footer() {
                 />
               ) : (
                 <span className="font-extrabold text-lg text-foreground">
-                  JA <span className="text-primary">Plan Studio</span>
+                  Planyx
                 </span>
               )}
             </Link>

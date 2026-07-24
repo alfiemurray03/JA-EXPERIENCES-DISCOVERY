@@ -450,7 +450,7 @@ export default function ManagedAIHelpChatbot() {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = `JA-Plan-Studio-${reference || sessionIdRef.current}-transcript.txt`;
+    anchor.download = `Planyx-${reference || sessionIdRef.current}-transcript.txt`;
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
