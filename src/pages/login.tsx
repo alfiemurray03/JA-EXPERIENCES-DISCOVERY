@@ -35,15 +35,26 @@ export default function LoginPage() {
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
 
-      <div className="min-h-[calc(100vh-4.5rem)] bg-background flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-sm space-y-5">
-          <div className="text-center">
-            <div className="w-16 h-16 rounded-2xl bg-blue-100 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-700 flex items-center justify-center mx-auto mb-5">
-              <ShieldCheck className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+      <div className="relative min-h-[calc(100vh-4.5rem)] overflow-hidden bg-background px-4 py-12">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_15%,rgba(37,99,235,.12),transparent_34%),radial-gradient(circle_at_82%_76%,rgba(6,182,212,.09),transparent_30%)]" />
+        <div className="relative mx-auto grid w-full max-w-5xl items-center gap-10 lg:grid-cols-[1fr_390px]">
+          <section className="hidden lg:block">
+            <p className="mb-4 text-xs font-semibold uppercase tracking-[.16em] text-blue-600 dark:text-blue-300">JA Group Services ID</p>
+            <h1 className="max-w-xl text-4xl font-semibold leading-tight tracking-[-.04em] text-foreground">One secure sign-in for every <span className="text-blue-600 dark:text-blue-400">Planyx experience.</span></h1>
+            <p className="mt-5 max-w-lg text-base leading-7 text-muted-foreground">Continue planning, save your itineraries and keep your experience details together without creating another password.</p>
+            <div className="mt-7 grid max-w-lg gap-3 sm:grid-cols-3">
+              {['Microsoft secured', 'Passwordless access', 'Account protected'].map(item => <div key={item} className="rounded-xl border border-border bg-card/80 px-3 py-3 text-xs font-medium text-foreground">{item}</div>)}
             </div>
-            <h1 className="text-2xl font-bold text-foreground mb-2">Sign in to Planyx</h1>
-            <p className="text-muted-foreground text-xs">Secured by JA Group Services ID</p>
-          </div>
+          </section>
+
+          <div className="w-full space-y-5">
+            <div className="text-center lg:text-left">
+              <div className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-xl border border-blue-200 bg-blue-100 lg:mx-0 dark:border-blue-700 dark:bg-blue-900/40">
+                <ShieldCheck className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              </div>
+              <h2 className="mb-2 text-2xl font-semibold tracking-tight text-foreground">Sign in to Planyx</h2>
+              <p className="text-xs text-muted-foreground">Protected by JA Group Services ID</p>
+            </div>
 
           {error && (
             <div className="p-3.5 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-400 text-sm leading-relaxed flex items-start gap-2.5">
@@ -86,6 +97,7 @@ export default function LoginPage() {
             <span className="mx-2">·</span>
             <Link to="/privacy" className="hover:text-foreground">Privacy Policy</Link>
           </p>
+          </div>
         </div>
       </div>
     </>
