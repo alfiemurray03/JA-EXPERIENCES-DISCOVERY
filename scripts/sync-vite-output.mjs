@@ -19,6 +19,7 @@ const staticAssets = path.join(root, 'static');
 const manifestName = '.asset-manifest.json';
 const manifestVersion = 2;
 const legacyManifestAssetLimit = 500;
+const generatedRootEntries = new Set(['assets', 'index.html', manifestName]);
 
 function normaliseAssetPath(asset) {
   return asset.replaceAll('\\', '/');
@@ -103,6 +104,17 @@ const preservationMap = new Map([
   ['coming-soon', 'coming-soon'],
   [path.join('assets', 'js', 'coming-soon.js'), path.join('assets', 'js', 'coming-soon.js')],
 ]);
+
+// Public contains a small number of deliberate Cloudflare and compatibility
+// files alongside generated Vite output. Preserve every existing root entry
+// except the generated index, asset directory and release manifest. This keeps
+// files such as _headers, _redirects, analytics.js and Airo runtime helpers while
+// allowing obsolete hashed assets to be removed safely.
+const existingRootEntries = await readdir(destination, { withFileTypes: true }).catch(() => []);
+for (const entry of existingRootEntries) {
+  if (generatedRootEntries.has(entry.name)) continue;
+  preservationMap.set(entry.name, entry.name);
+}
 
 for (const asset of previousReleaseAssets) {
   preservationMap.set(asset, asset);
