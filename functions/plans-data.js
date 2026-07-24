@@ -70,31 +70,13 @@ async function syncServicePlans(DB) {
 
   await safeAlter(DB, `ALTER TABLE service_plans ADD COLUMN stripe_product_id TEXT`);
 
-  const currentIds = DEFAULT_PLANS.map((plan) => plan[0]);
-  const placeholders = currentIds.map(() => "?").join(", ");
-  await DB.prepare(`DELETE FROM service_plans WHERE id NOT IN (${placeholders})`).bind(...currentIds).run();
-
   for (const plan of DEFAULT_PLANS) {
     await DB.prepare(`
       INSERT INTO service_plans (
         id, plan_name, plan_type, price_label, price_pence, stripe_product_id, stripe_price_id,
         delivery_time, revisions, description, button_label, is_active, is_featured, sort_order
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT(id) DO UPDATE SET
-        plan_name = excluded.plan_name,
-        plan_type = excluded.plan_type,
-        price_label = excluded.price_label,
-        price_pence = excluded.price_pence,
-        stripe_product_id = CASE WHEN COALESCE(service_plans.stripe_product_id, '') = '' THEN excluded.stripe_product_id ELSE service_plans.stripe_product_id END,
-        stripe_price_id = CASE WHEN COALESCE(service_plans.stripe_price_id, '') = '' THEN excluded.stripe_price_id ELSE service_plans.stripe_price_id END,
-        delivery_time = excluded.delivery_time,
-        revisions = excluded.revisions,
-        description = excluded.description,
-        button_label = excluded.button_label,
-        is_active = excluded.is_active,
-        is_featured = excluded.is_featured,
-        sort_order = excluded.sort_order,
-        updated_at = CURRENT_TIMESTAMP
+      ON CONFLICT(id) DO NOTHING
     `).bind(...plan).run();
   }
 }
