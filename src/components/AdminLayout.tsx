@@ -11,6 +11,7 @@ import {
   Bot, Moon, Sun,
 } from 'lucide-react';
 import { useAdminTheme } from '@/lib/admin-theme-context';
+import { useBranding } from '@/lib/branding';
 
 // ── Nav structure ─────────────────────────────────────────────────────────────
 
@@ -222,6 +223,7 @@ function AdminLayoutInner({ children, title }: AdminLayoutInnerProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { resolvedTheme, setTheme } = useAdminTheme();
+  const branding = useBranding();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [pinState, setPinState] = useState<{ loading: boolean; configured: boolean; unlocked: boolean; expiresAt?: string | null; lockedUntil?: string | null; error?: string }>({ loading: true, configured: false, unlocked: false });
   const [pin, setPin] = useState('');
@@ -363,6 +365,21 @@ function AdminLayoutInner({ children, title }: AdminLayoutInnerProps) {
           >
             <Menu className="w-5 h-5" />
           </button>
+
+          <Link
+            to="/admin/dashboard"
+            className="flex shrink-0 items-center border-r border-slate-200 pr-3 sm:pr-4"
+            aria-label="Planyx Admin Centre dashboard"
+          >
+            <img
+              src={branding.platform_logo_url}
+              alt="Planyx"
+              className="h-8 w-auto max-w-[116px] object-contain sm:h-9 sm:max-w-[150px]"
+            />
+            <span className="ml-2 hidden rounded-full bg-primary/10 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-primary md:inline">
+              Admin Centre
+            </span>
+          </Link>
 
           <div className="flex-1 flex items-center gap-2 min-w-0">
             <span className="text-xs text-slate-400 hidden sm:block shrink-0">Admin</span>
