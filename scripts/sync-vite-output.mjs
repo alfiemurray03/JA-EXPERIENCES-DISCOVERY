@@ -17,6 +17,20 @@ const source = path.join(root, 'dist');
 const destination = path.resolve(root, process.env.PUBLISH_DIR || 'public');
 const staticAssets = path.join(root, 'static');
 const manifestName = '.asset-manifest.json';
+const manifestVersion = 2;
+const legacyManifestAssetLimit = 500;
+
+function normaliseAssetPath(asset) {
+  return asset.replaceAll('\\', '/');
+}
+
+function isSafeAssetPath(asset) {
+  const normalised = normaliseAssetPath(asset);
+  return normalised.startsWith('assets/')
+    && !normalised.startsWith('assets/../')
+    && !normalised.includes('/../')
+    && !path.isAbsolute(normalised);
+}
 
 async function listFiles(directory, prefix = '') {
   const entries = await readdir(directory, { withFileTypes: true }).catch(() => []);
@@ -27,7 +41,7 @@ async function listFiles(directory, prefix = '') {
     if (entry.isDirectory()) {
       files.push(...await listFiles(path.join(directory, entry.name), relative));
     } else if (entry.isFile()) {
-      files.push(relative);
+      files.push(normaliseAssetPath(relative));
     }
   }
 
@@ -39,18 +53,49 @@ if (!sourceStats?.isDirectory()) {
   throw new Error('Vite output directory "dist" was not found. Run the Vite build first.');
 }
 
-const currentReleaseAssets = await listFiles(path.join(source, 'assets'), 'assets');
+const currentReleaseAssets = [...new Set(
+  (await listFiles(path.join(source, 'assets'), 'assets')).filter(isSafeAssetPath),
+)].sort();
 let previousReleaseAssets = [];
 
 try {
   const manifest = JSON.parse(await readFile(path.join(destination, manifestName), 'utf8'));
-  if (Array.isArray(manifest.assets)) {
-    previousReleaseAssets = manifest.assets.filter(asset => typeof asset === 'string');
+  const recordedAssets = Array.isArray(manifest.currentAssets)
+    ? manifest.currentAssets
+    : Array.isArray(manifest.assets)
+      ? manifest.assets
+      : [];
+  const safeRecordedAssets = [...new Set(
+    recordedAssets
+      .filter(asset => typeof asset === 'string')
+      .map(normaliseAssetPath)
+      .filter(isSafeAssetPath),
+  )].sort();
+
+  // Version 1 manifests created before publicDir was disabled may contain every
+  // historic hashed asset. Do not preserve a clearly polluted legacy manifest;
+  // otherwise the stale bundle is copied into every future release forever.
+  if (manifest.version === 1 && safeRecordedAssets.length > legacyManifestAssetLimit) {
+    console.warn(
+      `Skipping ${safeRecordedAssets.length} legacy assets from a polluted production manifest.`,
+    );
+  } else {
+    previousReleaseAssets = safeRecordedAssets;
   }
 } catch {
-  // First migration: retain the existing release once, then future manifests
-  // keep the current and immediately previous releases only.
-  previousReleaseAssets = await listFiles(path.join(destination, 'assets'), 'assets');
+  // First migration: retain the existing release once, unless it is clearly a
+  // polluted asset directory. Future version 2 manifests preserve exactly one
+  // immediately previous release.
+  const existingAssets = [...new Set(
+    (await listFiles(path.join(destination, 'assets'), 'assets')).filter(isSafeAssetPath),
+  )].sort();
+  if (existingAssets.length <= legacyManifestAssetLimit) {
+    previousReleaseAssets = existingAssets;
+  } else {
+    console.warn(
+      `Skipping ${existingAssets.length} untracked legacy assets during production cleanup.`,
+    );
+  }
 }
 
 const preservedRoot = await mkdtemp(path.join(os.tmpdir(), 'planyx-static-'));
@@ -97,7 +142,7 @@ try {
 
   await writeFile(
     path.join(destination, manifestName),
-    `${JSON.stringify({ version: 1, assets: currentReleaseAssets }, null, 2)}\n`,
+    `${JSON.stringify({ version: manifestVersion, currentAssets: currentReleaseAssets }, null, 2)}\n`,
     'utf8',
   );
 } finally {
