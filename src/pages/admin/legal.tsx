@@ -93,6 +93,13 @@ const LEGAL_DOCS: Array<{
     publicPath: '/complaints',
     description: 'How customers can complain, expected response times and escalation stages.',
   },
+  {
+    slug: 'refund-policy',
+    title: 'Refund Policy',
+    icon: Scale,
+    publicPath: '/refund-policy',
+    description: 'Subscription cancellation, statutory rights, refund eligibility and third-party booking boundaries.',
+  },
 ];
 
 // ── Default content (fallback if DB is empty) ─────────────────────────────────
