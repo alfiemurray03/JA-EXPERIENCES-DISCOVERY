@@ -230,3 +230,9 @@ test("Admin Centre navigation exposes website pages and legal policies", async (
   assert.match(layout, /Website Pages[\s\S]*\/admin\/pages/);
   assert.match(layout, /Legal Policies[\s\S]*\/admin\/legal/);
 });
+
+test("maintenance editor remains visible while the public website is live", async () => {
+  const settings = await readFile(new URL("src/pages/admin/site-settings.tsx", root), "utf8");
+  assert.match(settings, /Dedicated Maintenance Page/);
+  assert.doesNotMatch(settings, /cfg\.siteStatus === 'maintenance' && \(\s*<div className=\{sectionCls\}>/);
+});
