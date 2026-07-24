@@ -17,31 +17,6 @@ function cleanSlug(value) {
     .slice(0, 120);
 }
 
-const REQUIRED_POLICY_FALLBACKS = {
-  "terms-of-service": {
-    slug: "terms-of-service",
-    title: "Terms of Service",
-    content: "# Terms of Service\n\nThese terms explain the basis on which Planyx provides discovery, planning and guidance services.\n\nPlanyx provides written guidance and planning support only. Customers remain responsible for their own travel bookings, provider checks, suitability decisions and travel arrangements.",
-    content_type: "markdown",
-    version: "1.0",
-    effective_date: "2026-06-21",
-    status: "published",
-    is_published: 1,
-    updated_at: "2026-06-21"
-  },
-  "privacy-notice": {
-    slug: "privacy-notice",
-    title: "Privacy Notice",
-    content: "# Privacy Notice\n\nThis notice explains how Planyx handles customer account, enquiry and service information.\n\nJA Group Services Ltd acts as Data Controller for Planyx customer information. We use personal data to respond to enquiries, provide requested services, manage customer accounts, maintain records and meet legal or regulatory duties.",
-    content_type: "markdown",
-    version: "1.0",
-    effective_date: "2026-06-21",
-    status: "published",
-    is_published: 1,
-    updated_at: "2026-06-21"
-  }
-};
-
 async function safeAlter(DB, sql) {
   try {
     await DB.prepare(sql).run();
@@ -350,11 +325,9 @@ export async function onRequestGet(context) {
       AND lower(COALESCE(status, 'published')) = 'published'
   `).bind(slug).first();
 
-  if (!policy && !REQUIRED_POLICY_FALLBACKS[slug]) return notFound();
+  if (!policy) return notFound();
 
-  const displayPolicy = policy || REQUIRED_POLICY_FALLBACKS[slug];
-
-  return new Response(page(displayPolicy), {
+  return new Response(page(policy), {
     status: 200,
     headers: {
       "Content-Type": "text/html; charset=utf-8",
