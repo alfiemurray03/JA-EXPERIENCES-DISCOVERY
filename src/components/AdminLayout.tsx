@@ -1,4 +1,4 @@
-import { useState, useEffect, type ComponentType, type ReactNode } from 'react';
+import { useState, useEffect, useRef, type ComponentType, type ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAdmin } from '@/lib/admin-context';
 import { hasPermission } from '@/lib/admin-types';
@@ -8,7 +8,7 @@ import {
   Menu, ChevronRight, Shield, Bell, Send,
   Globe, Wrench, FileEdit, Palette, Activity, FileText, HeartPulse,
   X, UserCog, Clock, Mail, AlertTriangle, CircleDollarSign, PackagePlus, MoreHorizontal, Lock,
-  Bot, Moon, Sun,
+  Bot, Moon, Sun, ChevronDown,
 } from 'lucide-react';
 import { useAdminTheme } from '@/lib/admin-theme-context';
 import { useBranding } from '@/lib/branding';
@@ -102,6 +102,8 @@ function AdminLayoutInner({ children, title }: AdminLayoutInnerProps) {
   const [pin, setPin] = useState('');
   const [pinConfirm, setPinConfirm] = useState('');
   const [pinSubmitting, setPinSubmitting] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const accountMenuRef = useRef<HTMLDivElement>(null);
 
   const visibleItems = NAV_GROUPS.flatMap(group => group.items)
     .filter(item => admin && hasPermission(admin, item.section));
@@ -128,9 +130,28 @@ function AdminLayoutInner({ children, title }: AdminLayoutInnerProps) {
   );
 
   async function handleLogout() {
+    setAccountMenuOpen(false);
     await logout();
     navigate('/admin', { replace: true });
   }
+
+  useEffect(() => {
+    if (!accountMenuOpen) return;
+    function closeAccountMenu(event: MouseEvent) {
+      if (accountMenuRef.current && !accountMenuRef.current.contains(event.target as Node)) {
+        setAccountMenuOpen(false);
+      }
+    }
+    function closeAccountMenuWithKeyboard(event: KeyboardEvent) {
+      if (event.key === 'Escape') setAccountMenuOpen(false);
+    }
+    document.addEventListener('mousedown', closeAccountMenu);
+    document.addEventListener('keydown', closeAccountMenuWithKeyboard);
+    return () => {
+      document.removeEventListener('mousedown', closeAccountMenu);
+      document.removeEventListener('keydown', closeAccountMenuWithKeyboard);
+    };
+  }, [accountMenuOpen]);
 
   // Redirect to admin login if session is gone (expired or never set)
   useEffect(() => {
@@ -303,23 +324,77 @@ function AdminLayoutInner({ children, title }: AdminLayoutInnerProps) {
             {resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
 
-          <div className="hidden items-center gap-2 border-l border-white/15 pl-3 md:flex">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full border border-blue-400/30 bg-blue-500/15">
-              <span className="text-xs font-bold text-blue-300">{admin.name.charAt(0)}</span>
-            </div>
-            <div className="max-w-28">
-              <p className="truncate text-xs font-semibold text-white">{admin.name.split(' ')[0]}</p>
-              <p className="text-[10px] uppercase tracking-wide text-slate-400">Administrator</p>
-            </div>
+          <div ref={accountMenuRef} className="relative border-l border-white/15 pl-3">
+            <button
+              type="button"
+              onClick={() => setAccountMenuOpen(open => !open)}
+              className="flex min-h-10 items-center gap-2 rounded-lg px-1.5 py-1 text-left transition hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+              aria-haspopup="menu"
+              aria-expanded={accountMenuOpen}
+            >
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-blue-400/30 bg-blue-500/15">
+                <span className="text-xs font-bold text-blue-300">{admin.name.charAt(0)}</span>
+              </div>
+              <div className="hidden max-w-28 md:block">
+                <p className="truncate text-xs font-semibold text-white">{admin.name.split(' ')[0]}</p>
+                <p className="text-[10px] uppercase tracking-wide text-slate-400">Administrator</p>
+              </div>
+              <ChevronDown className={`hidden h-3.5 w-3.5 text-slate-400 transition-transform md:block ${accountMenuOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {accountMenuOpen && (
+              <div
+                role="menu"
+                className="absolute right-0 top-[calc(100%+0.65rem)] z-50 w-64 overflow-hidden rounded-xl border border-slate-200 bg-white text-slate-900 shadow-2xl"
+              >
+                <div className="border-b border-slate-100 px-4 py-3">
+                  <p className="truncate text-sm font-semibold">{admin.name}</p>
+                  <p className="mt-0.5 truncate text-xs text-slate-500">{admin.email}</p>
+                  <span className="mt-2 inline-flex rounded-full bg-blue-50 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-blue-700">
+                    Administrator
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => void handleLogout()}
+                  className="flex w-full items-center gap-2.5 px-4 py-3 text-left text-sm font-semibold text-red-600 transition hover:bg-red-50 focus:bg-red-50 focus:outline-none"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign out
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
         <div className="border-t border-slate-800 bg-slate-900/95">
           <div className="mx-auto flex h-10 w-full max-w-[1600px] items-center gap-2 overflow-x-auto px-4 text-xs sm:px-6 lg:px-8">
-            <span className="shrink-0 text-slate-400">Admin Centre</span>
+            <Link to="/admin/dashboard" className="shrink-0 text-slate-400 transition hover:text-white focus:outline-none focus-visible:underline">
+              Admin Centre
+            </Link>
             <ChevronRight className="h-3.5 w-3.5 shrink-0 text-slate-600" />
-            {currentGroup && <><span className="shrink-0 text-slate-400">{currentGroup.label}</span><ChevronRight className="h-3.5 w-3.5 shrink-0 text-slate-600" /></>}
-            <span className="truncate font-semibold text-white">{currentItem?.label || title || 'Dashboard'}</span>
+            {currentGroup && (
+              <>
+                <Link
+                  to={currentGroup.label === 'Site Status & Settings' ? '/admin/site-settings' : (currentGroup.items[0]?.href || '/admin/dashboard')}
+                  className="shrink-0 text-slate-400 transition hover:text-white focus:outline-none focus-visible:underline"
+                >
+                  {currentGroup.label}
+                </Link>
+                <ChevronRight className="h-3.5 w-3.5 shrink-0 text-slate-600" />
+              </>
+            )}
+            {currentItem ? (
+              <Link
+                to={currentItem.href}
+                aria-current="page"
+                className="truncate font-semibold text-white transition hover:text-blue-300 focus:outline-none focus-visible:underline"
+              >
+                {currentItem.label}
+              </Link>
+            ) : (
+              <span className="truncate font-semibold text-white">{title || 'Dashboard'}</span>
+            )}
           </div>
         </div>
       </header>
