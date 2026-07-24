@@ -158,7 +158,7 @@ function TrustStrip() {
     { icon: <FileText className="w-4 h-4" />,    label: 'No credit card to get started' },
   ];
   return (
-    <div className="border-y border-border bg-muted/20 py-5">
+    <div className="border-y border-blue-200/70 bg-gradient-to-r from-blue-50 via-cyan-50 to-violet-50 dark:border-blue-800/60 dark:from-blue-950/45 dark:via-cyan-950/25 dark:to-violet-950/35 py-5">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-wrap justify-center gap-x-8 gap-y-3">
           {items.map(item => (
@@ -336,7 +336,9 @@ export default function HomePage() {
       {/* ══════════════════════════════════════════════════════════
           1. HERO
       ══════════════════════════════════════════════════════════ */}
-      <section className="relative pt-20 pb-28 px-4 sm:px-6 lg:px-8 overflow-hidden">
+      <section className="relative pt-20 pb-28 px-4 sm:px-6 lg:px-8 overflow-hidden bg-gradient-to-br from-blue-50 via-white to-violet-50 dark:from-slate-950 dark:via-blue-950/40 dark:to-violet-950/30">
+        <div className="absolute -top-32 -left-24 h-80 w-80 rounded-full bg-cyan-400/25 blur-3xl pointer-events-none" aria-hidden="true" />
+        <div className="absolute -bottom-40 right-0 h-96 w-96 rounded-full bg-violet-500/20 blur-3xl pointer-events-none" aria-hidden="true" />
         <div className="max-w-7xl mx-auto">
 
           {/* Announcement banner */}
@@ -364,7 +366,7 @@ export default function HomePage() {
               <SectionBadge>Planyx · Guided planning builders</SectionBadge>
               <h1 className="text-4xl sm:text-5xl lg:text-[3.25rem] font-extrabold text-foreground leading-[1.1] tracking-tight mb-6">
                 Build personalised plans,{' '}
-                <span className="bg-gradient-to-r from-blue-500 to-blue-700 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-blue-600 via-cyan-500 to-violet-600 bg-clip-text text-transparent">
                   step by step
                 </span>
               </h1>
@@ -604,7 +606,7 @@ export default function HomePage() {
       {/* ══════════════════════════════════════════════════════════
           5. WHO IT'S FOR
       ══════════════════════════════════════════════════════════ */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-muted/20">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-blue-50/90 via-cyan-50/60 to-violet-50/90 dark:from-blue-950/35 dark:via-slate-950 dark:to-violet-950/30">
         <div className="max-w-5xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -795,35 +797,35 @@ export default function HomePage() {
             transition={{ duration: 0.5 }}
             className={`${glassStrong} p-10 sm:p-14 text-center relative overflow-hidden`}
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-600/6 via-transparent to-indigo-600/4 pointer-events-none rounded-2xl" />
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-cyan-600 to-violet-700 pointer-events-none rounded-2xl" />
             <div className="relative">
-              <div className="w-14 h-14 rounded-2xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center text-blue-600 mx-auto mb-6">
+              <div className="w-14 h-14 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center text-white mx-auto mb-6 shadow-lg shadow-blue-950/20">
                 <QrCode className="w-7 h-7" />
               </div>
-              <h2 className="text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight mb-4">
+              <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-4">
                 Ready to create your first plan?
               </h2>
-              <p className="text-muted-foreground mb-8 leading-relaxed text-base max-w-xl mx-auto">
+              <p className="text-blue-50 mb-8 leading-relaxed text-base max-w-xl mx-auto">
                 Sign in through JA Group Services ID, choose a guided builder and create your first personalised plan. Free to start—no credit card required.
               </p>
               <div className="flex flex-wrap gap-3 justify-center mb-8">
                 <Link to="/sign-in">
                   <Button
                     size="lg"
-                    className="bg-blue-600 hover:bg-blue-500 text-white font-semibold shadow-xl shadow-blue-600/25 px-8 rounded-xl transition-all duration-200 hover:-translate-y-px"
+                    className="bg-white hover:bg-blue-50 text-blue-700 font-semibold shadow-xl shadow-blue-950/25 px-8 rounded-xl transition-all duration-200 hover:-translate-y-px"
                   >
                     Explore Builders <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </Link>
                 <Link to="/sign-in">
-                  <Button size="lg" variant="outline" className="border-border text-foreground hover:bg-muted px-8 rounded-xl font-medium">
+                  <Button size="lg" variant="outline" className="border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white px-8 rounded-xl font-medium">
                     Sign in to dashboard
                   </Button>
                 </Link>
               </div>
-              <div className="flex flex-wrap justify-center gap-5 pt-6 border-t border-border">
+              <div className="flex flex-wrap justify-center gap-5 pt-6 border-t border-white/25">
                 {['Free to get started', 'No credit card required', 'UK-based service'].map(t => (
-                  <div key={t} className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <div key={t} className="flex items-center gap-1.5 text-sm text-blue-50">
                     <Check className="w-4 h-4 text-primary flex-shrink-0" />
                     <span>{t}</span>
                   </div>
