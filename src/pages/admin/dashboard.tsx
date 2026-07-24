@@ -123,22 +123,22 @@ export default function AdminDashboard() {
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
       <AdminLayout title="Dashboard" subtitle="Planyx Administration">
-        <div className="max-w-6xl mx-auto pb-20 lg:pb-0">
+        <div className="mx-auto w-full max-w-[1600px] pb-10">
           <div className="mb-8">
-            <div className="flex items-center justify-between gap-3 mb-1">
-              <div className="flex items-center gap-3">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex min-w-0 items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center">
                   <ShieldCheck className="w-5 h-5 text-red-600" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold text-foreground">{greeting}, {(admin?.name || 'Admin').split(' ')[0]}</h1>
-                  <p className="text-muted-foreground text-sm">Here&apos;s what&apos;s happening on your platform today</p>
+                  <h1 className="text-2xl font-bold leading-tight text-foreground sm:text-3xl">{greeting}, {(admin?.name || 'Admin').split(' ')[0]}</h1>
+                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground sm:text-base">Here&apos;s what&apos;s happening on your platform today</p>
                 </div>
               </div>
               <button
                 onClick={() => loadDashboard(true)}
                 disabled={refreshing || loadingStats}
-                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5 rounded-lg hover:bg-muted border border-border"
+                className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:w-auto"
                 title="Refresh dashboard"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
@@ -147,18 +147,18 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="mb-10 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {statCards.map((stat) => {
               const Icon = stat.icon;
               return (
-                <Card key={stat.label} className="bg-card border-border">
-                  <CardContent className="p-5">
+                <Card key={stat.label} className="h-full min-h-[150px] border-border bg-card">
+                  <CardContent className="h-full p-5 sm:p-6">
                     {loadingStats ? <div className="h-16 rounded animate-pulse bg-slate-100" /> : (
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <p className="text-xs text-muted-foreground mb-1">{stat.label}</p>
-                          <p className="text-2xl font-bold text-foreground">{typeof stat.value === 'number' ? stat.value.toLocaleString('en-GB') : stat.value}</p>
-                          <p className="text-xs text-muted-foreground mt-1">{stat.note}</p>
+                      <div className="flex h-full items-start justify-between gap-4">
+                        <div className="min-w-0">
+                          <p className="mb-2 text-sm font-medium leading-snug text-muted-foreground">{stat.label}</p>
+                          <p className="break-words text-2xl font-bold leading-tight text-foreground sm:text-3xl">{typeof stat.value === 'number' ? stat.value.toLocaleString('en-GB') : stat.value}</p>
+                          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{stat.note}</p>
                         </div>
                         <div className={`w-9 h-9 rounded-xl ${stat.bg} flex items-center justify-center flex-shrink-0`}>
                           <Icon className={`w-4 h-4 ${stat.color}`} />
@@ -173,22 +173,22 @@ export default function AdminDashboard() {
 
           <div className="mb-8">
             <div>
-              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Quick Access</h2>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-muted-foreground">Quick Access</h2>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {quickLinks.map(link => {
                   const Icon = link.icon;
                   return (
-                    <Link key={link.to} to={link.to}>
-                      <Card className="bg-card border-border hover:border-red-300 hover:bg-red-50/50 transition-all cursor-pointer group">
-                        <CardContent className="p-4 flex items-center gap-3">
+                    <Link key={link.to} to={link.to} className="block h-full">
+                      <Card className="group h-full min-h-[104px] cursor-pointer border-border bg-card transition-all hover:border-red-300 hover:bg-red-50/50 dark:hover:bg-red-950/20">
+                        <CardContent className="flex h-full items-start gap-4 p-5">
                           <div className="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0 group-hover:bg-red-200 transition-colors">
                             <Icon className="w-4 h-4 text-red-600" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-foreground">{link.label}</p>
-                            <p className="text-xs text-muted-foreground truncate">{link.desc}</p>
+                            <p className="text-base font-semibold leading-snug text-foreground">{link.label}</p>
+                            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{link.desc}</p>
                           </div>
-                          <ArrowRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-red-600 transition-colors flex-shrink-0" />
+                          <ArrowRight className="mt-1 h-4 w-4 flex-shrink-0 text-muted-foreground transition-colors group-hover:text-red-600" />
                         </CardContent>
                       </Card>
                     </Link>
