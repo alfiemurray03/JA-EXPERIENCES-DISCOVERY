@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
-  Bot, Building2, CheckCircle2, Clock, Headphones,
+  Bot, Building2, CheckCircle2, ChevronRight, Clock, Headphones,
   LifeBuoy, Loader2, Mail, MapPin, MessageSquare, Phone, Send,
   ShieldCheck, Sparkles, Smartphone, AlertTriangle
 } from 'lucide-react';
@@ -56,6 +56,7 @@ export default function ContactPage() {
   });
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [ticketReference, setTicketReference] = useState('');
   const [error, setError] = useState('');
 
   function update(field: string, value: string) {
@@ -133,8 +134,11 @@ export default function ContactPage() {
         credentials: 'include',
         body: JSON.stringify(form)
       });
-      const data = (await response.json()) as { success: boolean; error?: string };
-      if (data.success) setSuccess(true);
+      const data = (await response.json()) as { success: boolean; ticketReference?: string; error?: string };
+      if (data.success && data.ticketReference) {
+        setTicketReference(data.ticketReference);
+        setSuccess(true);
+      }
       else setError(data.error ?? 'We could not submit your request. Please try again.');
     } catch {
       setError('Network error. Please check your connection and try again.');
@@ -281,14 +285,25 @@ export default function ContactPage() {
                   <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 flex items-center justify-center mx-auto">
                     <CheckCircle2 className="w-8 h-8 text-emerald-500" />
                   </div>
-                  <h2 className="mt-5 text-2xl font-bold text-foreground">Your request is with us</h2>
+                  <h2 className="mt-5 text-2xl font-bold text-foreground">Your ticket has been created</h2>
                   <p className="mt-2 text-sm text-muted-foreground max-w-md mx-auto">
-                    We have received your message. The Planyx support team will reply using the email address you provided.
+                    We have received your enquiry and routed it to the Planyx support team.
+                  </p>
+                  <div className="mt-5 mx-auto max-w-sm rounded-2xl border border-primary/20 bg-primary/5 p-5">
+                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Your ticket number</p>
+                    <p className="mt-2 text-2xl font-black tracking-wide text-foreground" aria-live="polite">{ticketReference}</p>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      Keep this number. If you call us on {GROUP_PHONE_DISPLAY}, quote it so we can identify your enquiry.
+                    </p>
+                  </div>
+                  <p className="mt-4 text-xs text-muted-foreground">
+                    Our reply will be sent to <strong className="text-foreground">{form.email}</strong>.
                   </p>
                   <Button
                     className="mt-6"
                     onClick={() => {
                       setSuccess(false);
+                      setTicketReference('');
                       setForm((current) => ({ ...current, subject: '', message: '' }));
                     }}
                   >
@@ -383,7 +398,7 @@ export default function ContactPage() {
                   <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-t border-border pt-5">
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <ShieldCheck className="w-4 h-4 text-emerald-500" />
-                      Your details are used to respond to this request.
+                      Your enquiry will receive a ticket number and be routed securely to our support team.
                     </div>
                     <Button type="submit" disabled={submitting} className="gap-2">
                       {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}

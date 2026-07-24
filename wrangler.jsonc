@@ -2,14 +2,19 @@
   "name": "planyx",
   "main": "src/worker.js",
   "compatibility_date": "2026-06-06",
-
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
     "not_found_handling": "single-page-application"
   },
-
   "vars": {
-    "ENQUIRY_TO_EMAIL": "planyx@jagroupservices.co.uk"
-  }
+    "ENQUIRY_TO_EMAIL": "planyx@jagroupservices.co.uk",
+    "ENQUIRY_FROM_EMAIL": "tickets@jagroupservices.co.uk"
+  },
+  "send_email": [
+    {
+      "name": "SUPPORT_EMAIL",
+      "destination_address": "planyx@jagroupservices.co.uk"
+    }
+  ]
 }
